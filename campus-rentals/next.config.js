@@ -5,19 +5,39 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'abodebucket.s3.us-east-2.amazonaws.com',
+        port: '',
+        pathname: '/uploads/**',
       },
     ],
-    domains: ['abodebucket.s3.us-east-2.amazonaws.com'],
   },
-  experimental: {
-    optimizeCss: true,
-  },
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.(png|jpg|jpeg|gif|svg)$/i,
-      type: 'asset/resource',
-    });
-    return config;
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET,HEAD,OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Expose-Headers',
+            value: 'ETag',
+          },
+          {
+            key: 'Access-Control-Max-Age',
+            value: '3000',
+          },
+        ],
+      },
+    ];
   },
 };
 

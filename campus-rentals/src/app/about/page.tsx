@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { fetchProperties, fetchPropertyPhotos } from '@/utils/api'
-import { Property, Photo } from '@/types';
+import { Property } from '@/types';
 
 const isValidUrl = (url: string) => {
   try {
@@ -54,10 +54,11 @@ export default function AboutPage() {
       <div className="relative py-24">
         <div className="absolute inset-0">
           <Image
-            src="/Campus-Rentals.png"
-            alt="Campus Rentals Background"
+            src="/images/about-hero.jpg"
+            alt="About Campus Rentals"
             fill
-            className="object-cover opacity-50"
+            sizes="100vw"
+            className="object-cover"
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900/90 to-transparent" />

@@ -128,12 +128,13 @@ export default function PropertyDetailsPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       {/* Hero Section */}
       <div className="relative h-[60vh]">
-        {photos[0]?.photoUrl && (
+        {photos[0]?.photoLink && (
           <div className="absolute inset-0">
             <Image
-              src={photos[0].photoUrl}
+              src={photos[0].photoLink}
               alt={property.name}
               fill
+              sizes="100vw"
               className="object-cover"
               priority
             />
@@ -168,11 +169,12 @@ export default function PropertyDetailsPage() {
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {photos.map((photo) => (
-                  <div key={photo.photo_id} className="relative aspect-square rounded-lg overflow-hidden group">
+                  <div key={photo.photoId} className="relative aspect-square rounded-lg overflow-hidden group">
                     <Image
-                      src={photo.photoUrl}
-                      alt={`${property.name} - Photo ${photo.photo_id}`}
+                      src={photo.photoLink}
+                      alt={`${property.name} - Photo ${photo.photoId}`}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
