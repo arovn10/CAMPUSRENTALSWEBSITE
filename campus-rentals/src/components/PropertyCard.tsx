@@ -5,30 +5,30 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Property } from '@/types';
 import { fetchPropertyPhotos } from '@/utils/api';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 
 interface PropertyCardProps {
   property: Property;
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadPhoto = async () => {
+    const loadPhotos = async () => {
       try {
-        const photos = await fetchPropertyPhotos(property.property_id);
-        if (photos.length > 0) {
-          setPhotoUrl(photos[0].photoLink);
-        }
+        const fetchedPhotos = await fetchPropertyPhotos(property.property_id);
+        setPhotos(fetchedPhotos);
       } catch (error) {
-        console.error('Error loading property photo:', error);
+        console.error('Error loading property photos:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadPhoto();
+    loadPhotos();
   }, [property.property_id]);
 
   return (
@@ -38,14 +38,20 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
           </div>
-        ) : photoUrl ? (
-          <Image
-            src={photoUrl}
-            alt={property.address}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-110"
-          />
+        ) : photos.length > 0 ? (
+          <Swiper spaceBetween={8} slidesPerView={1} className="h-full w-full">
+            {photos.map((photo) => (
+              <SwiperSlide key={photo.photoId}>
+                <Image
+                  src={photo.photoLink}
+                  alt={property.address}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
             <span className="text-text">No image available</span>
