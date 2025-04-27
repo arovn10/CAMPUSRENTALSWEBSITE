@@ -5,60 +5,57 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Property } from '@/types';
 import { fetchPropertyPhotos } from '@/utils/api';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
 
 interface PropertyCardProps {
   property: Property;
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const [photos, setPhotos] = useState<any[]>([]);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadPhotos = async () => {
+    const loadThumbnail = async () => {
       try {
-        const fetchedPhotos = await fetchPropertyPhotos(property.property_id);
-        setPhotos(fetchedPhotos);
+        const photos = await fetchPropertyPhotos(property.property_id);
+        if (photos.length > 0) {
+          setThumbnail(photos[0].photoLink);
+        }
       } catch (error) {
-        console.error('Error loading property photos:', error);
+        console.error('Error loading property thumbnail:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    loadPhotos();
+    loadThumbnail();
   }, [property.property_id]);
 
   return (
     <div className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
-      <div className="relative h-72 overflow-hidden">
-        {loading ? (
-          <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
-          </div>
-        ) : photos.length > 0 ? (
-          <Swiper spaceBetween={8} slidesPerView={1} className="h-full w-full">
-            {photos.map((photo) => (
-              <SwiperSlide key={photo.photoId}>
-                <Image
-                  src={photo.photoLink}
-                  alt={property.address}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-            <span className="text-text">No image available</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
+      <Link href={`/properties/${property.property_id}`} className="block">
+        <div className="relative h-72 overflow-hidden">
+          {loading ? (
+            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+            </div>
+          ) : thumbnail ? (
+            <Image
+              src={thumbnail}
+              alt={property.address}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-110"
+              placeholder="blur"
+              blurDataURL="/placeholder.png"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
+              <span className="text-text">No image available</span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+      </Link>
       <div className="p-6 bg-gradient-to-b from-white to-secondary/5">
         <h3 className="text-xl font-bold text-text mb-2 group-hover:text-accent transition-colors duration-300">
           {property.address}
