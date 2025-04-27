@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Campus Rentals',
   description: 'Find your perfect student housing near campus',
   icons: {
-    icon: '/icons/Campus-Rentals-favicon.jpg',
+    icon: '/icons/Campus-Rentals-favicon.png',
   },
 };
 
@@ -21,6 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/png" href="/icons/Campus-Rentals-favicon.png" />
+      </head>
       <body className={inter.className}>
         <Header />
         {children}

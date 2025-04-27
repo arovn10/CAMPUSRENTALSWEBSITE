@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Property, Photo, PropertyAmenities } from '@/utils/api';
 import { fetchProperties, fetchPropertyPhotos, fetchPropertyAmenities } from '@/utils/api';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ import Image from 'next/image';
 
 export default function PropertyDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const propertyId = Number(params.id);
   
   const [property, setProperty] = useState<Property | null>(null);
