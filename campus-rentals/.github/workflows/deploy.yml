@@ -1,0 +1,24 @@
+name: Deploy to AWS EC2
+ on:
+     push:
+         branches:
+                 - main
+
+ jobs:
+       deploy:
+             runs-on: ubuntu-latest
+             steps:
+                   - name: Checkout code
+                     uses: actions/checkout@v3
+
+                   -  name: Deploy via SSH
+                   env:
+ GH_TOKEN: ${{ secrets.GH_TOKEN }}
+ run: |
+ ssh -o StrictHostKeyChecking=no bitnami@18.215.22.232 << 'ENDSSH' 
+            cd ~/CAMPUSRENTALSWEBSITE/campus-rentals
+ git pull https://arovn10:${GH_TOKEN}@github.com/arovn10/CAMPUSRENTALSWEBSITE.git main
+ npm install 
+            npm run build
+ pm2 restart campus-rentals
+          ENDSSH
