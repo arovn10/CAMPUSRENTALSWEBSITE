@@ -7,10 +7,10 @@ import Header from '@/components/Header';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Campus Rentals LLC',
-  description: 'Luxury student living in prime locations',
+  title: 'Campus Rentals',
+  description: 'Find your perfect student housing near campus',
   icons: {
-    icon: '/icons/favicon.png',
+    icon: '/icons/Campus-Rentals-favicon.jpg',
   },
 };
 

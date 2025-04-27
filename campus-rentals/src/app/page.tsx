@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Property } from '@/types';
 import { fetchProperties } from '@/utils/api';
 import PropertyCard from '@/components/PropertyCard';
 import Link from 'next/link';
-import Image from 'next/image';
+import { LoadScript } from '@react-google-maps/api';
 
 export default function HomePage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -34,83 +34,70 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      
-      console.log('Initializing video player with URL:', videoUrl);
-      
-      // Set up event listeners for debugging
-      video.onerror = (e) => {
-        console.error('Video error:', e);
-        console.error('Video error details:', video.error);
-        setVideoError(true);
-        setIsLoading(false);
-      };
-      
-      video.onloadeddata = () => {
-        console.log('Video loaded successfully');
-        setIsLoading(false);
-      };
-      
-      video.onloadstart = () => {
-        console.log('Video loading started');
-      };
-      
-      video.onstalled = () => {
-        console.error('Video stalled while loading');
-      };
-      
-      // Set source and attempt to play
-      video.src = videoUrl;
-      video.load();
-      
-      video.play().catch(error => {
-        console.error('Video playback failed:', error);
-        setVideoError(true);
-        setIsLoading(false);
-      });
-    }
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+    
+    // Set up event listeners
+    const handleError = (e: Event) => {
+      console.error('Video error:', e);
+      setVideoError(true);
+      setIsLoading(false);
+    };
+
+    const handleLoadedData = () => {
+      console.log('Video loaded successfully');
+      setIsLoading(false);
+    };
+
+    const handleLoadStart = () => {
+      console.log('Video loading started');
+    };
+
+    const handleStalled = () => {
+      console.error('Video stalled while loading');
+    };
+
+    video.addEventListener('error', handleError);
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('loadstart', handleLoadStart);
+    video.addEventListener('stalled', handleStalled);
+
+    // Set source and attempt to play
+    video.src = videoUrl;
+    video.load();
+
+    video.play().catch(error => {
+      console.error('Video playback failed:', error);
+      setVideoError(true);
+      setIsLoading(false);
+    });
+
+    // Cleanup
+    return () => {
+      video.removeEventListener('error', handleError);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('loadstart', handleLoadStart);
+      video.removeEventListener('stalled', handleStalled);
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      {/* Hero Section */}
-      <div className="relative h-screen">
-        <div className="absolute inset-0">
-          {isLoading && (
-            <div className="w-full h-full flex items-center justify-center bg-gray-900">
-              <div className="text-white">
-                <p>Loading video...</p>
-                <p className="text-sm mt-2">Check console for progress</p>
-              </div>
-            </div>
-          )}
-          {!videoError && !isLoading && (
-            <video
-              ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              crossOrigin="anonymous"
-            >
-              <source src={videoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )}
-          {videoError && (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-              <div className="text-white text-center">
-                <p className="text-xl mb-2">Video failed to load</p>
-                <p className="text-sm">Please check the browser console for error details</p>
-              </div>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent" style={{ zIndex: 1 }} />
-        </div>
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
+      <div className="relative w-full min-h-[500px] flex items-center justify-center overflow-hidden">
+        {/* Background Video */}
+        <video
+          className="absolute inset-0 w-full h-full object-cover opacity-40 z-0"
+          src="https://abodebucket.s3.us-east-2.amazonaws.com/uploads/ArchitecturalAnimation.MP4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        {/* Overlay for better text contrast */}
+        <div className="absolute inset-0 bg-black/60 z-10" />
+        {/* Hero Text Content */}
+        <div className="relative z-20 flex flex-col justify-center items-start py-20 px-4 md:px-0 max-w-4xl mx-auto w-full">
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
             Luxury Student Living
           </h1>
