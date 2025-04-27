@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Property } from '@/types';
+import Image from 'next/image';
 
 export default function CreatePropertyPage() {
   const router = useRouter();
@@ -47,7 +48,16 @@ export default function CreatePropertyPage() {
             <h2 className="font-semibold mb-2">Copied Photos</h2>
             <div className="flex gap-2 flex-wrap">
               {photos.map((photo, idx) => (
-                <img key={idx} src={photo.photoLink} alt="Copied" className="w-24 h-24 object-cover rounded" />
+                <Image
+                  key={idx}
+                  src={photo.photoLink}
+                  alt={form.address}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  placeholder="blur"
+                  blurDataURL="/placeholder.png"
+                />
               ))}
             </div>
           </div>
