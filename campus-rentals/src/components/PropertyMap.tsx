@@ -140,19 +140,6 @@ export default function PropertyMap({ properties, center, zoom = 12, selectedSch
             property.longitude >= -180 && 
             property.longitude <= 180
           ) {
-            // Calculate distance from selected school for styling
-            let isNearby = false;
-            if (selectedSchool) {
-              const selectedUniversity = UNIVERSITIES.find(u => u.name === selectedSchool);
-              if (selectedUniversity) {
-                const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                  new google.maps.LatLng(property.latitude, property.longitude),
-                  new google.maps.LatLng(selectedUniversity.position.lat, selectedUniversity.position.lng)
-                );
-                isNearby = distance <= 1609.34; // 1 mile in meters
-              }
-            }
-
             return (
               <Marker
                 key={property.property_id}
@@ -162,7 +149,7 @@ export default function PropertyMap({ properties, center, zoom = 12, selectedSch
                 }}
                 title={property.address}
                 icon={{
-                  url: isNearby ? '/property-marker.png' : '/property-marker-gray.png',
+                  url: '/property-marker.png',
                   scaledSize: {
                     width: 25,
                     height: 25,

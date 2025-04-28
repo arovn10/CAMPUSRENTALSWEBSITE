@@ -12,6 +12,20 @@ const SCHOOL_COORDINATES = {
   'Florida Atlantic University': { lat: 26.3700, lng: -80.1000 }
 };
 
+async function geocodeAddress(address: string): Promise<{ lat: number, lng: number } | null> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
+  );
+  const data = await response.json();
+  if (data.status === 'OK' && data.results.length > 0) {
+    const location = data.results[0].geometry.location;
+    return { lat: location.lat, lng: location.lng };
+  }
+  return null;
+}
+
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +51,30 @@ export default function PropertiesPage() {
     loadProperties();
   }, []);
 
+  useEffect(() => {
+    async function geocodeMissingProperties() {
+      const updated = await Promise.all(properties.map(async (property) => {
+        if (
+          typeof property.latitude !== 'number' ||
+          typeof property.longitude !== 'number' ||
+          isNaN(property.latitude) ||
+          isNaN(property.longitude)
+        ) {
+          const coords = await geocodeAddress(property.address);
+          if (coords) {
+            return { ...property, latitude: coords.lat, longitude: coords.lng };
+          }
+        }
+        return property;
+      }));
+      setProperties(updated);
+    }
+    if (properties.length > 0) {
+      geocodeMissingProperties();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties]);
+
   const handleSchoolChange = (school: string) => {
     setSelectedSchool(school);
     setMapCenter(SCHOOL_COORDINATES[school as keyof typeof SCHOOL_COORDINATES]);
@@ -51,6 +89,19 @@ export default function PropertiesPage() {
   const sortedProperties = [...properties]
     .filter(property => selectedBedrooms === null || property.bedrooms === selectedBedrooms)
     .sort((a, b) => {
+      // Sort by soonest available date first
+      const dateA = new Date(a.leaseTerms);
+      const dateB = new Date(b.leaseTerms);
+      const isValidA = !isNaN(dateA.getTime());
+      const isValidB = !isNaN(dateB.getTime());
+      if (isValidA && isValidB) {
+        return dateA.getTime() - dateB.getTime();
+      } else if (isValidA) {
+        return -1;
+      } else if (isValidB) {
+        return 1;
+      }
+      // Fallback to previous sort
       switch (sortBy) {
         case 'bedrooms-asc':
           return a.bedrooms - b.bedrooms;

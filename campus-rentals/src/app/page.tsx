@@ -20,9 +20,11 @@ export default function HomePage() {
       try {
         setLoading(true);
         const data = await fetchProperties();
+        console.log('Fetched properties:', data);
         // Shuffle the properties array
         const shuffled = [...data].sort(() => Math.random() - 0.5);
         setProperties(shuffled.slice(0, 3));
+        console.log('Properties set in state:', shuffled.slice(0, 3));
       } catch (error) {
         console.error('Error loading properties:', error);
       } finally {

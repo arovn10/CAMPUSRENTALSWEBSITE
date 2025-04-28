@@ -100,6 +100,15 @@ export default function PropertyDetailsPage() {
     setContactFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  function formatAvailableDate(leaseTerms: string | null): string {
+    if (!leaseTerms) return 'Contact for details';
+    const date = new Date(leaseTerms);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    return leaseTerms;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center">
@@ -207,6 +216,10 @@ export default function PropertyDetailsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Square Feet</span>
                   <span className="text-xl font-bold">{property.squareFeet}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">Available From</span>
+                  <span className="text-xl font-bold">{formatAvailableDate(property.leaseTerms)}</span>
                 </div>
               </div>
             </div>

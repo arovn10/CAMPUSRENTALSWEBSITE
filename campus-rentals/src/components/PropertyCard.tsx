@@ -10,6 +10,17 @@ interface PropertyCardProps {
   property: Property;
 }
 
+function formatAvailableDate(leaseTerms: string | null): string {
+  if (!leaseTerms) return 'Contact for details';
+  // Try to parse as date
+  const date = new Date(leaseTerms);
+  if (!isNaN(date.getTime())) {
+    return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  // Fallback: show as-is
+  return leaseTerms;
+}
+
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +100,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             <span className="transform transition-transform duration-300 group-hover/link:translate-x-1">→</span>
           </Link>
         </div>
+        <p className="text-sm text-gray-500 mt-2">
+          Available From: {formatAvailableDate(property.leaseTerms)}
+        </p>
       </div>
     </div>
   );
