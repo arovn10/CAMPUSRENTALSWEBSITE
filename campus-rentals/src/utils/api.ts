@@ -81,4 +81,17 @@ export async function fetchPropertyAmenities(propertyId: number): Promise<Proper
     console.error('Error fetching property amenities:', error);
     return null;
   }
+}
+
+/**
+ * Rewrites S3 URLs to use the CloudFront domain for faster CDN delivery.
+ * @param url The S3 URL to rewrite
+ * @returns The CloudFront URL
+ */
+export function s3ToCloudFrontUrl(url: string): string {
+  if (!url) return url;
+  return url.replace(
+    /^https:\/\/abodebucket\.s3\.us-east-2\.amazonaws\.com/,
+    'https://d1m1syk7iv23tg.cloudfront.net'
+  );
 } 

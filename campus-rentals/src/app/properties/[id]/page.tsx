@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Property, Photo, PropertyAmenities } from '@/utils/api';
+import { Property, Photo, PropertyAmenities, s3ToCloudFrontUrl } from '@/utils/api';
 import { fetchProperties, fetchPropertyPhotos, fetchPropertyAmenities } from '@/utils/api';
 import Link from 'next/link';
 import {
@@ -176,7 +176,7 @@ export default function PropertyDetailsPage() {
             {photos.map((photo, idx) => (
               <Image
                 key={photo.photoId}
-                src={photo.photoLink}
+                src={s3ToCloudFrontUrl(photo.photoLink)}
                 alt={property.name}
                 fill
                 sizes="100vw"
@@ -217,7 +217,7 @@ export default function PropertyDetailsPage() {
                 <div className="relative flex flex-col items-center">
                   <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden">
                     <Image
-                      src={photos[selectedPhotoIndex]?.photoLink || photos[0].photoLink}
+                      src={s3ToCloudFrontUrl(photos[selectedPhotoIndex]?.photoLink || photos[0].photoLink)}
                       alt={`${property.name} - Photo ${photos[selectedPhotoIndex]?.photoId || photos[0].photoId}`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

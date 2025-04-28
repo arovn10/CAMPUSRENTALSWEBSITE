@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Property } from '@/types';
-import { fetchPropertyPhotos } from '@/utils/api';
+import { fetchPropertyPhotos, s3ToCloudFrontUrl } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 
 interface PropertyCardProps {
@@ -32,7 +32,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       try {
         const photos = await fetchPropertyPhotos(property.property_id);
         if (photos.length > 0) {
-          setThumbnail(photos[0].photoLink);
+          setThumbnail(s3ToCloudFrontUrl(photos[0].photoLink));
         }
       } catch (error) {
         console.error('Error loading property thumbnail:', error);
@@ -70,7 +70,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </div>
         ) : thumbnail ? (
           <Image
-            src={thumbnail}
+            src={s3ToCloudFrontUrl(thumbnail || '')}
             alt={property.address}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Property } from '@/types';
 import Image from 'next/image';
+import { s3ToCloudFrontUrl } from '@/utils/api';
 
 export default function CreatePropertyPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function CreatePropertyPage() {
               {photos.map((photo, idx) => (
                 <Image
                   key={idx}
-                  src={photo.photoLink}
+                  src={s3ToCloudFrontUrl(photo.photoLink)}
                   alt={form.address}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
