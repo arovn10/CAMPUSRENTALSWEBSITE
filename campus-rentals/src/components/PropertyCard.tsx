@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Property } from '@/types';
 import { fetchPropertyPhotos } from '@/utils/api';
+import { useRouter } from 'next/navigation';
 
 interface PropertyCardProps {
   property: Property;
@@ -24,6 +25,7 @@ function formatAvailableDate(leaseTerms: string | null): string {
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const loadThumbnail = async () => {
@@ -42,31 +44,47 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   }, [property.property_id]);
 
   return (
-    <div className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
-      <Link href={`/properties/${property.property_id}`} className="block">
-        <div className="relative h-72 overflow-hidden">
-          {loading ? (
-            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
-            </div>
-          ) : thumbnail ? (
-            <Image
-              src={thumbnail}
-              alt={property.address}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-              placeholder="blur"
-              blurDataURL="/placeholder.png"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-              <span className="text-text">No image available</span>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </div>
-      </Link>
+    <div
+      className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer"
+      onClick={() => {
+        router.push(`/properties/${property.property_id}`);
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          router.push(`/properties/${property.property_id}`);
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          }
+        }
+      }}
+    >
+      <div className="relative h-72 overflow-hidden">
+        {loading ? (
+          <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+          </div>
+        ) : thumbnail ? (
+          <Image
+            src={thumbnail}
+            alt={property.address}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
+            placeholder="blur"
+            blurDataURL="/placeholder.png"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
+            <span className="text-text">No image available</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
       <div className="p-6 bg-gradient-to-b from-white to-secondary/5">
         <h3 className="text-xl font-bold text-text mb-2 group-hover:text-accent transition-colors duration-300">
           {property.address}
@@ -92,13 +110,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           <span className="text-2xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
             ${property.price}/month
           </span>
-          <Link 
-            href={`/properties/${property.property_id}`}
-            className="text-secondary hover:text-accent font-medium transition-colors duration-300 flex items-center gap-1 group/link"
-          >
+          <span className="text-secondary font-medium transition-colors duration-300 flex items-center gap-1 group/link">
             View Details
             <span className="transform transition-transform duration-300 group-hover/link:translate-x-1">→</span>
-          </Link>
+          </span>
         </div>
         <p className="text-sm text-gray-500 mt-2">
           Available From: {formatAvailableDate(property.leaseTerms)}

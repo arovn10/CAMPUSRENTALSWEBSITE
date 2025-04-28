@@ -28,14 +28,16 @@ export default function PropertyDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [showContactForm, setShowContactForm] = useState(false);
   const [contactFormData, setContactFormData] = useState({
     name: '',
     email: '',
     phone: '',
     message: '',
+    subject: '',
   });
   const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
 
   useEffect(() => {
     const loadPropertyDetails = async () => {
@@ -76,19 +78,50 @@ export default function PropertyDetailsPage() {
     }
   }, [propertyId]);
 
+  useEffect(() => {
+    if (photos.length > 1) {
+      const interval = setInterval(() => {
+        setHeroPhotoIndex((prev) => (prev + 1) % photos.length);
+      }, 4000); // 4 seconds
+      return () => clearInterval(interval);
+    }
+  }, [photos]);
+
+  useEffect(() => {
+    if (property) {
+      setContactFormData((prev) => ({ ...prev, subject: `${property.name} interest` }));
+    }
+  }, [property]);
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setContactStatus('submitting');
 
     try {
-      // TODO: Implement actual form submission logic
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'rovnerproperties@gmail.com',
+          from: contactFormData.email,
+          subject: contactFormData.subject || `New Contact Form Submission from ${contactFormData.name}`,
+          text: `\nName: ${contactFormData.name}\nEmail: ${contactFormData.email}\nPhone: ${contactFormData.phone}\nMessage: ${contactFormData.message}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
       setContactStatus('success');
       setContactFormData({
         name: '',
         email: '',
         phone: '',
         message: '',
+        subject: '',
       });
     } catch (error) {
       setContactStatus('error');
@@ -138,24 +171,27 @@ export default function PropertyDetailsPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       {/* Hero Section */}
       <div className="relative h-[60vh]">
-        {photos[0]?.photoLink && (
+        {photos.length > 0 && (
           <div className="absolute inset-0">
-            <Image
-              src={photos[0].photoLink}
-              alt={property.name}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent" />
+            {photos.map((photo, idx) => (
+              <Image
+                key={photo.photoId}
+                src={photo.photoLink}
+                alt={property.name}
+                fill
+                sizes="100vw"
+                className={`object-cover transition-opacity duration-1000 ${idx === heroPhotoIndex ? 'opacity-100 z-0' : 'opacity-0 z-0'}`}
+                priority={idx === 0}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent z-10" />
           </div>
         )}
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-end pb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-end pb-12 z-20 pointer-events-none">
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent pointer-events-auto">
             {property.name}
           </h1>
-          <p className="text-xl text-gray-300">{property.address}</p>
+          <p className="text-xl text-gray-300 pointer-events-auto">{property.address}</p>
         </div>
       </div>
 
@@ -175,21 +211,40 @@ export default function PropertyDetailsPage() {
             {/* Photo Gallery */}
             <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
               <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Photo Gallery
+                Photos
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {photos.map((photo) => (
-                  <div key={photo.photoId} className="relative aspect-square rounded-lg overflow-hidden group">
+              {photos.length > 0 && (
+                <div className="relative flex flex-col items-center">
+                  <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden">
                     <Image
-                      src={photo.photoLink}
-                      alt={`${property.name} - Photo ${photo.photoId}`}
+                      src={photos[selectedPhotoIndex]?.photoLink || photos[0].photoLink}
+                      alt={`${property.name} - Photo ${photos[selectedPhotoIndex]?.photoId || photos[0].photoId}`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="object-cover"
+                      priority={selectedPhotoIndex === 0}
+                      loading={selectedPhotoIndex === 0 ? 'eager' : 'lazy'}
                     />
                   </div>
-                ))}
-              </div>
+                  <div className="flex justify-center gap-4 mt-4">
+                    <button
+                      onClick={() => setSelectedPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1))}
+                      className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-accent/80 transition-colors"
+                    >
+                      Prev
+                    </button>
+                    <span className="text-gray-300">
+                      {selectedPhotoIndex + 1} / {photos.length}
+                    </span>
+                    <button
+                      onClick={() => setSelectedPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1))}
+                      className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-accent/80 transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -333,102 +388,100 @@ export default function PropertyDetailsPage() {
                   </svg>
                   rovnerproperties@gmail.com
                 </a>
+                {/* Contact Form */}
+                <form onSubmit={handleContactSubmit} className="space-y-4 mt-6">
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={contactFormData.subject}
+                      onChange={handleContactChange}
+                      required
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={contactFormData.name}
+                      onChange={handleContactChange}
+                      required
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={contactFormData.email}
+                      onChange={handleContactChange}
+                      required
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={contactFormData.phone}
+                      onChange={handleContactChange}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      value={contactFormData.message}
+                      onChange={handleContactChange}
+                      required
+                      rows={4}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={contactStatus === 'submitting'}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  >
+                    {contactStatus === 'submitting' ? 'Sending...' : 'Send Message'}
+                  </button>
+                  {contactStatus === 'success' && (
+                    <div className="rounded-md bg-green-50 p-4">
+                      <p className="text-sm text-green-700">Message sent successfully!</p>
+                    </div>
+                  )}
+                  {contactStatus === 'error' && (
+                    <div className="rounded-md bg-red-50 p-4">
+                      <p className="text-sm text-red-700">Failed to send message. Please try again.</p>
+                    </div>
+                  )}
+                </form>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Contact Form Modal */}
-      {showContactForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Contact About {property.name}</h2>
-              <button
-                onClick={() => setShowContactForm(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleContactSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={contactFormData.name}
-                  onChange={handleContactChange}
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={contactFormData.email}
-                  onChange={handleContactChange}
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={contactFormData.phone}
-                  onChange={handleContactChange}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={contactFormData.message}
-                  onChange={handleContactChange}
-                  required
-                  rows={4}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={contactStatus === 'submitting'}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-              >
-                {contactStatus === 'submitting' ? 'Sending...' : 'Send Message'}
-              </button>
-              {contactStatus === 'success' && (
-                <div className="rounded-md bg-green-50 p-4">
-                  <p className="text-sm text-green-700">Message sent successfully!</p>
-                </div>
-              )}
-              {contactStatus === 'error' && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <p className="text-sm text-red-700">Failed to send message. Please try again.</p>
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

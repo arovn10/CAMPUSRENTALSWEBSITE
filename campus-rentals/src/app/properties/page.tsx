@@ -33,6 +33,7 @@ export default function PropertiesPage() {
   const [mapCenter, setMapCenter] = useState(SCHOOL_COORDINATES['Tulane University']);
   const [sortBy, setSortBy] = useState<'bedrooms-asc' | 'bedrooms-desc' | 'price-asc' | 'price-desc'>('bedrooms-asc');
   const [selectedBedrooms, setSelectedBedrooms] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -87,7 +88,10 @@ export default function PropertiesPage() {
   }, [properties]);
 
   const sortedProperties = [...properties]
-    .filter(property => selectedBedrooms === null || property.bedrooms === selectedBedrooms)
+    .filter(property =>
+      (selectedBedrooms === null || property.bedrooms === selectedBedrooms) &&
+      (selectedSchool === '' || property.school === selectedSchool)
+    )
     .sort((a, b) => {
       // Sort by soonest available date first
       const dateA = new Date(a.leaseTerms);
@@ -115,6 +119,8 @@ export default function PropertiesPage() {
           return 0;
       }
     });
+
+  const handleLoadMore = () => setVisibleCount((prev) => prev + 4);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -231,11 +237,23 @@ export default function PropertiesPage() {
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {sortedProperties.map((property) => (
-                <PropertyCard key={property.property_id} property={property} />
-              ))}
-            </div>
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {sortedProperties.slice(0, visibleCount).map((property) => (
+                  <PropertyCard key={property.property_id} property={property} />
+                ))}
+              </div>
+              {visibleCount < sortedProperties.length && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={handleLoadMore}
+                    className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
