@@ -34,6 +34,7 @@ export default function PropertiesPage() {
   const [sortBy, setSortBy] = useState<'bedrooms-asc' | 'bedrooms-desc' | 'price-asc' | 'price-desc'>('bedrooms-asc');
   const [selectedBedrooms, setSelectedBedrooms] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(4);
+  const [geocodingComplete, setGeocodingComplete] = useState(false);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -42,6 +43,7 @@ export default function PropertiesPage() {
         const data = await fetchProperties();
         console.log('Fetched properties:', data);
         setProperties(data);
+        setGeocodingComplete(false); // Reset geocoding flag when new data loads
       } catch (error) {
         console.error('Error loading properties:', error);
       } finally {
@@ -54,6 +56,8 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     async function geocodeMissingProperties() {
+      if (geocodingComplete) return; // Prevent infinite loop
+      
       const updated = await Promise.all(properties.map(async (property) => {
         if (
           typeof property.latitude !== 'number' ||
@@ -68,13 +72,15 @@ export default function PropertiesPage() {
         }
         return property;
       }));
+      
       setProperties(updated);
+      setGeocodingComplete(true); // Mark geocoding as complete
     }
-    if (properties.length > 0) {
+    
+    if (properties.length > 0 && !geocodingComplete) {
       geocodeMissingProperties();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties]);
+  }, [properties, geocodingComplete]);
 
   const handleSchoolChange = (school: string) => {
     setSelectedSchool(school);
@@ -120,7 +126,13 @@ export default function PropertiesPage() {
       }
     });
 
-  const handleLoadMore = () => setVisibleCount((prev) => prev + 4);
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => {
+      const newCount = prev + 4;
+      // Safety check: don't exceed total properties count
+      return Math.min(newCount, sortedProperties.length);
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
