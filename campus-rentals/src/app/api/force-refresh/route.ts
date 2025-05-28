@@ -4,7 +4,10 @@ import {
   createCacheMetadata, 
   cleanOldCache,
   ensureCacheDirectories,
-  downloadAndCacheImage
+  downloadAndCacheImage,
+  getCachedCoordinates,
+  cacheCoordinates,
+  initializeGeocodingCache
 } from '@/utils/serverCache';
 import { 
   fetchProperties as originalFetchProperties,
@@ -18,7 +21,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 
-// Manual geocoding coordinates for New Orleans properties
+// Manual geocoding coordinates for New Orleans properties (fallback)
 const NEW_ORLEANS_COORDINATES: Record<string, { lat: number; lng: number }> = {
   // Joseph Street properties
   '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
@@ -49,30 +52,42 @@ const NEW_ORLEANS_COORDINATES: Record<string, { lat: number; lng: number }> = {
 };
 
 function addCoordinatesToProperties(properties: any[]): any[] {
+  console.log('🗺️ Starting geocoding process with cache...');
+  
   return properties.map(property => {
-    const coords = NEW_ORLEANS_COORDINATES[property.address];
-    if (coords) {
-      console.log(`Adding coordinates to ${property.name}: lat=${coords.lat}, lng=${coords.lng}`);
-      return {
-        ...property,
-        latitude: coords.lat,
-        longitude: coords.lng
-      };
-    } else {
-      console.log(`No coordinates found for ${property.name} at ${property.address}`);
-      // Return default Tulane area coordinates
-      return {
-        ...property,
-        latitude: 29.9400,
-        longitude: -90.1200
-      };
+    // First, try to get coordinates from cache
+    let coords = getCachedCoordinates(property.address);
+    
+    // If not in cache, try manual coordinates
+    if (!coords) {
+      coords = NEW_ORLEANS_COORDINATES[property.address];
+      
+      if (coords) {
+        // Cache the manual coordinates for future use
+        cacheCoordinates(property.address, coords.lat, coords.lng);
+        console.log(`📍 Using manual coordinates for ${property.name}: lat=${coords.lat}, lng=${coords.lng}`);
+      } else {
+        // Use default coordinates and cache them
+        coords = { lat: 29.9400, lng: -90.1200 };
+        cacheCoordinates(property.address, coords.lat, coords.lng);
+        console.log(`🎯 Using default coordinates for ${property.name} at ${property.address}`);
+      }
     }
+    
+    return {
+      ...property,
+      latitude: coords.lat,
+      longitude: coords.lng
+    };
   });
 }
 
 export async function POST() {
   try {
     console.log('=== FORCE REFRESH STARTED ===');
+    
+    // Initialize geocoding cache with known coordinates first
+    initializeGeocodingCache();
     
     // Ensure directories exist
     ensureCacheDirectories();

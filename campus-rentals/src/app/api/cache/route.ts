@@ -1,29 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   isCacheValid, 
-  loadDataFromCache 
+  loadDataFromCache,
+  loadGeocodingCache
 } from '@/utils/serverCache';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
   try {
     const isValid = isCacheValid();
     const cachedData = loadDataFromCache();
+    const geocodingCache = loadGeocodingCache();
     
-    const status = {
-      isValid,
-      hasData: !!cachedData,
-      lastUpdated: cachedData?.metadata.lastUpdated || null,
-      propertiesCount: cachedData?.properties.length || 0,
-      photosCount: cachedData ? Object.values(cachedData.photos).flat().length : 0
-    };
+    // Count cached images
+    const imagesCacheDir = path.join(process.cwd(), 'public', 'cached-images');
+    let cachedImagesCount = 0;
     
-    return NextResponse.json(status);
+    if (fs.existsSync(imagesCacheDir)) {
+      const files = fs.readdirSync(imagesCacheDir);
+      cachedImagesCount = files.filter(file => 
+        file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png') || file.endsWith('.webp')
+      ).length;
+    }
+    
+    // Calculate total photos from cached data
+    let totalPhotos = 0;
+    if (cachedData?.photos) {
+      totalPhotos = Object.values(cachedData.photos).reduce((sum, photoArray) => sum + photoArray.length, 0);
+    }
+    
+    return NextResponse.json({
+      cacheValid: isValid,
+      lastUpdated: cachedData?.metadata?.lastUpdated || null,
+      propertiesCount: cachedData?.properties?.length || 0,
+      photosCount: totalPhotos,
+      cachedImagesCount,
+      geocodingCacheCount: Object.keys(geocodingCache).length,
+      geocodingAddresses: Object.keys(geocodingCache),
+      amenitiesCount: cachedData?.amenities ? Object.keys(cachedData.amenities).length : 0
+    });
   } catch (error) {
-    console.error('Error getting cache status:', error);
-    return NextResponse.json(
-      { error: 'Failed to get cache status' },
-      { status: 500 }
-    );
+    console.error('Error checking cache status:', error);
+    return NextResponse.json({
+      error: 'Failed to check cache status',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
