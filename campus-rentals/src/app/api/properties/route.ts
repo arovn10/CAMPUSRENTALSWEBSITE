@@ -23,59 +23,7 @@ interface CachedPhoto extends Photo {
   cachedPath?: string;
 }
 
-// Manual geocoding coordinates for New Orleans properties
-const NEW_ORLEANS_COORDINATES: Record<string, { lat: number; lng: number }> = {
-  // Joseph Street properties
-  '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
-  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1267 },
-  
-  // Zimple Street properties
-  '7506 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
-  
-  // Cherokee Street properties
-  '1032 Cherokee St, New Orleans, LA 70118': { lat: 29.9378, lng: -90.1234 },
-  
-  // Freret Street properties
-  '7313 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7313 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
-  
-  // Audubon Street properties
-  '1414 Audubon St, New Orleans, LA 70118': { lat: 29.9356, lng: -90.1234 },
-  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9356, lng: -90.1234 },
-  
-  // Burthe Street properties
-  '7700 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
-  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
-};
-
-function addCoordinatesToProperties(properties: any[]): any[] {
-  return properties.map(property => {
-    const coords = NEW_ORLEANS_COORDINATES[property.address];
-    if (coords) {
-      console.log(`Adding coordinates to ${property.name}: lat=${coords.lat}, lng=${coords.lng}`);
-      return {
-        ...property,
-        latitude: coords.lat,
-        longitude: coords.lng
-      };
-    } else {
-      console.log(`No coordinates found for ${property.name} at ${property.address}`);
-      // Return default Tulane area coordinates
-      return {
-        ...property,
-        latitude: 29.9400,
-        longitude: -90.1200
-      };
-    }
-  });
-}
-
-// Fetch and cache all data
+// Fetch and cache all data (WITHOUT geocoding - that should only happen in force-refresh)
 async function fetchAndCacheAllData() {
   console.log('Fetching fresh data from API...');
   
@@ -83,17 +31,9 @@ async function fetchAndCacheAllData() {
     // Clean old cache files first
     cleanOldCache();
     
-    // Fetch all properties
-    const rawProperties = await originalFetchProperties();
-    console.log(`Fetched ${rawProperties.length} properties`);
-    
-    // Geocode properties to add coordinates
-    console.log('Starting geocoding process...');
-    console.log('First property before geocoding:', rawProperties[0]?.name, rawProperties[0]?.address);
-    
-    const properties = addCoordinatesToProperties(rawProperties);
-    console.log('Geocoding completed');
-    console.log('First property after geocoding:', properties[0]?.name, 'lat:', properties[0]?.latitude, 'lng:', properties[0]?.longitude);
+    // Fetch all properties (no geocoding here)
+    const properties = await originalFetchProperties();
+    console.log(`Fetched ${properties.length} properties`);
     
     // Fetch photos and amenities for all properties
     const photos: Record<number, Photo[]> = {};
@@ -136,7 +76,7 @@ async function fetchAndCacheAllData() {
       metadata: createCacheMetadata()
     };
     
-    console.log('Saving geocoded properties to cache...');
+    console.log('Saving properties to cache...');
     saveDataToCache(cacheData);
     
     // Start background image caching (don't wait for it)
