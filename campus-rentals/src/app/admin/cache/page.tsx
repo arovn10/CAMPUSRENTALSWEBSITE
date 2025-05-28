@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePerformance } from '../../../hooks/usePerformance';
+import { externalAPI } from '../../../utils/clientApi';
 
 interface CacheStatus {
-  isValid: boolean;
-  hasData: boolean;
+  cacheValid: boolean;
   lastUpdated: string | null;
   propertiesCount: number;
   photosCount: number;
+  cachedImagesCount: number;
+  geocodingCacheCount: number;
+  geocodingAddresses: string[];
+  amenitiesCount: number;
 }
 
 interface DebugInfo {
@@ -38,16 +43,24 @@ export default function CacheAdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [forceRefreshing, setForceRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const { metrics, clearAllCaches } = usePerformance();
 
   const fetchCacheStatus = async () => {
     try {
+      console.log('Fetching cache status...');
       const response = await fetch('/api/cache');
+      console.log('Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('Cache data:', data);
         setCacheStatus(data);
+      } else {
+        console.error('Failed to fetch cache status:', response.status);
+        setMessage(`Failed to fetch cache status: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching cache status:', error);
+      setMessage(`Error fetching cache status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -65,7 +78,7 @@ export default function CacheAdminPage() {
 
   const refreshStatus = async () => {
     setLoading(true);
-    await Promise.all([fetchCacheStatus(), fetchDebugInfo()]);
+    await fetchCacheStatus();
     setLoading(false);
   };
 
@@ -156,18 +169,14 @@ export default function CacheAdminPage() {
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Cache Valid:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  cacheStatus?.isValid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  cacheStatus?.cacheValid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                 }`}>
-                  {cacheStatus?.isValid ? 'Yes' : 'No'}
+                  {cacheStatus?.cacheValid ? 'Yes' : 'No'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-300">Has Data:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  cacheStatus?.hasData ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  {cacheStatus?.hasData ? 'Yes' : 'No'}
-                </span>
+                <span className="text-gray-300">Cached Images:</span>
+                <span className="text-xl font-bold text-accent">{cacheStatus?.cachedImagesCount || 0}</span>
               </div>
             </div>
             <div className="space-y-4">
@@ -179,6 +188,14 @@ export default function CacheAdminPage() {
                 <span className="text-gray-300">Photos:</span>
                 <span className="text-xl font-bold text-accent">{cacheStatus?.photosCount || 0}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Geocoded Addresses:</span>
+                <span className="text-xl font-bold text-accent">{cacheStatus?.geocodingCacheCount || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Amenities:</span>
+                <span className="text-xl font-bold text-accent">{cacheStatus?.amenitiesCount || 0}</span>
+              </div>
             </div>
           </div>
           {cacheStatus?.lastUpdated && (
@@ -187,6 +204,47 @@ export default function CacheAdminPage() {
               <span className="text-accent">{cacheStatus.lastUpdated}</span>
             </div>
           )}
+          {cacheStatus?.geocodingAddresses && cacheStatus.geocodingAddresses.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-accent">Geocoded Addresses</h3>
+              <div className="grid md:grid-cols-2 gap-2">
+                {cacheStatus.geocodingAddresses.map((address, index) => (
+                  <div key={index} className="text-sm text-gray-300 bg-gray-800/50 p-2 rounded">
+                    {address}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Performance Metrics */}
+        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm mb-8">
+          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+            Performance Metrics
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">API Cache Size:</span>
+                <span className="text-xl font-bold text-accent">{metrics.apiCacheSize}</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300">Cache Status:</span>
+                <span className="text-sm text-accent">Active</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <button
+                onClick={clearAllCaches}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors duration-300 w-full"
+              >
+                Clear API Cache
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Debug Information */}
