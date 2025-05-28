@@ -14,7 +14,7 @@ echo "   - SSH_KEY_PATH: Path to your SSH key file"
 # Configuration
 AWS_USER="bitnami"
 AWS_HOST="18.215.22.232"
-SSH_KEY_PATH="~/Desktop/lightsail-key.pem"
+SSH_KEY_PATH="./LightsailDefaultKey-us-east-1 (2).pem"
 
 echo "🔗 Connecting to AWS instance: $AWS_USER@$AWS_HOST"
 echo "📤 Executing deployment commands on remote server..."
@@ -23,7 +23,7 @@ ssh -i "$SSH_KEY_PATH" "$AWS_USER@$AWS_HOST" << 'EOF'
 echo "🚀 Starting deployment on AWS instance..."
 
 # Navigate to the application directory
-cd /opt/bitnami/projects/CAMPUSRENTALSWEBSITE || {
+cd /home/bitnami/CAMPUSRENTALSWEBSITE/campus-rentals || {
     echo "❌ Application directory not found"
     exit 1
 }
@@ -69,4 +69,4 @@ echo ""
 echo "Next steps:"
 echo "1. Test your website at: http://18.215.22.232"
 echo "2. Check cache status at: http://18.215.22.232/api/cache"
-echo "3. Monitor with: ssh -i ~/Desktop/lightsail-key.pem bitnami@18.215.22.232 'pm2 logs campus-rentals'" 
+echo "3. Monitor with: ssh -i './LightsailDefaultKey-us-east-1 (2).pem' bitnami@18.215.22.232 'pm2 logs campus-rentals'" 
