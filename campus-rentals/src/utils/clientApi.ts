@@ -39,15 +39,11 @@ export async function fetchPropertyPhotos(propertyId: number): Promise<CachedPho
   }
 }
 
-// Get optimized image URL (temporarily using CloudFront for better performance)
+// Get optimized image URL (using cached images for better performance)
 export function getOptimizedImageUrl(photo: CachedPhoto): string {
-  // Temporarily use CloudFront for better performance
-  // TODO: Fix cached image serving performance
+  // Use cached images if available, fallback to CloudFront
+  if (photo.cachedPath) {
+    return photo.cachedPath;
+  }
   return s3ToCloudFrontUrl(photo.photoLink);
-  
-  // Original cached logic (commented out for now):
-  // if (photo.cachedPath) {
-  //   return photo.cachedPath;
-  // }
-  // return s3ToCloudFrontUrl(photo.photoLink);
 } 
