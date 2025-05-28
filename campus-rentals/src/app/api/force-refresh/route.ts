@@ -216,17 +216,32 @@ async function cacheImagesImmediately(photos: Record<number, Photo[]>) {
     const batch = allPhotos.slice(i, i + batchSize);
     console.log(`Processing image batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(allPhotos.length/batchSize)}`);
     
-    await Promise.all(batch.map(async ({ propertyId, photo }) => {
+    const batchResults = await Promise.allSettled(batch.map(async ({ propertyId, photo }) => {
       try {
         const cloudFrontUrl = s3ToCloudFrontUrl(photo.photoLink);
-        await downloadAndCacheImage(cloudFrontUrl, propertyId, photo.photoId);
-        results.success++;
-        console.log(`✅ Cached: property-${propertyId}-photo-${photo.photoId}.jpg`);
+        const cachedPath = await downloadAndCacheImage(cloudFrontUrl, propertyId, photo.photoId);
+        
+        if (cachedPath) {
+          console.log(`✅ Cached: property-${propertyId}-photo-${photo.photoId}.jpg`);
+          return { success: true };
+        } else {
+          console.log(`❌ Failed to cache: property-${propertyId}-photo-${photo.photoId}.jpg`);
+          return { success: false };
+        }
       } catch (error) {
-        console.error(`❌ Failed to cache image for property ${propertyId}, photo ${photo.photoId}:`, error);
-        results.failed++;
+        console.error(`❌ Error caching image for property ${propertyId}, photo ${photo.photoId}:`, error);
+        return { success: false };
       }
     }));
+    
+    // Count results
+    batchResults.forEach(result => {
+      if (result.status === 'fulfilled' && result.value.success) {
+        results.success++;
+      } else {
+        results.failed++;
+      }
+    });
     
     // Small delay between batches
     await new Promise(resolve => setTimeout(resolve, 300));

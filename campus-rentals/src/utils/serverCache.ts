@@ -90,17 +90,18 @@ export async function downloadAndCacheImage(imageUrl: string, propertyId: number
   try {
     ensureCacheDirectories();
     
-    // Extract file extension from URL
-    const urlParts = imageUrl.split('.');
-    const extension = urlParts[urlParts.length - 1].split('?')[0] || 'jpg';
-    
-    // Create filename
-    const filename = `property-${propertyId}-photo-${photoId}.${extension}`;
+    // Sanitize and create a safe filename - always use .jpg extension
+    const filename = `property-${propertyId}-photo-${photoId}.jpg`;
     const localPath = path.join(CACHE_DIR, filename);
     
     // Check if file already exists
     if (fs.existsSync(localPath)) {
       return `/cached-images/${filename}`;
+    }
+    
+    // Validate URL
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      throw new Error('Invalid image URL');
     }
     
     // Download the image
@@ -110,12 +111,19 @@ export async function downloadAndCacheImage(imageUrl: string, propertyId: number
     }
     
     const buffer = await response.arrayBuffer();
+    
+    // Ensure the buffer is valid
+    if (!buffer || buffer.byteLength === 0) {
+      throw new Error('Empty image data received');
+    }
+    
+    // Write file safely
     fs.writeFileSync(localPath, Buffer.from(buffer));
     
     console.log(`Image cached: ${filename}`);
     return `/cached-images/${filename}`;
   } catch (error) {
-    console.error('Error downloading and caching image:', error);
+    console.error(`Error downloading and caching image for property ${propertyId}, photo ${photoId}:`, error);
     return null;
   }
 }
