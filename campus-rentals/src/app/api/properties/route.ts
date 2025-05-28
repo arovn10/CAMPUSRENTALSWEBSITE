@@ -17,6 +17,7 @@ import {
   Photo,
   PropertyAmenities
 } from '@/utils/api';
+import { geocodeProperties } from '@/utils/geocoding';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
@@ -32,8 +33,13 @@ async function fetchAndCacheAllData() {
     cleanOldCache();
     
     // Fetch all properties
-    const properties = await originalFetchProperties();
-    console.log(`Fetched ${properties.length} properties`);
+    const rawProperties = await originalFetchProperties();
+    console.log(`Fetched ${rawProperties.length} properties`);
+    
+    // Geocode properties to add coordinates
+    console.log('Geocoding properties...');
+    const properties = await geocodeProperties(rawProperties);
+    console.log('Geocoding completed');
     
     // Fetch photos and amenities for all properties
     const photos: Record<number, Photo[]> = {};

@@ -29,6 +29,20 @@ export default function PropertyMap({ properties, center, zoom = 12 }: PropertyM
     setMap(null);
   };
 
+  // Filter properties that have valid coordinates
+  const propertiesWithCoords = properties.filter(property => 
+    typeof property.latitude === 'number' && 
+    typeof property.longitude === 'number' &&
+    !isNaN(property.latitude) && 
+    !isNaN(property.longitude) &&
+    property.latitude >= -90 && 
+    property.latitude <= 90 &&
+    property.longitude >= -180 && 
+    property.longitude <= 180
+  );
+
+  console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
+
   return (
     <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
       <GoogleMap
@@ -38,39 +52,25 @@ export default function PropertyMap({ properties, center, zoom = 12 }: PropertyM
         onLoad={onLoad}
         onUnmount={onUnmount}
       >
-        {/* Property Markers - Show all properties */}
-        {properties.map((property) => {
-          if (
-            typeof property.latitude === 'number' && 
-            typeof property.longitude === 'number' &&
-            !isNaN(property.latitude) && 
-            !isNaN(property.longitude) &&
-            property.latitude >= -90 && 
-            property.latitude <= 90 &&
-            property.longitude >= -180 && 
-            property.longitude <= 180
-          ) {
-            return (
-              <Marker
-                key={property.property_id}
-                position={{
-                  lat: property.latitude,
-                  lng: property.longitude
-                }}
-                title={property.address}
-                icon={{
-                  url: '/property-marker.png',
-                  scaledSize: {
-                    width: 25,
-                    height: 25,
-                    equals: () => false
-                  }
-                }}
-              />
-            );
-          }
-          return null;
-        })}
+        {/* Property Markers */}
+        {propertiesWithCoords.map((property) => (
+          <Marker
+            key={property.property_id}
+            position={{
+              lat: property.latitude!,
+              lng: property.longitude!
+            }}
+            title={`${property.name} - ${property.address}`}
+            icon={{
+              url: '/property-marker.png',
+              scaledSize: {
+                width: 25,
+                height: 25,
+                equals: () => false
+              }
+            }}
+          />
+        ))}
       </GoogleMap>
     </LoadScript>
   );
