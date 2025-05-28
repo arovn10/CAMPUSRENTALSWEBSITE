@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Property, Photo, PropertyAmenities, s3ToCloudFrontUrl } from '@/utils/api';
-import { fetchProperties, fetchPropertyPhotos, fetchPropertyAmenities } from '@/utils/api';
+import { Property, PropertyAmenities } from '@/utils/api';
+import { fetchProperties, getOptimizedImageUrl } from '@/utils/clientApi';
+import { CachedPhoto, fetchPropertyPhotos } from '@/utils/clientApi';
+import { fetchPropertyAmenities } from '@/utils/api';
 import Link from 'next/link';
 import {
   HomeIcon,
@@ -23,7 +25,7 @@ export default function PropertyDetailsPage() {
   const propertyId = Number(params.id);
   
   const [property, setProperty] = useState<Property | null>(null);
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<CachedPhoto[]>([]);
   const [amenities, setAmenities] = useState<PropertyAmenities | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -176,7 +178,7 @@ export default function PropertyDetailsPage() {
             {photos.map((photo, idx) => (
               <Image
                 key={photo.photoId}
-                src={s3ToCloudFrontUrl(photo.photoLink)}
+                src={getOptimizedImageUrl(photo)}
                 alt={property.name}
                 fill
                 sizes="100vw"
@@ -217,7 +219,7 @@ export default function PropertyDetailsPage() {
                 <div className="relative flex flex-col items-center">
                   <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden">
                     <Image
-                      src={s3ToCloudFrontUrl(photos[selectedPhotoIndex]?.photoLink || photos[0].photoLink)}
+                      src={getOptimizedImageUrl(photos[selectedPhotoIndex] || photos[0])}
                       alt={`${property.name} - Photo ${photos[selectedPhotoIndex]?.photoId || photos[0].photoId}`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Property } from '@/types';
-import { fetchProperties } from '@/utils/api';
+import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyMap from '@/components/PropertyMap';
 

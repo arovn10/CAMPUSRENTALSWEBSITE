@@ -1,0 +1,175 @@
+import fs from 'fs';
+import path from 'path';
+import { Property, Photo, PropertyAmenities } from './api';
+
+const CACHE_DIR = path.join(process.cwd(), 'public', 'cached-images');
+const DATA_CACHE_DIR = path.join(process.cwd(), '.cache');
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Ensure cache directories exist
+export function ensureCacheDirectories() {
+  if (!fs.existsSync(CACHE_DIR)) {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(DATA_CACHE_DIR)) {
+    fs.mkdirSync(DATA_CACHE_DIR, { recursive: true });
+  }
+}
+
+// Cache metadata interface
+interface CacheMetadata {
+  timestamp: number;
+  lastUpdated: string;
+}
+
+// Data cache interface
+interface DataCache {
+  properties: Property[];
+  photos: Record<number, Photo[]>;
+  amenities: Record<number, PropertyAmenities | null>;
+  metadata: CacheMetadata;
+}
+
+// Get cache file paths
+function getCacheFilePath(type: 'data' | 'metadata'): string {
+  return path.join(DATA_CACHE_DIR, `${type}.json`);
+}
+
+// Check if cache is valid (less than 24 hours old)
+export function isCacheValid(): boolean {
+  try {
+    const metadataPath = getCacheFilePath('metadata');
+    if (!fs.existsSync(metadataPath)) {
+      return false;
+    }
+    
+    const metadata: CacheMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+    const now = Date.now();
+    return (now - metadata.timestamp) < CACHE_DURATION;
+  } catch (error) {
+    console.error('Error checking cache validity:', error);
+    return false;
+  }
+}
+
+// Save data to cache
+export function saveDataToCache(data: DataCache): void {
+  try {
+    ensureCacheDirectories();
+    
+    const dataPath = getCacheFilePath('data');
+    const metadataPath = getCacheFilePath('metadata');
+    
+    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+    fs.writeFileSync(metadataPath, JSON.stringify(data.metadata, null, 2));
+    
+    console.log('Data cached successfully');
+  } catch (error) {
+    console.error('Error saving data to cache:', error);
+  }
+}
+
+// Load data from cache
+export function loadDataFromCache(): DataCache | null {
+  try {
+    const dataPath = getCacheFilePath('data');
+    if (!fs.existsSync(dataPath)) {
+      return null;
+    }
+    
+    const data: DataCache = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    return data;
+  } catch (error) {
+    console.error('Error loading data from cache:', error);
+    return null;
+  }
+}
+
+// Download and cache an image
+export async function downloadAndCacheImage(imageUrl: string, propertyId: number, photoId: number): Promise<string | null> {
+  try {
+    ensureCacheDirectories();
+    
+    // Extract file extension from URL
+    const urlParts = imageUrl.split('.');
+    const extension = urlParts[urlParts.length - 1].split('?')[0] || 'jpg';
+    
+    // Create filename
+    const filename = `property-${propertyId}-photo-${photoId}.${extension}`;
+    const localPath = path.join(CACHE_DIR, filename);
+    
+    // Check if file already exists
+    if (fs.existsSync(localPath)) {
+      return `/cached-images/${filename}`;
+    }
+    
+    // Download the image
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`);
+    }
+    
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(localPath, Buffer.from(buffer));
+    
+    console.log(`Image cached: ${filename}`);
+    return `/cached-images/${filename}`;
+  } catch (error) {
+    console.error('Error downloading and caching image:', error);
+    return null;
+  }
+}
+
+// Get cached image path
+export function getCachedImagePath(propertyId: number, photoId: number): string | null {
+  try {
+    const extensions = ['jpg', 'jpeg', 'png', 'webp'];
+    
+    for (const ext of extensions) {
+      const filename = `property-${propertyId}-photo-${photoId}.${ext}`;
+      const localPath = path.join(CACHE_DIR, filename);
+      
+      if (fs.existsSync(localPath)) {
+        return `/cached-images/${filename}`;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting cached image path:', error);
+    return null;
+  }
+}
+
+// Clean old cache files
+export function cleanOldCache(): void {
+  try {
+    if (!fs.existsSync(CACHE_DIR)) {
+      return;
+    }
+    
+    const files = fs.readdirSync(CACHE_DIR);
+    const now = Date.now();
+    
+    files.forEach(file => {
+      const filePath = path.join(CACHE_DIR, file);
+      const stats = fs.statSync(filePath);
+      
+      // Delete files older than 48 hours (keep some buffer)
+      if (now - stats.mtime.getTime() > CACHE_DURATION * 2) {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted old cached file: ${file}`);
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning old cache:', error);
+  }
+}
+
+// Create cache metadata
+export function createCacheMetadata(): CacheMetadata {
+  return {
+    timestamp: Date.now(),
+    lastUpdated: new Date().toISOString()
+  };
+} 

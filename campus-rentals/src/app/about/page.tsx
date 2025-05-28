@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
-import { fetchProperties, fetchPropertyPhotos, s3ToCloudFrontUrl } from '@/utils/api'
+import { fetchProperties, fetchPropertyPhotos, getOptimizedImageUrl } from '@/utils/clientApi'
 import { Property } from '@/types';
 
 const isValidUrl = (url: string) => {
@@ -33,11 +33,11 @@ export default function AboutPage() {
         const photosPromises = randomProperties.map(async (property) => {
           const photos = await fetchPropertyPhotos(property.property_id);
           const randomPhoto = getRandomItem(photos);
-          return randomPhoto?.photoLink;
+          return randomPhoto ? getOptimizedImageUrl(randomPhoto) : null;
         });
 
         const photos = await Promise.all(photosPromises);
-        setRandomPhotos(photos.filter(url => url && isValidUrl(url)));
+        setRandomPhotos(photos.filter((url): url is string => url !== null && isValidUrl(url)));
       } catch (error) {
         console.error('Error loading photos:', error);
       } finally {
@@ -81,7 +81,7 @@ export default function AboutPage() {
               {randomPhotos[0] && (
                 <div className="absolute inset-0 opacity-20">
                   <Image
-                    src={s3ToCloudFrontUrl(randomPhotos[0])}
+                    src={randomPhotos[0]}
                     alt="Property Background"
                     fill
                     className="object-cover"
@@ -111,7 +111,7 @@ export default function AboutPage() {
               {randomPhotos[1] && (
                 <div className="absolute inset-0 opacity-20">
                   <Image
-                    src={s3ToCloudFrontUrl(randomPhotos[1])}
+                    src={randomPhotos[1]}
                     alt="Property Background"
                     fill
                     className="object-cover"
@@ -138,7 +138,7 @@ export default function AboutPage() {
               {randomPhotos[2] && (
                 <div className="absolute inset-0 opacity-20">
                   <Image
-                    src={s3ToCloudFrontUrl(randomPhotos[2])}
+                    src={randomPhotos[2]}
                     alt="Property Background"
                     fill
                     className="object-cover"
@@ -165,7 +165,7 @@ export default function AboutPage() {
               {randomPhotos[0] && (
                 <div className="absolute inset-0 opacity-20">
                   <Image
-                    src={s3ToCloudFrontUrl(randomPhotos[0])}
+                    src={randomPhotos[0]}
                     alt="Property Background"
                     fill
                     className="object-cover"

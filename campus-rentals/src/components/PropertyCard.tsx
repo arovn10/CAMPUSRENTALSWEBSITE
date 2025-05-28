@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Property } from '@/types';
-import { fetchPropertyPhotos, s3ToCloudFrontUrl } from '@/utils/api';
-import { useRouter } from 'next/navigation';
+import { fetchPropertyPhotos, getOptimizedImageUrl } from '@/utils/clientApi';
 
 interface PropertyCardProps {
   property: Property;
@@ -25,14 +24,13 @@ function formatAvailableDate(leaseTerms: string | null): string {
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const loadThumbnail = async () => {
       try {
         const photos = await fetchPropertyPhotos(property.property_id);
         if (photos.length > 0) {
-          setThumbnail(s3ToCloudFrontUrl(photos[0].photoLink));
+          setThumbnail(getOptimizedImageUrl(photos[0]));
         }
       } catch (error) {
         console.error('Error loading property thumbnail:', error);
@@ -44,25 +42,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   }, [property.property_id]);
 
   return (
-    <div
-      className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer"
-      onClick={() => {
-        router.push(`/properties/${property.property_id}`);
-        if (typeof window !== 'undefined') {
-          window.scrollTo({ top: 0, behavior: 'instant' });
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          router.push(`/properties/${property.property_id}`);
-          if (typeof window !== 'undefined') {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-          }
-        }
-      }}
-    >
+    <Link href={`/properties/${property.property_id}`} className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent">
       <div className="relative h-72 overflow-hidden">
         {loading ? (
           <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
@@ -70,7 +50,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </div>
         ) : thumbnail ? (
           <Image
-            src={s3ToCloudFrontUrl(thumbnail || '')}
+            src={thumbnail || ''}
             alt={property.address}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -119,6 +99,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           Available From: {formatAvailableDate(property.leaseTerms)}
         </p>
       </div>
-    </div>
+    </Link>
   );
 } 

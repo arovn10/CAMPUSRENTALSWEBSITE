@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Property } from '@/types';
-import { fetchProperties } from '@/utils/api';
+import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
 import Link from 'next/link';
 import { LoadScript } from '@react-google-maps/api';
