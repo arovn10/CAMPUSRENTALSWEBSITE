@@ -17,11 +17,62 @@ import {
   Photo,
   PropertyAmenities
 } from '@/utils/api';
-import { geocodeProperties } from '@/utils/geocoding';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
   cachedPath?: string;
+}
+
+// Manual geocoding coordinates for New Orleans properties
+const NEW_ORLEANS_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  // Joseph Street properties
+  '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
+  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1267 },
+  
+  // Zimple Street properties
+  '7506 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
+  
+  // Cherokee Street properties
+  '1032 Cherokee St, New Orleans, LA 70118': { lat: 29.9378, lng: -90.1234 },
+  
+  // Freret Street properties
+  '7313 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7313 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
+  
+  // Audubon Street properties
+  '1414 Audubon St, New Orleans, LA 70118': { lat: 29.9356, lng: -90.1234 },
+  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9356, lng: -90.1234 },
+  
+  // Burthe Street properties
+  '7700 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
+  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
+};
+
+function addCoordinatesToProperties(properties: any[]): any[] {
+  return properties.map(property => {
+    const coords = NEW_ORLEANS_COORDINATES[property.address];
+    if (coords) {
+      console.log(`Adding coordinates to ${property.name}: lat=${coords.lat}, lng=${coords.lng}`);
+      return {
+        ...property,
+        latitude: coords.lat,
+        longitude: coords.lng
+      };
+    } else {
+      console.log(`No coordinates found for ${property.name} at ${property.address}`);
+      // Return default Tulane area coordinates
+      return {
+        ...property,
+        latitude: 29.9400,
+        longitude: -90.1200
+      };
+    }
+  });
 }
 
 // Fetch and cache all data
@@ -37,9 +88,12 @@ async function fetchAndCacheAllData() {
     console.log(`Fetched ${rawProperties.length} properties`);
     
     // Geocode properties to add coordinates
-    console.log('Geocoding properties...');
-    const properties = await geocodeProperties(rawProperties);
+    console.log('Starting geocoding process...');
+    console.log('First property before geocoding:', rawProperties[0]?.name, rawProperties[0]?.address);
+    
+    const properties = addCoordinatesToProperties(rawProperties);
     console.log('Geocoding completed');
+    console.log('First property after geocoding:', properties[0]?.name, 'lat:', properties[0]?.latitude, 'lng:', properties[0]?.longitude);
     
     // Fetch photos and amenities for all properties
     const photos: Record<number, Photo[]> = {};
@@ -82,6 +136,7 @@ async function fetchAndCacheAllData() {
       metadata: createCacheMetadata()
     };
     
+    console.log('Saving geocoded properties to cache...');
     saveDataToCache(cacheData);
     
     // Start background image caching (don't wait for it)

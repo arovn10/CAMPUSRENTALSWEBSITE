@@ -16,6 +16,58 @@ import {
 import fs from 'fs';
 import path from 'path';
 
+// Manual geocoding coordinates for New Orleans properties
+const NEW_ORLEANS_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  // Joseph Street properties
+  '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
+  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1267 },
+  
+  // Zimple Street properties
+  '7506 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
+  
+  // Cherokee Street properties
+  '1032 Cherokee St, New Orleans, LA 70118': { lat: 29.9378, lng: -90.1234 },
+  
+  // Freret Street properties
+  '7313 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7313 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
+  
+  // Audubon Street properties
+  '1414 Audubon St, New Orleans, LA 70118': { lat: 29.9356, lng: -90.1234 },
+  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9356, lng: -90.1234 },
+  
+  // Burthe Street properties
+  '7700 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
+  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
+};
+
+function addCoordinatesToProperties(properties: any[]): any[] {
+  return properties.map(property => {
+    const coords = NEW_ORLEANS_COORDINATES[property.address];
+    if (coords) {
+      console.log(`Adding coordinates to ${property.name}: lat=${coords.lat}, lng=${coords.lng}`);
+      return {
+        ...property,
+        latitude: coords.lat,
+        longitude: coords.lng
+      };
+    } else {
+      console.log(`No coordinates found for ${property.name} at ${property.address}`);
+      // Return default Tulane area coordinates
+      return {
+        ...property,
+        latitude: 29.9400,
+        longitude: -90.1200
+      };
+    }
+  });
+}
+
 export async function POST() {
   try {
     console.log('=== FORCE REFRESH STARTED ===');
@@ -39,12 +91,18 @@ export async function POST() {
     
     // Fetch fresh data from API
     console.log('Fetching fresh data from API...');
-    const properties = await originalFetchProperties();
-    console.log(`Fetched ${properties.length} properties`);
+    const rawProperties = await originalFetchProperties();
+    console.log(`Fetched ${rawProperties.length} properties`);
     
-    if (properties.length === 0) {
+    if (rawProperties.length === 0) {
       throw new Error('No properties returned from API');
     }
+    
+    // Add coordinates to properties
+    console.log('Adding coordinates to properties...');
+    const properties = addCoordinatesToProperties(rawProperties);
+    console.log('Geocoding completed');
+    console.log('First property after geocoding:', properties[0]?.name, 'lat:', properties[0]?.latitude, 'lng:', properties[0]?.longitude);
     
     // Fetch photos and amenities for all properties
     const photos: Record<number, Photo[]> = {};
