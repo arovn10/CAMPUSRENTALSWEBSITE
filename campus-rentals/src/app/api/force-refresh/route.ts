@@ -3,12 +3,14 @@ import {
   saveDataToCache, 
   createCacheMetadata, 
   cleanOldCache,
-  ensureCacheDirectories
+  ensureCacheDirectories,
+  downloadAndCacheImage
 } from '@/utils/serverCache';
 import { 
   fetchProperties as originalFetchProperties,
   fetchPropertyPhotos as originalFetchPropertyPhotos,
   fetchPropertyAmenities as originalFetchPropertyAmenities,
+  s3ToCloudFrontUrl,
   Property,
   Photo,
   PropertyAmenities
@@ -157,6 +159,10 @@ export async function POST() {
     // Save to cache
     saveDataToCache(cacheData);
     
+    // Cache images immediately (not in background)
+    console.log('Starting immediate image caching...');
+    const imageResults = await cacheImagesImmediately(photos);
+    
     // Calculate total photos
     const totalPhotos = Object.values(photos).reduce((sum, photoArray) => sum + photoArray.length, 0);
     
@@ -166,7 +172,9 @@ export async function POST() {
       data: {
         propertiesCount: properties.length,
         photosCount: totalPhotos,
-        amenitiesCount: Object.keys(amenities).length
+        amenitiesCount: Object.keys(amenities).length,
+        imagesCached: imageResults.success,
+        imagesFailed: imageResults.failed
       },
       message: 'Cache refreshed successfully'
     };
@@ -183,4 +191,47 @@ export async function POST() {
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }
+}
+
+// Immediate image caching function
+async function cacheImagesImmediately(photos: Record<number, Photo[]>) {
+  console.log('Starting immediate image caching...');
+  
+  const allPhotos: Array<{ propertyId: number; photo: Photo }> = [];
+  
+  // Collect all photos
+  Object.entries(photos).forEach(([propertyId, propertyPhotos]) => {
+    propertyPhotos.forEach(photo => {
+      allPhotos.push({ propertyId: parseInt(propertyId), photo });
+    });
+  });
+  
+  console.log(`Caching ${allPhotos.length} images immediately...`);
+  
+  const results = { success: 0, failed: 0 };
+  
+  // Cache images in small batches
+  const batchSize = 5;
+  for (let i = 0; i < allPhotos.length; i += batchSize) {
+    const batch = allPhotos.slice(i, i + batchSize);
+    console.log(`Processing image batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(allPhotos.length/batchSize)}`);
+    
+    await Promise.all(batch.map(async ({ propertyId, photo }) => {
+      try {
+        const cloudFrontUrl = s3ToCloudFrontUrl(photo.photoLink);
+        await downloadAndCacheImage(cloudFrontUrl, propertyId, photo.photoId);
+        results.success++;
+        console.log(`✅ Cached: property-${propertyId}-photo-${photo.photoId}.jpg`);
+      } catch (error) {
+        console.error(`❌ Failed to cache image for property ${propertyId}, photo ${photo.photoId}:`, error);
+        results.failed++;
+      }
+    }));
+    
+    // Small delay between batches
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  
+  console.log(`Image caching completed: ${results.success} success, ${results.failed} failed`);
+  return results;
 } 
