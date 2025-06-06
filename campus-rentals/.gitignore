@@ -37,7 +37,7 @@ next-env.d.ts
 .vscode/
 
 # Large media files
-/public/ArchitecturalAnimation.MP4
+/public/ArchitecturalAnimation.MP4 
 
 # Cache directories
 /.cache/

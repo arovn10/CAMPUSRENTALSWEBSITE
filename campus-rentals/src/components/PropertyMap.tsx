@@ -54,22 +54,22 @@ export default function PropertyMap({ properties, center, zoom = 12 }: PropertyM
       >
         {/* Property Markers */}
         {propertiesWithCoords.map((property) => (
-          <Marker
-            key={property.property_id}
-            position={{
+              <Marker
+                key={property.property_id}
+                position={{
               lat: property.latitude!,
               lng: property.longitude!
-            }}
+                }}
             title={`${property.name} - ${property.address}`}
-            icon={{
-              url: '/property-marker.png',
-              scaledSize: {
-                width: 25,
-                height: 25,
-                equals: () => false
-              }
-            }}
-          />
+                icon={{
+                  url: '/property-marker.png',
+                  scaledSize: {
+                    width: 25,
+                    height: 25,
+                    equals: () => false
+                  }
+                }}
+              />
         ))}
       </GoogleMap>
     </LoadScript>
