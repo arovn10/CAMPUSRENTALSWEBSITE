@@ -3,7 +3,7 @@
 # Exit on error
 set -e
 
-echo "🚀 Deploying Campus Rentals with Caching System..."
+echo "🚀 Deploying Campus Rentals with Caching System and SSL..."
 
 # Update system packages
 echo "📦 Updating system packages..."
@@ -79,20 +79,42 @@ sudo apt-get install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-# Create Nginx configuration with caching support
+# Create Nginx configuration with caching support and SSL preparation
 echo "⚙️ Creating Nginx configuration..."
 sudo tee /etc/nginx/sites-available/campus-rentals << 'EOF'
+# HTTP server (will redirect to HTTPS)
 server {
     listen 80;
     server_name campusrentalsllc.com www.campusrentalsllc.com;
+    
+    # Redirect all HTTP traffic to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS server (will be configured by Certbot)
+server {
+    listen 443 ssl http2;
+    server_name campusrentalsllc.com www.campusrentalsllc.com;
+
+    # SSL configuration will be added by Certbot
+    # ssl_certificate /etc/letsencrypt/live/campusrentalsllc.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/campusrentalsllc.com/privkey.pem;
 
     # Increase client max body size for image uploads
     client_max_body_size 50M;
 
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
     # Cache static assets
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        add_header Vary "Accept-Encoding";
         try_files $uri @proxy;
     }
 
@@ -129,12 +151,6 @@ server {
     location / {
         try_files $uri @proxy;
     }
-
-    # Add security headers
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-XSS-Protection "1; mode=block";
-    add_header X-Content-Type-Options "nosniff";
-    add_header Referrer-Policy "strict-origin-when-cross-origin";
 }
 EOF
 
@@ -144,6 +160,10 @@ sudo ln -sf /etc/nginx/sites-available/campus-rentals /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
+
+# Install Certbot for SSL certificates
+echo "📦 Installing Certbot for SSL certificates..."
+sudo apt-get install -y certbot python3-certbot-nginx
 
 # Set up firewall
 echo "🔒 Configuring firewall..."
@@ -204,30 +224,69 @@ sudo tee /etc/logrotate.d/campus-rentals << 'EOF'
 }
 EOF
 
+# Create SSL setup reminder
+echo "📝 Creating SSL setup instructions..."
+sudo tee /var/www/campus-rentals/SSL_SETUP_INSTRUCTIONS.md << 'EOF'
+# SSL Certificate Setup Instructions
+
+## Prerequisites
+1. DNS must be pointing to this server's IP address
+2. Domain names: campusrentalsllc.com and www.campusrentalsllc.com
+
+## Setup SSL Certificate
+Run the following command to obtain and configure SSL certificates:
+
+```bash
+sudo certbot --nginx -d campusrentalsllc.com -d www.campusrentalsllc.com --non-interactive --agree-tos --email your-email@example.com
+```
+
+## Test SSL Renewal
+```bash
+sudo certbot renew --dry-run
+```
+
+## SSL Certificate Status
+Check certificate status:
+```bash
+sudo certbot certificates
+```
+
+## Manual Renewal
+```bash
+sudo certbot renew
+```
+
+## Troubleshooting
+- If certificates fail to obtain, ensure DNS is properly configured
+- Check Nginx configuration: `sudo nginx -t`
+- View Nginx logs: `sudo tail -f /var/log/nginx/error.log`
+EOF
+
 echo ""
 echo "🎉 Deployment completed successfully!"
 echo ""
 echo "📊 System Status:"
 echo "✅ Application: Running on PM2"
-echo "✅ Nginx: Configured with caching"
+echo "✅ Nginx: Configured with SSL preparation"
 echo "✅ Cache directories: Created"
 echo "✅ Maintenance: Scheduled daily at 2 AM"
+echo "✅ Certbot: Installed for SSL certificates"
 echo ""
 echo "🌐 Your application should now be running at:"
-echo "   http://$(curl -s ifconfig.me)"
-echo "   http://campusrentalsllc.com (after DNS update)"
+echo "   http://$(curl -s ifconfig.me) (will redirect to HTTPS)"
+echo "   http://campusrentalsllc.com (will redirect to HTTPS after SSL setup)"
 echo ""
 echo "🔧 Admin Panel:"
 echo "   http://$(curl -s ifconfig.me)/admin/cache"
 echo ""
-echo "📋 Next steps:"
-echo "1. Update your DNS to point to this instance's IP address"
-echo "2. Set up SSL certificate with Let's Encrypt (recommended)"
-echo "3. Monitor cache performance via admin panel"
-echo "4. Check logs: tail -f /var/log/campus-rentals-cache.log"
+echo "🔒 SSL Setup Required:"
+echo "1. Ensure DNS is pointing to this server's IP: $(curl -s ifconfig.me)"
+echo "2. Run SSL setup: sudo certbot --nginx -d campusrentalsllc.com -d www.campusrentalsllc.com"
+echo "3. Check SSL setup instructions: cat /var/www/campus-rentals/SSL_SETUP_INSTRUCTIONS.md"
 echo ""
 echo "🛠️ Useful commands:"
 echo "   pm2 status                    # Check application status"
 echo "   pm2 logs campus-rentals       # View application logs"
 echo "   sudo nginx -t                 # Test Nginx configuration"
-echo "   curl http://localhost:3000/api/cache  # Check cache status" 
+echo "   curl http://localhost:3000/api/cache  # Check cache status"
+echo "   sudo certbot certificates     # Check SSL certificate status" 
