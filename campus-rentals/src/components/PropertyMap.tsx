@@ -2,7 +2,7 @@
 
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { Property } from '@/types';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const containerStyle = {
@@ -19,110 +19,36 @@ interface PropertyMapProps {
   zoom?: number;
 }
 
-interface GeocodedProperty extends Property {
-  geocodedLat?: number;
-  geocodedLng?: number;
-}
-
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [hoveredProperty, setHoveredProperty] = useState<GeocodedProperty | null>(null);
-  const [selectedProperty, setSelectedProperty] = useState<GeocodedProperty | null>(null);
-  const [geocodedProperties, setGeocodedProperties] = useState<GeocodedProperty[]>([]);
-  const [isGeocoding, setIsGeocoding] = useState(false);
-  const [googleLoaded, setGoogleLoaded] = useState(false);
+  const [hoveredProperty, setHoveredProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const router = useRouter();
 
   const onLoad = (map: google.maps.Map) => {
     console.log('Google Map loaded');
     setMap(map);
-    setGoogleLoaded(true);
   };
 
   const onUnmount = () => {
     setMap(null);
   };
 
-  const onScriptLoad = () => {
-    console.log('Google Maps API script loaded');
-    setGoogleLoaded(true);
-  };
-
-  // Geocode addresses using Google Maps Geocoding API
-  useEffect(() => {
-    const geocodeProperties = async () => {
-      if (!googleLoaded || !window.google || properties.length === 0) {
-        console.log('Skipping geocoding - not ready:', { 
-          googleLoaded, 
-          hasGoogle: !!window.google, 
-          propertiesCount: properties.length 
-        });
-        return;
-      }
-
-      console.log('Starting geocoding for', properties.length, 'properties');
-      setIsGeocoding(true);
-      const geocoder = new google.maps.Geocoder();
-      const geocoded: GeocodedProperty[] = [];
-
-      for (const property of properties) {
-        try {
-          console.log('Geocoding address:', property.address);
-          const result = await geocoder.geocode({ address: property.address });
-          if (result.results.length > 0) {
-            const location = result.results[0].geometry.location;
-            const geocodedProperty = {
-              ...property,
-              geocodedLat: location.lat(),
-              geocodedLng: location.lng()
-            };
-            geocoded.push(geocodedProperty);
-            console.log(`✅ Geocoded ${property.address} to:`, location.lat(), location.lng());
-          } else {
-            // Fallback to original coordinates if geocoding fails
-            const fallbackProperty = {
-              ...property,
-              geocodedLat: property.latitude,
-              geocodedLng: property.longitude
-            };
-            geocoded.push(fallbackProperty);
-            console.log(`⚠️ Geocoding failed for ${property.address}, using fallback coordinates:`, property.latitude, property.longitude);
-          }
-        } catch (error) {
-          console.error(`❌ Error geocoding ${property.address}:`, error);
-          // Fallback to original coordinates
-          const fallbackProperty = {
-            ...property,
-            geocodedLat: property.latitude,
-            geocodedLng: property.longitude
-          };
-          geocoded.push(fallbackProperty);
-        }
-      }
-
-      console.log('Geocoding complete. Properties with coordinates:', geocoded.length);
-      setGeocodedProperties(geocoded);
-      setIsGeocoding(false);
-    };
-
-    geocodeProperties();
-  }, [properties, googleLoaded]);
-
   // Filter properties that have valid coordinates
-  const propertiesWithCoords = geocodedProperties.filter(property => 
-    typeof property.geocodedLat === 'number' && 
-    typeof property.geocodedLng === 'number' &&
-    !isNaN(property.geocodedLat) && 
-    !isNaN(property.geocodedLng) &&
-    property.geocodedLat >= -90 && 
-    property.geocodedLat <= 90 &&
-    property.geocodedLng >= -180 && 
-    property.geocodedLng <= 180
+  const propertiesWithCoords = properties.filter(property => 
+    typeof property.latitude === 'number' && 
+    typeof property.longitude === 'number' &&
+    !isNaN(property.latitude) && 
+    !isNaN(property.longitude) &&
+    property.latitude >= -90 && 
+    property.latitude <= 90 &&
+    property.longitude >= -180 && 
+    property.longitude <= 180
   );
 
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
 
-  const handleMarkerMouseOver = (property: GeocodedProperty) => {
+  const handleMarkerMouseOver = (property: Property) => {
     setHoveredProperty(property);
   };
 
@@ -130,7 +56,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     setHoveredProperty(null);
   };
 
-  const handleMarkerClick = (property: GeocodedProperty) => {
+  const handleMarkerClick = (property: Property) => {
     setSelectedProperty(property);
     // Navigate to property page
     router.push(`/properties/${property.property_id}`);
@@ -162,23 +88,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  if (isGeocoding) {
-    return (
-      <div className="h-[400px] rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-300">Geocoding property addresses...</p>
-          <p className="text-sm text-gray-400 mt-2">Processing {properties.length} properties</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <LoadScript 
-      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-      onLoad={onScriptLoad}
-    >
+    <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
@@ -200,8 +111,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
           <Marker
             key={property.property_id}
             position={{
-              lat: property.geocodedLat!,
-              lng: property.geocodedLng!
+              lat: property.latitude,
+              lng: property.longitude
             }}
             title={`${property.name} - ${property.address}`}
             icon={{
@@ -222,8 +133,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         {hoveredProperty && !selectedProperty && (
           <InfoWindow
             position={{
-              lat: hoveredProperty.geocodedLat!,
-              lng: hoveredProperty.geocodedLng!
+              lat: hoveredProperty.latitude,
+              lng: hoveredProperty.longitude
             }}
             onCloseClick={() => setHoveredProperty(null)}
             options={{
@@ -276,8 +187,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         {selectedProperty && (
           <InfoWindow
             position={{
-              lat: selectedProperty.geocodedLat!,
-              lng: selectedProperty.geocodedLng!
+              lat: selectedProperty.latitude,
+              lng: selectedProperty.longitude
             }}
             onCloseClick={handleInfoWindowClose}
             options={{
