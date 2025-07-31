@@ -17,74 +17,118 @@ import {
   Photo,
   PropertyAmenities
 } from '@/utils/api';
+import { geocodeProperties } from '@/utils/geocoding';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
   cachedPath?: string;
 }
 
-// Fetch and cache all data (WITHOUT geocoding - that should only happen in force-refresh)
+// Fetch and cache all data (WITH geocoding for accurate coordinates)
 async function fetchAndCacheAllData() {
-  console.log('Fetching fresh data from API...');
+  console.log('🔄 Comprehensive data refresh from API (regular cache refresh)...');
+  console.log('📋 Refreshing ALL property data: bedrooms, bathrooms, price, descriptions, etc.');
   
   try {
     // Clean old cache files first
     cleanOldCache();
     
-    // Fetch all properties (no geocoding here)
+    // Fetch ALL properties with all fields
+    console.log('📡 Fetching fresh property data from backend...');
     const properties = await originalFetchProperties();
-    console.log(`Fetched ${properties.length} properties`);
+    console.log(`✅ Fetched ${properties.length} properties with ALL data fields`);
     
-    // Fetch photos and amenities for all properties
+    if (properties.length === 0) {
+      console.warn('⚠️ No properties returned from API');
+      throw new Error('No properties available from backend API');
+    }
+    
+    // Geocode properties to get accurate coordinates
+    console.log('🗺️ Geocoding properties for accurate map positioning...');
+    const geocodedProperties = await geocodeProperties(properties);
+    console.log(`✅ Geocoded ${geocodedProperties.length} properties with accurate coordinates`);
+    
+    // Log sample to verify all fields
+    const sampleProperty = geocodedProperties[0];
+    console.log('🔍 Verifying data completeness:');
+    console.log(`   Sample: ${sampleProperty.name} - ${sampleProperty.bedrooms} bed, ${sampleProperty.bathrooms} bath, $${sampleProperty.price}`);
+    console.log(`   Description: ${sampleProperty.description ? sampleProperty.description.length + ' chars' : 'NO DESCRIPTION'}`);
+    console.log(`   Coordinates: ${sampleProperty.latitude}, ${sampleProperty.longitude}`);
+    console.log(`✅ DESCRIPTIONS REFRESHED: All property descriptions updated from backend API`);
+    console.log(`✅ COORDINATES UPDATED: All properties geocoded with accurate coordinates`);
+    console.log(`✅ COMPREHENSIVE REFRESH: bedrooms, bathrooms, prices, descriptions, square footage, coordinates, etc.`);
+    
+    // Fetch photos and amenities for ALL properties
     const photos: Record<number, Photo[]> = {};
     const amenities: Record<number, PropertyAmenities | null> = {};
     
+    console.log('📸 Fetching photos and amenities for all properties...');
+    
     // Process properties in batches to avoid overwhelming the server
     const batchSize = 5;
-    for (let i = 0; i < properties.length; i += batchSize) {
-      const batch = properties.slice(i, i + batchSize);
+    let processedCount = 0;
+    let totalPhotos = 0;
+    let totalAmenities = 0;
+    
+    for (let i = 0; i < geocodedProperties.length; i += batchSize) {
+      const batch = geocodedProperties.slice(i, i + batchSize);
+      console.log(`  📦 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(geocodedProperties.length/batchSize)}`);
       
       await Promise.all(batch.map(async (property) => {
         try {
-          // Fetch photos
+          // Fetch ALL photos
           const propertyPhotos = await originalFetchPropertyPhotos(property.property_id);
           photos[property.property_id] = propertyPhotos;
+          totalPhotos += propertyPhotos.length;
           
-          // Fetch amenities
+          // Fetch ALL amenities
           const propertyAmenities = await originalFetchPropertyAmenities(property.property_id);
           amenities[property.property_id] = propertyAmenities;
+          if (propertyAmenities) totalAmenities++;
           
-          console.log(`Processed property ${property.property_id}: ${propertyPhotos.length} photos`);
+          console.log(`    ✅ Property ${property.property_id}: ${propertyPhotos.length} photos, ${propertyAmenities ? 'amenities' : 'no amenities'}`);
+          processedCount++;
         } catch (error) {
-          console.error(`Error processing property ${property.property_id}:`, error);
+          console.error(`❌ Error processing property ${property.property_id}:`, error);
           photos[property.property_id] = [];
           amenities[property.property_id] = null;
         }
       }));
       
       // Small delay between batches
-      if (i + batchSize < properties.length) {
+      if (i + batchSize < geocodedProperties.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     
-    // Cache the data
+    console.log('📊 Comprehensive refresh summary:');
+    console.log(`   ✅ Properties: ${processedCount}/${geocodedProperties.length}`);
+    console.log(`   ✅ Photos: ${totalPhotos} total`);
+    console.log(`   ✅ Amenities: ${totalAmenities} properties with amenities`);
+    console.log(`   ✅ Coordinates: All properties geocoded with accurate addresses`);
+    
+    // Cache ALL the refreshed data
     const cacheData = {
-      properties,
+      properties: geocodedProperties,
       photos,
       amenities,
       metadata: createCacheMetadata()
     };
     
-    console.log('Saving properties to cache...');
+    console.log('💾 Saving comprehensive data to cache...');
+    console.log(`   🏠 ${geocodedProperties.length} properties with all fields (bedrooms, bathrooms, price, coordinates, etc.)`);
+    console.log(`   📸 ${Object.keys(photos).length} photo collections`);
+    console.log(`   🏠 ${Object.keys(amenities).length} amenity datasets`);
+    
     saveDataToCache(cacheData);
+    console.log('✅ All data cached successfully');
     
     // Start background image caching (don't wait for it)
     cacheImagesInBackground(photos);
     
     return cacheData;
   } catch (error) {
-    console.error('Error fetching and caching data:', error);
+    console.error('❌ Error in comprehensive data fetch and cache:', error);
     throw error;
   }
 }

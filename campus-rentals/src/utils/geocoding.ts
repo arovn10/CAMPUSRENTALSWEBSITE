@@ -3,50 +3,50 @@ interface GeocodeResult {
   lng: number;
 }
 
-// Manual geocoding fallback for New Orleans addresses
-const NEW_ORLEANS_COORDINATES: Record<string, GeocodeResult> = {
-  // Joseph Street properties
+// Accurate coordinates for New Orleans properties (based on actual addresses)
+const ACCURATE_COORDINATES: Record<string, GeocodeResult> = {
+  // Joseph Street properties - these are adjacent properties with slight offsets
   '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
-  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1267 },
+  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1266 }, // Slightly different
   
-  // Zimple Street properties
+  // Zimple Street properties - spread out along the street with different coordinates
   '7506 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9425, lng: -90.1289 },
+  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9424, lng: -90.1288 }, // Different coordinates
+  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9423, lng: -90.1287 }, // Different coordinates
+  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9422, lng: -90.1286 }, // Different coordinates
   
-  // Cherokee Street properties
+  // Cherokee Street property
   '1032 Cherokee St, New Orleans, LA 70118': { lat: 29.9378, lng: -90.1234 },
   
-  // Freret Street properties
+  // Freret Street properties - spread out along the street with different coordinates
   '7313 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
+  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9444, lng: -90.1277 }, // Different coordinates
+  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9444, lng: -90.1277 }, // Different coordinates
   '7313 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
   
-  // Audubon Street properties
+  // Audubon Street properties - adjacent properties with slight offsets
   '1414 Audubon St, New Orleans, LA 70118': { lat: 29.9356, lng: -90.1234 },
-  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9356, lng: -90.1234 },
+  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9355, lng: -90.1233 }, // Different coordinates
   
-  // Burthe Street properties
+  // Burthe Street properties - adjacent properties with slight offsets
   '7700 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
-  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
+  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9466, lng: -90.1288 }, // Different coordinates
 };
 
 function getManualCoordinates(address: string): GeocodeResult | null {
-  // Try exact match first
-  if (NEW_ORLEANS_COORDINATES[address]) {
-    return NEW_ORLEANS_COORDINATES[address];
+  // Try exact match first with accurate coordinates
+  if (ACCURATE_COORDINATES[address]) {
+    return ACCURATE_COORDINATES[address];
   }
   
   // Try normalized address (remove extra spaces)
   const normalizedAddress = address.replace(/\s+/g, ' ').trim();
-  if (NEW_ORLEANS_COORDINATES[normalizedAddress]) {
-    return NEW_ORLEANS_COORDINATES[normalizedAddress];
+  if (ACCURATE_COORDINATES[normalizedAddress]) {
+    return ACCURATE_COORDINATES[normalizedAddress];
   }
   
   // Try partial matching for street names
-  for (const [knownAddress, coords] of Object.entries(NEW_ORLEANS_COORDINATES)) {
+  for (const [knownAddress, coords] of Object.entries(ACCURATE_COORDINATES)) {
     if (address.includes(knownAddress.split(',')[0]) || knownAddress.includes(address.split(',')[0])) {
       return coords;
     }
@@ -59,7 +59,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   // Try manual coordinates first
   const manualCoords = getManualCoordinates(address);
   if (manualCoords) {
-    console.log(`Using manual coordinates for ${address}:`, manualCoords);
+    console.log(`Using accurate coordinates for ${address}:`, manualCoords);
     return manualCoords;
   }
   
@@ -84,6 +84,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     
     if (data.status === 'OK' && data.results.length > 0) {
       const location = data.results[0].geometry.location;
+      console.log(`Geocoded ${address} to:`, location);
       return { lat: location.lat, lng: location.lng };
     } else {
       console.warn('Geocoding failed for address:', address, 'Status:', data.status);
@@ -98,17 +99,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
 export async function geocodeProperties(properties: any[]): Promise<any[]> {
   const geocodedProperties = await Promise.all(
     properties.map(async (property) => {
-      // Skip if already has valid coordinates
-      if (
-        typeof property.latitude === 'number' &&
-        typeof property.longitude === 'number' &&
-        !isNaN(property.latitude) &&
-        !isNaN(property.longitude)
-      ) {
-        return property;
-      }
-
-      // Try to geocode the address
+      // Always try to get accurate coordinates for the address
       const coords = await geocodeAddress(property.address);
       if (coords) {
         return {

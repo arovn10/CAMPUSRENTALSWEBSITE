@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { EnvelopeIcon, PhoneIcon, ClockIcon } from '@heroicons/react/24/outline';
+import Script from 'next/script';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,15 @@ export default function ContactPage() {
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Google Ads conversion tracking
+  const trackConversion = () => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +54,9 @@ Message: ${formData.message}
 
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', message: '' });
+      
+      // Track conversion when form is successfully submitted
+      trackConversion();
     } catch (error) {
       setStatus('error');
       setErrorMessage('Failed to send message. Please try again later.');
@@ -57,6 +70,20 @@ Message: ${formData.message}
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      {/* Google Ads Conversion Tracking */}
+      <Script id="google-ads-conversion" strategy="afterInteractive">
+        {`
+          // Track conversion when form is successfully submitted
+          window.trackConversion = function() {
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'conversion', {
+                'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
+              });
+            }
+          };
+        `}
+      </Script>
+
       {/* Hero Section */}
       <div className="relative py-24">
         <div className="absolute inset-0">

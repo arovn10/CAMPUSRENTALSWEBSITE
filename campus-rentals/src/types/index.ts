@@ -15,4 +15,18 @@ export interface Property {
   photoUrl?: string | null;
   latitude: number;
   longitude: number;
+}
+
+// Google Analytics gtag function declaration
+declare global {
+  interface Window {
+    gtag: (
+      command: 'js' | 'config' | 'event',
+      targetId: string | Date,
+      config?: {
+        [key: string]: any;
+      }
+    ) => void;
+    dataLayer: any[];
+  }
 } 

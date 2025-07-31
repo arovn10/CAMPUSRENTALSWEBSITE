@@ -17,9 +17,9 @@ export default function PropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSchool, setSelectedSchool] = useState('Tulane University');
   const [mapCenter, setMapCenter] = useState(SCHOOL_COORDINATES['Tulane University']);
-  const [sortBy, setSortBy] = useState<'bedrooms-asc' | 'bedrooms-desc' | 'price-asc' | 'price-desc'>('bedrooms-asc');
+  const [sortBy, setSortBy] = useState<'bedrooms-asc' | 'bedrooms-desc' | 'price-asc' | 'price-desc' | 'date-asc'>('date-asc');
   const [selectedBedrooms, setSelectedBedrooms] = useState<number | null>(null);
-  const [visibleCount, setVisibleCount] = useState(4);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -49,25 +49,13 @@ export default function PropertiesPage() {
     return Array.from(bedrooms).sort((a, b) => a - b);
   }, [properties]);
 
-  const sortedProperties = [...properties]
-    .filter(property =>
+  const sortedProperties = useMemo(() => {
+    const filtered = properties.filter(property =>
       (selectedBedrooms === null || property.bedrooms === selectedBedrooms) &&
       (selectedSchool === '' || property.school === selectedSchool)
-    )
-    .sort((a, b) => {
-      // Sort by soonest available date first
-      const dateA = new Date(a.leaseTerms);
-      const dateB = new Date(b.leaseTerms);
-      const isValidA = !isNaN(dateA.getTime());
-      const isValidB = !isNaN(dateB.getTime());
-      if (isValidA && isValidB) {
-        return dateA.getTime() - dateB.getTime();
-      } else if (isValidA) {
-        return -1;
-      } else if (isValidB) {
-        return 1;
-      }
-      // Fallback to previous sort
+    );
+
+    return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'bedrooms-asc':
           return a.bedrooms - b.bedrooms;
@@ -77,17 +65,37 @@ export default function PropertiesPage() {
           return a.price - b.price;
         case 'price-desc':
           return b.price - a.price;
+        case 'date-asc':
+          // Sort by soonest available date first
+          const dateA = new Date(a.leaseTerms);
+          const dateB = new Date(b.leaseTerms);
+          const isValidA = !isNaN(dateA.getTime());
+          const isValidB = !isNaN(dateB.getTime());
+          if (isValidA && isValidB) {
+            return dateA.getTime() - dateB.getTime();
+          } else if (isValidA) {
+            return -1;
+          } else if (isValidB) {
+            return 1;
+          }
+          return 0;
         default:
           return 0;
       }
     });
+  }, [properties, selectedBedrooms, selectedSchool, sortBy]);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => {
-      const newCount = prev + 4;
+      const newCount = prev + 6;
       // Safety check: don't exceed total properties count
       return Math.min(newCount, sortedProperties.length);
     });
+  };
+
+  const handleSortChange = (newSortBy: string) => {
+    setSortBy(newSortBy as any);
+    setVisibleCount(12); // Reset to initial count when sorting changes
   };
 
   return (
@@ -109,9 +117,9 @@ export default function PropertiesPage() {
       {/* Filters Section */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <div className="bg-gray-900/50 p-6 rounded-xl backdrop-blur-sm">
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-4 gap-4">
                 <div>
                   <label htmlFor="school" className="block text-sm font-medium text-gray-300 mb-2">
                     Select School
@@ -154,14 +162,22 @@ export default function PropertiesPage() {
                   <select
                     id="sort"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => handleSortChange(e.target.value)}
                     className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all duration-300"
                   >
-                    <option value="bedrooms-asc">Bedrooms (Low to High)</option>
-                    <option value="bedrooms-desc">Bedrooms (High to Low)</option>
+                    <option value="date-asc">Available Date (Soonest)</option>
                     <option value="price-asc">Price (Low to High)</option>
                     <option value="price-desc">Price (High to Low)</option>
+                    <option value="bedrooms-asc">Bedrooms (Low to High)</option>
+                    <option value="bedrooms-desc">Bedrooms (High to Low)</option>
                   </select>
+                </div>
+                <div className="flex items-end">
+                  <div className="w-full text-center">
+                    <span className="text-sm text-gray-400">
+                      {sortedProperties.length} properties found
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -189,19 +205,33 @@ export default function PropertiesPage() {
       {/* Properties Grid */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Available Properties
-          </h2>
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+              Available Properties
+            </h2>
+            {!loading && sortedProperties.length > 0 && (
+              <div className="text-gray-400">
+                Showing {Math.min(visibleCount, sortedProperties.length)} of {sortedProperties.length} properties
+              </div>
+            )}
+          </div>
+          
           {loading ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center py-12">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
             </div>
           ) : properties.length === 0 ? (
-            <div className="text-center">
+            <div className="text-center py-12">
               <p className="text-xl text-gray-300 mb-8">
                 {selectedSchool === 'Florida Atlantic University'
                   ? 'Properties for Florida Atlantic University coming soon!'
                   : 'No properties available at this time.'}
+              </p>
+            </div>
+          ) : sortedProperties.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-300 mb-8">
+                No properties match your current filters. Try adjusting your search criteria.
               </p>
             </div>
           ) : (
@@ -212,12 +242,12 @@ export default function PropertiesPage() {
                 ))}
               </div>
               {visibleCount < sortedProperties.length && (
-                <div className="flex justify-center mt-8">
+                <div className="flex justify-center mt-12">
                   <button
                     onClick={handleLoadMore}
-                    className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300"
+                    className="px-8 py-4 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300 font-medium text-lg"
                   >
-                    Load More
+                    Load More Properties ({sortedProperties.length - visibleCount} remaining)
                   </button>
                 </div>
               )}
