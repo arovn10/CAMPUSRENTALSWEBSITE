@@ -15,12 +15,23 @@ export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Google Ads conversion tracking
+  // Track page view conversion when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
+      });
+      console.log('📊 Contact page view conversion tracked');
+    }
+  }, []);
+
+  // Google Ads conversion tracking for form submission
   const trackConversion = () => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'conversion', {
         'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
       });
+      console.log('📊 Form submission conversion tracked');
     }
   };
 
