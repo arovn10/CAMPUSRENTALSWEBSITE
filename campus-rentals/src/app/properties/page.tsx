@@ -194,7 +194,7 @@ export default function PropertiesPage() {
             </h2>
             <div className="h-[400px] rounded-lg overflow-hidden">
               <PropertyMap
-                properties={properties}
+                properties={sortedProperties}
                 center={mapCenter}
               />
             </div>
