@@ -25,11 +25,16 @@ export default function PropertiesPage() {
     const loadProperties = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Loading properties...');
         const data = await fetchProperties();
-        console.log('Fetched properties:', data);
+        console.log('✅ Fetched properties:', data);
+        console.log('📊 Properties count:', data.length);
+        if (data.length > 0) {
+          console.log('📍 First property coordinates:', data[0].latitude, data[0].longitude);
+        }
         setProperties(data);
       } catch (error) {
-        console.error('Error loading properties:', error);
+        console.error('❌ Error loading properties:', error);
       } finally {
         setLoading(false);
       }
