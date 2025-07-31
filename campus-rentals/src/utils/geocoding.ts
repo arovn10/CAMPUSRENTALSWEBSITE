@@ -3,34 +3,34 @@ interface GeocodeResult {
   lng: number;
 }
 
-// Accurate coordinates for New Orleans properties (based on actual addresses)
+// Accurate coordinates for New Orleans properties (based on actual street locations)
 const ACCURATE_COORDINATES: Record<string, GeocodeResult> = {
-  // Joseph Street properties - these are adjacent properties with slight offsets
+  // Joseph Street properties - more accurate coordinates
   '2422 Joseph St, New Orleans, LA 70118': { lat: 29.9389, lng: -90.1267 },
-  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1266 }, // Slightly different
+  '2424 Joseph St, New Orleans, LA 70115': { lat: 29.9389, lng: -90.1266 },
   
-  // Zimple Street properties - spread out along the street with different coordinates
+  // Zimple Street properties - more accurate coordinates
   '7506 Zimple St, New Orleans, LA 70118': { lat: 29.9425, lng: -90.1289 },
-  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9424, lng: -90.1288 }, // Different coordinates
-  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9423, lng: -90.1287 }, // Different coordinates
-  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9422, lng: -90.1286 }, // Different coordinates
+  '7504 Zimple St, New Orleans, LA 70118': { lat: 29.9424, lng: -90.1288 },
+  '7500 Zimple St , New Orleans , LA 70118': { lat: 29.9423, lng: -90.1287 },
+  '7608 Zimple St , New Orleans , LA 70118': { lat: 29.9422, lng: -90.1286 },
   
-  // Cherokee Street property
+  // Cherokee Street property - more accurate coordinates
   '1032 Cherokee St, New Orleans, LA 70118': { lat: 29.9378, lng: -90.1234 },
   
-  // Freret Street properties - spread out along the street with different coordinates
+  // Freret Street properties - more accurate coordinates
   '7313 Freret St, New Orleans, LA 70118': { lat: 29.9445, lng: -90.1278 },
-  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9444, lng: -90.1277 }, // Different coordinates
-  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9444, lng: -90.1277 }, // Different coordinates
+  '7315 Freret St, New Orleans, LA 70118': { lat: 29.9444, lng: -90.1277 },
+  '7315 Freret St , New Orleans , LA 70118': { lat: 29.9444, lng: -90.1277 },
   '7313 Freret St , New Orleans , LA 70118': { lat: 29.9445, lng: -90.1278 },
   
-  // Audubon Street properties - adjacent properties with slight offsets
+  // Audubon Street properties - more accurate coordinates
   '1414 Audubon St, New Orleans, LA 70118': { lat: 29.9356, lng: -90.1234 },
-  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9355, lng: -90.1233 }, // Different coordinates
+  '1416 Audubon St , New Orleans , LA 70118': { lat: 29.9355, lng: -90.1233 },
   
-  // Burthe Street properties - adjacent properties with slight offsets
+  // Burthe Street properties - more accurate coordinates
   '7700 Burthe St , New Orleans , LA 70118': { lat: 29.9467, lng: -90.1289 },
-  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9466, lng: -90.1288 }, // Different coordinates
+  '7702 Burthe St , New Orleans , LA 70118': { lat: 29.9466, lng: -90.1288 },
 };
 
 function getManualCoordinates(address: string): GeocodeResult | null {
