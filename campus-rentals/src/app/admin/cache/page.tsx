@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePerformance } from '../../../hooks/usePerformance';
-import { externalAPI } from '../../../utils/clientApi';
 
 interface CacheStatus {
   cacheValid: boolean;
@@ -15,71 +13,65 @@ interface CacheStatus {
   amenitiesCount: number;
 }
 
-interface DebugInfo {
-  timestamp: string;
-  originalAPI: {
-    working: boolean;
-    propertiesCount: number;
-    firstProperty: any;
-    testPhotosCount: number;
-  };
-  cache: {
-    valid: boolean;
-    hasData: boolean;
-    propertiesCount: number;
-    photosKeysCount: number;
-    metadata: any;
-  };
-  environment: {
-    nodeEnv: string;
-    cwd: string;
-  };
+interface LoginForm {
+  username: string;
+  password: string;
 }
 
 export default function CacheAdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginForm, setLoginForm] = useState<LoginForm>({ username: '', password: '' });
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null);
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [forceRefreshing, setForceRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const { metrics, clearAllCaches } = usePerformance();
 
-  const fetchCacheStatus = async () => {
-    try {
-      console.log('Fetching cache status...');
-      const response = await fetch('/api/cache');
-      console.log('Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Cache data:', data);
-        setCacheStatus(data);
-      } else {
-        console.error('Failed to fetch cache status:', response.status);
-        setMessage(`Failed to fetch cache status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error fetching cache status:', error);
-      setMessage(`Error fetching cache status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    
+    if (loginForm.username === 'campusrentalsnola' && loginForm.password === '15Saratoga!') {
+      setIsAuthenticated(true);
+      localStorage.setItem('adminAuthenticated', 'true');
+    } else {
+      setLoginError('Invalid username or password');
     }
   };
 
-  const fetchDebugInfo = async () => {
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('adminAuthenticated');
+  };
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('adminAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const fetchCacheStatus = async () => {
     try {
-      const response = await fetch('/api/debug');
+      setLoading(true);
+      const response = await fetch('/api/cache');
       if (response.ok) {
         const data = await response.json();
-        setDebugInfo(data);
+        setCacheStatus(data);
+      } else {
+        setMessage(`Failed to fetch cache status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error fetching debug info:', error);
+      setMessage(`Error fetching cache status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const refreshStatus = async () => {
-    setLoading(true);
     await fetchCacheStatus();
-    setLoading(false);
   };
 
   const warmUpCache = async () => {
@@ -88,7 +80,8 @@ export default function CacheAdminPage() {
     try {
       const response = await fetch('/api/warmup');
       if (response.ok) {
-        setMessage('Cache warmed up successfully');
+        const data = await response.json();
+        setMessage(`Cache warmed up successfully: ${data.propertiesCount} properties`);
         await refreshStatus();
       } else {
         setMessage('Failed to warm up cache');
@@ -107,7 +100,7 @@ export default function CacheAdminPage() {
       const data = await response.json();
       
       if (response.ok && data.success) {
-        setMessage(`Force refresh successful: ${data.data.propertiesCount} properties, ${data.data.photosCount} photos`);
+        setMessage(`Force refresh successful: ${data.data.propertiesCount} properties, ${data.data.photosCount} photos, ${data.data.imagesCached} images cached`);
         await refreshStatus();
       } else {
         setMessage(`Force refresh failed: ${data.message || 'Unknown error'}`);
@@ -118,233 +111,220 @@ export default function CacheAdminPage() {
     setForceRefreshing(false);
   };
 
-  const refreshCache = async () => {
+  const clearCache = async () => {
     setRefreshing(true);
     setMessage(null);
     try {
       const response = await fetch('/api/cache', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'refresh' })
+        body: JSON.stringify({ action: 'clear' })
       });
       
       if (response.ok) {
-        setMessage('Cache refreshed successfully');
+        const data = await response.json();
+        setMessage(`Cache cleared successfully: ${data.clearedFiles} files, ${data.clearedImages} images`);
         await refreshStatus();
       } else {
-        setMessage('Failed to refresh cache');
+        setMessage('Failed to clear cache');
       }
     } catch (error) {
-      setMessage('Error refreshing cache');
+      setMessage('Error clearing cache');
     }
     setRefreshing(false);
   };
 
   useEffect(() => {
-    refreshStatus();
-  }, []);
+    if (isAuthenticated) {
+      refreshStatus();
+    }
+  }, [isAuthenticated]);
 
-  if (loading) {
+  // Login Form
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm w-full max-w-md">
+          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent text-center">
+            Admin Login
+          </h1>
+          
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={loginForm.username}
+                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            
+            {loginError && (
+              <div className="bg-red-500/20 border border-red-500/30 p-3 rounded-lg text-red-400 text-sm">
+                {loginError}
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300 font-medium"
+            >
+              Login
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
 
+  // Main Admin Interface
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-          Cache Administration
-        </h1>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+            Cache Administration
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors duration-300"
+          >
+            Logout
+          </button>
+        </div>
 
         {/* Cache Status */}
-        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm mb-8">
-          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+        <div className="bg-gray-900/50 p-6 rounded-xl backdrop-blur-sm mb-6">
+          <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
             Cache Status
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Cache Valid:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  cacheStatus?.cacheValid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  {cacheStatus?.cacheValid ? 'Yes' : 'No'}
-                </span>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+            </div>
+          ) : cacheStatus ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Cache Status</div>
+                <div className={`text-lg font-bold ${cacheStatus.cacheValid ? 'text-green-400' : 'text-red-400'}`}>
+                  {cacheStatus.cacheValid ? 'Valid' : 'Invalid'}
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Cached Images:</span>
-                <span className="text-xl font-bold text-accent">{cacheStatus?.cachedImagesCount || 0}</span>
+              
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Properties</div>
+                <div className="text-2xl font-bold text-accent">{cacheStatus.propertiesCount}</div>
+              </div>
+              
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Photos</div>
+                <div className="text-2xl font-bold text-accent">{cacheStatus.photosCount}</div>
+              </div>
+              
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Cached Images</div>
+                <div className="text-2xl font-bold text-accent">{cacheStatus.cachedImagesCount}</div>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Properties:</span>
-                <span className="text-xl font-bold text-accent">{cacheStatus?.propertiesCount || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Photos:</span>
-                <span className="text-xl font-bold text-accent">{cacheStatus?.photosCount || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Geocoded Addresses:</span>
-                <span className="text-xl font-bold text-accent">{cacheStatus?.geocodingCacheCount || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Amenities:</span>
-                <span className="text-xl font-bold text-accent">{cacheStatus?.amenitiesCount || 0}</span>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <div className="text-gray-400">No cache data available</div>
+          )}
+          
           {cacheStatus?.lastUpdated && (
             <div className="mt-4 pt-4 border-t border-gray-700">
-              <span className="text-gray-300">Last Updated: </span>
-              <span className="text-accent">{cacheStatus.lastUpdated}</span>
-            </div>
-          )}
-          {cacheStatus?.geocodingAddresses && cacheStatus.geocodingAddresses.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <h3 className="text-lg font-semibold mb-3 text-accent">Geocoded Addresses</h3>
-              <div className="grid md:grid-cols-2 gap-2">
-                {cacheStatus.geocodingAddresses.map((address, index) => (
-                  <div key={index} className="text-sm text-gray-300 bg-gray-800/50 p-2 rounded">
-                    {address}
-                  </div>
-                ))}
-              </div>
+              <span className="text-gray-400">Last Updated: </span>
+              <span className="text-accent">{new Date(cacheStatus.lastUpdated).toLocaleString()}</span>
             </div>
           )}
         </div>
-
-        {/* Performance Metrics */}
-        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm mb-8">
-          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Performance Metrics
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">API Cache Size:</span>
-                <span className="text-xl font-bold text-accent">{metrics.apiCacheSize}</span>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Cache Status:</span>
-                <span className="text-sm text-accent">Active</span>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <button
-                onClick={clearAllCaches}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors duration-300 w-full"
-              >
-                Clear API Cache
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Debug Information */}
-        {debugInfo && (
-          <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm mb-8">
-            <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-              Debug Information
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-accent">Original API</h3>
-                <div className="space-y-2 text-sm">
-                  <div>Status: <span className={debugInfo.originalAPI.working ? 'text-green-400' : 'text-red-400'}>
-                    {debugInfo.originalAPI.working ? 'Working' : 'Failed'}
-                  </span></div>
-                  <div>Properties: <span className="text-accent">{debugInfo.originalAPI.propertiesCount}</span></div>
-                  <div>Test Photos: <span className="text-accent">{debugInfo.originalAPI.testPhotosCount}</span></div>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-secondary">Cache System</h3>
-                <div className="space-y-2 text-sm">
-                  <div>Valid: <span className={debugInfo.cache.valid ? 'text-green-400' : 'text-red-400'}>
-                    {debugInfo.cache.valid ? 'Yes' : 'No'}
-                  </span></div>
-                  <div>Has Data: <span className={debugInfo.cache.hasData ? 'text-green-400' : 'text-red-400'}>
-                    {debugInfo.cache.hasData ? 'Yes' : 'No'}
-                  </span></div>
-                  <div>Properties: <span className="text-accent">{debugInfo.cache.propertiesCount}</span></div>
-                  <div>Photo Sets: <span className="text-accent">{debugInfo.cache.photosKeysCount}</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <div className="text-sm text-gray-400">
-                Environment: {debugInfo.environment.nodeEnv} | 
-                Working Directory: {debugInfo.environment.cwd}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Actions */}
-        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm mb-8">
-          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Actions
+        <div className="bg-gray-900/50 p-6 rounded-xl backdrop-blur-sm mb-6">
+          <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+            Cache Actions
           </h2>
-          <div className="flex flex-wrap gap-4">
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={refreshStatus}
               disabled={loading}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors duration-300 disabled:opacity-50"
+              className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors duration-300 disabled:opacity-50"
             >
-              Refresh Status
+              {loading ? 'Loading...' : 'Refresh Status'}
             </button>
+            
             <button
               onClick={warmUpCache}
               disabled={refreshing}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors duration-300 disabled:opacity-50"
+              className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors duration-300 disabled:opacity-50"
             >
-              {refreshing ? 'Warming Up...' : 'Warm Up Cache'}
+              {refreshing ? 'Warming...' : 'Warm Up Cache'}
             </button>
-            <button
-              onClick={refreshCache}
-              disabled={refreshing}
-              className="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors duration-300 disabled:opacity-50"
-            >
-              {refreshing ? 'Refreshing...' : 'Force Refresh Cache'}
-            </button>
+            
             <button
               onClick={forceRefreshCache}
               disabled={forceRefreshing}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-300 disabled:opacity-50"
+              className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-300 disabled:opacity-50"
             >
-              {forceRefreshing ? 'Force Refreshing...' : 'Nuclear Refresh (Clear & Rebuild)'}
+              {forceRefreshing ? 'Refreshing...' : 'Force Refresh'}
+            </button>
+            
+            <button
+              onClick={clearCache}
+              disabled={refreshing}
+              className="px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors duration-300 disabled:opacity-50"
+            >
+              {refreshing ? 'Clearing...' : 'Clear Cache'}
             </button>
           </div>
         </div>
 
-        {/* Message */}
+        {/* Message Display */}
         {message && (
-          <div className="bg-gray-900/50 p-6 rounded-xl backdrop-blur-sm">
-            <div className={`p-4 rounded-lg ${
+          <div className="bg-gray-900/50 p-4 rounded-xl backdrop-blur-sm mb-6">
+            <div className={`p-3 rounded-lg ${
               message.includes('success') || message.includes('successful') 
-                ? 'bg-green-500/20 text-green-400' 
-                : 'bg-red-500/20 text-red-400'
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
             }`}>
               {message}
             </div>
           </div>
         )}
 
-        {/* Important Notes */}
-        <div className="bg-yellow-500/10 border border-yellow-500/20 p-6 rounded-xl mt-8">
-          <h3 className="text-lg font-semibold mb-3 text-yellow-400">⚠️ Important Notes:</h3>
-          <ul className="space-y-2 text-yellow-200 text-sm">
+        {/* Information Panel */}
+        <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-xl">
+          <h3 className="text-lg font-semibold mb-3 text-blue-400">ℹ️ Cache Information</h3>
+          <ul className="space-y-2 text-blue-200 text-sm">
+            <li>• <strong>Warm Up Cache:</strong> Fetches data from backend API and stores it locally</li>
+            <li>• <strong>Force Refresh:</strong> Completely rebuilds cache with all data and images</li>
+            <li>• <strong>Clear Cache:</strong> Removes all cached files and images</li>
+            <li>• <strong>Refresh Status:</strong> Updates the current cache status display</li>
             <li>• Cache automatically refreshes every 24 hours</li>
-            <li>• Force refresh will download all images again (may take several minutes)</li>
-            <li>• Nuclear refresh clears everything and rebuilds from scratch</li>
-            <li>• Images are cached locally in /public/cached-images/</li>
+            <li>• Images are cached locally for faster loading</li>
           </ul>
         </div>
       </div>

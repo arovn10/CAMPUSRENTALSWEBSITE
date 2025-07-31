@@ -63,8 +63,45 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    if (action === 'clear') {
+      // Clear server-side cache files
+      const cacheDir = path.join(process.cwd(), '.cache');
+      const imagesCacheDir = path.join(process.cwd(), 'public', 'cached-images');
+      
+      let clearedFiles = 0;
+      let clearedImages = 0;
+      
+      // Clear cache directory
+      if (fs.existsSync(cacheDir)) {
+        const files = fs.readdirSync(cacheDir);
+        for (const file of files) {
+          if (file.endsWith('.json')) {
+            fs.unlinkSync(path.join(cacheDir, file));
+            clearedFiles++;
+          }
+        }
+      }
+      
+      // Clear cached images
+      if (fs.existsSync(imagesCacheDir)) {
+        const files = fs.readdirSync(imagesCacheDir);
+        for (const file of files) {
+          if (file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png') || file.endsWith('.webp')) {
+            fs.unlinkSync(path.join(imagesCacheDir, file));
+            clearedImages++;
+          }
+        }
+      }
+      
+      return NextResponse.json({ 
+        message: clearedFiles === 0 && clearedImages === 0 ? 'Cache already empty' : 'Cache cleared successfully',
+        clearedFiles,
+        clearedImages
+      });
+    }
+    
     return NextResponse.json(
-      { error: 'Invalid action' },
+      { error: 'Invalid action. Use "refresh" or "clear"' },
       { status: 400 }
     );
   } catch (error) {
