@@ -17,14 +17,13 @@ import {
   Photo,
   PropertyAmenities
 } from '@/utils/api';
-import { geocodeProperties } from '@/utils/geocoding';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
   cachedPath?: string;
 }
 
-// Fetch and cache all data (WITH geocoding for accurate coordinates)
+// Fetch and cache all data (WITHOUT geocoding - handled in map component)
 async function fetchAndCacheAllData() {
   console.log('🔄 Comprehensive data refresh from API (regular cache refresh)...');
   console.log('📋 Refreshing ALL property data: bedrooms, bathrooms, price, descriptions, etc.');
@@ -43,20 +42,15 @@ async function fetchAndCacheAllData() {
       throw new Error('No properties available from backend API');
     }
     
-    // Geocode properties to get accurate coordinates
-    console.log('🗺️ Geocoding properties for accurate map positioning...');
-    const geocodedProperties = await geocodeProperties(properties);
-    console.log(`✅ Geocoded ${geocodedProperties.length} properties with accurate coordinates`);
-    
     // Log sample to verify all fields
-    const sampleProperty = geocodedProperties[0];
+    const sampleProperty = properties[0];
     console.log('🔍 Verifying data completeness:');
     console.log(`   Sample: ${sampleProperty.name} - ${sampleProperty.bedrooms} bed, ${sampleProperty.bathrooms} bath, $${sampleProperty.price}`);
     console.log(`   Description: ${sampleProperty.description ? sampleProperty.description.length + ' chars' : 'NO DESCRIPTION'}`);
-    console.log(`   Coordinates: ${sampleProperty.latitude}, ${sampleProperty.longitude}`);
+    console.log(`   Address: ${sampleProperty.address}`);
     console.log(`✅ DESCRIPTIONS REFRESHED: All property descriptions updated from backend API`);
-    console.log(`✅ COORDINATES UPDATED: All properties geocoded with accurate coordinates`);
-    console.log(`✅ COMPREHENSIVE REFRESH: bedrooms, bathrooms, prices, descriptions, square footage, coordinates, etc.`);
+    console.log(`✅ ADDRESSES AVAILABLE: All properties have addresses for map geocoding`);
+    console.log(`✅ COMPREHENSIVE REFRESH: bedrooms, bathrooms, prices, descriptions, square footage, addresses, etc.`);
     
     // Fetch photos and amenities for ALL properties
     const photos: Record<number, Photo[]> = {};
@@ -70,9 +64,9 @@ async function fetchAndCacheAllData() {
     let totalPhotos = 0;
     let totalAmenities = 0;
     
-    for (let i = 0; i < geocodedProperties.length; i += batchSize) {
-      const batch = geocodedProperties.slice(i, i + batchSize);
-      console.log(`  📦 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(geocodedProperties.length/batchSize)}`);
+    for (let i = 0; i < properties.length; i += batchSize) {
+      const batch = properties.slice(i, i + batchSize);
+      console.log(`  📦 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(properties.length/batchSize)}`);
       
       await Promise.all(batch.map(async (property) => {
         try {
@@ -96,27 +90,27 @@ async function fetchAndCacheAllData() {
       }));
       
       // Small delay between batches
-      if (i + batchSize < geocodedProperties.length) {
+      if (i + batchSize < properties.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     
     console.log('📊 Comprehensive refresh summary:');
-    console.log(`   ✅ Properties: ${processedCount}/${geocodedProperties.length}`);
+    console.log(`   ✅ Properties: ${processedCount}/${properties.length}`);
     console.log(`   ✅ Photos: ${totalPhotos} total`);
     console.log(`   ✅ Amenities: ${totalAmenities} properties with amenities`);
-    console.log(`   ✅ Coordinates: All properties geocoded with accurate addresses`);
+    console.log(`   ✅ Addresses: All properties have addresses for map geocoding`);
     
     // Cache ALL the refreshed data
     const cacheData = {
-      properties: geocodedProperties,
+      properties,
       photos,
       amenities,
       metadata: createCacheMetadata()
     };
     
     console.log('💾 Saving comprehensive data to cache...');
-    console.log(`   🏠 ${geocodedProperties.length} properties with all fields (bedrooms, bathrooms, price, coordinates, etc.)`);
+    console.log(`   🏠 ${properties.length} properties with all fields (bedrooms, bathrooms, price, addresses, etc.)`);
     console.log(`   📸 ${Object.keys(photos).length} photo collections`);
     console.log(`   🏠 ${Object.keys(amenities).length} amenity datasets`);
     

@@ -2,7 +2,7 @@
 
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { Property } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const containerStyle = {
@@ -19,10 +19,17 @@ interface PropertyMapProps {
   zoom?: number;
 }
 
+interface GeocodedProperty extends Property {
+  geocodedLat?: number;
+  geocodedLng?: number;
+}
+
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [hoveredProperty, setHoveredProperty] = useState<Property | null>(null);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [hoveredProperty, setHoveredProperty] = useState<GeocodedProperty | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<GeocodedProperty | null>(null);
+  const [geocodedProperties, setGeocodedProperties] = useState<GeocodedProperty[]>([]);
+  const [isGeocoding, setIsGeocoding] = useState(true);
   const router = useRouter();
 
   const onLoad = (map: google.maps.Map) => {
@@ -33,21 +40,66 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     setMap(null);
   };
 
+  // Geocode addresses using Google Maps Geocoding API
+  useEffect(() => {
+    const geocodeProperties = async () => {
+      setIsGeocoding(true);
+      const geocoder = new google.maps.Geocoder();
+      const geocoded: GeocodedProperty[] = [];
+
+      for (const property of properties) {
+        try {
+          const result = await geocoder.geocode({ address: property.address });
+          if (result.results.length > 0) {
+            const location = result.results[0].geometry.location;
+            geocoded.push({
+              ...property,
+              geocodedLat: location.lat(),
+              geocodedLng: location.lng()
+            });
+          } else {
+            // Fallback to original coordinates if geocoding fails
+            geocoded.push({
+              ...property,
+              geocodedLat: property.latitude,
+              geocodedLng: property.longitude
+            });
+          }
+        } catch (error) {
+          console.error(`Error geocoding ${property.address}:`, error);
+          // Fallback to original coordinates
+          geocoded.push({
+            ...property,
+            geocodedLat: property.latitude,
+            geocodedLng: property.longitude
+          });
+        }
+      }
+
+      setGeocodedProperties(geocoded);
+      setIsGeocoding(false);
+    };
+
+    if (properties.length > 0 && window.google) {
+      geocodeProperties();
+    }
+  }, [properties]);
+
   // Filter properties that have valid coordinates
-  const propertiesWithCoords = properties.filter(property => 
-    typeof property.latitude === 'number' && 
-    typeof property.longitude === 'number' &&
-    !isNaN(property.latitude) && 
-    !isNaN(property.longitude) &&
-    property.latitude >= -90 && 
-    property.latitude <= 90 &&
-    property.longitude >= -180 && 
-    property.longitude <= 180
+  const propertiesWithCoords = geocodedProperties.filter(property => 
+    typeof property.geocodedLat === 'number' && 
+    typeof property.geocodedLng === 'number' &&
+    !isNaN(property.geocodedLat) && 
+    !isNaN(property.geocodedLng) &&
+    property.geocodedLat >= -90 && 
+    property.geocodedLat <= 90 &&
+    property.geocodedLng >= -180 && 
+    property.geocodedLng <= 180
   );
 
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
 
-  const handleMarkerMouseOver = (property: Property) => {
+  const handleMarkerMouseOver = (property: GeocodedProperty) => {
     setHoveredProperty(property);
   };
 
@@ -55,7 +107,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     setHoveredProperty(null);
   };
 
-  const handleMarkerClick = (property: Property) => {
+  const handleMarkerClick = (property: GeocodedProperty) => {
     setSelectedProperty(property);
     // Navigate to property page
     router.push(`/properties/${property.property_id}`);
@@ -87,6 +139,17 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
+  if (isGeocoding) {
+    return (
+      <div className="h-[400px] rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-300">Geocoding property addresses...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
       <GoogleMap
@@ -110,8 +173,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
           <Marker
             key={property.property_id}
             position={{
-              lat: property.latitude!,
-              lng: property.longitude!
+              lat: property.geocodedLat!,
+              lng: property.geocodedLng!
             }}
             title={`${property.name} - ${property.address}`}
             icon={{
@@ -132,8 +195,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         {hoveredProperty && !selectedProperty && (
           <InfoWindow
             position={{
-              lat: hoveredProperty.latitude!,
-              lng: hoveredProperty.longitude!
+              lat: hoveredProperty.geocodedLat!,
+              lng: hoveredProperty.geocodedLng!
             }}
             onCloseClick={() => setHoveredProperty(null)}
             options={{
@@ -186,8 +249,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         {selectedProperty && (
           <InfoWindow
             position={{
-              lat: selectedProperty.latitude!,
-              lng: selectedProperty.longitude!
+              lat: selectedProperty.geocodedLat!,
+              lng: selectedProperty.geocodedLng!
             }}
             onCloseClick={handleInfoWindowClose}
             options={{
