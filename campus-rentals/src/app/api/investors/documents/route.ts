@@ -1,55 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from cookie
-    const token = request.cookies.get('auth-token')?.value;
+    const user = await requireAuth(request)
+    const { searchParams } = new URL(request.url)
+    const entityType = searchParams.get('entityType')
+    const entityId = searchParams.get('entityId')
+    const documentType = searchParams.get('documentType')
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'No authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Verify token
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-    });
-
-    if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'User not found or inactive' },
-        { status: 401 }
-      );
-    }
-
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const entityType = searchParams.get('entityType');
-    const entityId = searchParams.get('entityId');
-    const documentType = searchParams.get('documentType');
-
-    let documents;
+    let documents
 
     if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-      // Admin and sponsors can see all documents
-      const whereClause: any = {};
+      // Admin and managers can see all documents
+      const whereClause: any = {}
       
-      if (entityType) whereClause.entityType = entityType;
-      if (entityId) whereClause.entityId = entityId;
-      if (documentType) whereClause.documentType = documentType;
+      if (entityType) whereClause.entityType = entityType
+      if (entityId) whereClause.entityId = entityId
+      if (documentType) whereClause.documentType = documentType
 
       documents = await prisma.document.findMany({
         where: whereClause,
@@ -63,21 +32,21 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { createdAt: 'desc' },
-      });
+      })
     } else {
       // Investors can only see documents related to their investments
       const userInvestments = await prisma.investment.findMany({
         where: { userId: user.id, status: 'ACTIVE' },
         select: { propertyId: true },
-      });
+      })
 
       const userFundInvestments = await prisma.fundInvestment.findMany({
         where: { userId: user.id, status: 'ACTIVE' },
         select: { fundId: true },
-      });
+      })
 
-      const propertyIds = userInvestments.map(inv => inv.propertyId);
-      const fundIds = userFundInvestments.map(inv => inv.fundId);
+      const propertyIds = userInvestments.map(inv => inv.propertyId)
+      const fundIds = userFundInvestments.map(inv => inv.fundId)
 
       const whereClause: any = {
         OR: [
@@ -86,11 +55,11 @@ export async function GET(request: NextRequest) {
           { entityType: 'FUND', entityId: { in: fundIds } },
           { entityType: 'USER', entityId: user.id },
         ],
-      };
+      }
 
-      if (entityType) whereClause.entityType = entityType;
-      if (entityId) whereClause.entityId = entityId;
-      if (documentType) whereClause.documentType = documentType;
+      if (entityType) whereClause.entityType = entityType
+      if (entityId) whereClause.entityId = entityId
+      if (documentType) whereClause.documentType = documentType
 
       documents = await prisma.document.findMany({
         where: whereClause,
@@ -104,26 +73,26 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { createdAt: 'desc' },
-      });
+      })
     }
 
     // Group documents by entity type and add entity details
     const documentsWithDetails = await Promise.all(
-      documents.map(async (doc) => {
-        let entityDetails = null;
+      documents.map(async (doc: any) => {
+        let entityDetails = null
 
         if (doc.entityType === 'PROPERTY') {
           const property = await prisma.property.findUnique({
             where: { id: doc.entityId },
             select: { name: true, address: true },
-          });
-          entityDetails = property;
+          })
+          entityDetails = property
         } else if (doc.entityType === 'FUND') {
           const fund = await prisma.fund.findUnique({
             where: { id: doc.entityId },
             select: { name: true, description: true },
-          });
-          entityDetails = fund;
+          })
+          entityDetails = fund
         }
 
         return {
@@ -137,67 +106,39 @@ export async function GET(request: NextRequest) {
           documentType: doc.documentType,
           entityType: doc.entityType,
           entityId: doc.entityId,
-          entityDetails,
-          uploadedBy: doc.user,
+          entityName: entityDetails?.name || 'Unknown',
+          entityAddress: (entityDetails as any)?.address,
           isPublic: doc.isPublic,
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt,
-        };
+          uploadedBy: doc.uploadedBy,
+          uploadedAt: doc.createdAt,
+          user: doc.user,
+        }
       })
-    );
+    )
 
-    return NextResponse.json(documentsWithDetails);
+    return NextResponse.json(documentsWithDetails)
   } catch (error) {
-    console.error('Error fetching documents:', error);
+    console.error('Error fetching investor documents:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Get token from cookie
-    const token = request.cookies.get('auth-token')?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: 'No authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Verify token
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-    });
-
-    if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'User not found or inactive' },
-        { status: 401 }
-      );
-    }
-
+    const user = await requireAuth(request)
+    
     // Check if user has permission to upload documents
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
-      );
+      )
     }
 
-    const body = await request.json();
+    const body = await request.json()
     const {
       title,
       description,
@@ -208,15 +149,38 @@ export async function POST(request: NextRequest) {
       documentType,
       entityType,
       entityId,
-      isPublic = false,
-    } = body;
+      isPublic,
+    } = body
 
     // Validate required fields
     if (!title || !fileName || !filePath || !documentType || !entityType || !entityId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
-      );
+      )
+    }
+
+    // Validate entity exists
+    if (entityType === 'PROPERTY') {
+      const property = await prisma.property.findUnique({
+        where: { id: entityId },
+      })
+      if (!property) {
+        return NextResponse.json(
+          { error: 'Property not found' },
+          { status: 404 }
+        )
+      }
+    } else if (entityType === 'FUND') {
+      const fund = await prisma.fund.findUnique({
+        where: { id: entityId },
+      })
+      if (!fund) {
+        return NextResponse.json(
+          { error: 'Fund not found' },
+          { status: 404 }
+        )
+      }
     }
 
     // Create document
@@ -226,13 +190,13 @@ export async function POST(request: NextRequest) {
         description,
         fileName,
         filePath,
-        fileSize,
+        fileSize: parseInt(fileSize),
         mimeType,
         documentType,
         entityType,
         entityId,
+        isPublic: isPublic || false,
         uploadedBy: user.id,
-        isPublic,
       },
       include: {
         user: {
@@ -243,14 +207,49 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    });
+    })
 
-    return NextResponse.json(document);
+    // Create notification for relevant users
+    if (entityType === 'PROPERTY') {
+      const propertyInvestors = await prisma.investment.findMany({
+        where: { propertyId: entityId, status: 'ACTIVE' },
+        select: { userId: true },
+      })
+
+      for (const investor of propertyInvestors) {
+        await prisma.notification.create({
+          data: {
+            userId: investor.userId,
+            title: 'New Document Uploaded',
+            message: `A new document "${title}" has been uploaded for a property you're invested in`,
+            type: 'DOCUMENT_UPLOAD',
+          },
+        })
+      }
+    } else if (entityType === 'FUND') {
+      const fundInvestors = await prisma.fundInvestment.findMany({
+        where: { fundId: entityId, status: 'ACTIVE' },
+        select: { userId: true },
+      })
+
+      for (const investor of fundInvestors) {
+        await prisma.notification.create({
+          data: {
+            userId: investor.userId,
+            title: 'New Document Uploaded',
+            message: `A new document "${title}" has been uploaded for a fund you're invested in`,
+            type: 'DOCUMENT_UPLOAD',
+          },
+        })
+      }
+    }
+
+    return NextResponse.json(document, { status: 201 })
   } catch (error) {
-    console.error('Error creating document:', error);
+    console.error('Error uploading document:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 } 

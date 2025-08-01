@@ -1,0 +1,310 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  role      UserRole @default(INVESTOR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  investments        Investment[]
+  fundInvestments    FundInvestment[]
+  distributions      Distribution[]
+  documents         Document[]
+  notifications     Notification[]
+  fundContributions FundContribution[]
+  fundDistributions FundDistribution[]
+
+  @@map("users")
+}
+
+model Property {
+  id              String   @id @default(cuid())
+  propertyId      Int      @unique // External property ID
+  name            String
+  address         String
+  description     String?
+  bedrooms        Int
+  bathrooms       Int
+  price           Float
+  squareFeet      Int?
+  propertyType    PropertyType @default(SINGLE_FAMILY)
+  acquisitionDate DateTime?
+  acquisitionPrice Float?
+  currentValue    Float?
+  occupancyRate   Float?
+  monthlyRent     Float?
+  annualExpenses  Float?
+  capRate         Float?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  investments     Investment[]
+  photos          PropertyPhoto[]
+
+  @@map("properties")
+}
+
+model Fund {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  fundType    FundType @default(REAL_ESTATE)
+  targetSize  Float?
+  currentSize Float   @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  fundInvestments    FundInvestment[]
+  fundContributions  FundContribution[]
+  fundDistributions  FundDistribution[]
+
+  @@map("funds")
+}
+
+model Investment {
+  id                String           @id @default(cuid())
+  userId            String
+  propertyId        String
+  investmentAmount  Float
+  ownershipPercentage Float?
+  status            InvestmentStatus @default(ACTIVE)
+  investmentDate    DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id])
+  property      Property       @relation(fields: [propertyId], references: [id])
+  distributions Distribution[]
+
+  @@map("investments")
+}
+
+model FundInvestment {
+  id                String           @id @default(cuid())
+  userId            String
+  fundId            String
+  investmentAmount  Float
+  ownershipPercentage Float?
+  status            InvestmentStatus @default(ACTIVE)
+  investmentDate    DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  user              User             @relation(fields: [userId], references: [id])
+  fund              Fund             @relation(fields: [fundId], references: [id])
+
+  @@map("fund_investments")
+}
+
+model Distribution {
+  id           String   @id @default(cuid())
+  investmentId String
+  userId       String
+  amount       Float
+  distributionDate DateTime
+  distributionType DistributionType @default(RENTAL_INCOME)
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  investment   Investment @relation(fields: [investmentId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@map("distributions")
+}
+
+model FundContribution {
+  id           String   @id @default(cuid())
+  fundId       String
+  userId       String
+  amount       Float
+  contributionDate DateTime
+  contributionType ContributionType @default(CAPITAL_CALL)
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  fund         Fund     @relation(fields: [fundId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@map("fund_contributions")
+}
+
+model FundDistribution {
+  id           String   @id @default(cuid())
+  fundId       String
+  userId       String
+  amount       Float
+  distributionDate DateTime
+  distributionType FundDistributionType @default(PROFIT_DISTRIBUTION)
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  fund         Fund     @relation(fields: [fundId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@map("fund_distributions")
+}
+
+model Document {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  documentType DocumentType
+  entityType   EntityType
+  entityId     String
+  isPublic     Boolean      @default(false)
+  uploadedBy   String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [uploadedBy], references: [id])
+
+  @@map("documents")
+}
+
+model PropertyPhoto {
+  id         String   @id @default(cuid())
+  propertyId String
+  photoUrl   String
+  photoType  PhotoType @default(EXTERIOR)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@map("property_photos")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  INVESTOR
+  MANAGER
+}
+
+enum PropertyType {
+  SINGLE_FAMILY
+  MULTI_FAMILY
+  COMMERCIAL
+  MIXED_USE
+  LAND
+}
+
+enum FundType {
+  REAL_ESTATE
+  PRIVATE_EQUITY
+  VENTURE_CAPITAL
+  HEDGE_FUND
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  SOLD
+  FORECLOSED
+  PENDING
+}
+
+enum DistributionType {
+  RENTAL_INCOME
+  SALE_PROCEEDS
+  REFINANCE
+  INSURANCE_SETTLEMENT
+  OTHER
+}
+
+enum ContributionType {
+  CAPITAL_CALL
+  ADDITIONAL_INVESTMENT
+  ROLLOVER
+}
+
+enum FundDistributionType {
+  PROFIT_DISTRIBUTION
+  RETURN_OF_CAPITAL
+  SALE_PROCEEDS
+  OTHER
+}
+
+enum DocumentType {
+  OFFERING_MEMORANDUM
+  OPERATING_AGREEMENT
+  PPM
+  FINANCIAL_STATEMENT
+  TAX_DOCUMENT
+  INSURANCE
+  TITLE_REPORT
+  APPRAISAL
+  ENVIRONMENTAL_REPORT
+  OTHER
+}
+
+enum EntityType {
+  PROPERTY
+  FUND
+  USER
+}
+
+enum PhotoType {
+  EXTERIOR
+  INTERIOR
+  AERIAL
+  FLOOR_PLAN
+  OTHER
+}
+
+enum NotificationType {
+  DISTRIBUTION
+  DOCUMENT_UPLOAD
+  PROPERTY_UPDATE
+  FUND_UPDATE
+  SYSTEM
+} 

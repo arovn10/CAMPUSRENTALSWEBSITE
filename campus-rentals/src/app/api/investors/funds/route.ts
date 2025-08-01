@@ -1,179 +1,213 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from cookie
-    const token = request.cookies.get('auth-token')?.value;
+    const user = await requireAuth(request)
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'No authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Verify token
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-    });
-
-    if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'User not found or inactive' },
-        { status: 401 }
-      );
-    }
-
-    let funds;
+    let fundInvestments
 
     if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-      // Admin and sponsors can see all funds
-      funds = await prisma.fund.findMany({
-        where: { status: 'ACTIVE' },
+      // Admin and managers can see all fund investments
+      const whereClause: any = {}
+      if (status) whereClause.status = status
+
+      fundInvestments = await prisma.fundInvestment.findMany({
+        where: whereClause,
         include: {
-          sponsor: {
+          fund: true,
+          user: {
             select: {
               firstName: true,
               lastName: true,
               email: true,
             },
           },
-          fundInvestments: {
-            include: {
-              user: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                },
-              },
-            },
-          },
-          fundDistributions: true,
-          properties: {
-            include: {
-              property: true,
-            },
-          },
-          waterfallConfigs: true,
-          documents: {
-            where: { isPublic: true },
-          },
         },
-        orderBy: { name: 'asc' },
-      });
+        orderBy: { investmentDate: 'desc' },
+      })
     } else {
-      // Investors can only see funds they're invested in
-      const fundInvestments = await prisma.fundInvestment.findMany({
-        where: {
-          userId: user.id,
-          status: 'ACTIVE',
-        },
-        include: {
-          fund: {
-            include: {
-              sponsor: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                },
-              },
-              fundDistributions: {
-                where: {
-                  userId: user.id,
-                },
-              },
-              properties: {
-                include: {
-                  property: true,
-                },
-              },
-              waterfallConfigs: true,
-              documents: {
-                where: { isPublic: true },
-              },
-            },
-          },
-          fundDistributions: true,
-        },
-      });
+      // Investors can only see their own fund investments
+      const whereClause: any = {
+        userId: user.id,
+      }
+      if (status) whereClause.status = status
 
-      funds = fundInvestments.map(investment => ({
-        ...investment.fund,
-        userInvestment: {
-          amount: investment.investmentAmount,
-          date: investment.investmentDate,
-          preferredReturn: investment.preferredReturn,
-          status: investment.status,
+      fundInvestments = await prisma.fundInvestment.findMany({
+        where: whereClause,
+        include: {
+          fund: true,
         },
-        userDistributions: investment.fundDistributions,
-      }));
+        orderBy: { investmentDate: 'desc' },
+      })
     }
 
-    // Calculate financial metrics for each fund
-    const fundsWithMetrics = funds.map(fund => {
-      const totalInvested = fund.fundInvestments?.reduce((sum, inv) => sum + inv.investmentAmount, 0) || 0;
-      const totalDistributions = fund.fundDistributions?.reduce((sum, dist) => sum + dist.amount, 0) || 0;
-      
-      // Calculate fund performance metrics
-      const currentValue = fund.properties?.reduce((sum, fp) => sum + (fp.property.currentValue || fp.property.price), 0) || 0;
-      const totalReturn = currentValue + totalDistributions - totalInvested;
-      const irr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
+    // Calculate financial metrics for each fund investment
+    const fundInvestmentsWithMetrics = await Promise.all(
+      fundInvestments.map(async (fundInvestment: any) => {
+        // Get fund contributions and distributions for this user
+        const contributions = await prisma.fundContribution.findMany({
+          where: {
+            fundId: fundInvestment.fundId,
+            userId: fundInvestment.userId,
+          },
+        })
 
-      // Calculate fund utilization
-      const utilization = fund.targetSize > 0 ? (totalInvested / fund.targetSize) * 100 : 0;
+        const distributions = await prisma.fundDistribution.findMany({
+          where: {
+            fundId: fundInvestment.fundId,
+            userId: fundInvestment.userId,
+          },
+        })
 
-      return {
-        id: fund.id,
-        name: fund.name,
-        description: fund.description,
-        fundType: fund.fundType,
-        targetSize: fund.targetSize,
-        minimumInvestment: fund.minimumInvestment,
-        maximumInvestment: fund.maximumInvestment,
-        startDate: fund.startDate,
-        endDate: fund.endDate,
-        status: fund.status,
-        sponsor: fund.sponsor,
-        totalInvested,
-        totalDistributions,
-        currentValue,
-        totalReturn,
-        irr,
-        utilization,
-        properties: fund.properties?.map(fp => ({
-          id: fp.property.id,
-          name: fp.property.name,
-          address: fp.property.address,
-          ownershipPercentage: fp.ownershipPercentage,
-          acquisitionPrice: fp.acquisitionPrice,
-          currentValue: fp.property.currentValue || fp.property.price,
-        })),
-        waterfallConfig: fund.waterfallConfigs?.[0],
-        documents: fund.documents,
-        userInvestment: (fund as any).userInvestment,
-        userDistributions: (fund as any).userDistributions,
-      };
-    });
+        const totalContributions = contributions.reduce((sum: number, contrib: any) => sum + contrib.amount, 0)
+        const totalDistributions = distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
+        const currentValue = fundInvestment.investmentAmount // Simplified for now
+        const totalReturn = currentValue + totalDistributions - totalContributions
+        const irr = totalContributions > 0 ? ((totalReturn / totalContributions) * 100) : 0
 
-    return NextResponse.json(fundsWithMetrics);
+        return {
+          id: fundInvestment.id,
+          fundId: fundInvestment.fundId,
+          fundName: fundInvestment.fund.name,
+          fundDescription: fundInvestment.fund.description,
+          fundType: fundInvestment.fund.fundType,
+          investmentAmount: fundInvestment.investmentAmount,
+          currentValue,
+          totalReturn,
+          irr,
+          ownershipPercentage: fundInvestment.ownershipPercentage || 100,
+          status: fundInvestment.status,
+          investmentDate: fundInvestment.investmentDate,
+          contributions,
+          distributions,
+          fund: {
+            id: fundInvestment.fund.id,
+            name: fundInvestment.fund.name,
+            description: fundInvestment.fund.description,
+            fundType: fundInvestment.fund.fundType,
+            targetSize: fundInvestment.fund.targetSize,
+            currentSize: fundInvestment.fund.currentSize,
+          },
+          user: fundInvestment.user,
+        }
+      })
+    )
+
+    return NextResponse.json(fundInvestmentsWithMetrics)
   } catch (error) {
-    console.error('Error fetching investor funds:', error);
+    console.error('Error fetching investor funds:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request)
+    
+    // Check if user has permission to create fund investments
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      fundId,
+      userId,
+      investmentAmount,
+      ownershipPercentage,
+      investmentDate,
+    } = body
+
+    // Validate required fields
+    if (!fundId || !userId || !investmentAmount) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+
+    // Check if fund exists
+    const fund = await prisma.fund.findUnique({
+      where: { id: fundId },
+    })
+
+    if (!fund) {
+      return NextResponse.json(
+        { error: 'Fund not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    // Create fund investment
+    const fundInvestment = await prisma.fundInvestment.create({
+      data: {
+        userId,
+        fundId,
+        investmentAmount: parseFloat(investmentAmount),
+        ownershipPercentage: ownershipPercentage ? parseFloat(ownershipPercentage) : null,
+        investmentDate: investmentDate ? new Date(investmentDate) : new Date(),
+        status: 'ACTIVE',
+      },
+      include: {
+        fund: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    // Update fund current size
+    await prisma.fund.update({
+      where: { id: fundId },
+      data: {
+        currentSize: {
+          increment: parseFloat(investmentAmount),
+        },
+      },
+    })
+
+    // Create notification for the investor
+    await prisma.notification.create({
+      data: {
+        userId,
+        title: 'New Fund Investment Created',
+        message: `A new fund investment of $${investmentAmount.toLocaleString()} has been created for ${fund.name}`,
+        type: 'FUND_UPDATE',
+      },
+    })
+
+    return NextResponse.json(fundInvestment, { status: 201 })
+  } catch (error) {
+    console.error('Error creating fund investment:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 } 

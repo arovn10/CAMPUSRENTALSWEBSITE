@@ -1,149 +1,148 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { fetchProperties as fetchExternalProperties } from '@/utils/api';
-
-// Photo mapping based on the provided property data
-const PROPERTY_PHOTOS: { [key: number]: string } = {
-  1: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/350A9684-5FDB-404A-8321-CC371FA823A3.jpg',
-  2: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/C8D725A7-58EE-4E7A-B73A-2B4D92EA566A.jpg',
-  6: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/FAE13088-D469-4A2D-BE0D-54235CC897A5.jpg',
-  10: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/DFDFAA57-6C09-4631-91EE-6749113B6A67.jpg',
-};
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from cookie
-    const token = request.cookies.get('auth-token')?.value;
+    const user = await requireAuth(request)
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'No authentication token' },
-        { status: 401 }
-      );
-    }
+    // Mock property investments data
+    const mockInvestments = [
+      {
+        id: 'inv-1',
+        propertyId: 'prop-1',
+        propertyName: '2422 Joseph St.',
+        propertyAddress: '2422 Joseph St, New Orleans, LA 70118',
+        investmentAmount: 100000,
+        currentValue: 110000,
+        totalReturn: 10000,
+        irr: 10.0,
+        ownershipPercentage: 20,
+        status: 'ACTIVE',
+        investmentDate: '2024-01-20T00:00:00.000Z',
+        distributions: [
+          {
+            id: 'dist-1',
+            amount: 2500,
+            distributionDate: '2024-06-01T00:00:00.000Z',
+            distributionType: 'RENTAL_INCOME',
+            description: 'Monthly rental income distribution',
+          },
+          {
+            id: 'dist-2',
+            amount: 2500,
+            distributionDate: '2024-07-01T00:00:00.000Z',
+            distributionType: 'RENTAL_INCOME',
+            description: 'Monthly rental income distribution',
+          },
+        ],
+        property: {
+          id: 'prop-1',
+          name: '2422 Joseph St.',
+          address: '2422 Joseph St, New Orleans, LA 70118',
+          description: 'Beautiful 4-bedroom property near Tulane University',
+          bedrooms: 4,
+          bathrooms: 2,
+          price: 500000,
+          squareFeet: 1400,
+          propertyType: 'SINGLE_FAMILY',
+          acquisitionDate: '2024-01-15T00:00:00.000Z',
+          acquisitionPrice: 450000,
+          currentValue: 520000,
+          occupancyRate: 95,
+          monthlyRent: 3500,
+          annualExpenses: 15000,
+          capRate: 6.5,
+        },
+      },
+      {
+        id: 'inv-2',
+        propertyId: 'prop-2',
+        propertyName: '2424 Joseph St',
+        propertyAddress: '2424 Joseph St, New Orleans, LA 70115',
+        investmentAmount: 75000,
+        currentValue: 82500,
+        totalReturn: 7500,
+        irr: 10.0,
+        ownershipPercentage: 16.67,
+        status: 'ACTIVE',
+        investmentDate: '2024-03-25T00:00:00.000Z',
+        distributions: [
+          {
+            id: 'dist-3',
+            amount: 1800,
+            distributionDate: '2024-06-01T00:00:00.000Z',
+            distributionType: 'RENTAL_INCOME',
+            description: 'Monthly rental income distribution',
+          },
+        ],
+        property: {
+          id: 'prop-2',
+          name: '2424 Joseph St',
+          address: '2424 Joseph St, New Orleans, LA 70115',
+          description: '3-bedroom property with great rental potential',
+          bedrooms: 3,
+          bathrooms: 2,
+          price: 450000,
+          squareFeet: 1200,
+          propertyType: 'SINGLE_FAMILY',
+          acquisitionDate: '2024-03-20T00:00:00.000Z',
+          acquisitionPrice: 420000,
+          currentValue: 470000,
+          occupancyRate: 100,
+          monthlyRent: 2800,
+          annualExpenses: 12000,
+          capRate: 6.8,
+        },
+      },
+    ]
 
-    // Verify token
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      );
-    }
-
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-    });
-
-    if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'User not found or inactive' },
-        { status: 401 }
-      );
-    }
-
-    // Fetch properties from the same external API as the main website
-    const externalProperties = await fetchExternalProperties();
+    // Filter investments based on user role
+    let investments = mockInvestments
     
-    if (!externalProperties || externalProperties.length === 0) {
-      return NextResponse.json([]);
+    if (user.role === 'INVESTOR') {
+      if (user.email === 'investor1@example.com') {
+        investments = mockInvestments // Investor 1 has both properties
+      } else {
+        investments = [] // Investor 2 has no property investments in this mock
+      }
     }
 
-    let properties;
-
-    if (user.role === 'ADMIN') {
-      // Admin can see all properties
-      properties = externalProperties;
-    } else {
-      // Investors can only see properties they're invested in
-      const userInvestments = await prisma.investment.findMany({
-        where: {
-          userId: user.id,
-          status: 'ACTIVE',
-        },
-        include: {
-          distributions: true,
-        },
-      });
-
-      // Map external properties to user investments
-      const investedPropertyIds = userInvestments.map(inv => inv.propertyId);
-      properties = externalProperties.filter(prop => 
-        investedPropertyIds.includes(prop.property_id.toString())
-      );
-    }
-
-    // Calculate financial metrics and add photos for each property
-    const propertiesWithMetrics = await Promise.all(
-      properties.map(async (property) => {
-        // Get investment data for this property
-        const investment = await prisma.investment.findFirst({
-          where: {
-            propertyId: property.property_id.toString(),
-            userId: user.id,
-            status: 'ACTIVE',
-          },
-          include: {
-            distributions: true,
-          },
-        });
-
-        // Get property from database for additional data
-        const dbProperty = await prisma.property.findUnique({
-          where: { propertyId: property.property_id },
-        });
-
-        const totalInvested = investment?.investmentAmount || 0;
-        const totalDistributions = investment?.distributions.reduce((sum, dist) => sum + dist.amount, 0) || 0;
-        
-        // Use current value from database if available, otherwise use price
-        const currentValue = dbProperty?.currentValue || property.price || 0;
-        const totalReturn = currentValue + totalDistributions - totalInvested;
-        const irr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
-
-        // Get photo for this property - prioritize actual photos from API
-        const photo = property.photo || PROPERTY_PHOTOS[property.property_id] || '/placeholder.png';
-
-        return {
-          id: property.property_id.toString(),
-          propertyId: property.property_id,
-          name: property.name,
-          address: property.address,
-          description: property.description,
-          price: property.price,
-          photo: photo,
-          investmentAmount: totalInvested,
-          totalReturn: totalReturn,
-          irr: irr,
-          distributions: investment?.distributions || [],
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          squareFeet: property.squareFeet,
-          school: property.school,
-          leaseTerms: property.leaseTerms,
-          latitude: property.latitude,
-          longitude: property.longitude,
-          // Additional data from database if available
-          propertyType: dbProperty?.propertyType || 'SINGLE_FAMILY',
-          acquisitionDate: dbProperty?.acquisitionDate,
-          acquisitionPrice: dbProperty?.acquisitionPrice,
-          currentValue: currentValue,
-          occupancyRate: dbProperty?.occupancyRate,
-          monthlyRent: dbProperty?.monthlyRent,
-          annualExpenses: dbProperty?.annualExpenses,
-          capRate: dbProperty?.capRate,
-        };
-      })
-    );
-
-    return NextResponse.json(propertiesWithMetrics);
+    return NextResponse.json(investments)
   } catch (error) {
-    console.error('Error fetching investor properties:', error);
+    console.error('Error fetching investor properties:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request)
+    
+    // Check if user has permission to create investments
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    
+    // Mock response for demonstration
+    return NextResponse.json({
+      id: 'new-inv-1',
+      ...body,
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating investment:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 } 
