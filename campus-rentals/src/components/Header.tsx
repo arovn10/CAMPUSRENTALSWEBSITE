@@ -25,6 +25,7 @@ export default function Header() {
             <Link href="/properties" className="text-text hover:text-accent transition-colors">Properties</Link>
             <Link href="/about" className="text-text hover:text-accent transition-colors">About</Link>
             <Link href="/contact" className="text-text hover:text-accent transition-colors">Contact</Link>
+            <Link href="/investors/login" className="text-text hover:text-accent transition-colors">Investors</Link>
           </nav>
           {/* Instagram Icon (always visible) */}
           <div className="flex items-center space-x-4">
@@ -66,6 +67,7 @@ export default function Header() {
           <Link href="/properties" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Properties</Link>
           <Link href="/about" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>About</Link>
           <Link href="/contact" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+          <Link href="/investors/login" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Investors</Link>
           <a 
             href="https://www.instagram.com/campusrentalsllc" 
             target="_blank" 

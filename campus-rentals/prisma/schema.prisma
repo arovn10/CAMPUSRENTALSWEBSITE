@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User/Investor Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(INVESTOR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  investments     Investment[]
+  distributions   Distribution[]
+  propertyAccess PropertyAccess[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  INVESTOR
+  MANAGER
+}
+
+// Property Management (linked to existing properties)
+model Property {
+  id          String   @id @default(cuid())
+  propertyId  Int      @unique // External property ID from existing system
+  name        String
+  address     String
+  description String?
+  bedrooms    Int
+  bathrooms   Int
+  price       Float
+  squareFeet  Int?
+  school      String
+  photo       String?
+  leaseTerms  DateTime
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Investment Relations
+  investments     Investment[]
+  distributions   Distribution[]
+  propertyAccess PropertyAccess[]
+  waterfallConfigs WaterfallConfig[]
+
+  @@map("properties")
+}
+
+// Investment Management
+model Investment {
+  id              String   @id @default(cuid())
+  propertyId      String
+  userId          String
+  investmentAmount Float
+  preferredReturn Float   @default(0) // Annual preferred return percentage
+  startDate       DateTime
+  endDate         DateTime?
+  status          InvestmentStatus @default(ACTIVE)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  distributions Distribution[]
+
+  @@unique([propertyId, userId])
+  @@map("investments")
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  SOLD
+  TRANSFERRED
+  CANCELLED
+}
+
+// Distribution Management
+model Distribution {
+  id              String   @id @default(cuid())
+  propertyId      String
+  userId          String
+  investmentId    String
+  amount          Float
+  type            DistributionType
+  distributionDate DateTime
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  investment  Investment  @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@map("distributions")
+}
+
+enum DistributionType {
+  PREFERRED_RETURN
+  PROFIT_SHARE
+  RETURN_OF_CAPITAL
+  SALE_PROCEEDS
+}
+
+// Waterfall Configuration
+model WaterfallConfig {
+  id                String   @id @default(cuid())
+  propertyId        String   @unique
+  preferredReturn   Float    @default(8.0) // Default 8% preferred return
+  promoteThreshold  Float    @default(80.0) // 80/20 split after preferred return
+  promotePercentage Float    @default(20.0) // 20% promote to sponsor
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("waterfall_configs")
+}
+
+// Property Access Control
+model PropertyAccess {
+  id         String   @id @default(cuid())
+  propertyId String
+  userId     String
+  accessType AccessType @default(VIEW)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, userId])
+  @@map("property_access")
+}
+
+enum AccessType {
+  VIEW
+  EDIT
+  ADMIN
+}
+
+// Financial Calculations Cache
+model FinancialCalculation {
+  id              String   @id @default(cuid())
+  propertyId      String
+  calculationType CalculationType
+  calculationDate DateTime
+  data            Json     // Store calculation results as JSON
+  createdAt       DateTime @default(now())
+
+  // Relations
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, calculationType, calculationDate])
+  @@map("financial_calculations")
+}
+
+enum CalculationType {
+  IRR
+  CASH_ON_CASH
+  TOTAL_RETURN
+  WATERFALL
+  DISTRIBUTION_SCHEDULE
+} 

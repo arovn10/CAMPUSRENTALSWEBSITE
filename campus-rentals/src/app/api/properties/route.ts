@@ -17,6 +17,7 @@ import {
   Photo,
   PropertyAmenities
 } from '@/utils/api';
+import { getPropertyPhoto } from '@/utils/propertyPhotos';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
@@ -180,13 +181,27 @@ async function getCachedData() {
 export async function GET() {
   try {
     const data = await getCachedData();
-    return NextResponse.json(data.properties);
+    
+    // Enhance properties with photos from our photo utility
+    const enhancedProperties = data.properties.map((property: any) => ({
+      ...property,
+      photo: getPropertyPhoto(property.property_id) || property.photo || '/placeholder.png'
+    }));
+    
+    return NextResponse.json(enhancedProperties);
   } catch (error) {
     console.error('Error in properties API:', error);
     // Fallback to original API
     try {
       const properties = await originalFetchProperties();
-      return NextResponse.json(properties);
+      
+      // Enhance fallback properties with photos
+      const enhancedProperties = properties.map((property: any) => ({
+        ...property,
+        photo: getPropertyPhoto(property.property_id) || property.photo || '/placeholder.png'
+      }));
+      
+      return NextResponse.json(enhancedProperties);
     } catch (fallbackError) {
       console.error('Fallback API also failed:', fallbackError);
       return NextResponse.json(
