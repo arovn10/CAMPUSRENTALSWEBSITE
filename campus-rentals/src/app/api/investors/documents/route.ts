@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     let documents;
 
-    if (user.role === 'ADMIN' || user.role === 'SPONSOR') {
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
       // Admin and sponsors can see all documents
       const whereClause: any = {};
       
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has permission to upload documents
-    if (user.role !== 'ADMIN' && user.role !== 'SPONSOR') {
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     let funds;
 
-    if (user.role === 'ADMIN' || user.role === 'SPONSOR') {
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
       // Admin and sponsors can see all funds
       funds = await prisma.fund.findMany({
         where: { status: 'ACTIVE' },
