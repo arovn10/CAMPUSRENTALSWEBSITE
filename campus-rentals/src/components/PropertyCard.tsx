@@ -28,6 +28,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   useEffect(() => {
     const loadThumbnail = async () => {
       try {
+        // Always fetch photos from the API using the property ID
         const photos = await fetchPropertyPhotos(property.property_id);
         if (photos.length > 0) {
           setThumbnail(getOptimizedImageUrl(photos[0]));

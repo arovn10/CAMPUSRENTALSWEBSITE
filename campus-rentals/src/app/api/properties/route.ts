@@ -182,26 +182,14 @@ export async function GET() {
   try {
     const data = await getCachedData();
     
-    // Enhance properties with photos from our photo utility
-    const enhancedProperties = data.properties.map((property: any) => ({
-      ...property,
-      photo: getPropertyPhoto(property.property_id) || property.photo || '/placeholder.png'
-    }));
-    
-    return NextResponse.json(enhancedProperties);
+    // Return properties without photos - photos should be fetched via /api/photos/{id}
+    return NextResponse.json(data.properties);
   } catch (error) {
     console.error('Error in properties API:', error);
     // Fallback to original API
     try {
       const properties = await originalFetchProperties();
-      
-      // Enhance fallback properties with photos
-      const enhancedProperties = properties.map((property: any) => ({
-        ...property,
-        photo: getPropertyPhoto(property.property_id) || property.photo || '/placeholder.png'
-      }));
-      
-      return NextResponse.json(enhancedProperties);
+      return NextResponse.json(properties);
     } catch (fallbackError) {
       console.error('Fallback API also failed:', fallbackError);
       return NextResponse.json(

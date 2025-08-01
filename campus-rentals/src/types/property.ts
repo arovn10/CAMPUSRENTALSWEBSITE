@@ -11,7 +11,10 @@ export interface Property {
   amenities: string | null;
   leaseTerms: string;
   photo: string | null;
+  photos?: string[]; // Array of all photo URLs for the property
   school: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface PropertyPhoto {

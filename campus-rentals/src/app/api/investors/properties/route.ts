@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
       const totalReturn = currentValue + totalDistributions - totalInvested;
       const irr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
 
-      // Get photo for this property
-      const photo = PROPERTY_PHOTOS[property.propertyId] || '/placeholder.png';
+      // Get photo for this property - prioritize actual photos from API
+      const photo = property.photo || PROPERTY_PHOTOS[property.propertyId] || '/placeholder.png';
 
       return {
         id: property.id,
