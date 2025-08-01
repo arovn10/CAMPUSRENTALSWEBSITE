@@ -7,6 +7,7 @@ import {
   BuildingOfficeIcon,
   InformationCircleIcon,
   PhoneIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 export default function Navbar() {
@@ -61,6 +62,15 @@ export default function Navbar() {
             >
               <PhoneIcon className="h-5 w-5" />
               <span>Contact</span>
+            </Link>
+            <Link 
+              href="/investors" 
+              className={`flex items-center space-x-2 transition-colors duration-300 ${
+                isActive('/investors') ? 'text-accent' : 'text-gray-300 hover:text-accent'
+              }`}
+            >
+              <UserGroupIcon className="h-5 w-5" />
+              <span>Investors</span>
             </Link>
           </div>
         </div>
