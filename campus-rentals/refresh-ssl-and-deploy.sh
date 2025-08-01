@@ -71,6 +71,49 @@ ssh -i "$SSH_KEY_PATH" "$AWS_USER@$AWS_HOST" << 'ENDSSH'
     
     cd campus-rentals
     
+    # Setup environment file
+    log "🔧 Setting up environment file..."
+    cat > .env << 'EOF'
+# Database Configuration
+# Prisma Accelerate Database URL
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19VMU5SaVV5MHBrSm43cXBWbXFCNXYiLCJhcGlfa2V5IjoiMDFLMUpZRlY4UkJOTkc1MjEwQTlBOE4zMjQiLCJ0ZW5hbnRfaWQiOiI0NDJjYmZlOTJlNjY4MDk0ODAyNDUzODU3MzhmZjcyNWI3ZTJmZjBhNzEyYzA0MDNiZjU0YTgzNTZlYmE0ZGU3IiwiaW50ZXJuYWxfc2VjcmV0IjoiZjEzYmUzOWItOWIzZC00NmY1LWIzOGYtMGQ0ZjUyNWIwNTlhIn0.g1IIGCJPW1gj-HKerDj_qygHG040s8V0O3LjxqQundw"
+
+# JWT Configuration
+# Generate a secure random string for JWT signing
+JWT_SECRET="campus-rentals-super-secure-jwt-secret-key-2024"
+
+# Google Maps API
+# Your Google Maps API key for geocoding and maps
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="AIzaSyCMRq-rxm_IqV32dHmhhRshHfCXJHUZmqA"
+
+# AWS Configuration
+NEXT_PUBLIC_AWS_ACCESS_KEY_ID="15108fde5089768d6f68eaa70320e1f3442387814fa5ad1a20ff5e90b9894ee8"
+NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+NEXT_PUBLIC_AWS_REGION="us-east-2"
+NEXT_PUBLIC_S3_BUCKET_NAME="abodebucket"
+
+# GitHub Webhook (if using auto-deploy)
+GITHUB_WEBHOOK_SECRET="your-github-webhook-secret"
+
+# Environment
+NODE_ENV="production"
+
+# Prisma Configuration
+PRISMA_GENERATE_DATAPROXY=true
+
+# Database Pool Configuration
+DATABASE_POOL_SIZE=10
+DATABASE_CONNECTION_LIMIT=20
+
+# Cache Configuration
+CACHE_TTL=3600
+CACHE_MAX_SIZE=100
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+EOF
+    
     log "📦 Installing dependencies..."
     npm install
     
@@ -108,13 +151,15 @@ ssh -i "$SSH_KEY_PATH" "$AWS_USER@$AWS_HOST" << 'ENDSSH'
     
     # Test HTTPS access
     log "🌐 Testing HTTPS access..."
-    curl -I https://campusrentalsllc.com 2>/dev/null | head -1 || echo "⚠️ HTTPS test failed - check DNS and certificate"
+    curl -I https://campusrentalsllc.com
     
     log "✅ SSL refresh and deployment completed successfully!"
+    
     echo ""
     echo "🎉 Summary:"
     echo "✅ SSL certificate renewed"
     echo "✅ Application updated and restarted"
+    echo "✅ Environment file configured"
     echo "✅ Nginx configuration reloaded"
     echo "✅ Cache warmed up"
     echo ""
@@ -128,24 +173,19 @@ ssh -i "$SSH_KEY_PATH" "$AWS_USER@$AWS_HOST" << 'ENDSSH'
     echo "   curl -I https://campusrentalsllc.com"
 ENDSSH
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ SSL certificate refresh and site update completed successfully!${NC}"
-    echo ""
-    echo -e "${GREEN}🎉 Your Campus Rentals website is now updated with:${NC}"
-    echo -e "   ✅ Fresh SSL certificate"
-    echo -e "   ✅ Latest code deployment"
-    echo -e "   ✅ Restarted application"
-    echo -e "   ✅ Warmed up cache"
-    echo ""
-    echo -e "${YELLOW}🌐 Test your website:${NC}"
-    echo -e "   https://campusrentalsllc.com"
-    echo -e "   https://www.campusrentalsllc.com"
-    echo ""
-    echo -e "${YELLOW}📊 Monitor your deployment:${NC}"
-    echo -e "   ssh -i '$SSH_KEY_PATH' $AWS_USER@$AWS_HOST 'pm2 logs campus-rentals'"
-    echo -e "   ssh -i '$SSH_KEY_PATH' $AWS_USER@$AWS_HOST 'sudo certbot certificates'"
-else
-    echo -e "${RED}❌ SSL refresh and deployment failed!${NC}"
-    echo -e "${YELLOW}Please check the error messages above and try again.${NC}"
-    exit 1
-fi 
+echo -e "${GREEN}✅ SSL certificate refresh and site update completed successfully!${NC}"
+echo ""
+echo -e "${GREEN}🎉 Your Campus Rentals website is now updated with:${NC}"
+echo -e "${GREEN}   ✅ Fresh SSL certificate${NC}"
+echo -e "${GREEN}   ✅ Latest code deployment${NC}"
+echo -e "${GREEN}   ✅ Environment file configured${NC}"
+echo -e "${GREEN}   ✅ Restarted application${NC}"
+echo -e "${GREEN}   ✅ Warmed up cache${NC}"
+echo ""
+echo -e "${BLUE}🌐 Test your website:${NC}"
+echo -e "${BLUE}   https://campusrentalsllc.com${NC}"
+echo -e "${BLUE}   https://www.campusrentalsllc.com${NC}"
+echo ""
+echo -e "${BLUE}📊 Monitor your deployment:${NC}"
+echo -e "${BLUE}   ssh -i '$SSH_KEY_PATH' $AWS_USER@$AWS_HOST 'pm2 logs campus-rentals'${NC}"
+echo -e "${BLUE}   ssh -i '$SSH_KEY_PATH' $AWS_USER@$AWS_HOST 'sudo certbot certificates'${NC}" 

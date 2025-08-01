@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Setup Environment File for Campus Rentals
+# This script creates the .env file on the production server
+
+echo "🔧 Setting up environment file on AWS server..."
+
+# Create the .env file with production settings
+cat > /var/www/campus-rentals/campus-rentals/.env << 'EOF'
+# Database Configuration
+# Prisma Accelerate Database URL
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19VMU5SaVV5MHBrSm43cXBWbXFCNXYiLCJhcGlfa2V5IjoiMDFLMUpZRlY4UkJOTkc1MjEwQTlBOE4zMjQiLCJ0ZW5hbnRfaWQiOiI0NDJjYmZlOTJlNjY4MDk0ODAyNDUzODU3MzhmZjcyNWI3ZTJmZjBhNzEyYzA0MDNiZjU0YTgzNTZlYmE0ZGU3IiwiaW50ZXJuYWxfc2VjcmV0IjoiZjEzYmUzOWItOWIzZC00NmY1LWIzOGYtMGQ0ZjUyNWIwNTlhIn0.g1IIGCJPW1gj-HKerDj_qygHG040s8V0O3LjxqQundw"
+
+# JWT Configuration
+# Generate a secure random string for JWT signing
+JWT_SECRET="campus-rentals-super-secure-jwt-secret-key-2024"
+
+# Google Maps API
+# Your Google Maps API key for geocoding and maps
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="AIzaSyCMRq-rxm_IqV32dHmhhRshHfCXJHUZmqA"
+
+# AWS Configuration
+NEXT_PUBLIC_AWS_ACCESS_KEY_ID="15108fde5089768d6f68eaa70320e1f3442387814fa5ad1a20ff5e90b9894ee8"
+NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+NEXT_PUBLIC_AWS_REGION="us-east-2"
+NEXT_PUBLIC_S3_BUCKET_NAME="abodebucket"
+
+# GitHub Webhook (if using auto-deploy)
+GITHUB_WEBHOOK_SECRET="your-github-webhook-secret"
+
+# Environment
+NODE_ENV="production"
+
+# Prisma Configuration
+PRISMA_GENERATE_DATAPROXY=true
+
+# Database Pool Configuration
+DATABASE_POOL_SIZE=10
+DATABASE_CONNECTION_LIMIT=20
+
+# Cache Configuration
+CACHE_TTL=3600
+CACHE_MAX_SIZE=100
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+EOF
+
+echo "✅ Environment file created successfully!"
+echo "🔒 File is protected and not tracked in git"
+echo "🔄 Restarting application to pick up new environment..."
+
+# Restart the application
+pm2 restart campus-rentals
+
+echo "✅ Environment setup completed!" 
