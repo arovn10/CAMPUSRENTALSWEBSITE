@@ -34,6 +34,9 @@ export function verifyToken(token: string): JWTPayload | null {
 export async function authenticateUser(email: string, password: string) {
   const user = await prisma.user.findUnique({
     where: { email },
+    include: {
+      userPreferences: true,
+    },
   });
 
   if (!user || !user.isActive) {
@@ -63,6 +66,17 @@ export async function createInitialUsers() {
         firstName: 'Admin',
         lastName: 'User',
         role: 'ADMIN',
+        kycStatus: 'APPROVED',
+        userPreferences: {
+          create: {
+            emailNotifications: true,
+            smsNotifications: false,
+            currency: 'USD',
+            timezone: 'America/New_York',
+            dateFormat: 'MM/DD/YYYY',
+            numberFormat: 'en-US',
+          },
+        },
       },
     });
     console.log('✅ Admin user created');
@@ -82,8 +96,116 @@ export async function createInitialUsers() {
         firstName: 'Investor',
         lastName: 'User',
         role: 'INVESTOR',
+        kycStatus: 'APPROVED',
+        userPreferences: {
+          create: {
+            emailNotifications: true,
+            smsNotifications: false,
+            currency: 'USD',
+            timezone: 'America/New_York',
+            dateFormat: 'MM/DD/YYYY',
+            numberFormat: 'en-US',
+          },
+        },
       },
     });
     console.log('✅ Investor user created');
   }
+
+  // Create a sponsor user for fund management
+  const existingSponsor = await prisma.user.findUnique({
+    where: { email: 'sponsor@campusrentals.com' },
+  });
+
+  if (!existingSponsor) {
+    const sponsorPassword = await hashPassword('Sponsor2024!');
+    await prisma.user.create({
+      data: {
+        email: 'sponsor@campusrentals.com',
+        password: sponsorPassword,
+        firstName: 'Fund',
+        lastName: 'Sponsor',
+        role: 'SPONSOR',
+        kycStatus: 'APPROVED',
+        userPreferences: {
+          create: {
+            emailNotifications: true,
+            smsNotifications: false,
+            currency: 'USD',
+            timezone: 'America/New_York',
+            dateFormat: 'MM/DD/YYYY',
+            numberFormat: 'en-US',
+          },
+        },
+      },
+    });
+    console.log('✅ Sponsor user created');
+  }
+}
+
+// Enhanced user management functions
+export async function createUser(userData: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}) {
+  const hashedPassword = await hashPassword(userData.password);
+  
+  return await prisma.user.create({
+    data: {
+      ...userData,
+      password: hashedPassword,
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: false,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
+      },
+    },
+    include: {
+      userPreferences: true,
+    },
+  });
+}
+
+export async function updateUser(userId: string, updateData: any) {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    include: {
+      userPreferences: true,
+    },
+  });
+}
+
+export async function getUserWithPreferences(userId: string) {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      userPreferences: true,
+      investments: {
+        include: {
+          property: true,
+          distributions: true,
+        },
+      },
+      fundInvestments: {
+        include: {
+          fund: true,
+          fundDistributions: true,
+        },
+      },
+    },
+  });
 } 

@@ -47,14 +47,35 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0);
+      const fundInvestments = await prisma.fundInvestment.findMany({
+        where: { status: 'ACTIVE' },
+        include: {
+          fund: true,
+          fundDistributions: true,
+        },
+      });
+
+      const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0) +
+        fundInvestments.reduce((sum, inv) => sum + inv.investmentAmount, 0);
+
       const totalDistributions = investments.reduce((sum, inv) => 
         sum + inv.distributions.reduce((distSum, dist) => distSum + dist.amount, 0), 0
+      ) + fundInvestments.reduce((sum, inv) => 
+        sum + inv.fundDistributions.reduce((distSum, dist) => distSum + dist.amount, 0), 0
       );
-      const totalValue = investments.reduce((sum, inv) => sum + (inv.property.price || 0), 0);
+
+      const totalValue = investments.reduce((sum, inv) => sum + (inv.property.currentValue || inv.property.price), 0) +
+        fundInvestments.reduce((sum, inv) => {
+          const fundValue = inv.fund.properties?.reduce((fundSum, fp) => 
+            fundSum + (fp.property.currentValue || fp.property.price) * (fp.ownershipPercentage / 100), 0
+          ) || 0;
+          return sum + fundValue;
+        }, 0);
+
       const totalReturn = totalValue + totalDistributions - totalInvested;
       const averageIrr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
       const activeProperties = new Set(investments.map(inv => inv.propertyId)).size;
+      const activeFunds = new Set(fundInvestments.map(inv => inv.fundId)).size;
 
       stats = {
         totalInvested,
@@ -62,6 +83,8 @@ export async function GET(request: NextRequest) {
         totalReturn,
         averageIrr,
         activeProperties,
+        activeFunds,
+        totalDistributions,
       };
     } else {
       // Investor gets their personal stats
@@ -76,24 +99,60 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0);
+      const fundInvestments = await prisma.fundInvestment.findMany({
+        where: {
+          userId: user.id,
+          status: 'ACTIVE',
+        },
+        include: {
+          fund: {
+            include: {
+              properties: {
+                include: {
+                  property: true,
+                },
+              },
+            },
+          },
+          fundDistributions: true,
+        },
+      });
+
+      const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0) +
+        fundInvestments.reduce((sum, inv) => sum + inv.investmentAmount, 0);
+
       const totalDistributions = investments.reduce((sum, inv) => 
         sum + inv.distributions.reduce((distSum, dist) => distSum + dist.amount, 0), 0
+      ) + fundInvestments.reduce((sum, inv) => 
+        sum + inv.fundDistributions.reduce((distSum, dist) => distSum + dist.amount, 0), 0
       );
       
       // Calculate current value based on property values and investment percentage
       let totalValue = 0;
+      
+      // Property investments
       investments.forEach(investment => {
-        const propertyValue = investment.property.price || 0;
-        const totalPropertyInvestment = 0; // This would need to be calculated from all investments in the property
-        const investmentPercentage = totalPropertyInvestment > 0 ? 
-          (investment.investmentAmount / totalPropertyInvestment) : 1;
-        totalValue += propertyValue * investmentPercentage;
+        const propertyValue = investment.property.currentValue || investment.property.price || 0;
+        // For direct property investments, assume full ownership of the investment amount
+        totalValue += propertyValue;
+      });
+
+      // Fund investments
+      fundInvestments.forEach(investment => {
+        const fundValue = investment.fund.properties?.reduce((sum, fp) => 
+          sum + (fp.property.currentValue || fp.property.price) * (fp.ownershipPercentage / 100), 0
+        ) || 0;
+        
+        // Calculate investor's share of the fund value
+        const totalFundInvestment = investment.fund.fundInvestments?.reduce((sum, fi) => sum + fi.investmentAmount, 0) || investment.investmentAmount;
+        const investorShare = totalFundInvestment > 0 ? (investment.investmentAmount / totalFundInvestment) : 1;
+        totalValue += fundValue * investorShare;
       });
 
       const totalReturn = totalValue + totalDistributions - totalInvested;
       const averageIrr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
       const activeProperties = investments.length;
+      const activeFunds = fundInvestments.length;
 
       stats = {
         totalInvested,
@@ -101,6 +160,8 @@ export async function GET(request: NextRequest) {
         totalReturn,
         averageIrr,
         activeProperties,
+        activeFunds,
+        totalDistributions,
       };
     }
 

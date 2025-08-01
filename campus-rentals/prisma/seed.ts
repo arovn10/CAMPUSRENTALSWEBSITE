@@ -4,270 +4,646 @@ import { hashPassword } from '../lib/auth';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Starting database seed...');
 
-  // Check if admin user already exists
-  const existingAdmin = await prisma.user.findUnique({
+  // Create users
+  const adminPassword = await hashPassword('Celarev0319942002!');
+  const investorPassword = await hashPassword('15Saratoga!');
+  const sponsorPassword = await hashPassword('Sponsor2024!');
+
+  const admin = await prisma.user.upsert({
     where: { email: 'rovnerproperties@gmail.com' },
+    update: {},
+    create: {
+      email: 'rovnerproperties@gmail.com',
+      password: adminPassword,
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'ADMIN',
+      kycStatus: 'APPROVED',
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: false,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
+      },
+    },
   });
 
-  if (!existingAdmin) {
-    const adminPassword = await hashPassword('Celarev0319942002!');
-    await prisma.user.create({
-      data: {
-        email: 'rovnerproperties@gmail.com',
-        password: adminPassword,
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'ADMIN',
-      },
-    });
-    console.log('✅ Admin user created: rovnerproperties@gmail.com');
-  } else {
-    console.log('ℹ️ Admin user already exists');
-  }
-
-  // Check if investor user already exists
-  const existingInvestor = await prisma.user.findUnique({
+  const investor = await prisma.user.upsert({
     where: { email: 'srovner@dial-law.com' },
+    update: {},
+    create: {
+      email: 'srovner@dial-law.com',
+      password: investorPassword,
+      firstName: 'Investor',
+      lastName: 'User',
+      role: 'INVESTOR',
+      kycStatus: 'APPROVED',
+      phone: '+1-555-0123',
+      address: '123 Main St',
+      city: 'Albany',
+      state: 'NY',
+      zipCode: '12207',
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: false,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
+      },
+    },
   });
 
-  if (!existingInvestor) {
-    const investorPassword = await hashPassword('15Saratoga!');
-    await prisma.user.create({
-      data: {
-        email: 'srovner@dial-law.com',
-        password: investorPassword,
-        firstName: 'Investor',
-        lastName: 'User',
-        role: 'INVESTOR',
+  const sponsor = await prisma.user.upsert({
+    where: { email: 'sponsor@campusrentals.com' },
+    update: {},
+    create: {
+      email: 'sponsor@campusrentals.com',
+      password: sponsorPassword,
+      firstName: 'Fund',
+      lastName: 'Sponsor',
+      role: 'SPONSOR',
+      kycStatus: 'APPROVED',
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: false,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
       },
-    });
-    console.log('✅ Investor user created: srovner@dial-law.com');
-  } else {
-    console.log('ℹ️ Investor user already exists');
-  }
+    },
+  });
 
-  // Create actual properties from the provided data
-  const actualProperties = [
+  // Create additional investors
+  const investor2 = await prisma.user.upsert({
+    where: { email: 'investor2@example.com' },
+    update: {},
+    create: {
+      email: 'investor2@example.com',
+      password: await hashPassword('password123'),
+      firstName: 'Jane',
+      lastName: 'Smith',
+      role: 'INVESTOR',
+      kycStatus: 'APPROVED',
+      phone: '+1-555-0124',
+      address: '456 Oak Ave',
+      city: 'Schenectady',
+      state: 'NY',
+      zipCode: '12305',
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: true,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
+      },
+    },
+  });
+
+  const investor3 = await prisma.user.upsert({
+    where: { email: 'investor3@example.com' },
+    update: {},
+    create: {
+      email: 'investor3@example.com',
+      password: await hashPassword('password123'),
+      firstName: 'Mike',
+      lastName: 'Johnson',
+      role: 'INVESTOR',
+      kycStatus: 'APPROVED',
+      phone: '+1-555-0125',
+      address: '789 Pine St',
+      city: 'Troy',
+      state: 'NY',
+      zipCode: '12180',
+      userPreferences: {
+        create: {
+          emailNotifications: true,
+          smsNotifications: false,
+          currency: 'USD',
+          timezone: 'America/New_York',
+          dateFormat: 'MM/DD/YYYY',
+          numberFormat: 'en-US',
+        },
+      },
+    },
+  });
+
+  // Create funds
+  const fund1 = await prisma.fund.create({
+    data: {
+      name: 'Campus Rentals Fund I',
+      description: 'First fund focused on student housing properties near universities',
+      fundType: 'REAL_ESTATE',
+      targetSize: 5000000,
+      minimumInvestment: 50000,
+      maximumInvestment: 500000,
+      startDate: new Date('2023-01-01'),
+      endDate: new Date('2025-12-31'),
+      status: 'ACTIVE',
+      sponsorId: sponsor.id,
+      waterfallConfigs: {
+        create: {
+          preferredReturn: 8.0,
+          promoteThreshold: 80.0,
+          promotePercentage: 20.0,
+          catchUpPercentage: 100.0,
+        },
+      },
+    },
+  });
+
+  const fund2 = await prisma.fund.create({
+    data: {
+      name: 'Campus Rentals Opportunity Zone Fund',
+      description: 'Opportunity zone fund for qualified campus area developments',
+      fundType: 'OPPORTUNITY_ZONE',
+      targetSize: 10000000,
+      minimumInvestment: 100000,
+      maximumInvestment: 1000000,
+      startDate: new Date('2023-06-01'),
+      status: 'ACTIVE',
+      sponsorId: sponsor.id,
+      waterfallConfigs: {
+        create: {
+          preferredReturn: 7.0,
+          promoteThreshold: 85.0,
+          promotePercentage: 15.0,
+          catchUpPercentage: 100.0,
+        },
+      },
+    },
+  });
+
+  // Create properties that match the external API structure
+  // These property IDs should match the ones from the external API
+  const properties = [
     {
-      propertyId: 1,
-      name: '2422 Joseph St.',
-      address: '2422 Joseph St, New Orleans, LA 70118',
-      description: 'Beautiful home on Joseph St. only a 10-minute walk to campus! The house is on an extremely well-kempt street and only a few blocks from Starbucks and many other Freret Street shops. This listing is for the lower unit of the house which consists of 4 bedrooms and 2.5 baths. There is a large backyard that is shared with the upper unit and a driveway as well. The unit will be fully furnished.',
-      bedrooms: 4,
+      propertyId: 1, // This should match the external API property_id
+      name: '350A University Ave',
+      address: '350A University Ave, Albany, NY 12203',
+      description: 'Modern 3-bedroom apartment near UAlbany campus',
+      bedrooms: 3,
       bathrooms: 2,
-      price: 5000,
-      squareFeet: 1400,
-      school: 'Tulane University',
+      price: 450000,
+      squareFeet: 1200,
+      school: 'University at Albany',
       photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/350A9684-5FDB-404A-8321-CC371FA823A3.jpg',
-      leaseTerms: new Date('2025-06-01T20:01:52.000Z'),
-      latitude: 29.9389,
-      longitude: -90.1267,
+      leaseTerms: new Date('2024-08-01'),
+      latitude: 42.6862,
+      longitude: -73.8233,
+      propertyType: 'SINGLE_FAMILY',
+      acquisitionDate: new Date('2023-03-15'),
+      acquisitionPrice: 420000,
+      currentValue: 450000,
+      occupancyRate: 100,
+      monthlyRent: 2800,
+      annualExpenses: 18000,
+      capRate: 6.2,
     },
     {
-      propertyId: 2,
-      name: '2424 Joseph St',
-      address: '2424 Joseph St, New Orleans, LA 70115',
-      description: 'Beautiful home on Joseph St. only a 10-minute walk to campus! The house is on an extremely well-kempt street and only a few blocks from Starbucks and many other Freret Street shops. This listing is for the upper unit of the house which consists of 3 bedrooms and 2 baths. There is a large backyard that is shared with the lower unit and a driveway as well. The unit comes fully furnished',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 4050,
-      squareFeet: 1200,
-      school: 'Tulane University',
-      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/C8D725A7-58EE-4E7A-B73A-2B4D92EA566A.jpg',
-      leaseTerms: new Date('2026-06-01T20:03:32.000Z'),
-      latitude: 29.9389,
-      longitude: -90.1266,
-    },
-    {
-      propertyId: 3,
-      name: '7506 Zimple St ',
-      address: '7506 Zimple St, New Orleans, LA 70118',
-      description: 'Just 3 blocks from Tulane University, this gorgeous 3 bed 2 bath two-story apartment is perfect for your needs. Designed meticulously to host guests with the kitchen, powder room, and storage room all on the first floor. All bedrooms, full bathrooms, and laundry facilities are on the second floor! This unit comes fully furnished with a ring security system and gated parking. The pictures presented are very close renderings as to what the house will look like when completed. This listing is for the rear unit.',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 3000,
-      squareFeet: 1500,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2027-06-01T20:04:02.000Z'),
-      latitude: 29.9425,
-      longitude: -90.1289,
-    },
-    {
-      propertyId: 4,
-      name: '7504 Zimple St ',
-      address: '7504 Zimple St, New Orleans, LA 70118',
-      description: 'Just 3 blocks from Tulane University, this gorgeous two-story apartment is perfect for your needs. Designed meticulously to host guests with the kitchen, powder room, and storage room all on the first floor. All bedrooms, full bathrooms, and laundry facilities are on the second floor! This unit comes fully furnished with a ring security system and gated parking. The pictures presented are very close renderings as to what the house will look like when completed. This listing is for the rear unit.',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 7200,
-      squareFeet: 1600,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2027-06-01T20:04:19.000Z'),
-      latitude: 29.9424,
-      longitude: -90.1288,
-    },
-    {
-      propertyId: 5,
-      name: '1032 Cherokee St ',
-      address: '1032 Cherokee St, New Orleans, LA 70118',
-      description: 'Beautifully renovated single-family home right near campus! Find all of your needs met with this fully furnished property just three blocks from the new Tulane Police Headquarters, The Boot, and Tulane itself. Message for more info!',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 5400,
-      squareFeet: 1100,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2026-06-01T20:05:54.000Z'),
-      latitude: 29.9378,
-      longitude: -90.1234,
-    },
-    {
-      propertyId: 6,
-      name: '7315 Freret St ',
-      address: '7315 Freret St , New Orleans , LA 70118',
-      description: 'Discover the perfect blend of comfort and convenience with this fully furnished unit located at 7313 Freret St. Ideal for Tulane students, this home offers everything you need to excel academically while enjoying the vibrant student life just minutes from campus. Key Features: Prime Tulane Location: Situated on Freret Street, this unit is just a short distance from Tulane University\'s campus, providing easy access to classes, study spots, and campus events. Modern and Spacious: The open-concept living and dining areas offer a perfect environment for both studying and socializing, making it a great choice for students. Fully Furnished: Move-in ready with all essentials, including comfortable beds, desks, sofas, and a living room TV—everything you need to feel at home. Updated Kitchen: Featuring stainless steel appliances, quartz countertops, and ample cabinet space for all your cooking needs. Private Bedrooms: Four well-sized bedrooms with closets, ideal for students needing a quiet retreat for study or rest. Contemporary Bathrooms: Enjoy two full bathrooms with modern fixtures and a clean, sleek design. In-Unit Laundry: Washer and dryer included, offering the ultimate convenience. High-Speed Internet: Stay connected with fast, reliable Wi-Fi, perfect for online classes and streaming. Secure and Safe: The unit offers keyless entry and secure access for peace of mind. Convenient to Tulane Hotspots: Close to all your favorite Tulane hangouts, including the LBC, Reily Recreation Center, and the lively Freret Street corridor with its cafes, shops, and restaurants.',
-      bedrooms: 2,
-      bathrooms: 2,
-      price: 6800,
-      squareFeet: 1200,
-      school: 'Tulane University',
-      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/FAE13088-D469-4A2D-BE0D-54235CC897A5.jpg',
-      leaseTerms: new Date('2026-06-02T01:46:38.000Z'),
-      latitude: 29.9444,
-      longitude: -90.1277,
-    },
-    {
-      propertyId: 7,
-      name: '1414 Audubon St ',
-      address: '1414 Audubon St, New Orleans, LA 70118',
-      description: 'Just steps from campus, 1414 Audubon Street offers a gorgeous, fully furnished home with high-end finishes and a modern, comfortable design. Enjoy off-street parking, an open-concept living area, stylish furniture throughout, and an in-unit washer and dryer — all in an unbeatable location. With campus only a stone\'s throw away, this home delivers the perfect combination of convenience, style, and comfort. Enjoy off-street parking, spacious bedrooms, in-unit laundry, and an open-concept kitchen and living area perfect for everyday living and hosting friends. With campus only a stone\'s throw away, this location is hard to beat',
+      propertyId: 2, // This should match the external API property_id
+      name: 'C8D725 Pine Hills',
+      address: 'C8D725 Pine Hills, Albany, NY 12208',
+      description: 'Spacious 4-bedroom townhouse in Pine Hills',
       bedrooms: 4,
       bathrooms: 3,
-      price: 7200,
-      squareFeet: 2000,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2025-06-01T20:08:39.000Z'),
-      latitude: 29.9356,
-      longitude: -90.1234,
+      price: 520000,
+      squareFeet: 1800,
+      school: 'University at Albany',
+      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/C8D725A7-58EE-4E7A-B73A-2B4D92EA566A.jpg',
+      leaseTerms: new Date('2024-08-01'),
+      latitude: 42.6526,
+      longitude: -73.7562,
+      propertyType: 'TOWNHOUSE',
+      acquisitionDate: new Date('2023-05-20'),
+      acquisitionPrice: 490000,
+      currentValue: 520000,
+      occupancyRate: 100,
+      monthlyRent: 3200,
+      annualExpenses: 22000,
+      capRate: 5.8,
     },
     {
-      propertyId: 8,
-      name: '7500 Zimple St ',
-      address: '7500 Zimple St , New Orleans , LA 70118',
-      description: 'Beautifully renovated single-family home right near campus! Find all of your needs met with this fully furnished property just three blocks from the new Tulane Police Headquarters, The Boot, and Tulane itself. Message for more info!',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 7200,
-      squareFeet: 1500,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2026-06-01T20:07:58.000Z'),
-      latitude: 29.9423,
-      longitude: -90.1287,
-    },
-    {
-      propertyId: 9,
-      name: '1416 Audubon St ',
-      address: '1416 Audubon St , New Orleans , LA 70118',
-      description: 'Located just steps from campus, 1416 Audubon Street offers a brand new, fully furnished 3-bedroom, 2-bath home designed for modern student living. Thoughtfully finished with stylish furniture and high-end touches, this home provides a seamless blend of comfort and convenience.... Enjoy off-street parking, spacious bedrooms, in-unit laundry, and an open-concept kitchen and living area perfect for everyday living and hosting friends. With campus only a stone\'s throw away, this location is hard to beat',
-      bedrooms: 3,
-      bathrooms: 2,
-      price: 5600,
-      squareFeet: 1500,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2027-06-01T20:08:18.000Z'),
-      latitude: 29.9355,
-      longitude: -90.1233,
-    },
-    {
-      propertyId: 10,
-      name: '7700 Burthe St ',
-      address: '7700 Burthe St , New Orleans , LA 70118',
-      description: 'Elevate your student living experience with this fully furnished 4-bedroom, 2.5-bathroom upstairs unit at 7700 Burthe St. Nestled in a quiet and picturesque neighborhood, this unit is perfect for Tulane students looking for a serene yet convenient place to call home.... Key Features: Ideal Tulane Location: Located on Burthe Street, this unit is just a short walk or bike ride away from Tulane University\'s campus, making it easy to attend classes, study at the library, and participate in campus activities. Spacious and Bright: The upstairs unit offers an open-concept living and dining area with plenty of natural light, creating a welcoming space for studying or hanging out with friends. Fully Furnished: Move right in with all essentials provided, including comfortable beds, desks, sofas, and a living room TV, making it perfect for Tulane students. Modern Kitchen: Enjoy cooking in a kitchen equipped with stainless steel appliances, quartz countertops, and ample cabinet space. Private Bedrooms with Walk-In Closets: Four well-sized bedrooms, each featuring a walk-in closet, provide ample storage and a personal retreat for studying and relaxation. Updated Bathrooms: Two full bathrooms with modern fixtures and a clean, sleek design, plus a convenient powder room for guests. Bonus Makeup/Study Room: A dedicated makeup/study room offers extra space for getting ready or focusing on your studies. In-Unit Laundry: Washer and dryer included for your convenience, making laundry day hassle-free. High-Speed Internet: Stay connected with reliable Wi-Fi, essential for online classes and streaming. Secure and Safe: The unit offers keyless entry and secure access, ensuring peace of mind. Charming Neighborhood: Enjoy the peaceful atmosphere of Burthe Street, with easy access to nearby green spaces, Starbucks, and popular Tulane hangouts like The Boot and Maple Street.',
-      bedrooms: 4,
-      bathrooms: 2,
-      price: 7200,
-      squareFeet: 1600,
-      school: 'Tulane University',
-      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/DFDFAA57-6C09-4631-91EE-6749113B6A67.jpg',
-      leaseTerms: new Date('2027-06-01'),
-      latitude: 29.9467,
-      longitude: -90.1289,
-    },
-    {
-      propertyId: 11,
-      name: '7702 Burthe St ',
-      address: '7702 Burthe St , New Orleans , LA 70118',
-      description: 'Brand new construction on the corner of Burthe and Adams! Each bedroom is approximately 12ftx12ft with walk-in closets. Enjoy an extremely spacious living area, top-of-the-line appliances and finishes, a built-in study area, and modern security amenities. This apartment also has off-street parking and is in a great location. Right next door you have Starbucks, Maple Street Cafe, and many other Tulane favorites! This listing is the downstairs unit.',
-      bedrooms: 4,
-      bathrooms: 2,
-      price: 7200,
-      squareFeet: 1600,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2026-06-01'),
-      latitude: 29.9466,
-      longitude: -90.1288,
-    },
-    {
-      propertyId: 12,
-      name: '7608 Zimple St ',
-      address: '7608 Zimple St , New Orleans , LA 70118',
-      description: 'Beautiful single family home right by campus! Enjoy brand-new stainless steel appliances, top-of-the-line finishes, vaulted ceilings in the main living area, and perfectly fitted furniture. Great location just a few blocks from the boot, the new TUPD headquarters, and the entrance to campus! Please contact for more info.',
-      bedrooms: 4,
-      bathrooms: 2,
-      price: 7200,
-      squareFeet: 1400,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2026-06-01'),
-      latitude: 29.9422,
-      longitude: -90.1286,
-    },
-    {
-      propertyId: 13,
-      name: '7313 Freret St. ',
-      address: '7313 Freret St , New Orleans , LA 70118',
-      description: 'Discover the perfect blend of comfort and convenience with this fully furnished unit located at 7313 Freret St. Ideal for Tulane students, this home offers everything you need to excel academically while enjoying the vibrant student life just minutes from campus. Key Features: Prime Tulane Location: Situated on Freret Street, this unit is just a short distance from Tulane University\'s campus, providing easy access to classes, study spots, and campus events. Modern and Spacious: The open-concept living and dining areas offer a perfect environment for both studying and socializing, making it a great choice for students. Fully Furnished: Move-in ready with all essentials, including comfortable beds, desks, sofas, and a living room TV—everything you need to feel at home. Updated Kitchen: Featuring stainless steel appliances, quartz countertops, and ample cabinet space for all your cooking needs. Private Bedrooms: Four well-sized bedrooms with closets, ideal for students needing a quiet retreat for study or rest. Contemporary Bathrooms: Enjoy two full bathrooms with modern fixtures and a clean, sleek design. In-Unit Laundry: Washer and dryer included, offering the ultimate convenience. High-Speed Internet: Stay connected with fast, reliable Wi-Fi, perfect for online classes and streaming. Secure and Safe: The unit offers keyless entry and secure access for peace of mind. Convenient to Tulane Hotspots: Close to all your favorite Tulane hangouts, including the LBC, Reily Recreation Center, and the lively Freret Street corridor with its cafes, shops, and restaurants.',
+      propertyId: 6, // This should match the external API property_id
+      name: 'FAE130 Campus View',
+      address: 'FAE130 Campus View, Albany, NY 12203',
+      description: 'Luxury 2-bedroom apartment with campus views',
       bedrooms: 2,
       bathrooms: 2,
-      price: 7200,
+      price: 380000,
+      squareFeet: 1000,
+      school: 'University at Albany',
+      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/FAE13088-D469-4A2D-BE0D-54235CC897A5.jpg',
+      leaseTerms: new Date('2024-08-01'),
+      latitude: 42.6891,
+      longitude: -73.8199,
+      propertyType: 'CONDO',
+      acquisitionDate: new Date('2023-07-10'),
+      acquisitionPrice: 360000,
+      currentValue: 380000,
+      occupancyRate: 100,
+      monthlyRent: 2400,
+      annualExpenses: 15000,
+      capRate: 6.3,
+    },
+    {
+      propertyId: 10, // This should match the external API property_id
+      name: 'DFDFAA College Heights',
+      address: 'DFDFAA College Heights, Albany, NY 12208',
+      description: 'Family-friendly 3-bedroom home near campus',
+      bedrooms: 3,
+      bathrooms: 2,
+      price: 410000,
       squareFeet: 1400,
-      school: 'Tulane University',
-      photo: null,
-      leaseTerms: new Date('2027-06-01T04:00:00.000Z'),
-      latitude: 29.9445,
-      longitude: -90.1278,
+      school: 'University at Albany',
+      photo: 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/DFDFAA57-6C09-4631-91EE-6749113B6A67.jpg',
+      leaseTerms: new Date('2024-08-01'),
+      latitude: 42.6543,
+      longitude: -73.7589,
+      propertyType: 'SINGLE_FAMILY',
+      acquisitionDate: new Date('2023-09-05'),
+      acquisitionPrice: 390000,
+      currentValue: 410000,
+      occupancyRate: 100,
+      monthlyRent: 2600,
+      annualExpenses: 17000,
+      capRate: 6.1,
     },
   ];
 
-  for (const propertyData of actualProperties) {
-    const existingProperty = await prisma.property.findUnique({
+  const createdProperties = [];
+  for (const propertyData of properties) {
+    const property = await prisma.property.upsert({
       where: { propertyId: propertyData.propertyId },
+      update: propertyData,
+      create: propertyData,
     });
-
-    if (!existingProperty) {
-      await prisma.property.create({
-        data: propertyData,
-      });
-      console.log(`✅ Property created: ${propertyData.name} (ID: ${propertyData.propertyId})`);
-    } else {
-      console.log(`ℹ️ Property already exists: ${propertyData.name} (ID: ${propertyData.propertyId})`);
-    }
+    createdProperties.push(property);
   }
 
-  console.log('🎉 Database seeding completed!');
+  // Associate properties with funds
+  for (const property of createdProperties) {
+    await prisma.fundProperty.create({
+      data: {
+        fundId: fund1.id,
+        propertyId: property.id,
+        ownershipPercentage: 100,
+        acquisitionDate: property.acquisitionDate || new Date(),
+        acquisitionPrice: property.acquisitionPrice || property.price,
+      },
+    });
+  }
+
+  // Create investments using the property IDs that match the external API
+  const investments = [
+    {
+      propertyId: '1', // String ID that matches the external API property_id
+      userId: investor.id,
+      investmentAmount: 150000,
+      preferredReturn: 8.0,
+      startDate: new Date('2023-04-01'),
+      investmentType: 'EQUITY',
+      notes: 'Initial investment in University Ave property',
+    },
+    {
+      propertyId: '2', // String ID that matches the external API property_id
+      userId: investor.id,
+      investmentAmount: 200000,
+      preferredReturn: 8.0,
+      startDate: new Date('2023-06-01'),
+      investmentType: 'EQUITY',
+      notes: 'Investment in Pine Hills townhouse',
+    },
+    {
+      propertyId: '1', // String ID that matches the external API property_id
+      userId: investor2.id,
+      investmentAmount: 100000,
+      preferredReturn: 8.0,
+      startDate: new Date('2023-04-15'),
+      investmentType: 'EQUITY',
+      notes: 'Co-investment in University Ave property',
+    },
+    {
+      propertyId: '6', // String ID that matches the external API property_id
+      userId: investor3.id,
+      investmentAmount: 120000,
+      preferredReturn: 8.0,
+      startDate: new Date('2023-08-01'),
+      investmentType: 'EQUITY',
+      notes: 'Investment in Campus View apartment',
+    },
+  ];
+
+  for (const investmentData of investments) {
+    await prisma.investment.create({
+      data: investmentData,
+    });
+  }
+
+  // Create fund investments
+  const fundInvestments = [
+    {
+      fundId: fund1.id,
+      userId: investor.id,
+      investmentAmount: 300000,
+      investmentDate: new Date('2023-02-01'),
+      preferredReturn: 8.0,
+      notes: 'Initial fund investment',
+    },
+    {
+      fundId: fund1.id,
+      userId: investor2.id,
+      investmentAmount: 200000,
+      investmentDate: new Date('2023-02-15'),
+      preferredReturn: 8.0,
+      notes: 'Fund investment',
+    },
+    {
+      fundId: fund2.id,
+      userId: investor3.id,
+      investmentAmount: 150000,
+      investmentDate: new Date('2023-07-01'),
+      preferredReturn: 7.0,
+      notes: 'Opportunity zone fund investment',
+    },
+  ];
+
+  for (const fundInvestmentData of fundInvestments) {
+    await prisma.fundInvestment.create({
+      data: fundInvestmentData,
+    });
+  }
+
+  // Create distributions
+  const distributions = [
+    {
+      propertyId: '1', // String ID that matches the external API property_id
+      userId: investor.id,
+      investmentId: (await prisma.investment.findFirst({
+        where: { propertyId: '1', userId: investor.id },
+      }))!.id,
+      amount: 12000,
+      type: 'PREFERRED_RETURN',
+      distributionDate: new Date('2023-12-31'),
+      description: 'Annual preferred return distribution',
+      taxYear: 2023,
+    },
+    {
+      propertyId: '2', // String ID that matches the external API property_id
+      userId: investor.id,
+      investmentId: (await prisma.investment.findFirst({
+        where: { propertyId: '2', userId: investor.id },
+      }))!.id,
+      amount: 16000,
+      type: 'PREFERRED_RETURN',
+      distributionDate: new Date('2023-12-31'),
+      description: 'Annual preferred return distribution',
+      taxYear: 2023,
+    },
+    {
+      propertyId: '1', // String ID that matches the external API property_id
+      userId: investor2.id,
+      investmentId: (await prisma.investment.findFirst({
+        where: { propertyId: '1', userId: investor2.id },
+      }))!.id,
+      amount: 8000,
+      type: 'PREFERRED_RETURN',
+      distributionDate: new Date('2023-12-31'),
+      description: 'Annual preferred return distribution',
+      taxYear: 2023,
+    },
+  ];
+
+  for (const distributionData of distributions) {
+    await prisma.distribution.create({
+      data: distributionData,
+    });
+  }
+
+  // Create fund distributions
+  const fundDistributions = [
+    {
+      fundId: fund1.id,
+      userId: investor.id,
+      fundInvestmentId: (await prisma.fundInvestment.findFirst({
+        where: { fundId: fund1.id, userId: investor.id },
+      }))!.id,
+      amount: 24000,
+      type: 'PREFERRED_RETURN',
+      distributionDate: new Date('2023-12-31'),
+      description: 'Annual fund preferred return distribution',
+    },
+    {
+      fundId: fund1.id,
+      userId: investor2.id,
+      fundInvestmentId: (await prisma.fundInvestment.findFirst({
+        where: { fundId: fund1.id, userId: investor2.id },
+      }))!.id,
+      amount: 16000,
+      type: 'PREFERRED_RETURN',
+      distributionDate: new Date('2023-12-31'),
+      description: 'Annual fund preferred return distribution',
+    },
+  ];
+
+  for (const fundDistributionData of fundDistributions) {
+    await prisma.fundDistribution.create({
+      data: fundDistributionData,
+    });
+  }
+
+  // Create property income and expenses
+  for (const property of createdProperties) {
+    // Income
+    await prisma.propertyIncome.createMany({
+      data: [
+        {
+          propertyId: property.id,
+          type: 'RENT',
+          amount: property.monthlyRent || 2500,
+          date: new Date('2024-01-01'),
+          description: 'Monthly rent payment',
+        },
+        {
+          propertyId: property.id,
+          type: 'RENT',
+          amount: property.monthlyRent || 2500,
+          date: new Date('2024-02-01'),
+          description: 'Monthly rent payment',
+        },
+      ],
+    });
+
+    // Expenses
+    await prisma.propertyExpense.createMany({
+      data: [
+        {
+          propertyId: property.id,
+          type: 'MORTGAGE',
+          amount: (property.monthlyRent || 2500) * 0.6,
+          date: new Date('2024-01-01'),
+          description: 'Monthly mortgage payment',
+          vendor: 'Bank of America',
+        },
+        {
+          propertyId: property.id,
+          type: 'PROPERTY_TAX',
+          amount: (property.annualExpenses || 18000) * 0.3,
+          date: new Date('2024-01-15'),
+          description: 'Property tax payment',
+          vendor: 'Albany County',
+        },
+        {
+          propertyId: property.id,
+          type: 'INSURANCE',
+          amount: (property.annualExpenses || 18000) * 0.1,
+          date: new Date('2024-01-01'),
+          description: 'Property insurance',
+          vendor: 'State Farm',
+        },
+      ],
+    });
+  }
+
+  // Create documents
+  const documents = [
+    {
+      title: 'Operating Agreement - Fund I',
+      description: 'Fund operating agreement and terms',
+      fileName: 'operating_agreement_fund1.pdf',
+      filePath: '/documents/fund1/operating_agreement.pdf',
+      fileSize: 2048576,
+      mimeType: 'application/pdf',
+      documentType: 'OPERATING_AGREEMENT',
+      entityType: 'FUND',
+      entityId: fund1.id,
+      uploadedBy: sponsor.id,
+      isPublic: false,
+    },
+    {
+      title: 'PPM - Fund I',
+      description: 'Private Placement Memorandum',
+      fileName: 'ppm_fund1.pdf',
+      filePath: '/documents/fund1/ppm.pdf',
+      fileSize: 3145728,
+      mimeType: 'application/pdf',
+      documentType: 'PPM',
+      entityType: 'FUND',
+      entityId: fund1.id,
+      uploadedBy: sponsor.id,
+      isPublic: false,
+    },
+    {
+      title: 'Financial Statement Q4 2023',
+      description: 'Quarterly financial statement',
+      fileName: 'financial_statement_q4_2023.pdf',
+      filePath: '/documents/financials/q4_2023.pdf',
+      fileSize: 1048576,
+      mimeType: 'application/pdf',
+      documentType: 'FINANCIAL_STATEMENT',
+      entityType: 'PROPERTY',
+      entityId: createdProperties[0].id,
+      uploadedBy: admin.id,
+      isPublic: true,
+    },
+  ];
+
+  for (const documentData of documents) {
+    await prisma.document.create({
+      data: documentData,
+    });
+  }
+
+  // Create notifications
+  const notifications = [
+    {
+      userId: investor.id,
+      title: 'Distribution Received',
+      message: 'You have received a distribution of $12,000 from 350A University Ave',
+      type: 'DISTRIBUTION',
+      entityType: 'PROPERTY',
+      entityId: createdProperties[0].id,
+    },
+    {
+      userId: investor.id,
+      title: 'New Document Available',
+      message: 'Q4 2023 Financial Statement is now available',
+      type: 'DOCUMENT_UPLOAD',
+      entityType: 'PROPERTY',
+      entityId: createdProperties[0].id,
+    },
+    {
+      userId: investor2.id,
+      title: 'Distribution Received',
+      message: 'You have received a distribution of $8,000 from 350A University Ave',
+      type: 'DISTRIBUTION',
+      entityType: 'PROPERTY',
+      entityId: createdProperties[0].id,
+    },
+  ];
+
+  for (const notificationData of notifications) {
+    await prisma.notification.create({
+      data: notificationData,
+    });
+  }
+
+  // Create financial calculations cache
+  for (const property of createdProperties) {
+    await prisma.financialCalculation.create({
+      data: {
+        propertyId: property.id,
+        calculationType: 'IRR',
+        calculationDate: new Date(),
+        data: {
+          irr: 12.5,
+          totalReturn: 45000,
+          cashOnCash: 8.2,
+          equityMultiple: 1.15,
+        },
+      },
+    });
+
+    await prisma.financialCalculation.create({
+      data: {
+        propertyId: property.id,
+        calculationType: 'CASH_ON_CASH',
+        calculationDate: new Date(),
+        data: {
+          annualIncome: property.monthlyRent ? property.monthlyRent * 12 : 30000,
+          annualExpenses: property.annualExpenses || 18000,
+          netOperatingIncome: (property.monthlyRent ? property.monthlyRent * 12 : 30000) - (property.annualExpenses || 18000),
+          cashOnCashReturn: 8.2,
+        },
+      },
+    });
+  }
+
+  console.log('✅ Database seeded successfully!');
+  console.log(`Created ${properties.length} properties`);
+  console.log(`Created ${investments.length} investments`);
+  console.log(`Created ${fundInvestments.length} fund investments`);
+  console.log(`Created ${distributions.length} distributions`);
+  console.log(`Created ${fundDistributions.length} fund distributions`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

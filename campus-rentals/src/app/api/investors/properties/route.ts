@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { fetchProperties as fetchExternalProperties } from '@/utils/api';
 
 // Photo mapping based on the provided property data
 const PROPERTY_PHOTOS: { [key: number]: string } = {
@@ -43,88 +44,99 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Fetch properties from the same external API as the main website
+    const externalProperties = await fetchExternalProperties();
+    
+    if (!externalProperties || externalProperties.length === 0) {
+      return NextResponse.json([]);
+    }
+
     let properties;
 
     if (user.role === 'ADMIN') {
       // Admin can see all properties
-      properties = await prisma.property.findMany({
-        where: { isActive: true },
-        include: {
-          investments: {
-            include: {
-              user: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                },
-              },
-            },
-          },
-          distributions: true,
-        },
-        orderBy: { name: 'asc' },
-      });
+      properties = externalProperties;
     } else {
       // Investors can only see properties they're invested in
-      const investments = await prisma.investment.findMany({
+      const userInvestments = await prisma.investment.findMany({
         where: {
           userId: user.id,
           status: 'ACTIVE',
         },
         include: {
-          property: {
-            include: {
-              distributions: {
-                where: {
-                  userId: user.id,
-                },
-              },
-            },
-          },
+          distributions: true,
         },
       });
 
-      properties = investments.map(investment => ({
-        ...investment.property,
-        investmentAmount: investment.investmentAmount,
-        preferredReturn: investment.preferredReturn,
-        startDate: investment.startDate,
-        distributions: investment.property.distributions,
-      }));
+      // Map external properties to user investments
+      const investedPropertyIds = userInvestments.map(inv => inv.propertyId);
+      properties = externalProperties.filter(prop => 
+        investedPropertyIds.includes(prop.property_id.toString())
+      );
     }
 
     // Calculate financial metrics and add photos for each property
-    const propertiesWithMetrics = properties.map(property => {
-      const totalInvested = property.investments?.reduce((sum, inv) => sum + inv.investmentAmount, 0) || 0;
-      const totalDistributions = property.distributions?.reduce((sum, dist) => sum + dist.amount, 0) || 0;
-      
-      // Simple IRR calculation (this would be more complex in production)
-      const currentValue = property.price || 0;
-      const totalReturn = currentValue + totalDistributions - totalInvested;
-      const irr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
+    const propertiesWithMetrics = await Promise.all(
+      properties.map(async (property) => {
+        // Get investment data for this property
+        const investment = await prisma.investment.findFirst({
+          where: {
+            propertyId: property.property_id.toString(),
+            userId: user.id,
+            status: 'ACTIVE',
+          },
+          include: {
+            distributions: true,
+          },
+        });
 
-      // Get photo for this property - prioritize actual photos from API
-      const photo = property.photo || PROPERTY_PHOTOS[property.propertyId] || '/placeholder.png';
+        // Get property from database for additional data
+        const dbProperty = await prisma.property.findUnique({
+          where: { propertyId: property.property_id },
+        });
 
-      return {
-        id: property.id,
-        propertyId: property.propertyId,
-        name: property.name,
-        address: property.address,
-        price: property.price,
-        photo: photo,
-        investmentAmount: property.investmentAmount || totalInvested,
-        totalReturn: totalReturn,
-        irr: irr,
-        distributions: property.distributions || [],
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        squareFeet: property.squareFeet,
-        school: property.school,
-        leaseTerms: property.leaseTerms,
-      };
-    });
+        const totalInvested = investment?.investmentAmount || 0;
+        const totalDistributions = investment?.distributions.reduce((sum, dist) => sum + dist.amount, 0) || 0;
+        
+        // Use current value from database if available, otherwise use price
+        const currentValue = dbProperty?.currentValue || property.price || 0;
+        const totalReturn = currentValue + totalDistributions - totalInvested;
+        const irr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0;
+
+        // Get photo for this property - prioritize actual photos from API
+        const photo = property.photo || PROPERTY_PHOTOS[property.property_id] || '/placeholder.png';
+
+        return {
+          id: property.property_id.toString(),
+          propertyId: property.property_id,
+          name: property.name,
+          address: property.address,
+          description: property.description,
+          price: property.price,
+          photo: photo,
+          investmentAmount: totalInvested,
+          totalReturn: totalReturn,
+          irr: irr,
+          distributions: investment?.distributions || [],
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          squareFeet: property.squareFeet,
+          school: property.school,
+          leaseTerms: property.leaseTerms,
+          latitude: property.latitude,
+          longitude: property.longitude,
+          // Additional data from database if available
+          propertyType: dbProperty?.propertyType || 'SINGLE_FAMILY',
+          acquisitionDate: dbProperty?.acquisitionDate,
+          acquisitionPrice: dbProperty?.acquisitionPrice,
+          currentValue: currentValue,
+          occupancyRate: dbProperty?.occupancyRate,
+          monthlyRent: dbProperty?.monthlyRent,
+          annualExpenses: dbProperty?.annualExpenses,
+          capRate: dbProperty?.capRate,
+        };
+      })
+    );
 
     return NextResponse.json(propertiesWithMetrics);
   } catch (error) {
