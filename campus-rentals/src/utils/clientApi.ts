@@ -1,4 +1,4 @@
-import { Property } from './api';
+import { Property } from '@/types';
 import { s3ToCloudFrontUrl } from './api';
 import apiService from '../services/api';
 
