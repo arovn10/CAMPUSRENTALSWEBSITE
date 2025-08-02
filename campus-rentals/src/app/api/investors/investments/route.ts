@@ -7,11 +7,11 @@ export async function GET(request: NextRequest) {
     
     if (hasPermission(user, 'ADMIN')) {
       // Admin can see all investments
-      const investments = getAllInvestments();
+      const investments = await getAllInvestments();
       return NextResponse.json({ success: true, data: investments });
     } else {
       // Investors can only see their own investments
-      const investments = getInvestmentsByUser(user.id);
+      const investments = await getInvestmentsByUser(user.id);
       return NextResponse.json({ success: true, data: investments });
     }
   } catch (error) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const newInvestment = createInvestment({
+    const newInvestment = await createInvestment({
       name,
       propertyAddress,
       totalInvestment: Number(totalInvestment),
@@ -88,7 +88,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const updatedInvestment = updateInvestment(id, updates);
+    const updatedInvestment = await updateInvestment(id, updates);
     
     if (!updatedInvestment) {
       return NextResponse.json(
@@ -128,7 +128,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const success = deleteInvestment(id);
+    const success = await deleteInvestment(id);
     
     if (!success) {
       return NextResponse.json(

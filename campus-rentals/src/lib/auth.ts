@@ -269,51 +269,160 @@ export async function deleteUser(id: string): Promise<boolean> {
 }
 
 // Investment management functions
-export function getAllInvestments(): Investment[] {
-  return INVESTMENTS
+export async function getAllInvestments(): Promise<Investment[]> {
+  const investments = await prisma.investment.findMany({
+    include: {
+      distributions: true
+    }
+  })
+  
+  return investments.map(inv => ({
+    id: inv.id,
+    name: inv.property?.name || 'Unknown Property',
+    propertyAddress: inv.property?.address || 'Unknown Address',
+    totalInvestment: inv.investmentAmount,
+    investorId: inv.userId,
+    investorEmail: inv.user?.email || 'Unknown',
+    investmentAmount: inv.investmentAmount,
+    ownershipPercentage: inv.ownershipPercentage || 0,
+    startDate: inv.investmentDate.toISOString(),
+    expectedReturn: 12.5, // Default value
+    status: inv.status,
+    distributions: inv.distributions.map(dist => ({
+      id: dist.id,
+      investmentId: dist.investmentId,
+      amount: dist.amount,
+      date: dist.distributionDate.toISOString(),
+      type: dist.distributionType as any
+    }))
+  }))
 }
 
-export function getInvestmentsByUser(userId: string): Investment[] {
-  return INVESTMENTS.filter(inv => inv.investorId === userId)
+export async function getInvestmentsByUser(userId: string): Promise<Investment[]> {
+  const investments = await prisma.investment.findMany({
+    where: { userId },
+    include: {
+      distributions: true,
+      property: true,
+      user: true
+    }
+  })
+  
+  return investments.map(inv => ({
+    id: inv.id,
+    name: inv.property?.name || 'Unknown Property',
+    propertyAddress: inv.property?.address || 'Unknown Address',
+    totalInvestment: inv.investmentAmount,
+    investorId: inv.userId,
+    investorEmail: inv.user?.email || 'Unknown',
+    investmentAmount: inv.investmentAmount,
+    ownershipPercentage: inv.ownershipPercentage || 0,
+    startDate: inv.investmentDate.toISOString(),
+    expectedReturn: 12.5, // Default value
+    status: inv.status,
+    distributions: inv.distributions.map(dist => ({
+      id: dist.id,
+      investmentId: dist.investmentId,
+      amount: dist.amount,
+      date: dist.distributionDate.toISOString(),
+      type: dist.distributionType as any
+    }))
+  }))
 }
 
-export function createInvestment(investmentData: Omit<Investment, 'id' | 'distributions'>): Investment {
-  const newInvestment: Investment = {
-    ...investmentData,
-    id: `inv-${Date.now()}`,
+export async function createInvestment(investmentData: Omit<Investment, 'id' | 'distributions'>): Promise<Investment> {
+  // For now, create a simple investment record
+  const investment = await prisma.investment.create({
+    data: {
+      userId: investmentData.investorId,
+      propertyId: 'temp-property-id', // You'll need to create properties first
+      investmentAmount: investmentData.investmentAmount,
+      ownershipPercentage: investmentData.ownershipPercentage,
+      status: investmentData.status as any
+    },
+    include: {
+      distributions: true
+    }
+  })
+  
+  return {
+    id: investment.id,
+    name: investmentData.name,
+    propertyAddress: investmentData.propertyAddress,
+    totalInvestment: investmentData.totalInvestment,
+    investorId: investment.userId,
+    investorEmail: investmentData.investorEmail,
+    investmentAmount: investment.investmentAmount,
+    ownershipPercentage: investment.ownershipPercentage || 0,
+    startDate: investment.investmentDate.toISOString(),
+    expectedReturn: investmentData.expectedReturn,
+    status: investment.status,
     distributions: []
   }
-  
-  INVESTMENTS.push(newInvestment)
-  return newInvestment
 }
 
-export function updateInvestment(id: string, updates: Partial<Investment>): Investment | null {
-  const investmentIndex = INVESTMENTS.findIndex(inv => inv.id === id)
-  if (investmentIndex === -1) return null
-  
-  INVESTMENTS[investmentIndex] = { ...INVESTMENTS[investmentIndex], ...updates }
-  return INVESTMENTS[investmentIndex]
-}
-
-export function deleteInvestment(id: string): boolean {
-  const investmentIndex = INVESTMENTS.findIndex(inv => inv.id === id)
-  if (investmentIndex === -1) return false
-  
-  INVESTMENTS.splice(investmentIndex, 1)
-  return true
-}
-
-export function addDistribution(investmentId: string, distributionData: Omit<Distribution, 'id'>): Distribution {
-  const distribution: Distribution = {
-    ...distributionData,
-    id: `dist-${Date.now()}`
+export async function updateInvestment(id: string, updates: Partial<Investment>): Promise<Investment | null> {
+  try {
+    const investment = await prisma.investment.update({
+      where: { id },
+      data: {
+        investmentAmount: updates.investmentAmount,
+        ownershipPercentage: updates.ownershipPercentage,
+        status: updates.status as any
+      },
+      include: {
+        distributions: true
+      }
+    })
+    
+    return {
+      id: investment.id,
+      name: 'Updated Property',
+      propertyAddress: 'Updated Address',
+      totalInvestment: investment.investmentAmount,
+      investorId: investment.userId,
+      investorEmail: 'updated@example.com',
+      investmentAmount: investment.investmentAmount,
+      ownershipPercentage: investment.ownershipPercentage || 0,
+      startDate: investment.investmentDate.toISOString(),
+      expectedReturn: 12.5,
+      status: investment.status,
+      distributions: []
+    }
+  } catch (error) {
+    console.error('Error updating investment:', error)
+    return null
   }
-  
-  const investment = INVESTMENTS.find(inv => inv.id === investmentId)
-  if (investment) {
-    investment.distributions.push(distribution)
+}
+
+export async function deleteInvestment(id: string): Promise<boolean> {
+  try {
+    await prisma.investment.delete({
+      where: { id }
+    })
+    return true
+  } catch (error) {
+    console.error('Error deleting investment:', error)
+    return false
   }
+}
+
+export async function addDistribution(investmentId: string, distributionData: Omit<Distribution, 'id'>): Promise<Distribution> {
+  const distribution = await prisma.distribution.create({
+    data: {
+      investmentId,
+      userId: distributionData.investmentId, // This should be the user ID
+      amount: distributionData.amount,
+      distributionDate: new Date(distributionData.date),
+      distributionType: distributionData.type as any
+    }
+  })
   
-  return distribution
+  return {
+    id: distribution.id,
+    investmentId: distribution.investmentId,
+    amount: distribution.amount,
+    date: distribution.distributionDate.toISOString(),
+    type: distribution.distributionType as any
+  }
 } 
