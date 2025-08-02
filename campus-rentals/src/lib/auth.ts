@@ -12,8 +12,32 @@ export interface AuthenticatedUser {
   lastLogin: string
 }
 
-// Enhanced user data with admin account
-const MOCK_USERS: AuthenticatedUser[] = [
+// Investment interfaces
+export interface Investment {
+  id: string;
+  name: string;
+  propertyAddress: string;
+  totalInvestment: number;
+  investorId: string;
+  investorEmail: string;
+  investmentAmount: number;
+  ownershipPercentage: number;
+  startDate: string;
+  expectedReturn: number;
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED';
+  distributions: Distribution[];
+}
+
+export interface Distribution {
+  id: string;
+  investmentId: string;
+  amount: number;
+  date: string;
+  type: 'RENTAL' | 'SALE' | 'REFINANCE';
+}
+
+// In-memory storage (replace with real database in production)
+let USERS: AuthenticatedUser[] = [
   {
     id: 'admin-1',
     email: 'rovnerproperties@gmail.com',
@@ -21,52 +45,18 @@ const MOCK_USERS: AuthenticatedUser[] = [
     lastName: 'User',
     role: 'ADMIN',
     company: 'Campus Rentals LLC',
-    phone: '+1 (555) 123-4567',
+    phone: '+1 (504) 383-4552',
     createdAt: '2024-01-01T00:00:00.000Z',
     lastLogin: new Date().toISOString(),
-  },
-  {
-    id: 'manager-1',
-    email: 'manager@campusrentalsllc.com',
-    firstName: 'Mike',
-    lastName: 'Johnson',
-    role: 'MANAGER',
-    company: 'Campus Rentals LLC',
-    phone: '+1 (555) 234-5678',
-    createdAt: '2024-01-15T00:00:00.000Z',
-    lastLogin: new Date().toISOString(),
-  },
-  {
-    id: 'investor-1',
-    email: 'investor1@example.com',
-    firstName: 'John',
-    lastName: 'Smith',
-    role: 'INVESTOR',
-    company: 'Smith Investments',
-    phone: '+1 (555) 345-6789',
-    createdAt: '2024-02-01T00:00:00.000Z',
-    lastLogin: new Date().toISOString(),
-  },
-  {
-    id: 'investor-2',
-    email: 'investor2@example.com',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    role: 'INVESTOR',
-    company: 'Doe Capital',
-    phone: '+1 (555) 456-7890',
-    createdAt: '2024-02-15T00:00:00.000Z',
-    lastLogin: new Date().toISOString(),
-  },
-]
+  }
+];
 
-// Simple password verification (in production, use bcrypt)
-const PASSWORDS: Record<string, string> = {
-  'rovnerproperties@gmail.com': 'Celarev0319942002!',
-  'manager@campusrentalsllc.com': 'manager123',
-  'investor1@example.com': 'investor123',
-  'investor2@example.com': 'investor456',
-}
+let INVESTMENTS: Investment[] = [];
+
+// In-memory password storage (replace with real database in production)
+let PASSWORDS: Record<string, string> = {
+  'rovnerproperties@gmail.com': 'Celarev0319942002!'
+};
 
 export async function authenticateUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   try {
@@ -79,7 +69,7 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
     
     console.log('Auth email:', authEmail)
     
-    const user = MOCK_USERS.find(u => u.email === authEmail)
+    const user = USERS.find(u => u.email === authEmail)
     
     if (!user) {
       console.log('User not found for email:', authEmail)
@@ -96,7 +86,7 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
 
 export async function authenticateWithPassword(email: string, password: string): Promise<AuthenticatedUser | null> {
   try {
-    const user = MOCK_USERS.find(u => u.email === email)
+    const user = USERS.find(u => u.email === email)
     const storedPassword = PASSWORDS[email]
     
     if (!user || !storedPassword || storedPassword !== password) {
@@ -135,10 +125,10 @@ export function hasPermission(user: AuthenticatedUser, requiredRole: 'ADMIN' | '
 }
 
 export function getAllUsers(): AuthenticatedUser[] {
-  return MOCK_USERS
+  return USERS
 }
 
-export function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' | 'lastLogin'>): AuthenticatedUser {
+export function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' | 'lastLogin'>, password: string): AuthenticatedUser {
   const newUser: AuthenticatedUser = {
     ...userData,
     id: `user-${Date.now()}`,
@@ -146,22 +136,75 @@ export function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' 
     lastLogin: new Date().toISOString(),
   }
   
-  MOCK_USERS.push(newUser)
+  USERS.push(newUser)
+  PASSWORDS[userData.email] = password
   return newUser
 }
 
 export function updateUser(id: string, updates: Partial<AuthenticatedUser>): AuthenticatedUser | null {
-  const userIndex = MOCK_USERS.findIndex(u => u.id === id)
+  const userIndex = USERS.findIndex(u => u.id === id)
   if (userIndex === -1) return null
   
-  MOCK_USERS[userIndex] = { ...MOCK_USERS[userIndex], ...updates }
-  return MOCK_USERS[userIndex]
+  USERS[userIndex] = { ...USERS[userIndex], ...updates }
+  return USERS[userIndex]
 }
 
 export function deleteUser(id: string): boolean {
-  const userIndex = MOCK_USERS.findIndex(u => u.id === id)
+  const userIndex = USERS.findIndex(u => u.id === id)
   if (userIndex === -1) return false
   
-  MOCK_USERS.splice(userIndex, 1)
+  const user = USERS[userIndex]
+  delete PASSWORDS[user.email]
+  USERS.splice(userIndex, 1)
   return true
+}
+
+// Investment management functions
+export function getAllInvestments(): Investment[] {
+  return INVESTMENTS
+}
+
+export function getInvestmentsByUser(userId: string): Investment[] {
+  return INVESTMENTS.filter(inv => inv.investorId === userId)
+}
+
+export function createInvestment(investmentData: Omit<Investment, 'id' | 'distributions'>): Investment {
+  const newInvestment: Investment = {
+    ...investmentData,
+    id: `inv-${Date.now()}`,
+    distributions: []
+  }
+  
+  INVESTMENTS.push(newInvestment)
+  return newInvestment
+}
+
+export function updateInvestment(id: string, updates: Partial<Investment>): Investment | null {
+  const investmentIndex = INVESTMENTS.findIndex(inv => inv.id === id)
+  if (investmentIndex === -1) return null
+  
+  INVESTMENTS[investmentIndex] = { ...INVESTMENTS[investmentIndex], ...updates }
+  return INVESTMENTS[investmentIndex]
+}
+
+export function deleteInvestment(id: string): boolean {
+  const investmentIndex = INVESTMENTS.findIndex(inv => inv.id === id)
+  if (investmentIndex === -1) return false
+  
+  INVESTMENTS.splice(investmentIndex, 1)
+  return true
+}
+
+export function addDistribution(investmentId: string, distributionData: Omit<Distribution, 'id'>): Distribution {
+  const distribution: Distribution = {
+    ...distributionData,
+    id: `dist-${Date.now()}`
+  }
+  
+  const investment = INVESTMENTS.find(inv => inv.id === investmentId)
+  if (investment) {
+    investment.distributions.push(distribution)
+  }
+  
+  return distribution
 } 

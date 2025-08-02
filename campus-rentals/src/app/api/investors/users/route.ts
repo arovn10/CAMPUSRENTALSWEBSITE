@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, firstName, lastName, role, company, phone } = body
+    const { email, firstName, lastName, role, company, phone, password } = body
 
     // Validate required fields
-    if (!email || !firstName || !lastName || !role) {
+    if (!email || !firstName || !lastName || !role || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       role,
       company,
       phone
-    })
+    }, password)
 
     return NextResponse.json(newUser, { status: 201 })
   } catch (error) {
