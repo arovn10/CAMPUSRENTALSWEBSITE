@@ -1,77 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+
+// Mock notifications data
+const NOTIFICATIONS = [
+  {
+    id: 'notif-1',
+    title: 'Q2 2024 Distribution Available',
+    message: 'Your quarterly distribution of $75,000 is now available for withdrawal.',
+    type: 'DISTRIBUTION',
+    isRead: false,
+    createdAt: '2024-06-15T10:00:00.000Z',
+  },
+  {
+    id: 'notif-2',
+    title: 'New Property Acquisition',
+    message: 'Campus Rentals has acquired a new property at 789 Pine Street. Investment opportunities available.',
+    type: 'PROPERTY_UPDATE',
+    isRead: false,
+    createdAt: '2024-06-10T14:30:00.000Z',
+  },
+  {
+    id: 'notif-3',
+    title: 'Tax Documents Available',
+    message: 'Your 2023 tax documents are now available in the Documents section.',
+    type: 'DOCUMENT_UPLOAD',
+    isRead: true,
+    createdAt: '2024-03-15T09:00:00.000Z',
+  },
+  {
+    id: 'notif-4',
+    title: 'Fund Performance Update',
+    message: 'Campus Rentals Fund I has achieved 12.5% IRR year-to-date.',
+    type: 'PERFORMANCE_UPDATE',
+    isRead: true,
+    createdAt: '2024-06-01T11:00:00.000Z',
+  },
+  {
+    id: 'notif-5',
+    title: 'Annual Meeting Scheduled',
+    message: 'The annual investor meeting is scheduled for July 15th, 2024 at 2:00 PM EST.',
+    type: 'MEETING',
+    isRead: false,
+    createdAt: '2024-05-20T16:00:00.000Z',
+  },
+  {
+    id: 'notif-6',
+    title: 'Property Renovation Complete',
+    message: 'Renovations at 123 Main Street have been completed. Property is now fully leased.',
+    type: 'PROPERTY_UPDATE',
+    isRead: true,
+    createdAt: '2024-05-15T13:00:00.000Z',
+  }
+]
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    const { searchParams } = new URL(request.url)
-    const isRead = searchParams.get('isRead')
-    const type = searchParams.get('type')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    console.log('Notifications requested by:', user.email)
 
-    const whereClause: any = {
-      userId: user.id,
+    // Filter notifications based on user role
+    let notifications = NOTIFICATIONS
+
+    if (user.role === 'INVESTOR') {
+      // For investors, show all notifications (they're all relevant)
+      notifications = NOTIFICATIONS
+    } else if (user.role === 'MANAGER') {
+      // Managers see most notifications but not admin-specific ones
+      notifications = NOTIFICATIONS.filter(notif => 
+        !notif.type.includes('ADMIN')
+      )
     }
-
-    if (isRead !== null) {
-      whereClause.isRead = isRead === 'true'
-    }
-
-    if (type) {
-      whereClause.type = type
-    }
-
-    const notifications = await prisma.notification.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    })
+    // Admins see all notifications
 
     return NextResponse.json(notifications)
   } catch (error) {
     console.error('Error fetching notifications:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const user = await requireAuth(request)
-    const body = await request.json()
-    const { notificationIds, isRead } = body
-
-    if (!notificationIds || !Array.isArray(notificationIds)) {
-      return NextResponse.json(
-        { error: 'Invalid notification IDs' },
-        { status: 400 }
-      )
-    }
-
-    // Update notifications for the current user only
-    const updatedNotifications = await prisma.notification.updateMany({
-      where: {
-        id: { in: notificationIds },
-        userId: user.id, // Ensure user can only update their own notifications
-      },
-      data: {
-        isRead,
-      },
-    })
-
-    return NextResponse.json({
-      message: 'Notifications updated successfully',
-      updatedCount: updatedNotifications.count,
-    })
-  } catch (error) {
-    console.error('Error updating notifications:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -79,94 +83,63 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Check if user has permission to create notifications
+    // Only admins and managers can create notifications
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()
-    const {
-      userId,
+    const { title, message, type, targetUsers } = body
+
+    // Validate required fields
+    if (!title || !message || !type) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Create new notification
+    const newNotification = {
+      id: `notif-${Date.now()}`,
       title,
       message,
       type,
-    } = body
-
-    // Validate required fields
-    if (!userId || !title || !message || !type) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      isRead: false,
+      createdAt: new Date().toISOString(),
     }
 
-    // Check if target user exists
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    // In a real app, you'd save this to the database and send to target users
+    NOTIFICATIONS.unshift(newNotification) // Add to beginning of array
 
-    if (!targetUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    // Create notification
-    const notification = await prisma.notification.create({
-      data: {
-        userId,
-        title,
-        message,
-        type,
-        isRead: false,
-      },
-    })
-
-    return NextResponse.json(notification, { status: 201 })
+    return NextResponse.json(newNotification, { status: 201 })
   } catch (error) {
     console.error('Error creating notification:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    const body = await request.json()
+    const { id, isRead } = body
 
-    const { searchParams } = new URL(request.url);
-    const notificationId = searchParams.get('id');
-
-    if (notificationId) {
-      // Delete specific notification
-      await prisma.notification.deleteMany({
-        where: {
-          id: notificationId,
-          userId: user.id, // Ensure user can only delete their own notifications
-        },
-      });
-    } else {
-      // Delete all read notifications for the user
-      await prisma.notification.deleteMany({
-        where: {
-          userId: user.id,
-          isRead: true,
-        },
-      });
+    if (!id) {
+      return NextResponse.json({ error: 'Notification ID is required' }, { status: 400 })
     }
 
-    return NextResponse.json({ message: 'Notifications deleted successfully' });
+    // Find and update notification
+    const notificationIndex = NOTIFICATIONS.findIndex(n => n.id === id)
+    if (notificationIndex === -1) {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 })
+    }
+
+    NOTIFICATIONS[notificationIndex] = {
+      ...NOTIFICATIONS[notificationIndex],
+      isRead: isRead !== undefined ? isRead : NOTIFICATIONS[notificationIndex].isRead
+    }
+
+    return NextResponse.json(NOTIFICATIONS[notificationIndex])
   } catch (error) {
-    console.error('Error deleting notifications:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error updating notification:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

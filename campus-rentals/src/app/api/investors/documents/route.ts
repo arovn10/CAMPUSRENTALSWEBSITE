@@ -1,128 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+
+// Mock documents data
+const DOCUMENTS = [
+  {
+    id: 'doc-1',
+    title: 'Operating Agreement - Campus Rentals Fund I',
+    documentType: 'LEGAL',
+    entityType: 'FUND',
+    entityName: 'Campus Rentals Fund I',
+    uploadedAt: '2024-01-15T00:00:00.000Z',
+    fileSize: 2048576, // 2MB
+  },
+  {
+    id: 'doc-2',
+    title: 'Q1 2024 Financial Report',
+    documentType: 'FINANCIAL',
+    entityType: 'FUND',
+    entityName: 'Campus Rentals Fund I',
+    uploadedAt: '2024-04-15T00:00:00.000Z',
+    fileSize: 1048576, // 1MB
+  },
+  {
+    id: 'doc-3',
+    title: 'Property Purchase Agreement - 123 Main St',
+    documentType: 'LEGAL',
+    entityType: 'PROPERTY',
+    entityName: '123 Main Street',
+    uploadedAt: '2024-02-01T00:00:00.000Z',
+    fileSize: 3145728, // 3MB
+  },
+  {
+    id: 'doc-4',
+    title: 'Tax K-1 Form 2023',
+    documentType: 'TAX',
+    entityType: 'FUND',
+    entityName: 'Campus Rentals Fund I',
+    uploadedAt: '2024-03-15T00:00:00.000Z',
+    fileSize: 524288, // 512KB
+  },
+  {
+    id: 'doc-5',
+    title: 'Property Management Agreement',
+    documentType: 'CONTRACT',
+    entityType: 'PROPERTY',
+    entityName: '456 Oak Avenue',
+    uploadedAt: '2024-01-20T00:00:00.000Z',
+    fileSize: 1572864, // 1.5MB
+  }
+]
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    const { searchParams } = new URL(request.url)
-    const entityType = searchParams.get('entityType')
-    const entityId = searchParams.get('entityId')
-    const documentType = searchParams.get('documentType')
+    console.log('Documents requested by:', user.email)
 
-    let documents
+    // Filter documents based on user role and entity type
+    let documents = DOCUMENTS
 
-    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-      // Admin and managers can see all documents
-      const whereClause: any = {}
-      
-      if (entityType) whereClause.entityType = entityType
-      if (entityId) whereClause.entityId = entityId
-      if (documentType) whereClause.documentType = documentType
-
-      documents = await prisma.document.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-    } else {
-      // Investors can only see documents related to their investments
-      const userInvestments = await prisma.investment.findMany({
-        where: { userId: user.id, status: 'ACTIVE' },
-        select: { propertyId: true },
-      })
-
-      const userFundInvestments = await prisma.fundInvestment.findMany({
-        where: { userId: user.id, status: 'ACTIVE' },
-        select: { fundId: true },
-      })
-
-      const propertyIds = userInvestments.map(inv => inv.propertyId)
-      const fundIds = userFundInvestments.map(inv => inv.fundId)
-
-      const whereClause: any = {
-        OR: [
-          { isPublic: true },
-          { entityType: 'PROPERTY', entityId: { in: propertyIds } },
-          { entityType: 'FUND', entityId: { in: fundIds } },
-          { entityType: 'USER', entityId: user.id },
-        ],
-      }
-
-      if (entityType) whereClause.entityType = entityType
-      if (entityId) whereClause.entityId = entityId
-      if (documentType) whereClause.documentType = documentType
-
-      documents = await prisma.document.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
+    if (user.role === 'INVESTOR') {
+      // For investors, only show fund-related documents
+      documents = DOCUMENTS.filter(doc => doc.entityType === 'FUND')
     }
 
-    // Group documents by entity type and add entity details
-    const documentsWithDetails = await Promise.all(
-      documents.map(async (doc: any) => {
-        let entityDetails = null
-
-        if (doc.entityType === 'PROPERTY') {
-          const property = await prisma.property.findUnique({
-            where: { id: doc.entityId },
-            select: { name: true, address: true },
-          })
-          entityDetails = property
-        } else if (doc.entityType === 'FUND') {
-          const fund = await prisma.fund.findUnique({
-            where: { id: doc.entityId },
-            select: { name: true, description: true },
-          })
-          entityDetails = fund
-        }
-
-        return {
-          id: doc.id,
-          title: doc.title,
-          description: doc.description,
-          fileName: doc.fileName,
-          filePath: doc.filePath,
-          fileSize: doc.fileSize,
-          mimeType: doc.mimeType,
-          documentType: doc.documentType,
-          entityType: doc.entityType,
-          entityId: doc.entityId,
-          entityName: entityDetails?.name || 'Unknown',
-          entityAddress: (entityDetails as any)?.address,
-          isPublic: doc.isPublic,
-          uploadedBy: doc.uploadedBy,
-          uploadedAt: doc.createdAt,
-          user: doc.user,
-        }
-      })
-    )
-
-    return NextResponse.json(documentsWithDetails)
+    return NextResponse.json(documents)
   } catch (error) {
-    console.error('Error fetching investor documents:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error fetching documents:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -130,126 +74,36 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Check if user has permission to upload documents
+    // Only admins and managers can upload documents
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()
-    const {
-      title,
-      description,
-      fileName,
-      filePath,
-      fileSize,
-      mimeType,
-      documentType,
-      entityType,
-      entityId,
-      isPublic,
-    } = body
+    const { title, documentType, entityType, entityName, fileSize } = body
 
     // Validate required fields
-    if (!title || !fileName || !filePath || !documentType || !entityType || !entityId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    if (!title || !documentType || !entityType || !entityName) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Validate entity exists
-    if (entityType === 'PROPERTY') {
-      const property = await prisma.property.findUnique({
-        where: { id: entityId },
-      })
-      if (!property) {
-        return NextResponse.json(
-          { error: 'Property not found' },
-          { status: 404 }
-        )
-      }
-    } else if (entityType === 'FUND') {
-      const fund = await prisma.fund.findUnique({
-        where: { id: entityId },
-      })
-      if (!fund) {
-        return NextResponse.json(
-          { error: 'Fund not found' },
-          { status: 404 }
-        )
-      }
+    // Create new document
+    const newDocument = {
+      id: `doc-${Date.now()}`,
+      title,
+      documentType,
+      entityType,
+      entityName,
+      uploadedAt: new Date().toISOString(),
+      fileSize: fileSize || 0
     }
 
-    // Create document
-    const document = await prisma.document.create({
-      data: {
-        title,
-        description,
-        fileName,
-        filePath,
-        fileSize: parseInt(fileSize),
-        mimeType,
-        documentType,
-        entityType,
-        entityId,
-        isPublic: isPublic || false,
-        uploadedBy: user.id,
-      },
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    })
+    // In a real app, you'd save this to the database
+    DOCUMENTS.push(newDocument)
 
-    // Create notification for relevant users
-    if (entityType === 'PROPERTY') {
-      const propertyInvestors = await prisma.investment.findMany({
-        where: { propertyId: entityId, status: 'ACTIVE' },
-        select: { userId: true },
-      })
-
-      for (const investor of propertyInvestors) {
-        await prisma.notification.create({
-          data: {
-            userId: investor.userId,
-            title: 'New Document Uploaded',
-            message: `A new document "${title}" has been uploaded for a property you're invested in`,
-            type: 'DOCUMENT_UPLOAD',
-          },
-        })
-      }
-    } else if (entityType === 'FUND') {
-      const fundInvestors = await prisma.fundInvestment.findMany({
-        where: { fundId: entityId, status: 'ACTIVE' },
-        select: { userId: true },
-      })
-
-      for (const investor of fundInvestors) {
-        await prisma.notification.create({
-          data: {
-            userId: investor.userId,
-            title: 'New Document Uploaded',
-            message: `A new document "${title}" has been uploaded for a fund you're invested in`,
-            type: 'DOCUMENT_UPLOAD',
-          },
-        })
-      }
-    }
-
-    return NextResponse.json(document, { status: 201 })
+    return NextResponse.json(newDocument, { status: 201 })
   } catch (error) {
-    console.error('Error uploading document:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error creating document:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

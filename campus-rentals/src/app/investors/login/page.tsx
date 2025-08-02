@@ -1,141 +1,134 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { authenticateWithPassword } from '@/lib/auth'
 
-export default function InvestorLoginPage() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
+export default function InvestorLogin() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Redirect to investor dashboard
-        router.push('/investors/dashboard');
+      const user = await authenticateWithPassword(email, password)
+      
+      if (user) {
+        // Store user info in session storage
+        sessionStorage.setItem('user', JSON.stringify(user))
+        router.push('/investors/dashboard')
       } else {
-        setError(data.error || 'Login failed');
+        setError('Invalid email or password')
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      setError('Login failed. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Logo and Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 relative mb-4">
-            <Image
-              src="/CR-social-media.png"
-              alt="Campus Rentals"
-              fill
-              className="object-contain"
-            />
+          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">
-            Investor Portal
-          </h2>
-          <p className="text-gray-300">
-            Access your investment portfolio and property details
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+          <p className="text-gray-600">Sign in to your investor dashboard</p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
-                <p className="text-red-200 text-sm">{error}</p>
-              </div>
-            )}
-
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
                 placeholder="Enter your email"
               />
             </div>
-
+            
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 required
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200"
                 placeholder="Enter your password"
               />
             </div>
+          </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Signing In...
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
                 </div>
               ) : (
                 'Sign In'
               )}
             </button>
-          </form>
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="text-center">
-          <p className="text-gray-400 text-sm">
-            Need help? Contact{' '}
-            <a href="mailto:rovnerproperties@gmail.com" className="text-blue-400 hover:text-blue-300">
-              rovnerproperties@gmail.com
-            </a>
-          </p>
-        </div>
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Demo Accounts:
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-gray-500">
+              <p><strong>Admin:</strong> rovnerproperties@gmail.com / Celarev0319942002!</p>
+              <p><strong>Investor:</strong> investor1@example.com / investor123</p>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
-  );
+  )
 } 

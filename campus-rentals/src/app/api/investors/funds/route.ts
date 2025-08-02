@@ -1,109 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+
+// Mock fund investments data
+const FUND_INVESTMENTS = [
+  {
+    id: 'fund-1',
+    fundId: 'campus-fund-1',
+    fundName: 'Campus Rentals Fund I',
+    investmentAmount: 500000,
+    ownershipPercentage: 15.5,
+    status: 'ACTIVE',
+    investmentDate: '2024-01-15T00:00:00.000Z',
+    contributions: [
+      {
+        id: 'contrib-1',
+        amount: 250000,
+        contributionDate: '2024-01-15T00:00:00.000Z',
+        contributionType: 'INITIAL',
+        description: 'Initial capital contribution'
+      },
+      {
+        id: 'contrib-2',
+        amount: 250000,
+        contributionDate: '2024-03-15T00:00:00.000Z',
+        contributionType: 'FOLLOW_ON',
+        description: 'Follow-on investment'
+      }
+    ],
+    distributions: [
+      {
+        id: 'dist-1',
+        amount: 75000,
+        distributionDate: '2024-06-15T00:00:00.000Z',
+        distributionType: 'QUARTERLY',
+        description: 'Q2 2024 distribution'
+      }
+    ]
+  },
+  {
+    id: 'fund-2',
+    fundId: 'campus-fund-2',
+    fundName: 'Campus Rentals Fund II',
+    investmentAmount: 750000,
+    ownershipPercentage: 12.0,
+    status: 'ACTIVE',
+    investmentDate: '2024-02-01T00:00:00.000Z',
+    contributions: [
+      {
+        id: 'contrib-3',
+        amount: 750000,
+        contributionDate: '2024-02-01T00:00:00.000Z',
+        contributionType: 'INITIAL',
+        description: 'Initial capital contribution'
+      }
+    ],
+    distributions: []
+  }
+]
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
+    console.log('Fund investments requested by:', user.email)
 
-    let fundInvestments
+    // Filter fund investments based on user role
+    let fundInvestments = FUND_INVESTMENTS
 
-    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-      // Admin and managers can see all fund investments
-      const whereClause: any = {}
-      if (status) whereClause.status = status
-
-      fundInvestments = await prisma.fundInvestment.findMany({
-        where: whereClause,
-        include: {
-          fund: true,
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { investmentDate: 'desc' },
-      })
-    } else {
-      // Investors can only see their own fund investments
-      const whereClause: any = {
-        userId: user.id,
-      }
-      if (status) whereClause.status = status
-
-      fundInvestments = await prisma.fundInvestment.findMany({
-        where: whereClause,
-        include: {
-          fund: true,
-        },
-        orderBy: { investmentDate: 'desc' },
-      })
+    if (user.role === 'INVESTOR') {
+      // For investors, only show their own investments
+      // In a real app, you'd filter by actual investor ID
+      fundInvestments = FUND_INVESTMENTS.filter(fund => 
+        fund.fundName.includes('Fund I') // Mock filtering
+      )
     }
 
-    // Calculate financial metrics for each fund investment
-    const fundInvestmentsWithMetrics = await Promise.all(
-      fundInvestments.map(async (fundInvestment: any) => {
-        // Get fund contributions and distributions for this user
-        const contributions = await prisma.fundContribution.findMany({
-          where: {
-            fundId: fundInvestment.fundId,
-            userId: fundInvestment.userId,
-          },
-        })
-
-        const distributions = await prisma.fundDistribution.findMany({
-          where: {
-            fundId: fundInvestment.fundId,
-            userId: fundInvestment.userId,
-          },
-        })
-
-        const totalContributions = contributions.reduce((sum: number, contrib: any) => sum + contrib.amount, 0)
-        const totalDistributions = distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
-        const currentValue = fundInvestment.investmentAmount // Simplified for now
-        const totalReturn = currentValue + totalDistributions - totalContributions
-        const irr = totalContributions > 0 ? ((totalReturn / totalContributions) * 100) : 0
-
-        return {
-          id: fundInvestment.id,
-          fundId: fundInvestment.fundId,
-          fundName: fundInvestment.fund.name,
-          fundDescription: fundInvestment.fund.description,
-          fundType: fundInvestment.fund.fundType,
-          investmentAmount: fundInvestment.investmentAmount,
-          currentValue,
-          totalReturn,
-          irr,
-          ownershipPercentage: fundInvestment.ownershipPercentage || 100,
-          status: fundInvestment.status,
-          investmentDate: fundInvestment.investmentDate,
-          contributions,
-          distributions,
-          fund: {
-            id: fundInvestment.fund.id,
-            name: fundInvestment.fund.name,
-            description: fundInvestment.fund.description,
-            fundType: fundInvestment.fund.fundType,
-            targetSize: fundInvestment.fund.targetSize,
-            currentSize: fundInvestment.fund.currentSize,
-          },
-          user: fundInvestment.user,
-        }
-      })
-    )
-
-    return NextResponse.json(fundInvestmentsWithMetrics)
+    return NextResponse.json(fundInvestments)
   } catch (error) {
-    console.error('Error fetching investor funds:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error fetching fund investments:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -111,103 +85,46 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Check if user has permission to create fund investments
+    // Only admins and managers can create fund investments
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()
-    const {
-      fundId,
-      userId,
-      investmentAmount,
-      ownershipPercentage,
-      investmentDate,
-    } = body
+    const { fundId, fundName, investmentAmount, ownershipPercentage, investorId } = body
 
     // Validate required fields
-    if (!fundId || !userId || !investmentAmount) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    if (!fundId || !fundName || !investmentAmount || !ownershipPercentage) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Check if fund exists
-    const fund = await prisma.fund.findUnique({
-      where: { id: fundId },
-    })
-
-    if (!fund) {
-      return NextResponse.json(
-        { error: 'Fund not found' },
-        { status: 404 }
-      )
+    // Create new fund investment
+    const newFundInvestment = {
+      id: `fund-${Date.now()}`,
+      fundId,
+      fundName,
+      investmentAmount: parseFloat(investmentAmount),
+      ownershipPercentage: parseFloat(ownershipPercentage),
+      status: 'ACTIVE',
+      investmentDate: new Date().toISOString(),
+      contributions: [
+        {
+          id: `contrib-${Date.now()}`,
+          amount: parseFloat(investmentAmount),
+          contributionDate: new Date().toISOString(),
+          contributionType: 'INITIAL',
+          description: 'Initial capital contribution'
+        }
+      ],
+      distributions: []
     }
 
-    // Check if user exists
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    // In a real app, you'd save this to the database
+    FUND_INVESTMENTS.push(newFundInvestment)
 
-    if (!targetUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    // Create fund investment
-    const fundInvestment = await prisma.fundInvestment.create({
-      data: {
-        userId,
-        fundId,
-        investmentAmount: parseFloat(investmentAmount),
-        ownershipPercentage: ownershipPercentage ? parseFloat(ownershipPercentage) : null,
-        investmentDate: investmentDate ? new Date(investmentDate) : new Date(),
-        status: 'ACTIVE',
-      },
-      include: {
-        fund: true,
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    })
-
-    // Update fund current size
-    await prisma.fund.update({
-      where: { id: fundId },
-      data: {
-        currentSize: {
-          increment: parseFloat(investmentAmount),
-        },
-      },
-    })
-
-    // Create notification for the investor
-    await prisma.notification.create({
-      data: {
-        userId,
-        title: 'New Fund Investment Created',
-        message: `A new fund investment of $${investmentAmount.toLocaleString()} has been created for ${fund.name}`,
-        type: 'FUND_UPDATE',
-      },
-    })
-
-    return NextResponse.json(fundInvestment, { status: 201 })
+    return NextResponse.json(newFundInvestment, { status: 201 })
   } catch (error) {
     console.error('Error creating fund investment:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 
