@@ -28,7 +28,7 @@ export interface Investment {
   ownershipPercentage: number;
   startDate: string;
   expectedReturn: number;
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED';
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD' | 'FORECLOSED';
   distributions: Distribution[];
 }
 
