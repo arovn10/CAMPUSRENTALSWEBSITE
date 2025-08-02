@@ -120,12 +120,8 @@ export default function InvestorLogin() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Demo Accounts:
+              Contact your administrator for login credentials
             </p>
-            <div className="mt-2 space-y-1 text-xs text-gray-500">
-              <p><strong>Admin:</strong> rovnerproperties@gmail.com / Celarev0319942002!</p>
-              <p><strong>Investor:</strong> testinvestor@example.com / testpass123</p>
-            </div>
           </div>
         </form>
       </div>

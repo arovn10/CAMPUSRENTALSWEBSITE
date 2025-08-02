@@ -15,7 +15,10 @@ model User {
   email     String   @unique
   firstName String
   lastName  String
+  password  String   // Hashed password
   role      UserRole @default(INVESTOR)
+  company   String?
+  phone     String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

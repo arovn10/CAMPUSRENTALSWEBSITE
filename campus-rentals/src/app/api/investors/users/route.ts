@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const users = getAllUsers()
+    const users = await getAllUsers()
     return NextResponse.json(users)
   } catch (error) {
     console.error('Error fetching users:', error)
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const newUser = createUser({
+    const newUser = await createUser({
       email,
       firstName,
       lastName,
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    const updatedUser = updateUser(id, updates)
+    const updatedUser = await updateUser(id, updates)
     if (!updatedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    const success = deleteUser(id)
+    const success = await deleteUser(id)
     if (!success) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }

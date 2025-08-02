@@ -1,4 +1,8 @@
 import { NextRequest } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+
+const prisma = new PrismaClient()
 
 export interface AuthenticatedUser {
   id: string
@@ -36,27 +40,35 @@ export interface Distribution {
   type: 'RENTAL' | 'SALE' | 'REFINANCE';
 }
 
-// In-memory storage (replace with real database in production)
-let USERS: AuthenticatedUser[] = [
-  {
-    id: 'admin-1',
-    email: 'rovnerproperties@gmail.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'ADMIN',
-    company: 'Campus Rentals LLC',
-    phone: '+1 (504) 383-4552',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    lastLogin: new Date().toISOString(),
+// Initialize admin user if not exists
+async function initializeAdminUser() {
+  try {
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: 'rovnerproperties@gmail.com' }
+    })
+
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash('Celarev0319942002!', 12)
+      await prisma.user.create({
+        data: {
+          email: 'rovnerproperties@gmail.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          password: hashedPassword,
+          role: 'ADMIN',
+          company: 'Campus Rentals LLC',
+          phone: '+1 (504) 383-4552'
+        }
+      })
+      console.log('Admin user created successfully')
+    }
+  } catch (error) {
+    console.error('Error initializing admin user:', error)
   }
-];
+}
 
-let INVESTMENTS: Investment[] = [];
-
-// In-memory password storage (replace with real database in production)
-let PASSWORDS: Record<string, string> = {
-  'rovnerproperties@gmail.com': 'Celarev0319942002!'
-};
+// Initialize admin user on module load
+initializeAdminUser()
 
 export async function authenticateUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   try {
@@ -64,20 +76,42 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
     
     // Check for query parameter or header authentication
     const authEmail = request.nextUrl.searchParams.get('auth') || 
-                     request.headers.get('x-auth-email') ||
-                     'investor1@example.com' // Default for demo
+                     request.headers.get('x-auth-email')
+    
+    if (!authEmail) {
+      console.log('No auth email provided')
+      return null
+    }
     
     console.log('Auth email:', authEmail)
     
-    const user = USERS.find(u => u.email === authEmail)
+    const user = await prisma.user.findUnique({
+      where: { email: authEmail, isActive: true }
+    })
     
     if (!user) {
       console.log('User not found for email:', authEmail)
       return null
     }
     
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { updatedAt: new Date() }
+    })
+    
     console.log('User authenticated successfully:', user.email)
-    return user
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      company: user.company || undefined,
+      phone: user.phone || undefined,
+      createdAt: user.createdAt.toISOString(),
+      lastLogin: user.updatedAt.toISOString()
+    }
   } catch (error) {
     console.error('Authentication error:', error)
     return null
@@ -86,17 +120,37 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
 
 export async function authenticateWithPassword(email: string, password: string): Promise<AuthenticatedUser | null> {
   try {
-    const user = USERS.find(u => u.email === email)
-    const storedPassword = PASSWORDS[email]
+    const user = await prisma.user.findUnique({
+      where: { email, isActive: true }
+    })
     
-    if (!user || !storedPassword || storedPassword !== password) {
+    if (!user) {
+      return null
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, user.password)
+    
+    if (!isValidPassword) {
       return null
     }
     
     // Update last login
-    user.lastLogin = new Date().toISOString()
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { updatedAt: new Date() }
+    })
     
-    return user
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      company: user.company || undefined,
+      phone: user.phone || undefined,
+      createdAt: user.createdAt.toISOString(),
+      lastLogin: user.updatedAt.toISOString()
+    }
   } catch (error) {
     console.error('Password authentication error:', error)
     return null
@@ -124,39 +178,94 @@ export function hasPermission(user: AuthenticatedUser, requiredRole: 'ADMIN' | '
   return roleHierarchy[user.role] >= roleHierarchy[requiredRole]
 }
 
-export function getAllUsers(): AuthenticatedUser[] {
-  return USERS
+export async function getAllUsers(): Promise<AuthenticatedUser[]> {
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: 'desc' }
+  })
+  
+  return users.map(user => ({
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    company: user.company || undefined,
+    phone: user.phone || undefined,
+    createdAt: user.createdAt.toISOString(),
+    lastLogin: user.updatedAt.toISOString()
+  }))
 }
 
-export function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' | 'lastLogin'>, password: string): AuthenticatedUser {
-  const newUser: AuthenticatedUser = {
-    ...userData,
-    id: `user-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
+export async function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' | 'lastLogin'>, password: string): Promise<AuthenticatedUser> {
+  const hashedPassword = await bcrypt.hash(password, 12)
+  
+  const user = await prisma.user.create({
+    data: {
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      password: hashedPassword,
+      role: userData.role,
+      company: userData.company,
+      phone: userData.phone
+    }
+  })
+  
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    company: user.company || undefined,
+    phone: user.phone || undefined,
+    createdAt: user.createdAt.toISOString(),
+    lastLogin: user.updatedAt.toISOString()
   }
-  
-  USERS.push(newUser)
-  PASSWORDS[userData.email] = password
-  return newUser
 }
 
-export function updateUser(id: string, updates: Partial<AuthenticatedUser>): AuthenticatedUser | null {
-  const userIndex = USERS.findIndex(u => u.id === id)
-  if (userIndex === -1) return null
-  
-  USERS[userIndex] = { ...USERS[userIndex], ...updates }
-  return USERS[userIndex]
+export async function updateUser(id: string, updates: Partial<AuthenticatedUser>): Promise<AuthenticatedUser | null> {
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        firstName: updates.firstName,
+        lastName: updates.lastName,
+        role: updates.role,
+        company: updates.company,
+        phone: updates.phone
+      }
+    })
+    
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      company: user.company || undefined,
+      phone: user.phone || undefined,
+      createdAt: user.createdAt.toISOString(),
+      lastLogin: user.updatedAt.toISOString()
+    }
+  } catch (error) {
+    console.error('Error updating user:', error)
+    return null
+  }
 }
 
-export function deleteUser(id: string): boolean {
-  const userIndex = USERS.findIndex(u => u.id === id)
-  if (userIndex === -1) return false
-  
-  const user = USERS[userIndex]
-  delete PASSWORDS[user.email]
-  USERS.splice(userIndex, 1)
-  return true
+export async function deleteUser(id: string): Promise<boolean> {
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: { isActive: false }
+    })
+    return true
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return false
+  }
 }
 
 // Investment management functions
