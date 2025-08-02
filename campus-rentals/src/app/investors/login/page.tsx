@@ -21,7 +21,7 @@ export default function InvestorLogin() {
       
       if (user) {
         // Store user info in session storage
-        sessionStorage.setItem('user', JSON.stringify(user))
+        sessionStorage.setItem('currentUser', JSON.stringify(user))
         router.push('/investors/dashboard')
       } else {
         setError('Invalid email or password')
@@ -124,7 +124,7 @@ export default function InvestorLogin() {
             </p>
             <div className="mt-2 space-y-1 text-xs text-gray-500">
               <p><strong>Admin:</strong> rovnerproperties@gmail.com / Celarev0319942002!</p>
-              <p><strong>Investor:</strong> investor1@example.com / investor123</p>
+              <p><strong>Investor:</strong> testinvestor@example.com / testpass123</p>
             </div>
           </div>
         </form>
