@@ -272,7 +272,9 @@ export async function deleteUser(id: string): Promise<boolean> {
 export async function getAllInvestments(): Promise<Investment[]> {
   const investments = await prisma.investment.findMany({
     include: {
-      distributions: true
+      distributions: true,
+      property: true,
+      user: true
     }
   })
   
