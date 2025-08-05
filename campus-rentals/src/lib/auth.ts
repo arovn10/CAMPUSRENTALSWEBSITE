@@ -41,6 +41,8 @@ export interface Distribution {
   type: 'RENTAL' | 'SALE' | 'REFINANCE';
 }
 
+// Real database authentication only - no mock data
+
 // Initialize admin user if not exists
 async function initializeAdminUser() {
   try {
@@ -75,17 +77,25 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
   try {
     console.log('Authenticating user...')
     
-    // Check for query parameter or header authentication
-    const authEmail = request.nextUrl.searchParams.get('auth') || 
-                     request.headers.get('x-auth-email')
+    // Check for Authorization header first
+    const authHeader = request.headers.get('authorization')
+    let authEmail: string | null = null
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      authEmail = authHeader.substring(7) // Remove 'Bearer ' prefix
+      console.log('Auth email from header:', authEmail)
+    } else {
+      // Fallback to query parameter
+      authEmail = request.nextUrl.searchParams.get('auth')
+      console.log('Auth email from query:', authEmail)
+    }
     
     if (!authEmail) {
       console.log('No auth email provided')
       return null
     }
     
-    console.log('Auth email:', authEmail)
-    
+    // Find user in database
     const user = await prisma.user.findUnique({
       where: { email: authEmail, isActive: true }
     })
@@ -95,13 +105,8 @@ export async function authenticateUser(request: NextRequest): Promise<Authentica
       return null
     }
     
-    // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { updatedAt: new Date() }
-    })
+    console.log('User found:', user.email, user.role)
     
-    console.log('User authenticated successfully:', user.email)
     return {
       id: user.id,
       email: user.email,
@@ -162,7 +167,6 @@ export async function requireAuth(request: NextRequest): Promise<AuthenticatedUs
   const user = await authenticateUser(request)
   
   if (!user) {
-    console.log('Authentication required but no user found')
     throw new Error('Authentication required')
   }
   
@@ -429,3 +433,5 @@ export async function addDistribution(investmentId: string, distributionData: Om
     type: distribution.distributionType as any
   }
 } 
+
+// Real database authentication only - no mock verification needed 

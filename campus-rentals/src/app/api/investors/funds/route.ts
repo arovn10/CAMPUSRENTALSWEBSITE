@@ -1,80 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
-// Mock fund investments data
-const FUND_INVESTMENTS = [
-  {
-    id: 'fund-1',
-    fundId: 'campus-fund-1',
-    fundName: 'Campus Rentals Fund I',
-    investmentAmount: 500000,
-    ownershipPercentage: 15.5,
-    status: 'ACTIVE',
-    investmentDate: '2024-01-15T00:00:00.000Z',
-    contributions: [
-      {
-        id: 'contrib-1',
-        amount: 250000,
-        contributionDate: '2024-01-15T00:00:00.000Z',
-        contributionType: 'INITIAL',
-        description: 'Initial capital contribution'
-      },
-      {
-        id: 'contrib-2',
-        amount: 250000,
-        contributionDate: '2024-03-15T00:00:00.000Z',
-        contributionType: 'FOLLOW_ON',
-        description: 'Follow-on investment'
-      }
-    ],
-    distributions: [
-      {
-        id: 'dist-1',
-        amount: 75000,
-        distributionDate: '2024-06-15T00:00:00.000Z',
-        distributionType: 'QUARTERLY',
-        description: 'Q2 2024 distribution'
-      }
-    ]
-  },
-  {
-    id: 'fund-2',
-    fundId: 'campus-fund-2',
-    fundName: 'Campus Rentals Fund II',
-    investmentAmount: 750000,
-    ownershipPercentage: 12.0,
-    status: 'ACTIVE',
-    investmentDate: '2024-02-01T00:00:00.000Z',
-    contributions: [
-      {
-        id: 'contrib-3',
-        amount: 750000,
-        contributionDate: '2024-02-01T00:00:00.000Z',
-        contributionType: 'INITIAL',
-        description: 'Initial capital contribution'
-      }
-    ],
-    distributions: []
-  }
-]
+// Real database fund investments only - no mock data
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     console.log('Fund investments requested by:', user.email)
 
-    // Filter fund investments based on user role
-    let fundInvestments = FUND_INVESTMENTS
+    // Get real fund investments from database
+    const fundInvestments = await prisma.fundInvestment.findMany({
+      where: { 
+        userId: user.id
+      },
+      include: {
+        fund: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
 
-    if (user.role === 'INVESTOR') {
-      // For investors, only show their own investments
-      // In a real app, you'd filter by actual investor ID
-      fundInvestments = FUND_INVESTMENTS.filter(fund => 
-        fund.fundName.includes('Fund I') // Mock filtering
-      )
-    }
+    // Get contributions and distributions separately
+    const fundIds = fundInvestments.map(fi => fi.fundId)
+    
+    const [contributions, distributions] = await Promise.all([
+      prisma.fundContribution.findMany({
+        where: { 
+          fundId: { in: fundIds },
+          userId: user.id
+        }
+      }),
+      prisma.fundDistribution.findMany({
+        where: { 
+          fundId: { in: fundIds },
+          userId: user.id
+        }
+      })
+    ])
 
-    return NextResponse.json(fundInvestments)
+    // Transform to match expected format
+    const formattedFundInvestments = fundInvestments.map(fundInv => {
+      const fundContributions = contributions.filter(c => c.fundId === fundInv.fundId)
+      const fundDistributions = distributions.filter(d => d.fundId === fundInv.fundId)
+      
+      return {
+        id: fundInv.id,
+        fundId: fundInv.fundId,
+        fundName: fundInv.fund.name,
+        investmentAmount: fundInv.investmentAmount,
+        ownershipPercentage: fundInv.ownershipPercentage,
+        status: fundInv.status,
+        investmentDate: fundInv.createdAt.toISOString(),
+        contributions: fundContributions.map(contrib => ({
+          id: contrib.id,
+          amount: contrib.amount,
+          contributionDate: contrib.contributionDate.toISOString(),
+          contributionType: contrib.contributionType,
+          description: contrib.description
+        })),
+        distributions: fundDistributions.map(dist => ({
+          id: dist.id,
+          amount: dist.amount,
+          distributionDate: dist.distributionDate.toISOString(),
+          distributionType: dist.distributionType,
+          description: dist.description
+        }))
+      }
+    })
+
+    return NextResponse.json(formattedFundInvestments)
   } catch (error) {
     console.error('Error fetching fund investments:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -98,29 +92,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Create new fund investment
-    const newFundInvestment = {
-      id: `fund-${Date.now()}`,
-      fundId,
-      fundName,
-      investmentAmount: parseFloat(investmentAmount),
-      ownershipPercentage: parseFloat(ownershipPercentage),
-      status: 'ACTIVE',
-      investmentDate: new Date().toISOString(),
-      contributions: [
-        {
-          id: `contrib-${Date.now()}`,
-          amount: parseFloat(investmentAmount),
-          contributionDate: new Date().toISOString(),
-          contributionType: 'INITIAL',
-          description: 'Initial capital contribution'
-        }
-      ],
-      distributions: []
-    }
+    // Create new fund investment in database
+    const newFundInvestment = await prisma.fundInvestment.create({
+      data: {
+        userId: investorId || user.id,
+        fundId,
+        investmentAmount: parseFloat(investmentAmount),
+        ownershipPercentage: parseFloat(ownershipPercentage),
+        status: 'ACTIVE'
+      }
+    })
 
-    // In a real app, you'd save this to the database
-    FUND_INVESTMENTS.push(newFundInvestment)
+    // Create initial contribution
+    await prisma.fundContribution.create({
+      data: {
+        fundId,
+        userId: investorId || user.id,
+        amount: parseFloat(investmentAmount),
+        contributionDate: new Date(),
+        contributionType: 'CAPITAL_CALL',
+        description: 'Initial capital contribution'
+      }
+    })
 
     return NextResponse.json(newFundInvestment, { status: 201 })
   } catch (error) {

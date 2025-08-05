@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authenticateWithPassword } from '@/lib/auth'
 
 export default function InvestorLogin() {
   const [email, setEmail] = useState('')
@@ -17,16 +16,31 @@ export default function InvestorLogin() {
     setError('')
 
     try {
-      const user = await authenticateWithPassword(email, password)
+      console.log('Attempting login with:', { email, password })
       
-      if (user) {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      console.log('Response status:', response.status)
+      const data = await response.json()
+      console.log('Response data:', data)
+
+      if (response.ok && data.success) {
+        console.log('Login successful, redirecting...')
         // Store user info in session storage
-        sessionStorage.setItem('currentUser', JSON.stringify(user))
+        sessionStorage.setItem('currentUser', JSON.stringify(data.user))
         router.push('/investors/dashboard')
       } else {
-        setError('Invalid email or password')
+        console.log('Login failed:', data.error)
+        setError(data.error || 'Invalid email or password')
       }
     } catch (error) {
+      console.error('Login error:', error)
       setError('Login failed. Please try again.')
     } finally {
       setLoading(false)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,63 +9,41 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request)
     console.log('User authenticated:', user.email, user.role)
 
-    // Mock data based on user role
-    let stats
+    // Get real data from database
+    const investments = await prisma.investment.findMany({
+      where: { userId: user.id },
+      include: { 
+        property: true,
+        distributions: true
+      }
+    })
+
+    const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    const totalCurrentValue = investments.reduce((sum, inv) => sum + (inv.property.currentValue || inv.investmentAmount), 0)
+    const totalReturn = totalCurrentValue - totalInvested
+    const totalIrr = totalInvested > 0 ? ((totalCurrentValue / totalInvested - 1) * 100) : 0
+    const activeInvestments = investments.filter(inv => inv.status === 'ACTIVE').length
+    const totalDistributions = investments.reduce((sum, inv) => sum + inv.distributions.reduce((dSum, dist) => dSum + dist.amount, 0), 0)
     
-    if (user.role === 'ADMIN') {
-      stats = {
-        totalInvested: 2500000,
-        currentValue: 2750000,
-        totalReturn: 250000,
-        totalIrr: 10.0,
-        activeInvestments: 15,
-        totalDistributions: 180000,
-        pendingDistributions: 25000,
-        documentsCount: 45,
-        unreadNotifications: 8,
-      }
-    } else if (user.role === 'MANAGER') {
-      stats = {
-        totalInvested: 1800000,
-        currentValue: 1980000,
-        totalReturn: 180000,
-        totalIrr: 10.0,
-        activeInvestments: 12,
-        totalDistributions: 135000,
-        pendingDistributions: 20000,
-        documentsCount: 38,
-        unreadNotifications: 5,
-      }
-    } else {
-      // Investor data
-      if (user.email === 'investor1@example.com') {
-        stats = {
-          totalInvested: 425000,
-          currentValue: 467500,
-          totalReturn: 42500,
-          totalIrr: 10.0,
-          activeInvestments: 3,
-          totalDistributions: 6800,
-          pendingDistributions: 4300,
-          documentsCount: 12,
-          unreadNotifications: 2,
-        }
-      } else {
-        stats = {
-          totalInvested: 650000,
-          currentValue: 715000,
-          totalReturn: 65000,
-          totalIrr: 10.0,
-          activeInvestments: 2,
-          totalDistributions: 15200,
-          pendingDistributions: 8000,
-          documentsCount: 8,
-          unreadNotifications: 1,
-        }
-      }
+    // Calculate pending distributions (estimated monthly rent)
+    const pendingDistributions = investments.reduce((sum, inv) => {
+      const monthlyRent = inv.property.monthlyRent || 0
+      return sum + (monthlyRent * 0.8) // 80% of monthly rent as distribution
+    }, 0)
+
+    const stats = {
+      totalInvested: Math.round(totalInvested),
+      currentValue: Math.round(totalCurrentValue),
+      totalReturn: Math.round(totalReturn),
+      totalIrr: Math.round(totalIrr * 100) / 100,
+      activeInvestments,
+      totalDistributions: Math.round(totalDistributions),
+      pendingDistributions: Math.round(pendingDistributions),
+      documentsCount: 0, // Will be calculated from real documents
+      unreadNotifications: 0, // Will be calculated from real notifications
     }
 
-    console.log('Returning stats for user:', user.email, stats)
+    console.log('Returning real stats for user:', user.email, stats)
     return NextResponse.json(stats)
   } catch (error) {
     console.error('Error fetching investor stats:', error)

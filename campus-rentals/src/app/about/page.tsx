@@ -54,7 +54,7 @@ export default function AboutPage() {
       <div className="relative py-24">
         <div className="absolute inset-0">
           <Image
-            src="/images/about-hero.jpg"
+            src="/Campus-Rentals.png"
             alt="About Campus Rentals"
             fill
             sizes="100vw"

@@ -117,6 +117,13 @@ EOF
     log "📦 Installing dependencies..."
     npm install
     
+    log "🗄️ Setting up database..."
+    npx prisma generate
+    npx prisma db push
+    
+    log "🌱 Seeding complete database with investments and debt records..."
+    node seed-complete-investments.js
+    
     log "🔨 Building application..."
     npm run build
     
