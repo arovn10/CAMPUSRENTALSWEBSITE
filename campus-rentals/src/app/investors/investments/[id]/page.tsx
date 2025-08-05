@@ -3042,6 +3042,7 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6 border-4 border-green-500">
               {/* Debug: Make this section very visible */}
               <div className="text-lg font-bold text-green-600 mb-2">🔍 DEBUG: WATERFALL STRUCTURE CARDS SECTION</div>
+              <div className="text-lg font-bold text-red-600 mb-2" onClick={() => alert('WATERFALL STRUCTURE SECTION IS RENDERING!')}>🚨 CLICK HERE TO TEST IF THIS SECTION IS RENDERING 🚨</div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
                 <div className="flex space-x-2">
