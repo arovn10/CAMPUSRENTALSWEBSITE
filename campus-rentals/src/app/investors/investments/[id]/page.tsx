@@ -3072,20 +3072,20 @@ export default function InvestmentDetailPage() {
                                 <p className="text-sm text-gray-600">{structure.description}</p>
                                 <p className="text-xs text-gray-500">{structure.waterfallTiers.length} tiers</p>
                               </div>
-                              <div className="flex space-x-1">
+                              <div className="flex space-x-2">
                                 <button
                                   onClick={() => handleEditWaterfallStructure(structure)}
-                                  className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                                   title="Edit Structure"
                                 >
-                                  <PencilIcon className="h-4 w-4" />
+                                  <PencilIcon className="h-5 w-5" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteWaterfallStructure(structure.id)}
-                                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
                                   title="Delete Structure"
                                 >
-                                  <TrashIcon className="h-4 w-4" />
+                                  <TrashIcon className="h-5 w-5" />
                                 </button>
                               </div>
                             </div>
@@ -3125,8 +3125,12 @@ export default function InvestmentDetailPage() {
                     ))}
                     {waterfallStructures.length > 3 && (
                       <button
-                        onClick={() => setShowAllWaterfallStructures(!showAllWaterfallStructures)}
-                        className="text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors duration-200"
+                        onClick={() => {
+                          console.log('Current showAllWaterfallStructures:', showAllWaterfallStructures)
+                          console.log('Total waterfall structures:', waterfallStructures.length)
+                          setShowAllWaterfallStructures(!showAllWaterfallStructures)
+                        }}
+                        className="w-full text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-4 py-3 rounded-lg border border-blue-200 transition-colors duration-200 font-medium"
                       >
                         {showAllWaterfallStructures 
                           ? `Show Less` 
