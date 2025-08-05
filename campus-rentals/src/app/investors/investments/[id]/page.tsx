@@ -5593,6 +5593,18 @@ export default function InvestmentDetailPage() {
                   Cancel
                 </button>
                 <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this waterfall structure? This action cannot be undone.')) {
+                      handleDeleteWaterfallStructure(editingWaterfallStructure.id)
+                      setShowEditWaterfallModal(false)
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200"
+                >
+                  Delete Structure
+                </button>
+                <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
                 >
@@ -5813,6 +5825,18 @@ export default function InvestmentDetailPage() {
                   className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this global waterfall structure? This action cannot be undone.')) {
+                      handleDeleteWaterfallStructure(editingWaterfallStructure.id)
+                      setShowEditGlobalWaterfallModal(false)
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200"
+                >
+                  Delete Structure
                 </button>
                 <button
                   type="submit"
