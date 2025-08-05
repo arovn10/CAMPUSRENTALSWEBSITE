@@ -1641,6 +1641,33 @@ export default function InvestmentDetailPage() {
     }
   }
 
+  const handleDeleteWaterfallStructure = async (structureId: string) => {
+    if (!confirm('Are you sure you want to delete this waterfall structure? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/investors/waterfall-structures/${structureId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.email}`
+        }
+      })
+
+      if (response.ok) {
+        console.log('Waterfall structure deleted successfully')
+        await fetchWaterfallStructures()
+        alert('Waterfall structure deleted successfully!')
+      } else {
+        const errorData = await response.json()
+        console.error('Failed to delete waterfall structure:', errorData)
+        alert('Failed to delete waterfall structure')
+      }
+    } catch (error) {
+      console.error('Error deleting waterfall structure:', error)
+    }
+  }
+
   const handleEditDocument = (document: any) => {
     setEditingDocument(document)
     setEditDocumentData({
@@ -3045,13 +3072,22 @@ export default function InvestmentDetailPage() {
                                 <p className="text-sm text-gray-600">{structure.description}</p>
                                 <p className="text-xs text-gray-500">{structure.waterfallTiers.length} tiers</p>
                               </div>
-                              <button
-                                onClick={() => handleEditWaterfallStructure(structure)}
-                                className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
-                                title="Edit Structure"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => handleEditWaterfallStructure(structure)}
+                                  className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                                  title="Edit Structure"
+                                >
+                                  <PencilIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteWaterfallStructure(structure.id)}
+                                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                                  title="Delete Structure"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
                             </div>
                             {structure.waterfallDistributions && structure.waterfallDistributions.length > 0 && (
                               <div className="mt-2">
