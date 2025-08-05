@@ -3062,8 +3062,18 @@ export default function InvestmentDetailPage() {
               <div className="space-y-3">
                 {waterfallStructures.length > 0 ? (
                   <div className="space-y-2">
+                    {/* Debug info */}
+                    <div className="text-xs text-gray-500 mb-2">
+                      Showing {showAllWaterfallStructures ? waterfallStructures.length : Math.min(3, waterfallStructures.length)} of {waterfallStructures.length} structures
+                    </div>
+                    {/* Debug: Show structure details */}
+                    <div className="text-xs text-red-500 mb-2">
+                      DEBUG: {waterfallStructures.length} waterfall structures loaded
+                    </div>
                     {waterfallStructures.slice(0, showAllWaterfallStructures ? undefined : 3).map((structure: any) => (
-                      <div key={structure.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div key={structure.id} className="p-3 bg-gray-50 rounded-lg border-2 border-red-200">
+                        {/* Debug: Show structure ID */}
+                        <div className="text-xs text-red-500 mb-1">DEBUG: Structure ID: {structure.id}</div>
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex justify-between items-start">
@@ -3081,7 +3091,10 @@ export default function InvestmentDetailPage() {
                                   <PencilIcon className="h-5 w-5" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteWaterfallStructure(structure.id)}
+                                  onClick={() => {
+                                    console.log('Delete button clicked for structure:', structure.id, structure.name)
+                                    handleDeleteWaterfallStructure(structure.id)
+                                  }}
                                   className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
                                   title="Delete Structure"
                                 >
@@ -3126,6 +3139,7 @@ export default function InvestmentDetailPage() {
                     {waterfallStructures.length > 3 && (
                       <button
                         onClick={() => {
+                          console.log('+X more structures button clicked!')
                           console.log('Current showAllWaterfallStructures:', showAllWaterfallStructures)
                           console.log('Total waterfall structures:', waterfallStructures.length)
                           setShowAllWaterfallStructures(!showAllWaterfallStructures)
