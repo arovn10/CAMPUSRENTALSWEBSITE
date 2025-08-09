@@ -18,6 +18,7 @@ import {
   PropertyAmenities
 } from '@/utils/api';
 import { getPropertyPhoto } from '@/utils/propertyPhotos';
+import { getCoordinates } from '@/utils/coordinateCache';
 
 // Enhanced Photo interface with cached path
 interface CachedPhoto extends Photo {
@@ -42,6 +43,38 @@ async function fetchAndCacheAllData() {
       console.warn('⚠️ No properties returned from API');
       throw new Error('No properties available from backend API');
     }
+
+    // Geocode properties that don't have coordinates
+    console.log('🗺️ Geocoding property addresses...');
+    let geocodedCount = 0;
+    let skippedCount = 0;
+    
+    for (const property of properties) {
+      // Check if property already has valid coordinates
+      if (property.latitude && property.longitude && 
+          !isNaN(property.latitude) && !isNaN(property.longitude) &&
+          property.latitude >= -90 && property.latitude <= 90 &&
+          property.longitude >= -180 && property.longitude <= 180) {
+        skippedCount++;
+        continue;
+      }
+
+      // Geocode the address
+      const coordinates = await getCoordinates(property.address);
+      if (coordinates) {
+        property.latitude = coordinates.latitude;
+        property.longitude = coordinates.longitude;
+        geocodedCount++;
+        console.log(`   ✅ Geocoded: ${property.address} -> ${coordinates.latitude}, ${coordinates.longitude}`);
+      } else {
+        console.log(`   ❌ Failed to geocode: ${property.address}`);
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    console.log(`🗺️ Geocoding completed: ${geocodedCount} geocoded, ${skippedCount} already had coordinates`);
     
     // Log sample to verify all fields
     const sampleProperty = properties[0];
@@ -189,13 +222,27 @@ export async function GET() {
     // Fallback to original API
     try {
       const properties = await originalFetchProperties();
+      
+      // If external API fails, return test data with coordinates
+      if (!properties || properties.length === 0) {
+        console.log('External API failed, returning test data with coordinates...');
+        const testData = await import('./test-data.json');
+        return NextResponse.json(testData.default);
+      }
+      
       return NextResponse.json(properties);
     } catch (fallbackError) {
-      console.error('Fallback API also failed:', fallbackError);
-      return NextResponse.json(
-        { error: 'Failed to fetch properties' },
-        { status: 500 }
-      );
+      console.error('Fallback API also failed, using test data:', fallbackError);
+      try {
+        const testData = await import('./test-data.json');
+        return NextResponse.json(testData.default);
+      } catch (testDataError) {
+        console.error('Test data also failed:', testDataError);
+        return NextResponse.json(
+          { error: 'Failed to fetch properties' },
+          { status: 500 }
+        );
+      }
     }
   }
 } 

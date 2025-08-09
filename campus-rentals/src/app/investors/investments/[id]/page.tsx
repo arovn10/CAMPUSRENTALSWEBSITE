@@ -1438,6 +1438,7 @@ export default function InvestmentDetailPage() {
   }
 
   const handleEditWaterfallStructure = (structure: any) => {
+    console.log('handleEditWaterfallStructure called with structure:', structure)
     setEditingWaterfallStructure(structure)
     setWaterfallData({
       name: structure.name,
@@ -1453,6 +1454,7 @@ export default function InvestmentDetailPage() {
       }))
     })
     setShowEditWaterfallModal(true)
+    console.log('Edit waterfall modal should now be open')
   }
 
   const handleEditGlobalWaterfallStructure = (structure: any) => {
@@ -5584,31 +5586,44 @@ export default function InvestmentDetailPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex space-x-3 pt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowEditWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
-                >
-                  Cancel
-                </button>
+              <div className="flex flex-col space-y-3 pt-6">
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditWaterfallModal(false)}
+                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  >
+                    Update Structure
+                  </button>
+                </div>
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 mb-2">
+                    <strong>Debug Info:</strong> editingWaterfallStructure ID: {editingWaterfallStructure?.id || 'NOT SET'}
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
+                    console.log('Delete button clicked, editingWaterfallStructure:', editingWaterfallStructure)
+                    if (!editingWaterfallStructure || !editingWaterfallStructure.id) {
+                      alert('Error: No waterfall structure selected for deletion')
+                      return
+                    }
                     if (confirm('Are you sure you want to delete this waterfall structure? This action cannot be undone.')) {
+                      console.log('Deleting waterfall structure with ID:', editingWaterfallStructure.id)
                       handleDeleteWaterfallStructure(editingWaterfallStructure.id)
                       setShowEditWaterfallModal(false)
                     }
                   }}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200 font-medium"
                 >
-                  Delete Structure
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
-                >
-                  Update Structure
+                  🗑️ Delete Waterfall Structure
                 </button>
               </div>
             </form>
