@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: to,
-      replyTo: from,
+      reply_to: from,
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
