@@ -100,16 +100,12 @@ export default function CacheAdminPage() {
       const data = await response.json();
       
       if (response.ok && data.success) {
-<<<<<<< HEAD
-        setMessage(`Force refresh successful: ${data.data.propertiesCount} properties, ${data.data.photosCount} photos, ${data.data.imagesCached} images cached`);
-=======
         setMessage(`✅ COMPREHENSIVE REFRESH SUCCESSFUL! 
           📊 ${data.data.propertiesCount} properties refreshed (ALL fields including descriptions)
           📸 ${data.data.photosCount} photos updated
           🏠 ${data.data.amenitiesCount} amenity sets refreshed
           🖼️ ${data.data.imagesCached} images cached
           ✅ ALL DATA POINTS UPDATED: bedrooms, bathrooms, prices, descriptions, square footage, amenities, photos`);
->>>>>>> 35d86de9c2c5a6b24677dd9d206264bc5be47992
         await refreshStatus();
       } else {
         setMessage(`❌ Comprehensive refresh failed: ${data.message || 'Unknown error'}`);
@@ -296,10 +292,9 @@ export default function CacheAdminPage() {
             <button
               onClick={forceRefreshCache}
               disabled={forceRefreshing}
-<<<<<<< HEAD
-              className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-300 disabled:opacity-50"
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-300 disabled:opacity-50 font-semibold"
             >
-              {forceRefreshing ? 'Refreshing...' : 'Force Refresh'}
+              {forceRefreshing ? '🔄 Refreshing ALL Data...' : '🚀 COMPREHENSIVE REFRESH (All Data + Descriptions)'}
             </button>
             
             <button
@@ -308,11 +303,6 @@ export default function CacheAdminPage() {
               className="px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors duration-300 disabled:opacity-50"
             >
               {refreshing ? 'Clearing...' : 'Clear Cache'}
-=======
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors duration-300 disabled:opacity-50 font-semibold"
-            >
-              {forceRefreshing ? '🔄 Refreshing ALL Data...' : '🚀 COMPREHENSIVE REFRESH (All Data + Descriptions)'}
->>>>>>> 35d86de9c2c5a6b24677dd9d206264bc5be47992
             </button>
           </div>
         </div>
@@ -339,15 +329,11 @@ export default function CacheAdminPage() {
             <li>• <strong>Clear Cache:</strong> Removes all cached files and images</li>
             <li>• <strong>Refresh Status:</strong> Updates the current cache status display</li>
             <li>• Cache automatically refreshes every 24 hours</li>
-<<<<<<< HEAD
-            <li>• Images are cached locally for faster loading</li>
-=======
             <li>• Force refresh will download all images again (may take several minutes)</li>
             <li>• <strong>COMPREHENSIVE REFRESH</strong> clears everything and rebuilds from scratch</li>
             <li>• <strong>Refreshes ALL data:</strong> bedrooms, bathrooms, prices, descriptions, square footage, amenities, photos</li>
             <li>• Images are cached locally in /public/cached-images/</li>
             <li>• Use comprehensive refresh when property data changes in your backend</li>
->>>>>>> 35d86de9c2c5a6b24677dd9d206264bc5be47992
           </ul>
         </div>
       </div>
