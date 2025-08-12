@@ -28,10 +28,17 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   useEffect(() => {
     const loadThumbnail = async () => {
       try {
+        console.log(`Loading photos for property ${property.property_id}...`);
         // Always fetch photos from the API using the property ID
         const photos = await fetchPropertyPhotos(property.property_id);
+        console.log(`Received ${photos.length} photos for property ${property.property_id}:`, photos);
+        
         if (photos.length > 0) {
-          setThumbnail(getOptimizedImageUrl(photos[0]));
+          const photoUrl = getOptimizedImageUrl(photos[0]);
+          console.log(`Setting thumbnail URL for property ${property.property_id}:`, photoUrl);
+          setThumbnail(photoUrl);
+        } else {
+          console.log(`No photos found for property ${property.property_id}`);
         }
       } catch (error) {
         console.error('Error loading property thumbnail:', error);

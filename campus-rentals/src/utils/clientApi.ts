@@ -74,11 +74,12 @@ export async function fetchPropertyPhotos(propertyId: number): Promise<CachedPho
 
 // Get optimized image URL (using cached images for better performance)
 export function getOptimizedImageUrl(photo: CachedPhoto): string {
-  // Use cached images if available, fallback to CloudFront
+  // Use cached images if available, otherwise use the photo link directly
   if (photo.cachedPath) {
     return photo.cachedPath;
   }
-  return s3ToCloudFrontUrl(photo.photoLink);
+  // Return the photo link directly since we now allow S3 URLs in Next.js config
+  return photo.photoLink;
 }
 
 // Simplified external API access for essential functions only
