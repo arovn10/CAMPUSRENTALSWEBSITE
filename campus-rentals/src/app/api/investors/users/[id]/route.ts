@@ -10,9 +10,27 @@ export async function PUT(
     const user = await requireAuth(request)
     const body = await request.json()
     
+    // Check if user has permission to update users
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      )
+    }
+    
+    // Determine if we're updating by ID or email
+    let whereClause: any
+    if (params.id.includes('@')) {
+      // If the parameter contains @, treat it as an email
+      whereClause = { email: decodeURIComponent(params.id) }
+    } else {
+      // Otherwise treat it as an ID
+      whereClause = { id: params.id }
+    }
+    
     // Update user in database
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: whereClause,
       data: {
         firstName: body.firstName,
         lastName: body.lastName,
