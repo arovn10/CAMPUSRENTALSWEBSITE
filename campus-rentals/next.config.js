@@ -15,7 +15,7 @@ module.exports = {
       },
     ],
     // Allow serving images from the public directory
-    unoptimized: false,
+    unoptimized: true, // Temporarily disable optimization to test
     // Additional settings for better image handling
     domains: ['abodebucket.s3.us-east-2.amazonaws.com', 'd1m1syk7iv23tg.cloudfront.net'],
     minimumCacheTTL: 60,
