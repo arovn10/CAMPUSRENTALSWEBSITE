@@ -732,9 +732,12 @@ export default function InvestmentDetailPage() {
           entityOwnershipPercentage: '',
           investors: [
             {
+              investorType: 'INDIVIDUAL',
               userId: '',
+              entityId: '',
               userEmail: '',
               userName: '',
+              entityName: '',
               investmentAmount: '',
               ownershipPercentage: ''
             }
@@ -3999,26 +4002,68 @@ export default function InvestmentDetailPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Investor
+                            Investor Type
                           </label>
                           <select
-                            value={investor.userId}
+                            value={investor.investorType}
                             onChange={(e) => {
-                              const selectedUser = availableUsers.find(u => u.id === e.target.value)
-                              updateInvestor(index, 'userId', e.target.value)
-                              updateInvestor(index, 'userEmail', selectedUser?.email || '')
-                              updateInvestor(index, 'userName', `${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`.trim())
+                              updateInvestor(index, 'investorType', e.target.value)
+                              // Reset investor selection when type changes
+                              updateInvestor(index, 'userId', '')
+                              updateInvestor(index, 'entityId', '')
+                              updateInvestor(index, 'userEmail', '')
+                              updateInvestor(index, 'userName', '')
+                              updateInvestor(index, 'entityName', '')
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
                           >
-                            <option value="">Select investor...</option>
-                            {availableUsers.map(user => (
-                              <option key={user.id} value={user.id}>
-                                {user.firstName} {user.lastName} ({user.email})
-                              </option>
-                            ))}
+                            <option value="INDIVIDUAL">Individual</option>
+                            <option value="ENTITY">Entity</option>
                           </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Select {investor.investorType === 'ENTITY' ? 'Entity' : 'Investor'}
+                          </label>
+                          {investor.investorType === 'ENTITY' ? (
+                            <select
+                              value={investor.entityId}
+                              onChange={(e) => {
+                                const selectedEntity = availableEntities.find(e => e.id === e.target.value)
+                                updateInvestor(index, 'entityId', e.target.value)
+                                updateInvestor(index, 'entityName', selectedEntity?.name || '')
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              required
+                            >
+                              <option value="">Select entity...</option>
+                              {availableEntities.map(entity => (
+                                <option key={entity.id} value={entity.id}>
+                                  {entity.name} ({entity.type})
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select
+                              value={investor.userId}
+                              onChange={(e) => {
+                                const selectedUser = availableUsers.find(u => u.id === e.target.value)
+                                updateInvestor(index, 'userId', e.target.value)
+                                updateInvestor(index, 'userEmail', selectedUser?.email || '')
+                                updateInvestor(index, 'userName', `${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`.trim())
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              required
+                            >
+                              <option value="">Select investor...</option>
+                              {availableUsers.map(user => (
+                                <option key={user.id} value={user.id}>
+                                  {user.firstName} {user.lastName} ({user.email})
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
