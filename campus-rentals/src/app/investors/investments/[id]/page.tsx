@@ -171,6 +171,12 @@ export default function InvestmentDetailPage() {
   const [showEditEntityModal, setShowEditEntityModal] = useState(false)
   const [editingEntityInvestment, setEditingEntityInvestment] = useState<any>(null)
   const [propertyEntityInvestments, setPropertyEntityInvestments] = useState<any[]>([])
+  const [showAddEntityInvestorModal, setShowAddEntityInvestorModal] = useState(false)
+  const [addEntityInvestorData, setAddEntityInvestorData] = useState({
+    entityId: '',
+    investmentAmount: '',
+    ownershipPercentage: ''
+  })
   const [showNOIModal, setShowNOIModal] = useState(false)
   const [showInsuranceModal, setShowInsuranceModal] = useState(false)
   const [showTaxModal, setShowTaxModal] = useState(false)
@@ -631,6 +637,48 @@ export default function InvestmentDetailPage() {
       }
     } catch (error) {
       console.error('Error fetching property entity investments:', error)
+    }
+  }
+
+  const handleAddEntityAsInvestor = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!investment?.property?.id) {
+      alert('Property not found')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/investors/entity-investments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.email}`
+        },
+        body: JSON.stringify({
+          entityId: addEntityInvestorData.entityId,
+          propertyId: investment.property.id,
+          investmentAmount: parseFloat(addEntityInvestorData.investmentAmount),
+          ownershipPercentage: parseFloat(addEntityInvestorData.ownershipPercentage)
+        })
+      })
+
+      if (response.ok) {
+        setShowAddEntityInvestorModal(false)
+        setAddEntityInvestorData({
+          entityId: '',
+          investmentAmount: '',
+          ownershipPercentage: ''
+        })
+        await fetchPropertyEntityInvestments() // Refresh the list
+        alert('Entity added as investor successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to add entity as investor: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error adding entity as investor:', error)
+      alert('Error adding entity as investor')
     }
   }
 
@@ -2939,6 +2987,36 @@ export default function InvestmentDetailPage() {
               </div>
             )}
 
+            {/* Add Entity as Investor (Admin only) */}
+            {currentUser?.role === 'ADMIN' && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Add Entity as Investor</h2>
+                  <button
+                    onClick={async () => {
+                      await fetchAvailableEntities()
+                      setShowAddEntityInvestorModal(true)
+                    }}
+                    className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">Add an existing entity as an investor in this project with ownership percentage and investment amount.</p>
+                  <button
+                    onClick={async () => {
+                      await fetchAvailableEntities()
+                      setShowAddEntityInvestorModal(true)
+                    }}
+                    className="w-full px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200 font-medium"
+                  >
+                    Add Entity to Project
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Multi-Investor Management (Admin only) */}
             {currentUser?.role === 'ADMIN' && (
               <div className="bg-white rounded-2xl shadow-sm border p-6">
@@ -3930,6 +4008,88 @@ export default function InvestmentDetailPage() {
                   className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
                 >
                   Create Entity
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Entity as Investor Modal */}
+      {showAddEntityInvestorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Add Entity as Investor</h3>
+              <button
+                onClick={() => setShowAddEntityInvestorModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddEntityAsInvestor} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Entity
+                </label>
+                <select
+                  value={addEntityInvestorData.entityId}
+                  onChange={(e) => setAddEntityInvestorData({ ...addEntityInvestorData, entityId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select an entity...</option>
+                  {availableEntities.map(entity => (
+                    <option key={entity.id} value={entity.id}>
+                      {entity.name} ({entity.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Investment Amount
+                </label>
+                <input
+                  type="number"
+                  value={addEntityInvestorData.investmentAmount}
+                  onChange={(e) => setAddEntityInvestorData({ ...addEntityInvestorData, investmentAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ownership Percentage
+                </label>
+                <input
+                  type="number"
+                  value={addEntityInvestorData.ownershipPercentage}
+                  onChange={(e) => setAddEntityInvestorData({ ...addEntityInvestorData, ownershipPercentage: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.0"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  required
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddEntityInvestorModal(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200"
+                >
+                  Add Entity to Project
                 </button>
               </div>
             </form>
