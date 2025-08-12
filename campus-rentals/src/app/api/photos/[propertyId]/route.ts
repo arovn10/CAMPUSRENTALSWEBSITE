@@ -32,12 +32,11 @@ function getLocalPropertyPhotos(propertyId: number): Photo[] {
   if (!photoUrls) return [];
   
   return photoUrls.map((url, index) => ({
-    photoId: `${propertyId}-${index + 1}`,
+    photoId: index + 1,
     photoLink: url,
-    propertyId: propertyId,
-    isPrimary: index === 0,
-    uploadedAt: new Date().toISOString(),
-    uploadedBy: 'system'
+    propertyKey: propertyId,
+    description: `Property ${propertyId} photo ${index + 1}`,
+    photoOrder: index + 1
   }));
 }
 
@@ -79,6 +78,7 @@ export async function GET(
     // Fallback to original API
     try {
       const photos = await originalFetchPropertyPhotos(propertyId);
+      console.log(`External API returned ${photos.length} photos for property ${propertyId}:`, photos);
       const photosWithCache: CachedPhoto[] = photos.map(photo => ({
         ...photo,
         cachedPath: getCachedImagePath(propertyId, photo.photoId) || undefined
@@ -90,6 +90,7 @@ export async function GET(
       
       // Fallback to local photo mapping
       const localPhotos = getLocalPropertyPhotos(propertyId);
+      console.log(`Using local photos for property ${propertyId}:`, localPhotos);
       if (localPhotos.length > 0) {
         return NextResponse.json(localPhotos);
       }
