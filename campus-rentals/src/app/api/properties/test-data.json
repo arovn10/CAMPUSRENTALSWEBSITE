@@ -1,7 +1,7 @@
 [
   {
     "property_id": 1,
-    "username": "campusrentals",
+    "username": "campusrentalsnola",
     "address": "1234 Magazine St, New Orleans, LA 70130",
     "name": "Magazine Garden Apartment",
     "description": "Beautiful 2-bedroom apartment near Tulane University. Features modern amenities, hardwood floors, and walking distance to campus.",
@@ -18,7 +18,7 @@
   },
   {
     "property_id": 2,
-    "username": "campusrentals",
+    "username": "campusrentalsnola",
     "address": "5678 St. Charles Ave, New Orleans, LA 70115",
     "name": "St. Charles Victorian",
     "description": "Charming 3-bedroom house in the Garden District. Historic home with modern updates, large yard, and streetcar access.",
@@ -35,7 +35,7 @@
   },
   {
     "property_id": 3,
-    "username": "campusrentals",
+    "username": "campusrentalsnola",
     "address": "9012 Freret St, New Orleans, LA 70118",
     "name": "Freret Student House",
     "description": "Modern 4-bedroom student house near Tulane. Perfect for group living with individual leases available.",
@@ -52,7 +52,7 @@
   },
   {
     "property_id": 4,
-    "username": "campusrentals",
+    "username": "campusrentalsnola",
     "address": "3456 Broadway St, New Orleans, LA 70118",
     "name": "Broadway Loft",
     "description": "Spacious 1-bedroom loft apartment with high ceilings and modern finishes. Perfect for graduate students.",
@@ -69,7 +69,7 @@
   },
   {
     "property_id": 5,
-    "username": "campusrentals",
+    "username": "campusrentalsnola",
     "address": "7890 Carrollton Ave, New Orleans, LA 70118",
     "name": "Carrollton Corner",
     "description": "Cozy 2-bedroom apartment near both Tulane and Loyola universities. Great location with easy transit access.",
