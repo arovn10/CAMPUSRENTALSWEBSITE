@@ -2780,22 +2780,80 @@ export default function InvestmentDetailPage() {
             </div>
 
             {/* Investor Info (Admin only) */}
-            {currentUser?.role === 'ADMIN' && investment.investorName && (
+            {currentUser?.role === 'ADMIN' && (
               <div className="bg-white rounded-2xl shadow-sm border p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Investor Information</h2>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Editable</span>
+                  <h2 className="text-xl font-semibold text-gray-900">Ownership Breakdown</h2>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Live Data</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <UserIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900">{investment.investorName}</p>
-                      <p className="text-sm text-gray-600">{investment.investorEmail}</p>
+                
+                {/* Direct Investment Summary */}
+                {investment.investorName && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">Direct Investment</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <UserIcon className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-gray-700">{investment.investorName}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">{formatPercentage(investment.ownershipPercentage)}</div>
+                        <div className="text-xs text-gray-600">{formatCurrency(investment.investmentAmount)}</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    <p>Click "Edit Investment" to modify investor details</p>
+                )}
+
+                {/* Entity Investment Summary */}
+                {propertyEntityInvestments.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">Entity Investments</h3>
+                    {propertyEntityInvestments.map((entityInvestment) => (
+                      <div key={entityInvestment.id} className="p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <BuildingOfficeIcon className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">{entityInvestment.entity.name}</span>
+                            <span className="text-xs text-gray-500">({entityInvestment.entity.type})</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-gray-900">{formatPercentage(entityInvestment.ownershipPercentage)}</div>
+                            <div className="text-xs text-gray-600">{formatCurrency(entityInvestment.investmentAmount)}</div>
+                          </div>
+                        </div>
+                        
+                        {/* Entity Owners Breakdown */}
+                        {entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-green-200">
+                            <div className="text-xs text-gray-600 mb-1">Individual owners within entity:</div>
+                            <div className="space-y-1">
+                              {entityInvestment.entity.entityOwners.map((owner: any) => (
+                                <div key={owner.id} className="flex justify-between text-xs">
+                                  <span className="text-gray-700">{owner.user.firstName} {owner.user.lastName}</span>
+                                  <span className="text-gray-600">
+                                    {formatPercentage(owner.ownershipPercentage)} • {formatCurrency(owner.investmentAmount)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Total Ownership Summary */}
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-900">Total Project Ownership</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {(() => {
+                        const directOwnership = parseFloat(investment.ownershipPercentage || '0')
+                        const entityOwnership = propertyEntityInvestments.reduce((sum, ei) => sum + parseFloat(ei.ownershipPercentage || '0'), 0)
+                        return formatPercentage(directOwnership + entityOwnership)
+                      })()}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2814,7 +2872,12 @@ export default function InvestmentDetailPage() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">Active entities in this project:</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">Active entities in this project:</p>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      {propertyEntityInvestments.length} {propertyEntityInvestments.length === 1 ? 'entity' : 'entities'}
+                    </span>
+                  </div>
                   
                   {propertyEntityInvestments.length > 0 ? (
                     <div className="space-y-3">
@@ -2824,7 +2887,7 @@ export default function InvestmentDetailPage() {
                             <div>
                               <p className="font-medium text-gray-900">{entityInvestment.entity.name}</p>
                               <p className="text-sm text-gray-600">{entityInvestment.entity.type}</p>
-                              <p className="text-xs text-blue-600">{formatCurrency(entityInvestment.investmentAmount)} • {formatPercentage(entityInvestment.ownershipPercentage)}</p>
+                              <p className="text-xs text-blue-600">{formatCurrency(entityInvestment.investmentAmount)} • {formatPercentage(parseFloat(entityInvestment.ownershipPercentage || '0'))}</p>
                             </div>
                             <div className="flex items-center space-x-2">
                               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span>
