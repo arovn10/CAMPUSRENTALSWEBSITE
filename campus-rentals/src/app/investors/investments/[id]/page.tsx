@@ -2300,30 +2300,7 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investor Details & Entity Structure</h2>
               
-              {/* Direct Investment Info */}
-              {investment.investmentType !== 'ENTITY' && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Direct Investment</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Investor</p>
-                      <p className="font-medium text-gray-900">{investment.investorName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Investment Amount</p>
-                      <p className="font-medium text-gray-900">{formatCurrency(investment.investmentAmount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Ownership Percentage</p>
-                      <p className="font-medium text-gray-900">{formatPercentage(investment.ownershipPercentage)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Investment Date</p>
-                      <p className="font-medium text-gray-900">{formatDate(investment.investmentDate)}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
               {/* Entity Investments */}
               {propertyEntityInvestments.length > 0 && (
