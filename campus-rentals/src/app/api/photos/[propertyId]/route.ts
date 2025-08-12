@@ -65,26 +65,30 @@ export async function GET(
       if (cachedData && cachedData.photos[propertyId]) {
         const photos = cachedData.photos[propertyId];
         
-        // Add cached paths to photos
-        const photosWithCache: CachedPhoto[] = photos.map(photo => ({
+        // Don't add cached paths since the files don't exist
+        // Return photos without cached paths
+        const photosWithoutCache: CachedPhoto[] = photos.map(photo => ({
           ...photo,
-          cachedPath: getCachedImagePath(propertyId, photo.photoId) || undefined
+          cachedPath: undefined // Don't use cached paths that don't exist
         }));
         
-        return NextResponse.json(photosWithCache);
+        return NextResponse.json(photosWithoutCache);
       }
     }
 
-    // Fallback to original API
-    try {
-      const photos = await originalFetchPropertyPhotos(propertyId);
-      console.log(`External API returned ${photos.length} photos for property ${propertyId}:`, photos);
-      const photosWithCache: CachedPhoto[] = photos.map(photo => ({
-        ...photo,
-        cachedPath: getCachedImagePath(propertyId, photo.photoId) || undefined
-      }));
-      
-      return NextResponse.json(photosWithCache);
+          // Fallback to original API
+      try {
+        const photos = await originalFetchPropertyPhotos(propertyId);
+        console.log(`External API returned ${photos.length} photos for property ${propertyId}:`, photos);
+        
+        // Don't add cached paths since the files don't exist
+        // Return photos with S3 URLs directly
+        const photosWithoutCache: CachedPhoto[] = photos.map(photo => ({
+          ...photo,
+          cachedPath: undefined // Don't use cached paths that don't exist
+        }));
+        
+        return NextResponse.json(photosWithoutCache);
     } catch (externalApiError) {
       console.log(`External API failed for property ${propertyId}, using local photo mapping...`);
       
@@ -92,7 +96,12 @@ export async function GET(
       const localPhotos = getLocalPropertyPhotos(propertyId);
       console.log(`Using local photos for property ${propertyId}:`, localPhotos);
       if (localPhotos.length > 0) {
-        return NextResponse.json(localPhotos);
+        // Convert to CachedPhoto format but without cached paths
+        const localPhotosWithCache: CachedPhoto[] = localPhotos.map(photo => ({
+          ...photo,
+          cachedPath: undefined // Don't use cached paths that don't exist
+        }));
+        return NextResponse.json(localPhotosWithCache);
       }
       
       // If no local photos, return empty array
