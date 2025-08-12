@@ -154,9 +154,12 @@ export default function InvestmentDetailPage() {
     entityOwnershipPercentage: '',
     investors: [
       {
+        investorType: 'INDIVIDUAL', // 'INDIVIDUAL' or 'ENTITY'
         userId: '',
+        entityId: '',
         userEmail: '',
         userName: '',
+        entityName: '',
         investmentAmount: '',
         ownershipPercentage: ''
       }
@@ -637,9 +640,12 @@ export default function InvestmentDetailPage() {
       investors: [
         ...prev.investors,
         {
+          investorType: 'INDIVIDUAL',
           userId: '',
+          entityId: '',
           userEmail: '',
           userName: '',
+          entityName: '',
           investmentAmount: '',
           ownershipPercentage: ''
         }
