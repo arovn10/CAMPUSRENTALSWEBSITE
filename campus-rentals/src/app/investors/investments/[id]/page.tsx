@@ -247,6 +247,7 @@ export default function InvestmentDetailPage() {
     // Refinance fields
     refinanceAmount: '',
     newDebtAmount: '',
+    originationFees: '',
     closingFees: '',
     prepaymentPenalty: ''
   })
@@ -1605,6 +1606,7 @@ export default function InvestmentDetailPage() {
       description: distribution.description || '',
       refinanceAmount: '',
       newDebtAmount: '',
+      originationFees: '',
       closingFees: '',
       prepaymentPenalty: ''
     })
@@ -1641,6 +1643,7 @@ export default function InvestmentDetailPage() {
           description: '',
           refinanceAmount: '',
           newDebtAmount: '',
+          originationFees: '',
           closingFees: '',
           prepaymentPenalty: ''
         })
@@ -1817,8 +1820,8 @@ export default function InvestmentDetailPage() {
         
         if (distributionData.distributionType === 'REFINANCE') {
           breakdownMessage += `🏠 Refinance Summary:\n`
-          breakdownMessage += `• Refinance Amount: ${formatCurrency(parseFloat(distributionData.refinanceAmount || '0'))}\n`
           breakdownMessage += `• New Debt Amount: ${formatCurrency(parseFloat(distributionData.newDebtAmount || '0'))}\n`
+          breakdownMessage += `• Origination Fees: ${formatCurrency(parseFloat(distributionData.originationFees || '0'))}\n`
           breakdownMessage += `• Closing Fees: ${formatCurrency(parseFloat(distributionData.closingFees || '0'))}\n`
           breakdownMessage += `• Prepayment Penalty: ${formatCurrency(parseFloat(distributionData.prepaymentPenalty || '0'))}\n`
           breakdownMessage += `• Distribution Amount: ${formatCurrency(parseFloat(distributionData.totalAmount || '0'))}\n\n`
@@ -1889,6 +1892,7 @@ export default function InvestmentDetailPage() {
           description: '',
           refinanceAmount: '',
           newDebtAmount: '',
+          originationFees: '',
           closingFees: '',
           prepaymentPenalty: ''
         })
@@ -5227,38 +5231,6 @@ export default function InvestmentDetailPage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Refinance Amount
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={distributionData.refinanceAmount}
-                      onChange={(e) => {
-                        const refinanceAmount = parseFloat(e.target.value) || 0
-                        const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
-                        const closingFees = parseFloat(distributionData.closingFees) || 0
-                        const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
-                        
-                        // Calculate distribution amount: refinance - new debt - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - closingFees - prepaymentPenalty
-                        
-                        setDistributionData({ 
-                          ...distributionData, 
-                          refinanceAmount: e.target.value,
-                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
-                        })
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                      placeholder="0.00"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Total refinance amount received
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       New Debt Amount
                     </label>
                     <input
@@ -5266,17 +5238,21 @@ export default function InvestmentDetailPage() {
                       step="0.01"
                       value={distributionData.newDebtAmount}
                       onChange={(e) => {
-                        const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
                         const newDebtAmount = parseFloat(e.target.value) || 0
+                        const originationFees = parseFloat(distributionData.originationFees) || 0
                         const closingFees = parseFloat(distributionData.closingFees) || 0
                         const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
                         
-                        // Calculate distribution amount: refinance - new debt - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - closingFees - prepaymentPenalty
+                        // Refinance amount = new debt amount (they are the same)
+                        const refinanceAmount = newDebtAmount
+                        
+                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
+                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
                         
                         setDistributionData({ 
                           ...distributionData, 
                           newDebtAmount: e.target.value,
+                          refinanceAmount: e.target.value, // Link refinance amount to new debt amount
                           totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
                         })
                       }}
@@ -5285,7 +5261,42 @@ export default function InvestmentDetailPage() {
                       placeholder="0.00"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Amount of new debt taken out (will replace current property debt)
+                      Amount of new debt taken out (will replace current property debt and set refinance amount)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Origination Fees ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={distributionData.originationFees}
+                      onChange={(e) => {
+                        const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
+                        const originationFees = parseFloat(e.target.value) || 0
+                        const closingFees = parseFloat(distributionData.closingFees) || 0
+                        const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
+                        
+                        // Refinance amount = new debt amount (they are the same)
+                        const refinanceAmount = newDebtAmount
+                        
+                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
+                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
+                        
+                        setDistributionData({ 
+                          ...distributionData, 
+                          originationFees: e.target.value,
+                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
+                        })
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Loan origination fees (typically 1-2% of loan amount)
                     </p>
                   </div>
 
@@ -5298,13 +5309,16 @@ export default function InvestmentDetailPage() {
                       step="0.01"
                       value={distributionData.closingFees}
                       onChange={(e) => {
-                        const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
                         const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
+                        const originationFees = parseFloat(distributionData.originationFees) || 0
                         const closingFees = parseFloat(e.target.value) || 0
                         const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
                         
-                        // Calculate distribution amount: refinance - new debt - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - closingFees - prepaymentPenalty
+                        // Refinance amount = new debt amount (they are the same)
+                        const refinanceAmount = newDebtAmount
+                        
+                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
+                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
                         
                         setDistributionData({ 
                           ...distributionData, 
@@ -5317,7 +5331,7 @@ export default function InvestmentDetailPage() {
                       placeholder="0.00"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Total closing costs and fees
+                      Other closing costs and fees (title, appraisal, etc.)
                     </p>
                   </div>
 
@@ -5361,7 +5375,7 @@ export default function InvestmentDetailPage() {
                       </span>
                     </div>
                     <p className="text-xs text-green-600 mt-1">
-                      Refinance - New Debt - Closing Fees - Prepayment Penalty
+                      Refinance - New Debt - Origination Fees - Closing Fees - Prepayment Penalty
                     </p>
                   </div>
                 </div>
