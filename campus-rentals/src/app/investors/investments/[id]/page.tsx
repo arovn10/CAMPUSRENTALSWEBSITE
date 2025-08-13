@@ -5246,8 +5246,11 @@ export default function InvestmentDetailPage() {
                         // Refinance amount = new debt amount (they are the same)
                         const refinanceAmount = newDebtAmount
                         
-                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
+                        // Get current debt amount from the investment's property
+                        const currentDebtAmount = investment?.property?.debtAmount || 0
+                        
+                        // Calculate distribution amount: New Debt - Fees - Old Debt
+                        const distributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - currentDebtAmount
                         
                         setDistributionData({ 
                           ...distributionData, 
@@ -5282,8 +5285,11 @@ export default function InvestmentDetailPage() {
                         // Refinance amount = new debt amount (they are the same)
                         const refinanceAmount = newDebtAmount
                         
-                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
+                        // Get current debt amount from the investment's property
+                        const currentDebtAmount = investment?.property?.debtAmount || 0
+                        
+                        // Calculate distribution amount: New Debt - Fees - Old Debt
+                        const distributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - currentDebtAmount
                         
                         setDistributionData({ 
                           ...distributionData, 
@@ -5317,8 +5323,11 @@ export default function InvestmentDetailPage() {
                         // Refinance amount = new debt amount (they are the same)
                         const refinanceAmount = newDebtAmount
                         
-                        // Calculate distribution amount: refinance - new debt - origination fees - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - originationFees - closingFees - prepaymentPenalty
+                        // Get current debt amount from the investment's property
+                        const currentDebtAmount = investment?.property?.debtAmount || 0
+                        
+                        // Calculate distribution amount: New Debt - Fees - Old Debt
+                        const distributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - currentDebtAmount
                         
                         setDistributionData({ 
                           ...distributionData, 
@@ -5346,11 +5355,15 @@ export default function InvestmentDetailPage() {
                       onChange={(e) => {
                         const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
                         const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
+                        const originationFees = parseFloat(distributionData.originationFees) || 0
                         const closingFees = parseFloat(distributionData.closingFees) || 0
                         const prepaymentPenalty = parseFloat(e.target.value) || 0
                         
-                        // Calculate distribution amount: refinance - new debt - closing fees - prepayment penalty
-                        const distributionAmount = refinanceAmount - newDebtAmount - closingFees - prepaymentPenalty
+                        // Get current debt amount from the investment's property
+                        const currentDebtAmount = investment?.property?.debtAmount || 0
+                        
+                        // Calculate distribution amount: New Debt - Fees - Old Debt
+                        const distributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - currentDebtAmount
                         
                         setDistributionData({ 
                           ...distributionData, 
@@ -5375,7 +5388,7 @@ export default function InvestmentDetailPage() {
                       </span>
                     </div>
                     <p className="text-xs text-green-600 mt-1">
-                      Refinance - New Debt - Origination Fees - Closing Fees - Prepayment Penalty
+                      New Debt - Origination Fees - Closing Fees - Prepayment Penalty - Old Debt
                     </p>
                   </div>
                 </div>
