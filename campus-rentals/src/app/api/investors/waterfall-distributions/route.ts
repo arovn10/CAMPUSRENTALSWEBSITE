@@ -168,6 +168,7 @@ export async function POST(request: NextRequest) {
 
     // If refinance, compute distribution by subtracting old debt and fees from new debt
     let totalDistributionAmount = body.totalAmount
+    let debtAmount = property.debtAmount || 0
 
     if (body.distributionType === 'REFINANCE') {
       const newDebtAmount = parseFloat(body.newDebtAmount || '0') || 0
@@ -176,14 +177,16 @@ export async function POST(request: NextRequest) {
       const closingFeesList: Array<{ category: string; amount: number }> = Array.isArray(body.closingFeesItems) ? body.closingFeesItems.map((i: any) => ({ category: String(i.category || ''), amount: Number(i.amount || 0) })) : []
       const closingFees = closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)
 
-      // Old debt is current property.debtAmount
+      // For refinance, the new debt amount becomes the current debt
+      debtAmount = newDebtAmount
+      
+      // Calculate distribution amount: New Debt - Origination - Closing - Prepayment - Old Debt
       const oldDebtAmount = property.debtAmount || 0
       totalDistributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - oldDebtAmount
       if (totalDistributionAmount < 0) totalDistributionAmount = 0
     }
     
-    // STEP 1: Subtract debt first
-    const debtAmount = property.debtAmount || 0
+    // STEP 1: Subtract debt first (for refinance, this is the new debt amount)
     let availableForDistribution = totalDistributionAmount - debtAmount
     
     if (availableForDistribution < 0) {
