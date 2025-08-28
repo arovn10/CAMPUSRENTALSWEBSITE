@@ -184,10 +184,16 @@ export async function POST(request: NextRequest) {
       const oldDebtAmount = property.debtAmount || 0
       totalDistributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - oldDebtAmount
       if (totalDistributionAmount < 0) totalDistributionAmount = 0
+      
+      // For refinance, we don't subtract debt again since it's already accounted for in the calculation
+      // The distribution amount is what's available after paying off old debt and fees
+    } else {
+      // For non-refinance distributions, subtract debt as usual
+      totalDistributionAmount = totalDistributionAmount - debtAmount
     }
     
-    // STEP 1: Subtract debt first (for refinance, this is the new debt amount)
-    let availableForDistribution = totalDistributionAmount - debtAmount
+    // STEP 1: Calculate available for distribution
+    let availableForDistribution = totalDistributionAmount
     
     if (availableForDistribution < 0) {
       return NextResponse.json(
