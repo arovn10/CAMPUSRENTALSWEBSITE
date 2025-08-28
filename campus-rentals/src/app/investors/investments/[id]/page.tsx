@@ -1607,6 +1607,7 @@ export default function InvestmentDetailPage() {
       newDebtAmount: '',
       originationFees: '',
       closingFees: '',
+      closingFeesItems: [],
       prepaymentPenalty: ''
     })
     setShowEditDistributionModal(true)
@@ -1644,6 +1645,7 @@ export default function InvestmentDetailPage() {
           newDebtAmount: '',
           originationFees: '',
           closingFees: '',
+          closingFeesItems: [],
           prepaymentPenalty: ''
         })
         await fetchWaterfallStructures()
@@ -1902,6 +1904,7 @@ export default function InvestmentDetailPage() {
           newDebtAmount: '',
           originationFees: '',
           closingFees: '',
+          closingFeesItems: [],
           prepaymentPenalty: ''
         })
         await fetchWaterfallStructures()
