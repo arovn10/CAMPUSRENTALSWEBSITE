@@ -166,7 +166,21 @@ export async function POST(request: NextRequest) {
       property = waterfallStructure.property
     }
 
-    const totalDistributionAmount = body.totalAmount
+    // If refinance, compute distribution by subtracting old debt and fees from new debt
+    let totalDistributionAmount = body.totalAmount
+
+    if (body.distributionType === 'REFINANCE') {
+      const newDebtAmount = parseFloat(body.newDebtAmount || '0') || 0
+      const originationFees = parseFloat(body.originationFees || '0') || 0
+      const prepaymentPenalty = parseFloat(body.prepaymentPenalty || '0') || 0
+      const closingFeesList: Array<{ category: string; amount: number }> = Array.isArray(body.closingFeesItems) ? body.closingFeesItems.map((i: any) => ({ category: String(i.category || ''), amount: Number(i.amount || 0) })) : []
+      const closingFees = closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)
+
+      // Old debt is current property.debtAmount
+      const oldDebtAmount = property.debtAmount || 0
+      totalDistributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - oldDebtAmount
+      if (totalDistributionAmount < 0) totalDistributionAmount = 0
+    }
     
     // STEP 1: Subtract debt first
     const debtAmount = property.debtAmount || 0
@@ -499,6 +513,17 @@ export async function POST(request: NextRequest) {
         isProcessed: true
       }
     })
+
+    // If refinance with closing fee items, persist them
+    if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
+      await prisma.refinanceClosingFee.createMany({
+        data: body.closingFeesItems.map((i: any) => ({
+          waterfallDistributionId: waterfallDistribution.id,
+          category: String(i.category || ''),
+          amount: Number(i.amount || 0)
+        }))
+      })
+    }
 
     // STEP 7: Get detailed breakdown for response
     const detailedBreakdown = await prisma.waterfallTierDistribution.findMany({

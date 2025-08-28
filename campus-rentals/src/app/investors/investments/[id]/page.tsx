@@ -249,6 +249,7 @@ export default function InvestmentDetailPage() {
     newDebtAmount: '',
     originationFees: '',
     closingFees: '',
+    closingFeesItems: [] as { category: string; amount: string }[],
     prepaymentPenalty: ''
   })
   const [applyWaterfallData, setApplyWaterfallData] = useState({
@@ -766,7 +767,6 @@ export default function InvestmentDetailPage() {
       console.error('Error creating multi-investor investment:', error)
     }
   }
-
   const handleCreateEntityInModal = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -1550,7 +1550,6 @@ export default function InvestmentDetailPage() {
       console.error('Error updating waterfall structure:', error)
     }
   }
-
   const handleUpdateGlobalWaterfallStructure = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -1795,7 +1794,16 @@ export default function InvestmentDetailPage() {
       distributionDate: distributionData.distributionDate,
       distributionType: distributionData.distributionType,
       description: distributionData.description,
-      ...(isGlobalStructure && { propertyId: investment?.property?.id })
+      ...(isGlobalStructure && { propertyId: investment?.property?.id }),
+      ...(distributionData.distributionType === 'REFINANCE' && {
+        newDebtAmount: distributionData.newDebtAmount,
+        originationFees: distributionData.originationFees,
+        prepaymentPenalty: distributionData.prepaymentPenalty,
+        closingFeesItems: (distributionData.closingFeesItems || []).map((i: any) => ({
+          category: i.category,
+          amount: parseFloat(i.amount || '0') || 0
+        }))
+      })
     }
     
     console.log('Processing distribution with data:', requestBody)
@@ -2026,7 +2034,6 @@ export default function InvestmentDetailPage() {
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gray-50 pt-4 pb-8">
       {/* Header */}
@@ -2748,7 +2755,6 @@ export default function InvestmentDetailPage() {
               )}
             </div>
           </div>
-
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Documents */}
@@ -3354,7 +3360,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Edit Investment Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
@@ -3801,8 +3806,8 @@ export default function InvestmentDetailPage() {
 
       {/* Create Entity Modal */}
       {showCreateEntityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Create New Entity</h3>
               <button
@@ -3917,8 +3922,6 @@ export default function InvestmentDetailPage() {
       )}
 
       {/* Add Entity as Investor Modal */}
-
-
       {/* Multi-Investor Modal */}
       {showMultiInvestorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -4597,7 +4600,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* NOI Calculator Modal */}
       {showNOIModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
@@ -5123,7 +5125,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Process Distribution Modal */}
       {showWaterfallModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
@@ -5168,8 +5169,8 @@ export default function InvestmentDetailPage() {
                   Choose the waterfall structure that defines how this distribution will be split among investors
                 </p>
               </div>
-              {/* Total Amount - Hide when refinance is selected since it's calculated automatically */}
-              {distributionData.distributionType !== 'REFINANCE' && (
+              {/* Total Amount - Greyed out (readOnly) when refinance, but still visible */}
+              (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Total Amount
@@ -5179,15 +5180,18 @@ export default function InvestmentDetailPage() {
                     step="0.01"
                     value={distributionData.totalAmount}
                     onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${distributionData.distributionType === 'REFINANCE' ? 'bg-gray-100 text-gray-500' : ''}`}
                     required
+                    readOnly={distributionData.distributionType === 'REFINANCE'}
                     placeholder="0.00"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    The total amount to be distributed (e.g., $50,000 in rental income)
+                    {distributionData.distributionType === 'REFINANCE' 
+                      ? 'Calculated automatically for refinance: New Debt - Origination - Closing - Prepayment - Old Debt' 
+                      : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
                   </p>
                 </div>
-              )}
+              )
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Distribution Date
@@ -5315,37 +5319,63 @@ export default function InvestmentDetailPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Closing Fees ($)
+                      Closing Fees
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={distributionData.closingFees}
-                      onChange={(e) => {
-                        const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
-                        const originationFees = parseFloat(distributionData.originationFees) || 0
-                        const closingFees = parseFloat(e.target.value) || 0
-                        const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
-                        
-                        // Get current debt amount from the investment's property
-                        const currentDebtAmount = investment?.property?.debtAmount || 0
-                        
-                        // Calculate distribution amount: Refinance Amount - Previous Debt - All Fees
-                        const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFees - prepaymentPenalty
-                        
-                        setDistributionData({ 
-                          ...distributionData, 
-                          closingFees: e.target.value,
-                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
-                        })
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                      placeholder="0.00"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Other closing costs and fees (title, appraisal, etc.)
-                    </p>
+                    <div className="space-y-2">
+                      {distributionData.closingFeesItems.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-6 gap-2 items-center">
+                          <input
+                            type="text"
+                            className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Category (e.g., Title, Appraisal)"
+                            value={item.category}
+                            onChange={(e) => {
+                              const items = [...distributionData.closingFeesItems]
+                              items[idx] = { ...items[idx], category: e.target.value }
+                              setDistributionData({ ...distributionData, closingFeesItems: items })
+                            }}
+                          />
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Amount"
+                            value={item.amount}
+                            onChange={(e) => {
+                              const items = [...distributionData.closingFeesItems]
+                              items[idx] = { ...items[idx], amount: e.target.value }
+                              // Recalculate totals
+                              const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
+                              const originationFees = parseFloat(distributionData.originationFees) || 0
+                              const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
+                              const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
+                              const currentDebtAmount = investment?.property?.debtAmount || 0
+                              const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
+                              setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0' })
+                            }}
+                          />
+                          <button type="button" className="col-span-1 text-red-600 hover:text-red-800" onClick={() => {
+                            const items = distributionData.closingFeesItems.filter((_, i) => i !== idx)
+                            const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
+                            const originationFees = parseFloat(distributionData.originationFees) || 0
+                            const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
+                            const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
+                            const currentDebtAmount = investment?.property?.debtAmount || 0
+                            const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
+                            setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0' })
+                          }}>
+                            <XMarkIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center">
+                        <button type="button" className="text-blue-600 hover:text-blue-800 text-sm" onClick={() => setDistributionData({ ...distributionData, closingFeesItems: [...distributionData.closingFeesItems, { category: '', amount: '' }] })}>+ Add Closing Fee</button>
+                        <div className="text-sm text-gray-700">Total: ${parseFloat(distributionData.closingFees || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Add one or more closing fee line items with categories.
+                      </p>
+                    </div>
                   </div>
 
                   <div>
@@ -5809,7 +5839,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Edit Waterfall Structure Modal */}
       {showEditWaterfallModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
