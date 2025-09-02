@@ -525,17 +525,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
-<<<<<<< HEAD
     // If refinance with closing fee items, persist them
     if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
-      await prisma.refinanceClosingFee.createMany({
+      await prisma.refinanceClosingFees.createMany({
         data: body.closingFeesItems.map((i: any) => ({
           waterfallDistributionId: waterfallDistribution.id,
           category: String(i.category || ''),
           amount: Number(i.amount || 0)
         }))
       })
-=======
+    }
+
     // STEP 6.5: Update property debt for refinancing distributions
     if (isRefinancing && body.newDebtAmount && property) {
       try {
@@ -550,7 +550,6 @@ export async function POST(request: NextRequest) {
         console.error('Failed to update property debt amount:', error)
         // Don't fail the entire distribution if debt update fails
       }
->>>>>>> cc31954 (Fix refinancing distribution error - use new debt amount for debt validation)
     }
 
     // STEP 7: Get detailed breakdown for response
