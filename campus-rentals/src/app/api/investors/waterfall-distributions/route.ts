@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
     // If refinance, compute distribution by subtracting old debt and fees from new debt
     let totalDistributionAmount = body.totalAmount
     let debtAmount = property.debtAmount || 0
+    let isRefinancing = false
 
     if (body.distributionType === 'REFINANCE') {
       const newDebtAmount = parseFloat(body.newDebtAmount || '0') || 0
@@ -179,6 +180,7 @@ export async function POST(request: NextRequest) {
 
       // For refinance, the new debt amount becomes the current debt
       debtAmount = newDebtAmount
+      isRefinancing = true
       
       // Calculate distribution amount: New Debt - Origination - Closing - Prepayment - Old Debt
       const oldDebtAmount = property.debtAmount || 0
@@ -523,6 +525,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+<<<<<<< HEAD
     // If refinance with closing fee items, persist them
     if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
       await prisma.refinanceClosingFee.createMany({
@@ -532,6 +535,22 @@ export async function POST(request: NextRequest) {
           amount: Number(i.amount || 0)
         }))
       })
+=======
+    // STEP 6.5: Update property debt for refinancing distributions
+    if (isRefinancing && body.newDebtAmount && property) {
+      try {
+        await prisma.property.update({
+          where: { id: property.id },
+          data: {
+            debtAmount: body.newDebtAmount
+          }
+        })
+        console.log(`Updated property ${property.id} debt amount to ${body.newDebtAmount} for refinancing distribution`)
+      } catch (error) {
+        console.error('Failed to update property debt amount:', error)
+        // Don't fail the entire distribution if debt update fails
+      }
+>>>>>>> cc31954 (Fix refinancing distribution error - use new debt amount for debt validation)
     }
 
     // STEP 7: Get detailed breakdown for response

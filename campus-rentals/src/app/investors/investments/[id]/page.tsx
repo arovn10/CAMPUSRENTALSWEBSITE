@@ -1797,6 +1797,7 @@ export default function InvestmentDetailPage() {
       distributionType: distributionData.distributionType,
       description: distributionData.description,
       ...(isGlobalStructure && { propertyId: investment?.property?.id }),
+      // Include refinancing data if this is a refinance distribution
       ...(distributionData.distributionType === 'REFINANCE' && {
         newDebtAmount: distributionData.newDebtAmount,
         originationFees: distributionData.originationFees,
@@ -1837,35 +1838,10 @@ export default function InvestmentDetailPage() {
           breakdownMessage += `• Distribution Amount: ${formatCurrency(parseFloat(distributionData.totalAmount || '0'))}\n\n`
         }
         
-        // If this is a refinance distribution, update the property's debt
-        if (distributionData.distributionType === 'REFINANCE' && investment?.property?.id) {
-          try {
-            const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
-            console.log(`Updating property ${investment.property.id} debt from current amount to ${newDebtAmount}`)
-            
-            // Update the property's debt amount
-            const propertyUpdateResponse = await fetch(`/api/properties/${investment.property.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.email}`
-              },
-              body: JSON.stringify({
-                debtAmount: newDebtAmount
-              })
-            })
-            
-            if (propertyUpdateResponse.ok) {
-              console.log('Property debt updated successfully')
-              breakdownMessage += `🏠 Property Debt Updated: ${formatCurrency(newDebtAmount)}\n\n`
-            } else {
-              console.error('Failed to update property debt:', await propertyUpdateResponse.json())
-              breakdownMessage += `⚠️ Warning: Property debt update failed\n\n`
-            }
-          } catch (error) {
-            console.error('Error updating property debt:', error)
-            breakdownMessage += `⚠️ Warning: Property debt update failed\n\n`
-          }
+        // Property debt is now updated automatically by the API for refinancing distributions
+        if (distributionData.distributionType === 'REFINANCE') {
+          const newDebtAmount = parseFloat(distributionData.newDebtAmount) || 0
+          breakdownMessage += `🏠 Property Debt Updated: ${formatCurrency(newDebtAmount)}\n\n`
         }
         
         breakdownMessage += `💰 Financial Summary:\n`
