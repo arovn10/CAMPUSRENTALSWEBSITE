@@ -527,7 +527,7 @@ export async function POST(request: NextRequest) {
 
     // If refinance with closing fee items, persist them
     if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
-      await prisma.refinanceClosingFees.createMany({
+      await prisma.refinanceClosingFee.createMany({
         data: body.closingFeesItems.map((i: any) => ({
           waterfallDistributionId: waterfallDistribution.id,
           category: String(i.category || ''),
