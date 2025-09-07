@@ -5164,11 +5164,11 @@ export default function InvestmentDetailPage() {
                     readOnly={distributionData.distributionType === 'REFINANCE'}
                     placeholder="0.00"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {distributionData.distributionType === 'REFINANCE' 
-                      ? 'Calculated automatically for refinance: New Debt - Origination - Closing - Prepayment - Old Debt' 
-                      : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
-                  </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {distributionData.distributionType === 'REFINANCE'
+                        ? 'Calculated distribution amount after subtracting old debt and all fees from refinance amount'
+                        : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
+                    </p>
                 </div>
               )
               <div>
@@ -5249,7 +5249,7 @@ export default function InvestmentDetailPage() {
                           ...distributionData, 
                           refinanceAmount: e.target.value,
                           newDebtAmount: e.target.value, // New debt becomes the refinance amount
-                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
+                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5284,7 +5284,7 @@ export default function InvestmentDetailPage() {
                         setDistributionData({ 
                           ...distributionData, 
                           originationFees: e.target.value,
-                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
+                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5330,7 +5330,7 @@ export default function InvestmentDetailPage() {
                               const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
                               const currentDebtAmount = investment?.property?.debtAmount || 0
                               const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
-                              setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0' })
+                              setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount.toString() })
                             }}
                           />
                           <button type="button" className="col-span-1 text-red-600 hover:text-red-800" onClick={() => {
@@ -5341,7 +5341,7 @@ export default function InvestmentDetailPage() {
                             const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
                             const currentDebtAmount = investment?.property?.debtAmount || 0
                             const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
-                            setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0' })
+                            setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount.toString() })
                           }}>
                             <XMarkIcon className="h-5 w-5" />
                           </button>
@@ -5380,7 +5380,7 @@ export default function InvestmentDetailPage() {
                         setDistributionData({ 
                           ...distributionData, 
                           prepaymentPenalty: e.target.value,
-                          totalAmount: distributionAmount > 0 ? distributionAmount.toString() : '0'
+                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
