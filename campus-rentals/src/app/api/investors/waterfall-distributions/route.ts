@@ -525,6 +525,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // STEP 6.1: Save all tier distributions to the database
+    if (allTierDistributions.length > 0) {
+      await prisma.waterfallTierDistribution.createMany({
+        data: allTierDistributions
+      })
+      console.log(`Created ${allTierDistributions.length} tier distributions for waterfall distribution ${waterfallDistribution.id}`)
+    }
+
     // If refinance with closing fee items, persist them
     if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
       await prisma.refinanceClosingFee.createMany({
