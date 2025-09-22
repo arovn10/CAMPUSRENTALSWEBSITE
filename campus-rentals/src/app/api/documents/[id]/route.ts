@@ -92,7 +92,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       console.log('File read successfully, size:', fileBuffer.length)
       
       // Return the file with appropriate headers
-      return new NextResponse(fileBuffer, {
+      return new NextResponse(fileBuffer as BodyInit, {
         headers: {
           'Content-Type': document.mimeType,
           'Content-Disposition': `inline; filename="${document.fileName}"`,
