@@ -1025,6 +1025,22 @@ export default function InvestmentDetailPage() {
     }
   }
 
+  // Get the current NOI calculation (same as displayed in NOI Calculator)
+  const getCurrentNOICalculation = () => {
+    const monthlyRent = investment?.property?.monthlyRent || 0
+    const otherIncome = investment?.property?.otherIncome || 0
+    const annualExpenses = investment?.property?.annualExpenses || 0
+    const capRate = investment?.property?.capRate || 0
+
+    const annualRent = monthlyRent * 12
+    const annualOtherIncome = otherIncome * 12
+    const annualRevenue = annualRent + annualOtherIncome
+    const noi = annualRevenue - annualExpenses
+    const estimatedValue = capRate > 0 ? (noi / (capRate / 100)) : 0
+
+    return estimatedValue
+  }
+
   // NOI Calculation Functions
   const calculateNOI = () => {
     const monthlyRent = parseFloat(noiData.monthlyRent || '0')
@@ -2255,7 +2271,10 @@ export default function InvestmentDetailPage() {
                     <div className="p-4 bg-emerald-50 rounded-lg">
                       <p className="text-sm text-emerald-600 font-medium">Current Value</p>
                       <p className="text-xl font-bold text-emerald-900">
-                        {formatCurrency(investment.property.currentValue || 0)}
+                        {formatCurrency(getCurrentNOICalculation())}
+                      </p>
+                      <p className="text-sm text-emerald-700 mt-1">
+                        Based on NOI / Cap Rate (same as calculator)
                       </p>
                     </div>
                   </div>
@@ -2286,11 +2305,11 @@ export default function InvestmentDetailPage() {
                     <div className="p-4 bg-green-50 rounded-lg">
                       <p className="text-sm text-green-600 font-medium">Equity to Value</p>
                       <p className="text-xl font-bold text-green-900">
-                        {formatCurrency((investment.property.currentValue || 0) - (investment.property.debtAmount || 0))}
+                        {formatCurrency(getCurrentNOICalculation() - (investment.property.debtAmount || 0))}
                       </p>
                       <p className="text-sm text-green-700 mt-1">
-                        {investment.property.currentValue > 0 ? 
-                          formatPercentage(((investment.property.currentValue - (investment.property.debtAmount || 0)) / investment.property.currentValue) * 100) : 
+                        {getCurrentNOICalculation() > 0 ? 
+                          formatPercentage(((getCurrentNOICalculation() - (investment.property.debtAmount || 0)) / getCurrentNOICalculation()) * 100) : 
                           '0%'
                         } of current value
                       </p>
@@ -2557,7 +2576,7 @@ export default function InvestmentDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Current Value</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(investment.property.currentValue)}</p>
+                    <p className="font-medium text-gray-900">{formatCurrency(getCurrentNOICalculation())}</p>
                   </div>
                 </div>
               </div>
@@ -3632,121 +3651,6 @@ export default function InvestmentDetailPage() {
                 </div>
               </div>
 
-              {/* Refinance Section */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <input
-                    type="checkbox"
-                    id="isRefinance"
-                    checked={editData.isRefinance}
-                    onChange={(e) => setEditData({ ...editData, isRefinance: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isRefinance" className="text-lg font-medium text-gray-900">
-                    This is a Refinance Transaction
-                  </label>
-                </div>
-                
-                {editData.isRefinance && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-blue-900 mb-4">Refinance Details</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
-                          New Loan Amount
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editData.newLoanAmount}
-                          onChange={(e) => setEditData({ ...editData, newLoanAmount: e.target.value })}
-                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
-                          Less: Payoff of Old Loan
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editData.oldLoanPayoff}
-                          onChange={(e) => setEditData({ ...editData, oldLoanPayoff: e.target.value })}
-                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
-                          Less: Prepayment Penalty
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editData.prepaymentPenalty}
-                          onChange={(e) => setEditData({ ...editData, prepaymentPenalty: e.target.value })}
-                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-blue-700 mb-2">
-                          Less: Origination Fee (1%)
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editData.originationFee}
-                          onChange={(e) => setEditData({ ...editData, originationFee: e.target.value })}
-                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0.00"
-                        />
-                        <p className="text-xs text-blue-600 mt-1">
-                          Typically 1% of new loan amount
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Refinance Summary */}
-                    <div className="mt-6 p-4 bg-white border border-blue-200 rounded-lg">
-                      <h5 className="text-sm font-medium text-blue-900 mb-3">Refinance Summary</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-blue-700">New Loan Amount:</span>
-                          <span className="font-medium">${editData.newLoanAmount || '0.00'}</span>
-                        </div>
-                        <div className="flex justify-between text-red-600">
-                          <span>- Payoff of Old Loan:</span>
-                          <span className="font-medium">-${editData.oldLoanPayoff || '0.00'}</span>
-                        </div>
-                        <div className="flex justify-between text-red-600">
-                          <span>- Prepayment Penalty:</span>
-                          <span className="font-medium">-${editData.prepaymentPenalty || '0.00'}</span>
-                        </div>
-                        <div className="flex justify-between text-red-600">
-                          <span>- Origination Fee:</span>
-                          <span className="font-medium">-${editData.originationFee || '0.00'}</span>
-                        </div>
-                        <div className="border-t border-blue-200 pt-2 mt-2">
-                          <div className="flex justify-between font-semibold text-blue-900">
-                            <span>Net Proceeds:</span>
-                            <span>
-                              ${(() => {
-                                const newLoan = parseFloat(editData.newLoanAmount) || 0;
-                                const oldLoan = parseFloat(editData.oldLoanPayoff) || 0;
-                                const penalty = parseFloat(editData.prepaymentPenalty) || 0;
-                                const origination = parseFloat(editData.originationFee) || 0;
-                                return (newLoan - oldLoan - penalty - origination).toFixed(2);
-                              })()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Description */}
               <div>
