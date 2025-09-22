@@ -182,10 +182,27 @@ export async function POST(request: NextRequest) {
       debtAmount = newDebtAmount
       isRefinancing = true
       
-      // Calculate distribution amount: New Debt - Origination - Closing - Prepayment - Old Debt
+      // Calculate distribution amount: New Debt - Old Debt - Origination - Closing - Prepayment
       const oldDebtAmount = property.debtAmount || 0
-      totalDistributionAmount = newDebtAmount - originationFees - closingFees - prepaymentPenalty - oldDebtAmount
-      if (totalDistributionAmount < 0) totalDistributionAmount = 0
+      totalDistributionAmount = newDebtAmount - oldDebtAmount - originationFees - closingFees - prepaymentPenalty
+      
+      console.log('Refinancing calculation:', {
+        newDebtAmount,
+        oldDebtAmount,
+        originationFees,
+        closingFees,
+        prepaymentPenalty,
+        calculatedDistribution: totalDistributionAmount,
+        propertyId: property.id,
+        propertyName: property.name,
+        calculation: `${newDebtAmount} - ${oldDebtAmount} - ${originationFees} - ${closingFees} - ${prepaymentPenalty} = ${totalDistributionAmount}`
+      })
+      
+      // Ensure distribution amount is not negative
+      if (totalDistributionAmount < 0) {
+        console.log('Distribution amount is negative, setting to 0')
+        totalDistributionAmount = 0
+      }
       
       // For refinance, we don't subtract debt again since it's already accounted for in the calculation
       // The distribution amount is what's available after paying off old debt and fees
@@ -197,7 +214,24 @@ export async function POST(request: NextRequest) {
     // STEP 1: Calculate available for distribution
     let availableForDistribution = totalDistributionAmount
     
+    console.log('Distribution calculation summary:', {
+      distributionType: body.distributionType,
+      totalDistributionAmount,
+      availableForDistribution,
+      debtAmount,
+      isRefinancing,
+      propertyId: property.id,
+      propertyName: property.name
+    })
+    
     if (availableForDistribution < 0) {
+      console.log('Distribution amount is negative:', {
+        totalDistributionAmount,
+        availableForDistribution,
+        debtAmount,
+        isRefinancing,
+        propertyDebtAmount: property.debtAmount
+      })
       return NextResponse.json(
         { error: 'Distribution amount is less than outstanding debt. Cannot process distribution.' },
         { status: 400 }
@@ -214,6 +248,7 @@ export async function POST(request: NextRequest) {
     console.log('Processing distribution for property:', {
       propertyId: property.id,
       propertyName: property.name,
+      debtAmount: property.debtAmount,
       directInvestments: property.investments.length,
       entityInvestments: property.entityInvestments.length,
       totalInvestedCapital
@@ -489,16 +524,14 @@ export async function POST(request: NextRequest) {
           }
           
           if (investorShare > 0) {
-            const tierDistribution = await prisma.waterfallTierDistribution.create({
-              data: {
-                waterfallTierId: tier.id,
-                userId: userId,
-                distributionAmount: investorShare,
-                distributionDate: new Date(body.distributionDate),
-                distributionType: body.distributionType,
-                description: `${tier.tierName} - ${investor.user.firstName} ${investor.user.lastName}`
-              }
-            })
+            const tierDistribution = {
+              waterfallTierId: tier.id,
+              userId: userId,
+              distributionAmount: investorShare,
+              distributionDate: new Date(body.distributionDate),
+              distributionType: body.distributionType,
+              description: `${tier.tierName} - ${investor.user.firstName} ${investor.user.lastName}`
+            }
             tierDistributions.push(tierDistribution)
           }
         }
@@ -550,10 +583,10 @@ export async function POST(request: NextRequest) {
         await prisma.property.update({
           where: { id: property.id },
           data: {
-            debtAmount: body.newDebtAmount
+            debtAmount: parseFloat(body.newDebtAmount)
           }
         })
-        console.log(`Updated property ${property.id} debt amount to ${body.newDebtAmount} for refinancing distribution`)
+        console.log(`Updated property ${property.id} debt amount from ${property.debtAmount} to ${body.newDebtAmount} for refinancing distribution`)
       } catch (error) {
         console.error('Failed to update property debt amount:', error)
         // Don't fail the entire distribution if debt update fails
