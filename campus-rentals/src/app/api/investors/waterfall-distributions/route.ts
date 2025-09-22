@@ -673,6 +673,72 @@ export async function POST(request: NextRequest) {
           debtAmount: debtAmount,
           originalAmount: totalDistributionAmount
         }
+      },
+      // Comprehensive calculation details for reference
+      calculationDetails: {
+        refinancing: isRefinancing ? {
+          oldDebtAmount: property.debtAmount || 0,
+          newDebtAmount: parseFloat(body.newDebtAmount || '0') || 0,
+          originationFees: parseFloat(body.originationFees || '0') || 0,
+          closingFees: closingFeesList.reduce((s, i) => s + (i.amount || 0), 0),
+          closingFeesBreakdown: closingFeesList,
+          prepaymentPenalty: parseFloat(body.prepaymentPenalty || '0') || 0,
+          calculationFormula: `${body.newDebtAmount} - ${property.debtAmount || 0} - ${parseFloat(body.originationFees || '0') || 0} - ${closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)} - ${parseFloat(body.prepaymentPenalty || '0') || 0}`,
+          calculatedDistribution: totalDistributionAmount,
+          propertyDebtUpdated: isRefinancing ? parseFloat(body.newDebtAmount || '0') : property.debtAmount || 0
+        } : null,
+        waterfallStructure: {
+          id: waterfallStructure.id,
+          name: waterfallStructure.name,
+          description: waterfallStructure.description,
+          tiers: waterfallStructure.waterfallTiers.map(tier => ({
+            id: tier.id,
+            tierNumber: tier.tierNumber,
+            tierName: tier.tierName,
+            tierType: tier.tierType,
+            priority: tier.priority,
+            returnRate: tier.returnRate,
+            catchUpPercentage: tier.catchUpPercentage,
+            promotePercentage: tier.promotePercentage,
+            isActive: tier.isActive
+          }))
+        },
+        property: {
+          id: property.id,
+          name: property.name,
+          address: property.address,
+          oldDebtAmount: property.debtAmount || 0,
+          newDebtAmount: isRefinancing ? parseFloat(body.newDebtAmount || '0') : property.debtAmount || 0,
+          totalInvestedCapital: totalInvestedCapital,
+          directInvestments: property.investments.length,
+          entityInvestments: property.entityInvestments.length
+        },
+        investors: Array.from(investorMap.entries()).map(([userId, investor]) => ({
+          userId: userId,
+          name: `${investor.user.firstName} ${investor.user.lastName}`,
+          email: investor.user.email,
+          totalOwnership: investor.totalOwnership,
+          directInvestment: investor.directInvestment,
+          entityInvestments: investor.entityInvestments,
+          totalInvestment: investor.directInvestment + investor.entityInvestments.reduce((sum: number, e: any) => sum + e.investmentAmount, 0)
+        })),
+        previousDistributions: {
+          count: previousDistributions.length,
+          totalAmount: previousDistributions.reduce((sum, dist) => sum + dist.totalAmount, 0),
+          distributions: previousDistributions.map(dist => ({
+            id: dist.id,
+            totalAmount: dist.totalAmount,
+            distributionDate: dist.distributionDate,
+            distributionType: dist.distributionType,
+            description: dist.description
+          }))
+        },
+        tierCalculations: distributionResults.map(result => ({
+          tier: result.tier,
+          amount: result.amount,
+          type: result.type,
+          investors: breakdownByTier[result.tier]?.investors || []
+        }))
       }
     }, { status: 201 })
   } catch (error) {
