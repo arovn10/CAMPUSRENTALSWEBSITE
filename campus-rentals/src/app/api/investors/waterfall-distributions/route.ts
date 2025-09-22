@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    console.log('Fetching distributions for property:', propertyId)
     
     // Get all waterfall distributions for the property
     const distributions = await prisma.waterfallDistribution.findMany({
@@ -47,14 +46,6 @@ export async function GET(request: NextRequest) {
       orderBy: { distributionDate: 'desc' }
     })
     
-    console.log('Found distributions:', distributions.length)
-    console.log('Distribution details:', distributions.map((d: any) => ({
-      id: d.id,
-      totalAmount: d.totalAmount,
-      distributionDate: d.distributionDate,
-      structureName: d.waterfallStructure.name,
-      structureId: d.waterfallStructure.id
-    })))
     
     return NextResponse.json(distributions)
   } catch (error) {
@@ -186,21 +177,8 @@ export async function POST(request: NextRequest) {
       const oldDebtAmount = property.debtAmount || 0
       totalDistributionAmount = newDebtAmount - oldDebtAmount - originationFees - closingFees - prepaymentPenalty
       
-      console.log('Refinancing calculation:', {
-        newDebtAmount,
-        oldDebtAmount,
-        originationFees,
-        closingFees,
-        prepaymentPenalty,
-        calculatedDistribution: totalDistributionAmount,
-        propertyId: property.id,
-        propertyName: property.name,
-        calculation: `${newDebtAmount} - ${oldDebtAmount} - ${originationFees} - ${closingFees} - ${prepaymentPenalty} = ${totalDistributionAmount}`
-      })
-      
       // Ensure distribution amount is not negative
       if (totalDistributionAmount < 0) {
-        console.log('Distribution amount is negative, setting to 0')
         totalDistributionAmount = 0
       }
       
@@ -214,24 +192,7 @@ export async function POST(request: NextRequest) {
     // STEP 1: Calculate available for distribution
     let availableForDistribution = totalDistributionAmount
     
-    console.log('Distribution calculation summary:', {
-      distributionType: body.distributionType,
-      totalDistributionAmount,
-      availableForDistribution,
-      debtAmount,
-      isRefinancing,
-      propertyId: property.id,
-      propertyName: property.name
-    })
-    
     if (availableForDistribution < 0) {
-      console.log('Distribution amount is negative:', {
-        totalDistributionAmount,
-        availableForDistribution,
-        debtAmount,
-        isRefinancing,
-        propertyDebtAmount: property.debtAmount
-      })
       return NextResponse.json(
         { error: 'Distribution amount is less than outstanding debt. Cannot process distribution.' },
         { status: 400 }
@@ -245,14 +206,6 @@ export async function POST(request: NextRequest) {
     // STEP 3: Create a map of all individual investors and their total ownership percentages
     const investorMap = new Map()
 
-    console.log('Processing distribution for property:', {
-      propertyId: property.id,
-      propertyName: property.name,
-      debtAmount: property.debtAmount,
-      directInvestments: property.investments.length,
-      entityInvestments: property.entityInvestments.length,
-      totalInvestedCapital
-    })
 
     // Add direct investors
     for (const investment of property.investments) {
@@ -267,7 +220,6 @@ export async function POST(request: NextRequest) {
       existing.totalOwnership += (investment.ownershipPercentage || 0)
       existing.directInvestment += investment.investmentAmount
       investorMap.set(key, existing)
-      console.log('Added direct investor:', { userId: key, userName: investment.user.firstName, ownership: existing.totalOwnership, investment: investment.investmentAmount })
     }
 
     // Add entity investors (but don't double count - only count individual ownership)
@@ -580,15 +532,32 @@ export async function POST(request: NextRequest) {
     // STEP 6.5: Update property debt for refinancing distributions
     if (isRefinancing && body.newDebtAmount && property) {
       try {
+        const newDebtDetails = body.newDebtDetails || 
+          `Refinanced debt - ${body.newLender || 'New lender'} - ${body.newInterestRate ? body.newInterestRate + '%' : 'Rate TBD'} - ${body.newTerm ? body.newTerm + ' year term' : 'Term TBD'}`
+        
+        // Save old debt information in the distribution record for potential rollback
+        const oldDebtInfo = {
+          amount: property.debtAmount || 0,
+          details: property.debtDetails || 'No previous debt details'
+        }
+        
         await prisma.property.update({
           where: { id: property.id },
           data: {
-            debtAmount: parseFloat(body.newDebtAmount)
+            debtAmount: parseFloat(body.newDebtAmount),
+            debtDetails: newDebtDetails
           }
         })
-        console.log(`Updated property ${property.id} debt amount from ${property.debtAmount} to ${body.newDebtAmount} for refinancing distribution`)
+        
+        // Update the distribution record with old debt info for rollback capability
+        await prisma.waterfallDistribution.update({
+          where: { id: waterfallDistribution.id },
+          data: {
+            oldDebtAmount: oldDebtInfo.amount,
+            oldDebtDetails: oldDebtInfo.details
+          }
+        })
       } catch (error) {
-        console.error('Failed to update property debt amount:', error)
         // Don't fail the entire distribution if debt update fails
       }
     }
@@ -680,10 +649,10 @@ export async function POST(request: NextRequest) {
           oldDebtAmount: property.debtAmount || 0,
           newDebtAmount: parseFloat(body.newDebtAmount || '0') || 0,
           originationFees: parseFloat(body.originationFees || '0') || 0,
-          closingFees: closingFeesList.reduce((s, i) => s + (i.amount || 0), 0),
-          closingFeesBreakdown: closingFeesList,
+          closingFees: Array.isArray(body.closingFeesItems) ? body.closingFeesItems.reduce((s: number, i: any) => s + (i.amount || 0), 0) : 0,
+          closingFeesBreakdown: Array.isArray(body.closingFeesItems) ? body.closingFeesItems.map((i: any) => ({ category: String(i.category || ''), amount: Number(i.amount || 0) })) : [],
           prepaymentPenalty: parseFloat(body.prepaymentPenalty || '0') || 0,
-          calculationFormula: `${body.newDebtAmount} - ${property.debtAmount || 0} - ${parseFloat(body.originationFees || '0') || 0} - ${closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)} - ${parseFloat(body.prepaymentPenalty || '0') || 0}`,
+          calculationFormula: `${body.newDebtAmount} - ${property.debtAmount || 0} - ${parseFloat(body.originationFees || '0') || 0} - ${Array.isArray(body.closingFeesItems) ? body.closingFeesItems.reduce((s: number, i: any) => s + (i.amount || 0), 0) : 0} - ${parseFloat(body.prepaymentPenalty || '0') || 0}`,
           calculatedDistribution: totalDistributionAmount,
           propertyDebtUpdated: isRefinancing ? parseFloat(body.newDebtAmount || '0') : property.debtAmount || 0
         } : null,
@@ -712,6 +681,30 @@ export async function POST(request: NextRequest) {
           totalInvestedCapital: totalInvestedCapital,
           directInvestments: property.investments.length,
           entityInvestments: property.entityInvestments.length
+        },
+        debtDetails: {
+          oldDebt: {
+            amount: property.debtAmount || 0,
+            details: property.debtDetails || 'No debt details available'
+          },
+          newDebt: isRefinancing ? {
+            amount: parseFloat(body.newDebtAmount || '0'),
+            details: body.newDebtDetails || 'New refinanced debt',
+            lender: body.newLender || 'New lender',
+            interestRate: body.newInterestRate || null,
+            term: body.newTerm || null,
+            amortization: body.newAmortization || null
+          } : null,
+          debtChange: isRefinancing ? {
+            amountChange: parseFloat(body.newDebtAmount || '0') - (property.debtAmount || 0),
+            percentageChange: property.debtAmount ? ((parseFloat(body.newDebtAmount || '0') - (property.debtAmount || 0)) / (property.debtAmount || 0)) * 100 : 0
+          } : null,
+          rollbackInfo: isRefinancing ? {
+            canRollback: true,
+            oldDebtAmount: property.debtAmount || 0,
+            oldDebtDetails: property.debtDetails || 'No previous debt details',
+            message: 'Old debt information saved for potential rollback if distribution is deleted'
+          } : null
         },
         investors: Array.from(investorMap.entries()).map(([userId, investor]) => ({
           userId: userId,
@@ -817,19 +810,46 @@ export async function DELETE(request: NextRequest) {
     
     // Delete the waterfall distribution and all related tier distributions
     await prisma.$transaction(async (tx) => {
-      // Get the waterfall structure ID first
+      // Get the distribution details first to check if we need to restore old debt
       const distribution = await tx.waterfallDistribution.findUnique({
         where: { id: distributionId },
-        select: { waterfallStructureId: true }
+        include: {
+          waterfallStructure: {
+            include: {
+              property: true
+            }
+          }
+        }
       })
       
       if (distribution) {
+        // If this was a refinancing distribution, restore the old debt
+        if (distribution.distributionType === 'REFINANCE' && 
+            distribution.oldDebtAmount !== null && 
+            distribution.waterfallStructure.property) {
+          
+          await tx.property.update({
+            where: { id: distribution.waterfallStructure.property.id },
+            data: {
+              debtAmount: distribution.oldDebtAmount,
+              debtDetails: distribution.oldDebtDetails || 'Restored from deleted refinancing distribution'
+            }
+          })
+        }
+        
         // Delete all tier distributions for this waterfall structure
         await tx.waterfallTierDistribution.deleteMany({
           where: {
             waterfallTier: {
               waterfallStructureId: distribution.waterfallStructureId
             }
+          }
+        })
+        
+        // Delete refinance closing fees
+        await tx.refinanceClosingFee.deleteMany({
+          where: {
+            waterfallDistributionId: distributionId
           }
         })
       }
