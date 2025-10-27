@@ -1,13 +1,38 @@
 'use client';
 
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Property } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const containerStyle = {
-  width: '100%',
-  height: '400px'
+// Fix for default marker icons in Next.js
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import markerRetinaIcon from 'leaflet/dist/images/marker-icon-2x.png';
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon.src,
+  iconRetinaUrl: markerRetinaIcon.src,
+  shadowUrl: markerShadow.src,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Custom marker icon for properties
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  });
 };
 
 interface PropertyMapProps {
@@ -19,20 +44,20 @@ interface PropertyMapProps {
   zoom?: number;
 }
 
+// Component to update map bounds
+function MapUpdater({ center, zoom }: { center: { lat: number; lng: number }; zoom: number }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView([center.lat, center.lng], zoom);
+  }, [center, zoom, map]);
+  
+  return null;
+}
+
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [hoveredProperty, setHoveredProperty] = useState<Property | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const router = useRouter();
-
-  const onLoad = (map: google.maps.Map) => {
-    console.log('Google Map loaded');
-    setMap(map);
-  };
-
-  const onUnmount = () => {
-    setMap(null);
-  };
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -48,22 +73,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
 
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
 
-  const handleMarkerMouseOver = (property: Property) => {
-    setHoveredProperty(property);
-  };
-
-  const handleMarkerMouseOut = () => {
-    setHoveredProperty(null);
-  };
-
   const handleMarkerClick = (property: Property) => {
-    setSelectedProperty(property);
-    // Navigate to property page
     router.push(`/properties/${property.property_id}`);
-  };
-
-  const handleInfoWindowClose = () => {
-    setSelectedProperty(null);
   };
 
   const formatPrice = (price: number) => {
@@ -88,66 +99,43 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  return (
-    <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={zoom}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-        options={{
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ]
-        }}
-      >
-        {/* Property Markers */}
-        {propertiesWithCoords.map((property) => (
-          <Marker
-            key={property.property_id}
-            position={{
-              lat: property.latitude,
-              lng: property.longitude
-            }}
-            title={`${property.name} - ${property.address}`}
-            icon={{
-              url: '/property-marker.png',
-              scaledSize: {
-                width: 25,
-                height: 25,
-                equals: () => false
-              }
-            }}
-            onMouseOver={() => handleMarkerMouseOver(property)}
-            onMouseOut={handleMarkerMouseOut}
-            onClick={() => handleMarkerClick(property)}
-          />
-        ))}
+  const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
 
-        {/* Hover Preview InfoWindow */}
-        {hoveredProperty && !selectedProperty && (
-          <InfoWindow
-            position={{
-              lat: hoveredProperty.latitude,
-              lng: hoveredProperty.longitude
-            }}
-            onCloseClick={() => setHoveredProperty(null)}
-            options={{
-              pixelOffset: new google.maps.Size(0, -40),
-              disableAutoPan: true
-            }}
-          >
+  if (typeof window === 'undefined') {
+    return null; // Don't render on server
+  }
+
+  return (
+    <MapContainer
+      center={[center.lat, center.lng]}
+      zoom={zoom}
+      scrollWheelZoom={true}
+      style={{ height: '400px', width: '100%', borderRadius: '8px' }}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      <MapUpdater center={center} zoom={zoom} />
+
+      {/* Property Markers */}
+      {propertiesWithCoords.map((property) => (
+        <Marker
+          key={property.property_id}
+          position={[property.latitude, property.longitude]}
+          icon={propertyIcon}
+          eventHandlers={{
+            click: () => handleMarkerClick(property),
+          }}
+        >
+          <Popup>
             <div className="max-w-xs bg-white rounded-lg shadow-lg p-4">
               <div className="flex items-start space-x-3">
-                {hoveredProperty.photo && (
+                {property.photo && (
                   <img
-                    src={hoveredProperty.photo}
-                    alt={hoveredProperty.name}
+                    src={property.photo}
+                    alt={property.name}
                     className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -156,102 +144,36 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
                 )}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900 truncate">
-                    {hoveredProperty.name}
+                    {property.name}
                   </h3>
                   <p className="text-xs text-gray-600 truncate">
-                    {hoveredProperty.address}
+                    {property.address}
                   </p>
                   <div className="mt-1 flex items-center space-x-2">
                     <span className="text-xs text-gray-500">
-                      {hoveredProperty.bedrooms} bed, {hoveredProperty.bathrooms} bath
+                      {property.bedrooms} bed, {property.bathrooms} bath
                     </span>
                     <span className="text-xs font-semibold text-green-600">
-                      {formatPrice(hoveredProperty.price)}
+                      {formatPrice(property.price)}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Available: {formatDate(hoveredProperty.leaseTerms)}
+                    Available: {formatDate(property.leaseTerms)}
                   </p>
                 </div>
               </div>
               <div className="mt-2 text-center">
-                <span className="text-xs text-blue-600 font-medium">
-                  Click to view details →
-                </span>
+                <button
+                  onClick={() => handleMarkerClick(property)}
+                  className="w-full px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                >
+                  View Details →
+                </button>
               </div>
             </div>
-          </InfoWindow>
-        )}
-
-        {/* Selected Property InfoWindow */}
-        {selectedProperty && (
-          <InfoWindow
-            position={{
-              lat: selectedProperty.latitude,
-              lng: selectedProperty.longitude
-            }}
-            onCloseClick={handleInfoWindowClose}
-            options={{
-              pixelOffset: new google.maps.Size(0, -40)
-            }}
-          >
-            <div className="max-w-sm bg-white rounded-lg shadow-lg p-4">
-              <div className="flex items-start space-x-3">
-                {selectedProperty.photo && (
-                  <img
-                    src={selectedProperty.photo}
-                    alt={selectedProperty.name}
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {selectedProperty.name}
-                  </h3>
-                  <p className="text-xs text-gray-600">
-                    {selectedProperty.address}
-                  </p>
-                  <div className="mt-2 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Bedrooms:</span>
-                      <span className="text-xs font-medium">{selectedProperty.bedrooms}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Bathrooms:</span>
-                      <span className="text-xs font-medium">{selectedProperty.bathrooms}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Price:</span>
-                      <span className="text-xs font-semibold text-green-600">
-                        {formatPrice(selectedProperty.price)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Available:</span>
-                      <span className="text-xs font-medium">
-                        {formatDate(selectedProperty.leaseTerms)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-600 line-clamp-2">
-                  {selectedProperty.description}
-                </p>
-                <div className="mt-2 text-center">
-                  <span className="text-xs text-blue-600 font-medium">
-                    Navigating to property page...
-                  </span>
-                </div>
-              </div>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
-    </LoadScript>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
   );
-} 
+}

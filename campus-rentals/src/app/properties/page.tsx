@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Property } from '@/types';
 import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
-import PropertyMap from '@/components/PropertyMap';
+
+const PropertyMap = dynamic(() => import('@/components/PropertyMap'), {
+  ssr: false,
+  loading: () => <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center"><div className="text-white">Loading map...</div></div>
+});
 
 const SCHOOL_COORDINATES = {
   'Tulane University': { lat: 29.9400, lng: -90.1200 },

@@ -5,7 +5,6 @@ import { Property } from '@/types';
 import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
 import Link from 'next/link';
-import { LoadScript } from '@react-google-maps/api';
 
 export default function HomePage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -106,12 +105,18 @@ export default function HomePage() {
           <p className="text-2xl text-gray-300 mb-8 max-w-2xl">
             Experience premium off-campus housing designed for student success
           </p>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Link 
               href="/properties" 
               className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
             >
               View Properties
+            </Link>
+            <Link 
+              href="/fau-housing" 
+              className="px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+            >
+              FAU Housing
             </Link>
             <Link 
               href="/contact" 
@@ -157,6 +162,29 @@ export default function HomePage() {
               <h3 className="text-xl font-bold mb-2">Modern Amenities</h3>
               <p className="text-gray-400">State-of-the-art facilities and amenities designed for student comfort.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAU Housing Highlight */}
+      <section className="py-20 bg-gradient-to-r from-yellow-500/10 to-green-500/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">
+              Specialized FAU Housing
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+              Premium off-campus housing designed specifically for Florida Atlantic University students
+            </p>
+            <Link 
+              href="/fau-housing" 
+              className="inline-flex items-center px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+            >
+              Explore FAU Properties
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
