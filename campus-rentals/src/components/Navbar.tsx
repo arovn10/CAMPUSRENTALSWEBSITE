@@ -8,10 +8,13 @@ import {
   InformationCircleIcon,
   PhoneIcon,
   UserGroupIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
+import { useState } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
@@ -36,15 +39,31 @@ export default function Navbar() {
               <HomeIcon className="h-5 w-5" />
               <span>Home</span>
             </Link>
-            <Link 
-              href="/properties" 
-              className={`flex items-center space-x-2 transition-colors duration-300 ${
-                isActive('/properties') ? 'text-accent' : 'text-gray-300 hover:text-accent'
-              }`}
-            >
-              <BuildingOfficeIcon className="h-5 w-5" />
-              <span>Properties</span>
-            </Link>
+
+            {/* Properties Dropdown */}
+            <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+              <button
+                type="button"
+                className={`flex items-center space-x-2 transition-colors duration-300 ${
+                  pathname?.startsWith('/properties') || pathname === '/fau-housing' || pathname === '/tulane-housing' ? 'text-accent' : 'text-gray-300 hover:text-accent'
+                }`}
+                onClick={() => setOpen(prev => !prev)}
+              >
+                <BuildingOfficeIcon className="h-5 w-5" />
+                <span>Properties</span>
+                <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+              </button>
+              {open && (
+                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-900 border border-gray-800 z-50">
+                  <div className="py-1">
+                    <Link href="/properties" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-accent">All Properties</Link>
+                    <Link href="/tulane-housing" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-accent">Housing Near Tulane</Link>
+                    <Link href="/fau-housing" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-accent">Housing Near FAU</Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Link 
               href="/about" 
               className={`flex items-center space-x-2 transition-colors duration-300 ${
