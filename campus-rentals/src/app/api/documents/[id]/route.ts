@@ -126,6 +126,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const user = await requireAuth(request)
     
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
     console.log('Document update request by:', user.email, 'Role:', user.role)
     console.log('Document ID:', params.id)
     
@@ -188,6 +195,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     
     // Check if user has permission to delete documents
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
