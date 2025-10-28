@@ -1,36 +1,9 @@
 'use client';
 
 import { Property } from '@/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-
-// Only import CSS - this is safe for SSR
 import 'leaflet/dist/leaflet.css';
-
-// Leaflet imports MUST be lazy-loaded to avoid SSR errors
-let LeafletComponents: any = null;
-let LeafletLib: any = null;
-
-async function loadLeaflet() {
-  if (typeof window === 'undefined') return; // Don't load on server
-  if (LeafletComponents) return LeafletComponents; // Already loaded
-  
-  const reactLeaflet = await import('react-leaflet');
-  LeafletLib = await import('leaflet').then(m => m.default);
-  
-  // Fix default icon paths
-  if (LeafletLib) {
-    delete (LeafletLib.Icon.Default.prototype as any)._getIconUrl;
-    LeafletLib.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
-  }
-  
-  LeafletComponents = reactLeaflet;
-  return reactLeaflet;
-}
 
 interface PropertyMapProps {
   properties: Property[];
@@ -42,22 +15,10 @@ interface PropertyMapProps {
 }
 
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [mounted, setMounted] = useState(false);
   const [components, setComponents] = useState<any>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    // Load Leaflet only in browser
-    if (typeof window !== 'undefined') {
-      loadLeaflet().then(comps => {
-        if (comps) {
-          setComponents(comps);
-          setMounted(true);
-        }
-      });
-    }
-  }, []);
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -71,7 +32,37 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     property.longitude <= 180
   );
 
-  console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Dynamically load Leaflet and react-leaflet
+      Promise.all([
+        import('leaflet'),
+        import('react-leaflet')
+      ]).then(([LModule, RLModule]) => {
+        const L = LModule.default;
+        const RL = RLModule;
+        
+        // Configure icon paths
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+        
+        setComponents({
+          L,
+          MapContainer: RL.MapContainer,
+          TileLayer: RL.TileLayer,
+          Marker: RL.Marker,
+          Popup: RL.Popup
+        });
+        setMounted(true);
+      }).catch(err => {
+        console.error('Failed to load Leaflet:', err);
+      });
+    }
+  }, []);
 
   const handleMarkerClick = (property: Property) => {
     router.push(`/properties/${property.property_id}`);
@@ -110,7 +101,6 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     );
   }
 
-  // If there are no properties with coordinates, render a friendly placeholder
   if (propertiesWithCoords.length === 0) {
     return (
       <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
@@ -122,16 +112,15 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     );
   }
 
-  // Create custom marker icon using the lazy-loaded Leaflet library
-  const propertyIcon = LeafletLib?.divIcon({
+  const { L, MapContainer, TileLayer, Marker, Popup } = components;
+
+  const propertyIcon = L.divIcon({
     className: 'custom-marker',
     html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 30],
     popupAnchor: [0, -30]
   });
-
-  const { MapContainer, TileLayer, Marker, Popup } = components;
 
   return (
     <div className="relative h-full w-full">
@@ -145,8 +134,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
-        {/* Property Markers */}
+        
         {propertiesWithCoords.map((property) => (
           <Marker
             key={property.property_id}
