@@ -1,9 +1,7 @@
 'use client';
 
 import { Property } from '@/types';
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import 'leaflet/dist/leaflet.css';
+import { useState } from 'react';
 
 interface PropertyMapProps {
   properties: Property[];
@@ -15,10 +13,7 @@ interface PropertyMapProps {
 }
 
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
-  const [mounted, setMounted] = useState(false);
-  const [components, setComponents] = useState<any>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -32,74 +27,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     property.longitude <= 180
   );
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Dynamically load Leaflet and react-leaflet
-      Promise.all([
-        import('leaflet'),
-        import('react-leaflet')
-      ]).then(([LModule, RLModule]) => {
-        const L = LModule.default;
-        const RL = RLModule;
-        
-        // Configure icon paths
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        });
-        
-        setComponents({
-          L,
-          MapContainer: RL.MapContainer,
-          TileLayer: RL.TileLayer,
-          Marker: RL.Marker,
-          Popup: RL.Popup
-        });
-        setMounted(true);
-      }).catch(err => {
-        console.error('Failed to load Leaflet:', err);
-      });
-    }
-  }, []);
-
-  const handleMarkerClick = (property: Property) => {
-    router.push(`/properties/${property.property_id}`);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Available Soon';
-    }
-  };
-
-  if (!mounted || !components) {
-    return (
-      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="mb-2">Loading map...</p>
-          <p className="text-sm text-gray-400">View properties in the list below</p>
-        </div>
-      </div>
-    );
-  }
+  console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
 
   if (propertiesWithCoords.length === 0) {
     return (
@@ -112,84 +40,26 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     );
   }
 
-  const { L, MapContainer, TileLayer, Marker, Popup } = components;
-
-  const propertyIcon = L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30]
-  });
-
+  // For now, create a simple OpenStreetMap embed with a list of addresses
+  // We'll replace this with a proper Leaflet map once SSR issues are resolved
   return (
-    <div className="relative h-full w-full">
-      <MapContainer
-        center={[center.lat, center.lng]}
-        zoom={zoom}
-        scrollWheelZoom={true}
-        style={{ height: '400px', width: '100%', borderRadius: '8px' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {propertiesWithCoords.map((property) => (
-          <Marker
-            key={property.property_id}
-            position={[property.latitude, property.longitude]}
-            icon={propertyIcon}
-            eventHandlers={{
-              click: () => handleMarkerClick(property),
-            }}
-          >
-            <Popup>
-              <div className="max-w-xs bg-white rounded-lg shadow-lg p-4">
-                <div className="flex items-start space-x-3">
-                  {property.photo && (
-                    <img
-                      src={property.photo}
-                      alt={property.name}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">
-                      {property.name}
-                    </h3>
-                    <p className="text-xs text-gray-600 truncate">
-                      {property.address}
-                    </p>
-                    <div className="mt-1 flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">
-                        {property.bedrooms} bed, {property.bathrooms} bath
-                      </span>
-                      <span className="text-xs font-semibold text-green-600">
-                        {formatPrice(property.price)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Available: {formatDate(property.leaseTerms)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-2 text-center">
-                  <button
-                    onClick={() => handleMarkerClick(property)}
-                    className="w-full px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                  >
-                    View Details →
-                  </button>
-                </div>
+    <div className="space-y-4">
+      <div className="h-[400px] bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
+        <div className="text-white text-center p-8">
+          <h3 className="text-2xl font-bold mb-4">Property Locations</h3>
+          <p className="text-gray-300 mb-6">
+            {propertiesWithCoords.length} properties found near {propertiesWithCoords[0]?.school || 'campus'}
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            {propertiesWithCoords.map((property) => (
+              <div key={property.property_id} className="bg-gray-700 p-3 rounded-lg">
+                <p className="font-semibold text-accent">{property.name}</p>
+                <p className="text-gray-400 text-xs">{property.address}</p>
               </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
