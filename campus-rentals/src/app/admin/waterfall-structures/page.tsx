@@ -16,6 +16,27 @@ interface Property {
   name: string
   address: string
   waterfallStructures?: WaterfallStructure[]
+  entityInvestments?: EntityInvestment[]
+}
+
+interface EntityInvestment {
+  id: string
+  investmentAmount: number
+  ownershipPercentage: number
+  status: string
+  investmentDate: string
+  entityName: string
+  entityType: string
+  entityOwners: EntityOwner[]
+}
+
+interface EntityOwner {
+  id: string
+  userId: string
+  userName: string
+  userEmail: string
+  ownershipPercentage: number
+  investmentAmount: number
 }
 
 interface WaterfallStructure {
