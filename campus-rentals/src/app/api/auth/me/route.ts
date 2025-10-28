@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await authenticateUser(request);
+    const user = await requireAuth(request);
 
     if (!user) {
       return NextResponse.json(
