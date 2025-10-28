@@ -57,6 +57,7 @@ function MapUpdater({ center, zoom }: { center: { lat: number; lng: number }; zo
 
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [hasError, setHasError] = useState(false);
   const router = useRouter();
 
   // Filter properties that have valid coordinates
@@ -74,16 +75,24 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
 
   const handleMarkerClick = (property: Property) => {
-    router.push(`/properties/${property.property_id}`);
+    try {
+      router.push(`/properties/${property.property_id}`);
+    } catch (error) {
+      console.error('Error navigating to property:', error);
+    }
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(price);
+    } catch {
+      return `$${price}`;
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -99,13 +108,21 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
-
-  if (typeof window === 'undefined') {
-    return null; // Don't render on server
+  if (typeof window === 'undefined' || hasError) {
+    return (
+      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="mb-2">Map unavailable</p>
+          <p className="text-sm text-gray-400">View properties in the list below</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
+  try {
+    const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
+
+    return (
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={zoom}
@@ -175,5 +192,16 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         </Marker>
       ))}
     </MapContainer>
-  );
+    );
+  } catch (error) {
+    console.error('Error rendering map:', error);
+    return (
+      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="mb-2">Map unavailable</p>
+          <p className="text-sm text-gray-400">View properties in the list below</p>
+        </div>
+      </div>
+    );
+  }
 }
