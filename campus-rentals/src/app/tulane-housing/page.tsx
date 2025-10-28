@@ -84,7 +84,7 @@ export default function TulaneHousingPage() {
           <div className="flex items-center mb-6">
             <AcademicCapIcon className="w-12 h-12 text-emerald-400 mr-4" />
             <h1 className="text-6xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-              Tulane Housing
+              Housing Near Tulane
             </h1>
           </div>
           <p className="text-2xl text-gray-200 mb-8 max-w-3xl">
@@ -95,7 +95,7 @@ export default function TulaneHousingPage() {
               href="#properties" 
               className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
             >
-              View Tulane Properties
+              View Properties Near Tulane
             </Link>
             <Link 
               href="/contact" 
@@ -107,11 +107,11 @@ export default function TulaneHousingPage() {
         </div>
       </div>
 
-      {/* Why Choose Tulane Housing Section */}
+      {/* Why Choose Section */}
       <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-            Why Choose Our Tulane Housing?
+            Why Choose Housing Near Tulane?
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
@@ -127,11 +127,11 @@ export default function TulaneHousingPage() {
         </div>
       </section>
 
-      {/* Tulane Properties Section */}
+      {/* Properties Section */}
       <section id="properties" className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-            Tulane Student Properties
+            Properties Near Tulane
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {properties.map((property, index) => (
@@ -221,7 +221,7 @@ export default function TulaneHousingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-            Ready to Live Near Tulane?
+            Ready to Find Housing Near Tulane?
           </h2>
         <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Explore premium rentals minutes from campus.
@@ -247,7 +247,7 @@ export default function TulaneHousingPage() {
       <footer className="py-8 bg-gray-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p className="text-gray-400 mb-2">Premium Housing near Tulane</p>
+            <p className="text-gray-400 mb-2">Premium Housing Near Tulane</p>
             <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Campus Rentals. All rights reserved.</p>
           </div>
         </div>
