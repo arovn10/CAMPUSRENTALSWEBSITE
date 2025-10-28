@@ -68,7 +68,16 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
 
   // Custom marker icon for properties
   const createCustomIcon = (color: string) => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      // Return a dummy icon for SSR
+      return L.divIcon({
+        className: 'custom-marker',
+        html: '',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+      });
+    }
     return L.divIcon({
       className: 'custom-marker',
       html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
