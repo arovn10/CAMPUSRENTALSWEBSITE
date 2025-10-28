@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
+import { NextRequest } from 'next/server'
 import { prisma } from './prisma'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
@@ -500,5 +501,73 @@ export async function logoutUser(userId: string): Promise<void> {
       resource: 'USER',
       resourceId: userId
     }
+  })
+}
+
+// Middleware functions for API routes
+export async function requireAuth(request: NextRequest): Promise<AuthUser | null> {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null
+  }
+
+  const token = authHeader.substring(7)
+  return verifyToken(token)
+}
+
+export function hasPermission(user: AuthUser, requiredRole: string): boolean {
+  const roleHierarchy = {
+    'INVESTOR': 1,
+    'MANAGER': 2,
+    'ADMIN': 3
+  }
+
+  const userLevel = roleHierarchy[user.role as keyof typeof roleHierarchy] || 0
+  const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0
+
+  return userLevel >= requiredLevel
+}
+
+// Legacy functions for backward compatibility
+export const authenticateWithPassword = authenticateUser
+export const createUser = registerUser
+export const getAllUsers = async () => {
+  return await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      company: true,
+      phone: true,
+      isActive: true,
+      emailVerified: true,
+      createdAt: true
+    }
+  })
+}
+
+export const updateUser = async (userId: string, data: any) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      company: true,
+      phone: true,
+      isActive: true,
+      emailVerified: true
+    }
+  })
+}
+
+export const deleteUser = async (userId: string) => {
+  return await prisma.user.delete({
+    where: { id: userId }
   })
 }
