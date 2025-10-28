@@ -436,26 +436,6 @@ export default function InvestmentDetailPage() {
   const handleEditInvestment = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Debug logging
-    console.log('Edit Investment Debug:', {
-      urlId: params.id,
-      investment: investment,
-      editData: editData,
-      investmentType: investment?.entityName ? 'ENTITY' : 'REGULAR',
-      hasEntityName: !!investment?.entityName,
-      hasEntityType: !!investment?.entityType,
-      investmentExists: !!investment,
-      investmentId: investment?.id,
-      idsMatch: investment?.id === params.id
-    })
-    
-    console.log('Current editData values:', {
-      debtAmount: editData.debtAmount,
-      constructionCost: editData.constructionCost,
-      debtDetails: editData.debtDetails,
-      acquisitionPrice: editData.acquisitionPrice
-    })
-    
     try {
       const requestBody = {
         investmentAmount: parseFloat(editData.investmentAmount),
@@ -481,18 +461,6 @@ export default function InvestmentDetailPage() {
         squareFeet: parseInt(editData.squareFeet),
         propertyType: editData.propertyType
       }
-      
-      console.log('Edit Investment Request Body:', requestBody)
-      console.log('Debt Amount being sent:', requestBody.debtAmount)
-      console.log('Construction Cost being sent:', requestBody.constructionCost)
-      console.log('Debt Details being sent:', requestBody.debtDetails)
-      
-      // Debug logging only - no alerts
-      console.log('DEBUG: Sending to API:', {
-        debtAmount: requestBody.debtAmount,
-        constructionCost: requestBody.constructionCost,
-        debtDetails: requestBody.debtDetails
-      })
       
       // Determine if this is a regular investment or entity investment
       const isEntityInvestment = investment?.entityName || investment?.entityType
@@ -4203,9 +4171,9 @@ export default function InvestmentDetailPage() {
       {/* Edit Entity Modal */}
       {showEditEntityModal && editingEntityInvestment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Entity Investment</h3>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-3xl mx-4 my-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Entity: {editingEntityInvestment.entity.name}</h3>
               <button
                 onClick={() => setShowEditEntityModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
@@ -4213,59 +4181,46 @@ export default function InvestmentDetailPage() {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleUpdateEntityInvestment} className="space-y-6">
+            <form onSubmit={handleUpdateEntityInvestment} className="space-y-4">
               {/* Entity Investment Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Entity Investment Details</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Entity Name
-                      </label>
-                      <input
-                        type="text"
-                        value={editingEntityInvestment.entity.name}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Investment Amount
-                      </label>
-                      <input
-                        type="number"
-                        value={editingEntityInvestment.investmentAmount}
-                        onChange={(e) => setEditingEntityInvestment({
-                          ...editingEntityInvestment,
-                          investmentAmount: e.target.value
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ownership Percentage
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={editingEntityInvestment.ownershipPercentage}
-                        onChange={(e) => setEditingEntityInvestment({
-                          ...editingEntityInvestment,
-                          ownershipPercentage: e.target.value
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Total Investment
+                    </label>
+                    <input
+                      type="number"
+                      value={editingEntityInvestment.investmentAmount}
+                      onChange={(e) => setEditingEntityInvestment({
+                        ...editingEntityInvestment,
+                        investmentAmount: e.target.value
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Ownership %
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingEntityInvestment.ownershipPercentage}
+                      onChange={(e) => setEditingEntityInvestment({
+                        ...editingEntityInvestment,
+                        ownershipPercentage: e.target.value
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Entity Owners */}
-                <div>
+              {/* Entity Investors */}
+              <div>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-lg font-medium text-gray-900">Entity Investors</h4>
                     <button
@@ -4279,40 +4234,18 @@ export default function InvestmentDetailPage() {
                   <div className="space-y-4">
                     {editingEntityInvestment.entity.entityOwners && editingEntityInvestment.entity.entityOwners.length > 0 ? (
                       editingEntityInvestment.entity.entityOwners.map((owner: any, index: number) => (
-                      <div key={owner.id} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            <h5 className="font-medium text-gray-900">
-                              {owner.user.firstName && owner.user.lastName ? 
-                                `${owner.user.firstName} ${owner.user.lastName}` : 
-                                'Select Investor'
-                              }
-                            </h5>
-                            {owner.userId && (
-                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                Existing User
-                              </span>
-                            )}
-                            {!owner.userId && owner.user.firstName && owner.user.lastName && owner.user.email && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                New User
-                              </span>
-                            )}
-                          </div>
+                      <div key={owner.id} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium text-gray-700">Investor {index + 1}</h5>
                           <button
                             type="button"
                             onClick={() => removeEntityInvestor(index)}
-                            className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200"
+                            className="p-1 text-red-600 hover:text-red-700"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
-                        
-                        {/* User Selection Dropdown */}
-                        <div className="mb-3">
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Select Investor
-                          </label>
+                        <div className="space-y-2">
                           <select
                             value={owner.userId || owner.entityId || ''}
                             onChange={(e) => {
@@ -4320,7 +4253,6 @@ export default function InvestmentDetailPage() {
                               const selectedEntity = availableEntities.find(entity => entity.id === e.target.value)
                               
                               if (selectedUser) {
-                                // Reset entity fields and set user fields
                                 updateEntityInvestor(index, 'userId', selectedUser.id)
                                 updateEntityInvestor(index, 'entityId', '')
                                 updateEntityInvestor(index, 'user', {
@@ -4329,7 +4261,6 @@ export default function InvestmentDetailPage() {
                                   email: selectedUser.email
                                 })
                               } else if (selectedEntity) {
-                                // Reset user fields and set entity fields
                                 updateEntityInvestor(index, 'userId', '')
                                 updateEntityInvestor(index, 'entityId', selectedEntity.id)
                                 updateEntityInvestor(index, 'user', {
@@ -4339,91 +4270,69 @@ export default function InvestmentDetailPage() {
                                 })
                               }
                             }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            required={!owner.user.firstName || !owner.user.lastName || !owner.user.email || owner.entityId}
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           >
-                            <option value="">Select an investor...</option>
-                            <optgroup label="Individual Investors">
+                            <option value="">Create new or select existing...</option>
+                            <optgroup label="Create New Individual">
+                              <option value="NEW_INDIVIDUAL">👤 + New Individual Investor</option>
+                            </optgroup>
+                            <optgroup label="Existing Individual Investors">
                               {availableUsers.map(user => (
                                 <option key={user.id} value={user.id}>
-                                  👤 {user.firstName} {user.lastName} ({user.email})
+                                  {user.firstName} {user.lastName}
                                 </option>
                               ))}
                             </optgroup>
-                            <optgroup label="Entities">
+                            <optgroup label="Existing Entities">
                               {availableEntities.map(entity => (
                                 <option key={entity.id} value={entity.id}>
-                                  🏢 {entity.name} ({entity.type})
+                                  🏢 {entity.name}
                                 </option>
                               ))}
                             </optgroup>
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Choose from existing investors/entities or create a new one below
-                          </p>
-                          {/* Validation Status */}
-                          {owner.userId || owner.entityId || (owner.user.firstName && owner.user.lastName && owner.user.email) ? (
-                            <p className="text-xs text-green-600 mt-1">
-                              ✓ Investor information complete
-                            </p>
-                          ) : (
-                            <p className="text-xs text-red-600 mt-1">
-                              ⚠ Please select an existing investor/entity or fill in all new investor details
-                            </p>
-                          )}
-                        </div>
-                        
-                        {/* Create New Investor Option */}
-                        <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
-                          <p className="text-xs font-medium text-blue-800 mb-2">Create New Investor</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            <input
-                              type="text"
-                              placeholder="First Name"
-                              value={owner.user.firstName || ''}
-                              onChange={(e) => updateEntityInvestor(index, 'user', { firstName: e.target.value })}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Last Name"
-                              value={owner.user.lastName || ''}
-                              onChange={(e) => updateEntityInvestor(index, 'user', { lastName: e.target.value })}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <input
-                              type="email"
-                              placeholder="Email"
-                              value={owner.user.email || ''}
-                              onChange={(e) => updateEntityInvestor(index, 'user', { email: e.target.value })}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Investment Amount
-                            </label>
+                          
+                          {(!owner.userId && !owner.entityId) ? (
+                            <div className="grid grid-cols-3 gap-2">
+                              <input
+                                type="text"
+                                placeholder="First Name"
+                                value={owner.user.firstName || ''}
+                                onChange={(e) => updateEntityInvestor(index, 'user', { firstName: e.target.value })}
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Last Name"
+                                value={owner.user.lastName || ''}
+                                onChange={(e) => updateEntityInvestor(index, 'user', { lastName: e.target.value })}
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                              />
+                              <input
+                                type="email"
+                                placeholder="Email"
+                                value={owner.user.email || ''}
+                                onChange={(e) => updateEntityInvestor(index, 'user', { email: e.target.value })}
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                          ) : null}
+                          
+                          <div className="grid grid-cols-2 gap-2">
                             <input
                               type="number"
-                              value={owner.investmentAmount}
+                              placeholder="Amount"
+                              value={owner.investmentAmount || ''}
                               onChange={(e) => updateEntityInvestor(index, 'investmentAmount', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              required
+                              className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
                             />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Ownership %
-                            </label>
                             <input
                               type="number"
                               step="0.01"
-                              value={owner.ownershipPercentage}
+                              placeholder="Ownership %"
+                              value={owner.ownershipPercentage || ''}
                               onChange={(e) => updateEntityInvestor(index, 'ownershipPercentage', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              required
+                              className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                         </div>
