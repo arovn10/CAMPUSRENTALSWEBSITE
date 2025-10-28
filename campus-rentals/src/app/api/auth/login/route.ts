@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const user = await authenticateWithPassword(email, password)
+    const result = await authenticateWithPassword({ email, password })
+    const user = result?.user
 
     if (!user) {
       return NextResponse.json(
