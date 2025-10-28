@@ -11,17 +11,36 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  password  String   // Hashed password
-  role      UserRole @default(INVESTOR)
-  company   String?
-  phone     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  email             String   @unique
+  firstName         String
+  lastName          String
+  password          String   // Hashed password
+  role              UserRole @default(INVESTOR)
+  company           String?
+  phone             String?
+  isActive          Boolean  @default(true)
+  emailVerified     Boolean  @default(false)
+  emailVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  loginAttempts     Int      @default(0)
+  lockedUntil       DateTime?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean  @default(false)
+  profileImage      String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?
+  dateOfBirth       DateTime?
+  ssn               String?  // Encrypted
+  emergencyContact  String?
+  emergencyPhone    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
   investments        Investment[]
@@ -37,6 +56,10 @@ model User {
   insurance         Insurance[]
   propertyTaxes     PropertyTax[]
   waterfallTierDistributions WaterfallTierDistribution[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  auditLogs         AuditLog[]
+  fileUploads       FileUpload[]
 
   @@map("users")
 }
@@ -563,4 +586,169 @@ enum WaterfallDistributionType {
   PREFERRED_RETURN
   PROMOTE
   OTHER
+}
+
+// Authentication and Security Models
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// File Management Models
+model FileUpload {
+  id            String   @id @default(cuid())
+  userId        String
+  fileName      String
+  originalName  String
+  filePath      String
+  fileSize      Int
+  mimeType      String
+  fileHash      String   @unique
+  category      FileCategory
+  isPublic      Boolean  @default(false)
+  metadata      Json?
+  uploadedAt    DateTime @default(now())
+  expiresAt     DateTime?
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("file_uploads")
+}
+
+model FileShare {
+  id          String   @id @default(cuid())
+  fileId      String
+  sharedBy    String
+  sharedWith  String?
+  shareToken  String   @unique
+  permissions FilePermissions
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@map("file_shares")
+}
+
+// Email and Notification Models
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  to          String
+  from        String
+  subject     String
+  templateId  String?
+  status      EmailStatus
+  sentAt      DateTime?
+  errorMessage String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@map("email_logs")
+}
+
+model SystemSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  category    String?
+  isEncrypted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Additional Enums
+enum FileCategory {
+  DOCUMENT
+  IMAGE
+  VIDEO
+  AUDIO
+  ARCHIVE
+  SPREADSHEET
+  PRESENTATION
+  OTHER
+}
+
+enum FilePermissions {
+  READ
+  WRITE
+  DELETE
+  SHARE
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  EMAIL_VERIFY
+  FILE_UPLOAD
+  FILE_DOWNLOAD
+  FILE_DELETE
 } 

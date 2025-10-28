@@ -1,437 +1,504 @@
-import { NextRequest } from 'next/server'
-import { PrismaClient } from '@prisma/client/edge'
-import { withAccelerate } from '@prisma/extension-accelerate'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
+import { prisma } from './prisma'
 
-const prisma = new PrismaClient().$extends(withAccelerate())
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+const JWT_EXPIRES_IN = '7d'
+const BCRYPT_ROUNDS = 12
 
-export interface AuthenticatedUser {
+export interface AuthUser {
   id: string
   email: string
   firstName: string
   lastName: string
-  role: 'ADMIN' | 'INVESTOR' | 'MANAGER'
+  role: string
+  isActive: boolean
+  emailVerified: boolean
+}
+
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface RegisterData {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
   company?: string
   phone?: string
-  createdAt: string
-  lastLogin: string
 }
 
-// Investment interfaces
-export interface Investment {
-  id: string;
-  name: string;
-  propertyAddress: string;
-  totalInvestment: number;
-  investorId: string;
-  investorEmail: string;
-  investmentAmount: number;
-  ownershipPercentage: number;
-  startDate: string;
-  expectedReturn: number;
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD' | 'FORECLOSED';
-  distributions: Distribution[];
+export interface PasswordResetData {
+  email: string
 }
 
-export interface Distribution {
-  id: string;
-  investmentId: string;
-  amount: number;
-  date: string;
-  type: 'RENTAL' | 'SALE' | 'REFINANCE';
+export interface PasswordUpdateData {
+  token: string
+  password: string
 }
 
-// Real database authentication only - no mock data
-
-// Initialize admin user if not exists
-async function initializeAdminUser() {
-  try {
-    const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'rovnerproperties@gmail.com' }
-    })
-
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Celarev0319942002!', 12)
-      await prisma.user.create({
-        data: {
-          email: 'rovnerproperties@gmail.com',
-          firstName: 'Admin',
-          lastName: 'User',
-          password: hashedPassword,
-          role: 'ADMIN',
-          company: 'Campus Rentals LLC',
-          phone: '+1 (504) 383-4552'
-        }
-      })
-      console.log('Admin user created successfully')
-    }
-  } catch (error) {
-    console.error('Error initializing admin user:', error)
-  }
+// Password utilities
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS)
 }
 
-// Initialize admin user on module load
-initializeAdminUser()
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(password, hashedPassword)
+}
 
-export async function authenticateUser(request: NextRequest): Promise<AuthenticatedUser | null> {
-  try {
-    console.log('Authenticating user...')
-    
-    // Check for Authorization header first
-    const authHeader = request.headers.get('authorization')
-    let authEmail: string | null = null
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      authEmail = authHeader.substring(7) // Remove 'Bearer ' prefix
-      console.log('Auth email from header:', authEmail)
-    } else {
-      // Fallback to query parameter
-      authEmail = request.nextUrl.searchParams.get('auth')
-      console.log('Auth email from query:', authEmail)
-    }
-    
-    if (!authEmail) {
-      console.log('No auth email provided')
-      return null
-    }
-    
-    // Find user in database
-    const user = await prisma.user.findUnique({
-      where: { email: authEmail, isActive: true }
-    })
-    
-    if (!user) {
-      console.log('User not found for email:', authEmail)
-      return null
-    }
-    
-    console.log('User found:', user.email, user.role)
-    
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+// JWT utilities
+export function generateToken(user: AuthUser): string {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email, 
       role: user.role,
-      company: user.company || undefined,
-      phone: user.phone || undefined,
-      createdAt: user.createdAt.toISOString(),
-      lastLogin: user.updatedAt.toISOString()
+      emailVerified: user.emailVerified 
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  )
+}
+
+export function verifyToken(token: string): AuthUser | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any
+    return {
+      id: decoded.id,
+      email: decoded.email,
+      firstName: decoded.firstName,
+      lastName: decoded.lastName,
+      role: decoded.role,
+      isActive: decoded.isActive,
+      emailVerified: decoded.emailVerified
     }
   } catch (error) {
-    console.error('Authentication error:', error)
     return null
   }
 }
 
-export async function authenticateWithPassword(email: string, password: string): Promise<AuthenticatedUser | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email, isActive: true }
-    })
+// Token generation utilities
+export function generateSecureToken(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
+
+export function generateEmailVerificationToken(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
+
+export function generatePasswordResetToken(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
+
+// User authentication functions
+export async function authenticateUser(credentials: LoginCredentials): Promise<{ user: AuthUser; token: string } | null> {
+  const { email, password } = credentials
+
+  // Find user
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() }
+  })
+
+  if (!user) {
+    return null
+  }
+
+  // Check if account is locked
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    throw new Error('Account is temporarily locked due to too many failed login attempts')
+  }
+
+  // Check if user is active
+  if (!user.isActive) {
+    throw new Error('Account is deactivated')
+  }
+
+  // Verify password
+  const isValidPassword = await verifyPassword(password, user.password)
+  
+  if (!isValidPassword) {
+    // Increment login attempts
+    const loginAttempts = user.loginAttempts + 1
+    const lockedUntil = loginAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null // Lock for 15 minutes
     
-    if (!user) {
-      return null
-    }
-    
-    const isValidPassword = await bcrypt.compare(password, user.password)
-    
-    if (!isValidPassword) {
-      return null
-    }
-    
-    // Update last login
     await prisma.user.update({
       where: { id: user.id },
-      data: { updatedAt: new Date() }
+      data: { 
+        loginAttempts,
+        lockedUntil
+      }
     })
-    
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      company: user.company || undefined,
-      phone: user.phone || undefined,
-      createdAt: user.createdAt.toISOString(),
-      lastLogin: user.updatedAt.toISOString()
+
+    throw new Error('Invalid credentials')
+  }
+
+  // Reset login attempts on successful login
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { 
+      loginAttempts: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date()
     }
-  } catch (error) {
-    console.error('Password authentication error:', error)
-    return null
-  }
-}
-
-export async function requireAuth(request: NextRequest): Promise<AuthenticatedUser> {
-  const user = await authenticateUser(request)
-  
-  if (!user) {
-    throw new Error('Authentication required')
-  }
-  
-  return user
-}
-
-export function hasPermission(user: AuthenticatedUser, requiredRole: 'ADMIN' | 'MANAGER' | 'INVESTOR'): boolean {
-  const roleHierarchy = {
-    ADMIN: 3,
-    MANAGER: 2,
-    INVESTOR: 1,
-  }
-  
-  return roleHierarchy[user.role] >= roleHierarchy[requiredRole]
-}
-
-export async function getAllUsers(): Promise<AuthenticatedUser[]> {
-  const users = await prisma.user.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: 'desc' }
   })
-  
-  return users.map(user => ({
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      action: 'LOGIN',
+      resource: 'USER',
+      resourceId: user.id,
+      details: { email: user.email }
+    }
+  })
+
+  const authUser: AuthUser = {
     id: user.id,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    company: user.company || undefined,
-    phone: user.phone || undefined,
-    createdAt: user.createdAt.toISOString(),
-    lastLogin: user.updatedAt.toISOString()
-  }))
+    isActive: user.isActive,
+    emailVerified: user.emailVerified
+  }
+
+  const token = generateToken(authUser)
+
+  return { user: authUser, token }
 }
 
-export async function createUser(userData: Omit<AuthenticatedUser, 'id' | 'createdAt' | 'lastLogin'>, password: string): Promise<AuthenticatedUser> {
-  const hashedPassword = await bcrypt.hash(password, 12)
-  
+export async function registerUser(data: RegisterData): Promise<{ user: AuthUser; token: string }> {
+  const { email, password, firstName, lastName, company, phone } = data
+
+  // Check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() }
+  })
+
+  if (existingUser) {
+    throw new Error('User with this email already exists')
+  }
+
+  // Hash password
+  const hashedPassword = await hashPassword(password)
+
+  // Create user
   const user = await prisma.user.create({
     data: {
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role: userData.role,
-      company: userData.company,
-      phone: userData.phone
+      firstName,
+      lastName,
+      company,
+      phone,
+      role: 'INVESTOR',
+      isActive: true,
+      emailVerified: false
     }
   })
-  
+
+  // Generate email verification token
+  const verificationToken = generateEmailVerificationToken()
+  await prisma.emailVerificationToken.create({
+    data: {
+      userId: user.id,
+      token: verificationToken,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    }
+  })
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      action: 'CREATE',
+      resource: 'USER',
+      resourceId: user.id,
+      details: { email: user.email, role: user.role }
+    }
+  })
+
+  const authUser: AuthUser = {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    isActive: user.isActive,
+    emailVerified: user.emailVerified
+  }
+
+  const token = generateToken(authUser)
+
+  return { user: authUser, token }
+}
+
+export async function requestPasswordReset(data: PasswordResetData): Promise<{ token: string }> {
+  const { email } = data
+
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() }
+  })
+
+  if (!user) {
+    // Don't reveal if user exists or not for security
+    return { token: generatePasswordResetToken() }
+  }
+
+  // Generate reset token
+  const resetToken = generatePasswordResetToken()
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+  // Store reset token
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      token: resetToken,
+      expiresAt
+    }
+  })
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      action: 'PASSWORD_CHANGE',
+      resource: 'USER',
+      resourceId: user.id,
+      details: { email: user.email, type: 'RESET_REQUEST' }
+    }
+  })
+
+  return { token: resetToken }
+}
+
+export async function resetPassword(data: PasswordUpdateData): Promise<boolean> {
+  const { token, password } = data
+
+  // Find valid reset token
+  const resetToken = await prisma.passwordResetToken.findFirst({
+    where: {
+      token,
+      used: false,
+      expiresAt: { gt: new Date() }
+    },
+    include: { user: true }
+  })
+
+  if (!resetToken) {
+    throw new Error('Invalid or expired reset token')
+  }
+
+  // Hash new password
+  const hashedPassword = await hashPassword(password)
+
+  // Update user password
+  await prisma.user.update({
+    where: { id: resetToken.userId },
+    data: { 
+      password: hashedPassword,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+      loginAttempts: 0,
+      lockedUntil: null
+    }
+  })
+
+  // Mark token as used
+  await prisma.passwordResetToken.update({
+    where: { id: resetToken.id },
+    data: { used: true }
+  })
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: resetToken.userId,
+      action: 'PASSWORD_CHANGE',
+      resource: 'USER',
+      resourceId: resetToken.userId,
+      details: { email: resetToken.user.email, type: 'RESET_COMPLETE' }
+    }
+  })
+
+  return true
+}
+
+export async function verifyEmail(token: string): Promise<boolean> {
+  const verificationToken = await prisma.emailVerificationToken.findFirst({
+    where: {
+      token,
+      used: false,
+      expiresAt: { gt: new Date() }
+    },
+    include: { user: true }
+  })
+
+  if (!verificationToken) {
+    throw new Error('Invalid or expired verification token')
+  }
+
+  // Update user email verification status
+  await prisma.user.update({
+    where: { id: verificationToken.userId },
+    data: { 
+      emailVerified: true,
+      emailVerifiedAt: new Date()
+    }
+  })
+
+  // Mark token as used
+  await prisma.emailVerificationToken.update({
+    where: { id: verificationToken.id },
+    data: { used: true }
+  })
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: verificationToken.userId,
+      action: 'EMAIL_VERIFY',
+      resource: 'USER',
+      resourceId: verificationToken.userId,
+      details: { email: verificationToken.user.email }
+    }
+  })
+
+  return true
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  })
+
+  if (!user) {
+    throw new Error('User not found')
+  }
+
+  // Verify current password
+  const isValidPassword = await verifyPassword(currentPassword, user.password)
+  if (!isValidPassword) {
+    throw new Error('Current password is incorrect')
+  }
+
+  // Hash new password
+  const hashedPassword = await hashPassword(newPassword)
+
+  // Update password
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword }
+  })
+
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      action: 'PASSWORD_CHANGE',
+      resource: 'USER',
+      resourceId: userId,
+      details: { email: user.email, type: 'CHANGE' }
+    }
+  })
+
+  return true
+}
+
+export async function getUserById(userId: string): Promise<AuthUser | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      isActive: true,
+      emailVerified: true
+    }
+  })
+
+  if (!user) {
+    return null
+  }
+
   return {
     id: user.id,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    company: user.company || undefined,
-    phone: user.phone || undefined,
-    createdAt: user.createdAt.toISOString(),
-    lastLogin: user.updatedAt.toISOString()
+    isActive: user.isActive,
+    emailVerified: user.emailVerified
   }
 }
 
-export async function updateUser(id: string, updates: Partial<AuthenticatedUser>): Promise<AuthenticatedUser | null> {
-  try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        firstName: updates.firstName,
-        lastName: updates.lastName,
-        role: updates.role,
-        company: updates.company,
-        phone: updates.phone
-      }
-    })
-    
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      company: user.company || undefined,
-      phone: user.phone || undefined,
-      createdAt: user.createdAt.toISOString(),
-      lastLogin: user.updatedAt.toISOString()
-    }
-  } catch (error) {
-    console.error('Error updating user:', error)
-    return null
-  }
-}
+export async function createAdminUser(data: RegisterData): Promise<AuthUser> {
+  const { email, password, firstName, lastName, company, phone } = data
 
-export async function deleteUser(id: string): Promise<boolean> {
-  try {
-    await prisma.user.update({
-      where: { id },
-      data: { isActive: false }
-    })
-    return true
-  } catch (error) {
-    console.error('Error deleting user:', error)
-    return false
-  }
-}
-
-// Investment management functions
-export async function getAllInvestments(): Promise<Investment[]> {
-  const investments = await prisma.investment.findMany({
-    include: {
-      distributions: true,
-      property: true,
-      user: true
-    }
+  // Check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() }
   })
-  
-  return investments.map(inv => ({
-    id: inv.id,
-    name: inv.property?.name || 'Unknown Property',
-    propertyAddress: inv.property?.address || 'Unknown Address',
-    totalInvestment: inv.investmentAmount,
-    investorId: inv.userId,
-    investorEmail: inv.user?.email || 'Unknown',
-    investmentAmount: inv.investmentAmount,
-    ownershipPercentage: inv.ownershipPercentage || 0,
-    startDate: inv.investmentDate.toISOString(),
-    expectedReturn: 12.5, // Default value
-    status: inv.status,
-    distributions: inv.distributions.map(dist => ({
-      id: dist.id,
-      investmentId: dist.investmentId,
-      amount: dist.amount,
-      date: dist.distributionDate.toISOString(),
-      type: dist.distributionType as any
-    }))
-  }))
-}
 
-export async function getInvestmentsByUser(userId: string): Promise<Investment[]> {
-  const investments = await prisma.investment.findMany({
-    where: { userId },
-    include: {
-      distributions: true,
-      property: true,
-      user: true
-    }
-  })
-  
-  return investments.map(inv => ({
-    id: inv.id,
-    name: inv.property?.name || 'Unknown Property',
-    propertyAddress: inv.property?.address || 'Unknown Address',
-    totalInvestment: inv.investmentAmount,
-    investorId: inv.userId,
-    investorEmail: inv.user?.email || 'Unknown',
-    investmentAmount: inv.investmentAmount,
-    ownershipPercentage: inv.ownershipPercentage || 0,
-    startDate: inv.investmentDate.toISOString(),
-    expectedReturn: 12.5, // Default value
-    status: inv.status,
-    distributions: inv.distributions.map(dist => ({
-      id: dist.id,
-      investmentId: dist.investmentId,
-      amount: dist.amount,
-      date: dist.distributionDate.toISOString(),
-      type: dist.distributionType as any
-    }))
-  }))
-}
+  if (existingUser) {
+    throw new Error('User with this email already exists')
+  }
 
-export async function createInvestment(investmentData: Omit<Investment, 'id' | 'distributions'>): Promise<Investment> {
-  // For now, create a simple investment record
-  const investment = await prisma.investment.create({
+  // Hash password
+  const hashedPassword = await hashPassword(password)
+
+  // Create admin user
+  const user = await prisma.user.create({
     data: {
-      userId: investmentData.investorId,
-      propertyId: 'temp-property-id', // You'll need to create properties first
-      investmentAmount: investmentData.investmentAmount,
-      ownershipPercentage: investmentData.ownershipPercentage,
-      status: investmentData.status as any
-    },
-    include: {
-      distributions: true
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      firstName,
+      lastName,
+      company,
+      phone,
+      role: 'ADMIN',
+      isActive: true,
+      emailVerified: true,
+      emailVerifiedAt: new Date()
     }
   })
-  
-  return {
-    id: investment.id,
-    name: investmentData.name,
-    propertyAddress: investmentData.propertyAddress,
-    totalInvestment: investmentData.totalInvestment,
-    investorId: investment.userId,
-    investorEmail: investmentData.investorEmail,
-    investmentAmount: investment.investmentAmount,
-    ownershipPercentage: investment.ownershipPercentage || 0,
-    startDate: investment.investmentDate.toISOString(),
-    expectedReturn: investmentData.expectedReturn,
-    status: investment.status,
-    distributions: []
-  }
-}
 
-export async function updateInvestment(id: string, updates: Partial<Investment>): Promise<Investment | null> {
-  try {
-    const investment = await prisma.investment.update({
-      where: { id },
-      data: {
-        investmentAmount: updates.investmentAmount,
-        ownershipPercentage: updates.ownershipPercentage,
-        status: updates.status as any
-      },
-      include: {
-        distributions: true
-      }
-    })
-    
-    return {
-      id: investment.id,
-      name: 'Updated Property',
-      propertyAddress: 'Updated Address',
-      totalInvestment: investment.investmentAmount,
-      investorId: investment.userId,
-      investorEmail: 'updated@example.com',
-      investmentAmount: investment.investmentAmount,
-      ownershipPercentage: investment.ownershipPercentage || 0,
-      startDate: investment.investmentDate.toISOString(),
-      expectedReturn: 12.5,
-      status: investment.status,
-      distributions: []
-    }
-  } catch (error) {
-    console.error('Error updating investment:', error)
-    return null
-  }
-}
-
-export async function deleteInvestment(id: string): Promise<boolean> {
-  try {
-    await prisma.investment.delete({
-      where: { id }
-    })
-    return true
-  } catch (error) {
-    console.error('Error deleting investment:', error)
-    return false
-  }
-}
-
-export async function addDistribution(investmentId: string, distributionData: Omit<Distribution, 'id'>): Promise<Distribution> {
-  const distribution = await prisma.distribution.create({
+  // Create audit log
+  await prisma.auditLog.create({
     data: {
-      investmentId,
-      userId: distributionData.investmentId, // This should be the user ID
-      amount: distributionData.amount,
-      distributionDate: new Date(distributionData.date),
-      distributionType: distributionData.type as any
+      userId: user.id,
+      action: 'CREATE',
+      resource: 'USER',
+      resourceId: user.id,
+      details: { email: user.email, role: 'ADMIN', createdBy: 'SYSTEM' }
     }
   })
-  
-  return {
-    id: distribution.id,
-    investmentId: distribution.investmentId,
-    amount: distribution.amount,
-    date: distribution.distributionDate.toISOString(),
-    type: distribution.distributionType as any
-  }
-} 
 
-// Real database authentication only - no mock verification needed 
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    isActive: user.isActive,
+    emailVerified: user.emailVerified
+  }
+}
+
+export async function logoutUser(userId: string): Promise<void> {
+  // Create audit log
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      action: 'LOGOUT',
+      resource: 'USER',
+      resourceId: userId
+    }
+  })
+}
