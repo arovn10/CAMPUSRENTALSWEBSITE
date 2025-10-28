@@ -1802,9 +1802,8 @@ export default function InvestmentDetailPage() {
   const handleProcessDistribution = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Check if this is a global waterfall structure (starts with "Global")
-    const isGlobalStructure = waterfallStructures.find(s => s.id === distributionData.waterfallStructureId)?.name?.startsWith('Global') ||
-                             globalWaterfallStructures.find(s => s.id === distributionData.waterfallStructureId)?.name?.startsWith('Global')
+    // Check if this is a global waterfall structure by checking if it's in the global structures array
+    const isGlobalStructure = globalWaterfallStructures.some(s => s.id === distributionData.waterfallStructureId)
     
     const requestBody = {
       waterfallStructureId: distributionData.waterfallStructureId,
@@ -1812,6 +1811,7 @@ export default function InvestmentDetailPage() {
       distributionDate: distributionData.distributionDate,
       distributionType: distributionData.distributionType,
       description: distributionData.description,
+      // If it's a global structure, include propertyId so the API knows to create a local copy
       ...(isGlobalStructure && { propertyId: investment?.property?.id }),
       // Include refinancing data if this is a refinance distribution
       ...(distributionData.distributionType === 'REFINANCE' && {
@@ -5040,10 +5040,10 @@ export default function InvestmentDetailPage() {
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Global Structures (Copy Only)">
+                  <optgroup label="Global Structures (Auto-Copy)">
                     {globalWaterfallStructures.map((structure: any) => (
-                      <option key={structure.id} value={structure.id} disabled>
-                        {structure.name} ({structure.waterfallTiers.length} tiers) - Global (Copy to use)
+                      <option key={structure.id} value={structure.id}>
+                        {structure.name} ({structure.waterfallTiers.length} tiers) - Global (will be copied automatically)
                       </option>
                     ))}
                   </optgroup>
