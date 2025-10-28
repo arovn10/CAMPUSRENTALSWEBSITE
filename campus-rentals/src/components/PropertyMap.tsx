@@ -119,6 +119,18 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     );
   }
 
+  // If there are no properties with coordinates, render a friendly placeholder
+  if (propertiesWithCoords.length === 0) {
+    return (
+      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="mb-2">No locations to display</p>
+          <p className="text-sm text-gray-400">Refine filters or see the list below</p>
+        </div>
+      </div>
+    );
+  }
+
   try {
     const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
 
