@@ -30,6 +30,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
     
     // Check if user has permission to view documents
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
