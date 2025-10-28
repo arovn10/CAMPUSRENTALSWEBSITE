@@ -14,18 +14,22 @@ import markerRetinaIcon from 'leaflet/dist/images/marker-icon-2x.png';
 
 // Initialize Leaflet only on client side
 const initializeLeafletIcons = () => {
-  if (typeof window !== 'undefined' && !L.Icon.Default.prototype._getIconUrl) {
-    const DefaultIcon = L.icon({
-      iconUrl: markerIcon.src,
-      iconRetinaUrl: markerRetinaIcon.src,
-      shadowUrl: markerShadow.src,
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+  if (typeof window !== 'undefined') {
+    try {
+      const DefaultIcon = L.icon({
+        iconUrl: markerIcon.src,
+        iconRetinaUrl: markerRetinaIcon.src,
+        shadowUrl: markerShadow.src,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
 
-    L.Marker.prototype.options.icon = DefaultIcon;
+      L.Marker.prototype.options.icon = DefaultIcon;
+    } catch (error) {
+      console.error('Failed to initialize Leaflet icons:', error);
+    }
   }
 };
 
