@@ -215,6 +215,9 @@ export async function GET() {
   try {
     const data = await getCachedData();
     
+    // Debug log to check if coordinates exist
+    console.log('Sample property from cache:', JSON.stringify(data.properties[0], null, 2));
+    
     // Return properties without photos - photos should be fetched via /api/photos/{id}
     return NextResponse.json(data.properties);
   } catch (error) {
