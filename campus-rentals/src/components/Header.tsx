@@ -23,7 +23,6 @@ export default function Header() {
           <nav className="hidden md:flex space-x-6">
             <Link href="/" className="text-text hover:text-accent transition-colors">Home</Link>
             <Link href="/properties" className="text-text hover:text-accent transition-colors">Properties</Link>
-            <Link href="/fau-housing" className="text-text hover:text-accent transition-colors">FAU Housing</Link>
             <Link href="/about" className="text-text hover:text-accent transition-colors">About</Link>
             <Link href="/contact" className="text-text hover:text-accent transition-colors">Contact</Link>
             <Link href="/investors/login" className="text-text hover:text-accent transition-colors">Investors</Link>
@@ -66,7 +65,6 @@ export default function Header() {
         <div className="flex flex-col p-8 space-y-6">
           <Link href="/" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Home</Link>
           <Link href="/properties" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Properties</Link>
-          <Link href="/fau-housing" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>FAU Housing</Link>
           <Link href="/about" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>About</Link>
           <Link href="/contact" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
           <Link href="/investors/login" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Investors</Link>
