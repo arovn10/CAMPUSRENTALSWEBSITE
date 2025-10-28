@@ -3,6 +3,7 @@
 import { Property } from '@/types';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import 'leaflet/dist/leaflet.css';
 
 interface PropertyMapProps {
   properties: Property[];
@@ -20,9 +21,8 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
   const router = useRouter();
 
   useEffect(() => {
-    // Load Leaflet CSS and initialize map components on client
+    // Initialize map components on client
     if (typeof window !== 'undefined') {
-      import('leaflet/dist/leaflet.css');
       import('react-leaflet').then((mod) => {
         setMapComponents({
           MapContainer: mod.MapContainer,
