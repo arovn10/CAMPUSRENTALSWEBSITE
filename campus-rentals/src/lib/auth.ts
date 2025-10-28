@@ -99,14 +99,14 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<{
   const { email, password } = credentials
 
   // Find user
-  const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase() }
-  })
-
-  if (!user) {
-    return null
-  }
-
+    })
+    
+    if (!user) {
+      return null
+    }
+    
   // Check if account is locked
   if (user.lockedUntil && user.lockedUntil > new Date()) {
     throw new Error('Account is temporarily locked due to too many failed login attempts')
@@ -119,8 +119,8 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<{
 
   // Verify password
   const isValidPassword = await verifyPassword(password, user.password)
-  
-  if (!isValidPassword) {
+    
+    if (!isValidPassword) {
     // Increment login attempts
     const loginAttempts = user.loginAttempts + 1
     const lockedUntil = loginAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null // Lock for 15 minutes
@@ -158,11 +158,11 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<{
   })
 
   const authUser: AuthUser = {
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
     isActive: user.isActive,
     emailVerified: user.emailVerified
   }
@@ -427,7 +427,7 @@ export async function getUserById(userId: string): Promise<AuthUser | null> {
   if (!user) {
     return null
   }
-
+  
   return {
     id: user.id,
     email: user.email,
@@ -472,21 +472,21 @@ export async function createAdminUser(data: RegisterData): Promise<AuthUser> {
 
   // Create audit log
   await prisma.auditLog.create({
-    data: {
+      data: {
       userId: user.id,
       action: 'CREATE',
       resource: 'USER',
       resourceId: user.id,
       details: { email: user.email, role: 'ADMIN', createdBy: 'SYSTEM' }
-    }
-  })
-
-  return {
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
+      }
+    })
+    
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
     isActive: user.isActive,
     emailVerified: user.emailVerified
   }
@@ -513,6 +513,14 @@ export async function requireAuth(request: NextRequest): Promise<AuthUser | null
 
   const token = authHeader.substring(7)
   return verifyToken(token)
+}
+
+export async function requireAuthOrThrow(request: NextRequest): Promise<AuthUser> {
+  const user = await requireAuth(request)
+  if (!user) {
+    throw new Error('Authentication required')
+  }
+  return user
 }
 
 export function hasPermission(user: AuthUser, requiredRole: string): boolean {
