@@ -12,27 +12,21 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import markerRetinaIcon from 'leaflet/dist/images/marker-icon-2x.png';
 
-const DefaultIcon = L.icon({
-  iconUrl: markerIcon.src,
-  iconRetinaUrl: markerRetinaIcon.src,
-  shadowUrl: markerShadow.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+// Initialize Leaflet only on client side
+const initializeLeafletIcons = () => {
+  if (typeof window !== 'undefined' && !L.Icon.Default.prototype._getIconUrl) {
+    const DefaultIcon = L.icon({
+      iconUrl: markerIcon.src,
+      iconRetinaUrl: markerRetinaIcon.src,
+      shadowUrl: markerShadow.src,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
 
-L.Marker.prototype.options.icon = DefaultIcon;
-
-// Custom marker icon for properties
-const createCustomIcon = (color: string) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30]
-  });
+    L.Marker.prototype.options.icon = DefaultIcon;
+  }
 };
 
 interface PropertyMapProps {
@@ -63,7 +57,22 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      initializeLeafletIcons();
+    }
   }, []);
+
+  // Custom marker icon for properties
+  const createCustomIcon = (color: string) => {
+    if (typeof window === 'undefined') return null;
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30]
+    });
+  };
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
