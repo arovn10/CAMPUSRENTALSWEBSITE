@@ -4345,7 +4345,6 @@ export default function InvestmentDetailPage() {
                       </div>
                     )}
                   </div>
-                </div>
               </div>
 
               {/* Validation Summary */}
