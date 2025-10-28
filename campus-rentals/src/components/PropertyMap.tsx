@@ -1,20 +1,35 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Property } from '@/types';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import L from 'leaflet';
+
+// Only import CSS - this is safe for SSR
 import 'leaflet/dist/leaflet.css';
 
-// Fix default icon paths
-if (typeof window !== 'undefined') {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  });
+// Leaflet imports MUST be lazy-loaded to avoid SSR errors
+let LeafletComponents: any = null;
+let LeafletLib: any = null;
+
+async function loadLeaflet() {
+  if (typeof window === 'undefined') return; // Don't load on server
+  if (LeafletComponents) return LeafletComponents; // Already loaded
+  
+  const reactLeaflet = await import('react-leaflet');
+  LeafletLib = await import('leaflet').then(m => m.default);
+  
+  // Fix default icon paths
+  if (LeafletLib) {
+    delete (LeafletLib.Icon.Default.prototype as any)._getIconUrl;
+    LeafletLib.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }
+  
+  LeafletComponents = reactLeaflet;
+  return reactLeaflet;
 }
 
 interface PropertyMapProps {
@@ -26,24 +41,22 @@ interface PropertyMapProps {
   zoom?: number;
 }
 
-// Component to update map bounds
-function MapUpdater({ center, zoom }: { center: { lat: number; lng: number }; zoom: number }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView([center.lat, center.lng], zoom);
-  }, [center, zoom, map]);
-  
-  return null;
-}
-
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [components, setComponents] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    setMounted(true);
+    // Load Leaflet only in browser
+    if (typeof window !== 'undefined') {
+      loadLeaflet().then(comps => {
+        if (comps) {
+          setComponents(comps);
+          setMounted(true);
+        }
+      });
+    }
   }, []);
 
   // Filter properties that have valid coordinates
@@ -86,7 +99,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  if (!mounted) {
+  if (!mounted || !components) {
     return (
       <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
         <div className="text-white text-center">
@@ -109,14 +122,16 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     );
   }
 
-  // Create custom marker icon
-  const propertyIcon = L.divIcon({
+  // Create custom marker icon using the lazy-loaded Leaflet library
+  const propertyIcon = LeafletLib?.divIcon({
     className: 'custom-marker',
     html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 30],
     popupAnchor: [0, -30]
   });
+
+  const { MapContainer, TileLayer, Marker, Popup } = components;
 
   return (
     <div className="relative h-full w-full">
@@ -130,8 +145,6 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
-        <MapUpdater center={center} zoom={zoom} />
 
         {/* Property Markers */}
         {propertiesWithCoords.map((property) => (
