@@ -36,19 +36,24 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   }, []);
 
-  // Custom marker icon creator
-  const createCustomIcon = (color: string) => {
-    if (typeof window === 'undefined' || !MapComponents) return null;
-    
-    const L = require('leaflet');
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    });
-  };
+  // State for custom marker icon
+  const [propertyIcon, setPropertyIcon] = useState<any>(null);
+
+  useEffect(() => {
+    // Create custom icon once Leaflet is loaded
+    if (MapComponents && typeof window !== 'undefined') {
+      import('leaflet').then(L => {
+        const icon = L.default.divIcon({
+          className: 'custom-marker',
+          html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 30],
+          popupAnchor: [0, -30]
+        });
+        setPropertyIcon(icon);
+      });
+    }
+  }, [MapComponents]);
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -98,7 +103,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  if (typeof window === 'undefined' || !mounted || !MapComponents) {
+  if (typeof window === 'undefined' || !mounted || !MapComponents || !propertyIcon) {
     return (
       <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
         <div className="text-white text-center">
@@ -116,18 +121,6 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         <div className="text-white text-center">
           <p className="mb-2">No locations to display</p>
           <p className="text-sm text-gray-400">Refine filters or see the list below</p>
-        </div>
-      </div>
-    );
-  }
-
-  const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
-  if (!propertyIcon) {
-    return (
-      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="mb-2">Map unavailable</p>
-          <p className="text-sm text-gray-400">View properties in the list below</p>
         </div>
       </div>
     );
