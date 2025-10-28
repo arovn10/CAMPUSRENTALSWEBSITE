@@ -12,6 +12,7 @@ import {
   CogIcon,
   UserIcon,
   ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
   CalendarIcon,
   BanknotesIcon,
   DocumentIcon,
@@ -23,7 +24,12 @@ import {
   PencilIcon,
   TrashIcon,
   ArrowRightOnRectangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  MapPinIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowUpRightIcon
 } from '@heroicons/react/24/outline'
 
 interface Investment {
@@ -31,6 +37,8 @@ interface Investment {
   name?: string
   propertyName?: string
   propertyAddress: string
+  propertyCity?: string
+  propertyState?: string
   totalInvestment?: number
   investorId?: string
   investorEmail?: string
@@ -38,20 +46,20 @@ interface Investment {
   ownershipPercentage: number
   startDate?: string
   expectedReturn?: number
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED'
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD'
   distributions?: Distribution[]
-  // New fields for entity investments
+  currentValue?: number
+  totalReturn?: number
+  irr?: number
   investmentType?: 'DIRECT' | 'ENTITY'
   entityName?: string
   entityType?: string
-  entityOwners?: Array<{
-    id: string
-    userId: string
-    userName: string
-    userEmail: string
-    ownershipPercentage: number
-    investmentAmount: number
-  }>
+  bedrooms?: number
+  bathrooms?: number
+  squareFeet?: number
+  acquisitionDate?: string
+  monthlyRent?: number
+  capRate?: number
 }
 
 interface Distribution {
@@ -59,7 +67,7 @@ interface Distribution {
   investmentId: string
   amount: number
   date: string
-  type: 'RENTAL' | 'SALE' | 'REFINANCE'
+  type: 'RENTAL' | 'SALE' | 'REFINANCE' | 'INSURANCE_SETTLEMENT' | 'OTHER'
 }
 
 interface User {
@@ -84,12 +92,14 @@ interface DashboardStats {
   pendingDistributions: number
   documentsCount: number
   unreadNotifications: number
+  totalProperties: number
+  totalSquareFeet: number
+  averageIRR: number
 }
 
 export default function InvestorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
   const [investments, setInvestments] = useState<Investment[]>([])
   const [stats, setStats] = useState<DashboardStats>({
     totalInvested: 0,
@@ -100,134 +110,42 @@ export default function InvestorDashboard() {
     totalDistributions: 0,
     pendingDistributions: 0,
     documentsCount: 0,
-    unreadNotifications: 0
+    unreadNotifications: 0,
+    totalProperties: 0,
+    totalSquareFeet: 0,
+    averageIRR: 0
   })
-  const [activeTab, setActiveTab] = useState('overview')
-  const [showCreateUser, setShowCreateUser] = useState(false)
-  const [showCreateProject, setShowCreateProject] = useState(false)
-  const [showAssignInvestors, setShowAssignInvestors] = useState(false)
-  const [showCreateInvestor, setShowCreateInvestor] = useState(false)
-  const [showViewInvestment, setShowViewInvestment] = useState(false)
-  const [showEditInvestment, setShowEditInvestment] = useState(false)
-  const [showViewUser, setShowViewUser] = useState(false)
-  const [showEditUser, setShowEditUser] = useState(false)
-  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // Form states
-  const [newUser, setNewUser] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    role: 'INVESTOR' as const,
-    company: '',
-    phone: ''
-  })
-
-  const [newProject, setNewProject] = useState({
-    name: '',
-    propertyAddress: '',
-    totalProjectCost: '',
-    totalAmountInvested: '',
-    totalDebt: '',
-    description: '',
-    propertyType: 'SINGLE_FAMILY' as const,
-    bedrooms: '',
-    bathrooms: '',
-    squareFeet: '',
-    acquisitionDate: '',
-    acquisitionPrice: '',
-    monthlyRent: '',
-    annualExpenses: ''
-  })
-
-  const [newInvestment, setNewInvestment] = useState({
-    projectId: '',
-    investorId: '',
-    investorEmail: '',
-    investmentAmount: '',
-    ownershipPercentage: '',
-    startDate: '',
-    expectedReturn: '',
-    status: 'PENDING' as const
-  })
+  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
     if (user) {
       const userData = JSON.parse(user)
       setCurrentUser(userData)
-      // Fetch data after user is set
-      setTimeout(() => fetchDashboardData(userData), 100)
+      fetchDashboardData(userData)
     } else {
       router.push('/investors/login')
     }
   }, [router])
 
-  // Recalculate stats when investments change
-  useEffect(() => {
-    if (investments.length > 0) {
-      calculateStats()
-    }
-  }, [investments])
-
-  const fetchDashboardData = async (user?: User) => {
+  const fetchDashboardData = async (user: User) => {
     try {
       setLoading(true)
-      const currentUserData = user || currentUser
       
-      if (!currentUserData) {
-        console.error('No user data available')
-        return
-      }
-      
-      // Fetch stats from the API
-      const statsResponse = await fetch('/api/investors/stats', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUserData.email}`
-        }
-      })
-      
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData)
-      } else {
-        console.error('Failed to fetch stats:', statsResponse.status)
-      }
-
       // Fetch investments
       const investmentsResponse = await fetch('/api/investors/properties', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUserData.email}`
+          'Authorization': `Bearer ${user.email}`
         }
       })
       
       if (investmentsResponse.ok) {
         const investmentsData = await investmentsResponse.json()
         setInvestments(investmentsData || [])
-      } else {
-        console.error('Failed to fetch investments:', investmentsResponse.status)
-      }
-
-      // Fetch users (admin only)
-      if (currentUserData.role === 'ADMIN') {
-        const usersResponse = await fetch('/api/investors/users', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUserData.email}`
-          }
-        })
-        if (usersResponse.ok) {
-          const usersData = await usersResponse.json()
-          setUsers(usersData)
-        }
+        calculateStats(investmentsData || [])
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -236,23 +154,33 @@ export default function InvestorDashboard() {
     }
   }
 
-  const calculateStats = () => {
-    const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentAmount, 0)
-    const activeInvestments = investments.filter(inv => inv.status === 'ACTIVE').length
-    const totalDistributions = investments.reduce((sum, inv) => 
+  const calculateStats = (investmentData: Investment[]) => {
+    const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    const currentValue = investmentData.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
+    const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
+    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
+    const totalDistributions = investmentData.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
     )
+    const averageIRR = investmentData.length > 0 
+      ? investmentData.reduce((sum, inv) => sum + (inv.irr || 0), 0) / investmentData.length 
+      : 0
+    const totalProperties = investmentData.length
+    const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
 
     setStats({
       totalInvested,
-      currentValue: totalInvested * 1.15, // 15% appreciation
-      totalReturn: totalDistributions,
-      totalIrr: 0, // Will be calculated from real data
+      currentValue,
+      totalReturn,
+      totalIrr: averageIRR,
       activeInvestments,
       totalDistributions,
       pendingDistributions: 0,
       documentsCount: 0,
-      unreadNotifications: 0
+      unreadNotifications: 0,
+      totalProperties,
+      totalSquareFeet,
+      averageIRR
     })
   }
 
@@ -265,215 +193,6 @@ export default function InvestorDashboard() {
     router.push(`/investors/investments/${investmentId}`)
   }
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch('/api/investors/users?auth=' + currentUser?.email, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
-      })
-
-      if (response.ok) {
-        setShowCreateUser(false)
-        setNewUser({
-          firstName: '',
-          lastName: '',
-          email: '',
-          password: '',
-          role: 'INVESTOR',
-          company: '',
-          phone: ''
-        })
-        fetchDashboardData()
-      }
-    } catch (error) {
-      console.error('Error creating user:', error)
-    }
-  }
-
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch('/api/investors/properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newProject,
-          totalProjectCost: Number(newProject.totalProjectCost),
-          totalAmountInvested: Number(newProject.totalAmountInvested),
-          totalDebt: Number(newProject.totalDebt),
-          acquisitionPrice: Number(newProject.acquisitionPrice),
-          monthlyRent: Number(newProject.monthlyRent),
-          annualExpenses: Number(newProject.annualExpenses),
-          bedrooms: Number(newProject.bedrooms),
-          bathrooms: Number(newProject.bathrooms),
-          squareFeet: Number(newProject.squareFeet)
-        })
-      })
-
-      if (response.ok) {
-        setShowCreateProject(false)
-        setNewProject({
-          name: '',
-          propertyAddress: '',
-          totalProjectCost: '',
-          totalAmountInvested: '',
-          totalDebt: '',
-          description: '',
-          propertyType: 'SINGLE_FAMILY' as const,
-          bedrooms: '',
-          bathrooms: '',
-          squareFeet: '',
-          acquisitionDate: '',
-          acquisitionPrice: '',
-          monthlyRent: '',
-          annualExpenses: ''
-        })
-        fetchDashboardData()
-      }
-    } catch (error) {
-      console.error('Error creating project:', error)
-    }
-  }
-
-  const handleCreateInvestment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch('/api/investors/investments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newInvestment,
-          investmentAmount: Number(newInvestment.investmentAmount),
-          ownershipPercentage: Number(newInvestment.ownershipPercentage),
-          expectedReturn: Number(newInvestment.expectedReturn)
-        })
-      })
-
-      if (response.ok) {
-        setShowAssignInvestors(false)
-        setNewInvestment({
-          projectId: '',
-          investorId: '',
-          investorEmail: '',
-          investmentAmount: '',
-          ownershipPercentage: '',
-          startDate: '',
-          expectedReturn: '',
-          status: 'PENDING' as const
-        })
-        fetchDashboardData()
-      }
-    } catch (error) {
-      console.error('Error creating investment:', error)
-    }
-  }
-
-  const handleUpdateInvestment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedInvestment) return
-    
-    try {
-      const response = await fetch(`/api/investors/investments/${selectedInvestment.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          investmentAmount: Number(newInvestment.investmentAmount),
-          ownershipPercentage: Number(newInvestment.ownershipPercentage),
-          expectedReturn: Number(newInvestment.expectedReturn),
-          status: newInvestment.status
-        })
-      })
-
-      if (response.ok) {
-        setShowEditInvestment(false)
-        setSelectedInvestment(null)
-        fetchDashboardData()
-      }
-    } catch (error) {
-      console.error('Error updating investment:', error)
-    }
-  }
-
-  const handleDeleteInvestment = async (investmentId: string) => {
-    if (!confirm('Are you sure you want to delete this investment? This action cannot be undone.')) return
-    
-    try {
-      const response = await fetch(`/api/investors/investments/${investmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${currentUser?.email}`
-        }
-      })
-
-      if (response.ok) {
-        setShowViewInvestment(false)
-        setSelectedInvestment(null)
-        await fetchDashboardData()
-        alert('Investment deleted successfully!')
-      } else {
-        alert('Failed to delete investment. Please try again.')
-      }
-    } catch (error) {
-      console.error('Error deleting investment:', error)
-      alert('Error deleting investment. Please try again.')
-    }
-  }
-
-  const handleUpdateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedUser) return
-    
-    try {
-      const response = await fetch(`/api/investors/users/${selectedUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          email: newUser.email,
-          role: newUser.role,
-          company: newUser.company,
-          phone: newUser.phone
-        })
-      })
-
-      if (response.ok) {
-        setShowEditUser(false)
-        setSelectedUser(null)
-        fetchDashboardData()
-      }
-    } catch (error) {
-      console.error('Error updating user:', error)
-    }
-  }
-
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
-    
-    try {
-      const response = await fetch(`/api/investors/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${currentUser?.email}`
-        }
-      })
-
-      if (response.ok) {
-        alert('User deleted successfully!')
-        setShowViewUser(false)
-        setSelectedUser(null)
-        fetchDashboardData()
-      } else {
-        alert('Failed to delete user. Please try again.')
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error)
-      alert('Error deleting user. Please try again.')
-    }
-  }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -484,45 +203,16 @@ export default function InvestorDashboard() {
   }
 
   const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800'
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800'
-      case 'COMPLETED': return 'bg-blue-100 text-blue-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const calculateWaterfall = (investment: Investment) => {
-    const totalInvestment = investment.totalInvestment || investment.investmentAmount
-    const investorAmount = investment.investmentAmount
-    const ownershipPercentage = investment.ownershipPercentage / 100
-    
-    // Simple waterfall calculation
-    const preferredReturn = investorAmount * 0.08 // 8% preferred return
-    const catchUp = Math.max(0, (totalInvestment * 0.15) - preferredReturn) * ownershipPercentage
-    const carriedInterest = Math.max(0, (totalInvestment * 0.20) - preferredReturn - catchUp) * 0.20
-    const investorReturn = preferredReturn + catchUp + (carriedInterest * 0.80)
-    const gpReturn = carriedInterest * 0.20
-    
-    return {
-      preferredReturn,
-      catchUp,
-      carriedInterest,
-      investorReturn,
-      gpReturn,
-      totalReturn: investorReturn + gpReturn
+      case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-300'
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      case 'COMPLETED': return 'bg-blue-100 text-blue-800 border-blue-300'
+      case 'SOLD': return 'bg-gray-100 text-gray-800 border-gray-300'
+      default: return 'bg-gray-100 text-gray-800 border-gray-300'
     }
   }
 
@@ -530,1438 +220,486 @@ export default function InvestorDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">Investor Dashboard</h1>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                {currentUser?.role}
-              </span>
+              <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-3 rounded-xl shadow-lg">
+                <BuildingOfficeIcon className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Campus Rentals LLC</h1>
+                <p className="text-sm text-gray-500">Investment Portal</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {currentUser?.firstName} {currentUser?.lastName}
-              </span>
+              <button
+                onClick={() => router.push('/admin')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                Admin
+              </button>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">
+                  {currentUser?.firstName} {currentUser?.lastName}
+                </p>
+                <p className="text-xs text-gray-500">{currentUser?.email}</p>
+              </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                className="p-2 text-gray-600 hover:text-red-600 transition-colors"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span>Logout</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Total Invested</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.totalInvested)}</p>
-              </div>
-              <CurrencyDollarIcon className="h-8 w-8 text-blue-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Current Value</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.currentValue)}</p>
-              </div>
-              <ChartBarIcon className="h-8 w-8 text-green-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Total Return</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.totalReturn)}</p>
-              </div>
-              <ArrowTrendingUpIcon className="h-8 w-8 text-purple-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">IRR</p>
-                <p className="text-2xl font-bold">{formatPercentage(stats.totalIrr)}</p>
-              </div>
-              <CalculatorIcon className="h-8 w-8 text-orange-200" />
-            </div>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8">
+            <button
+              onClick={() => setActiveView('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeView === 'overview'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ChartBarIcon className="h-5 w-5 inline mr-2" />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveView('deals')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeView === 'deals'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <HomeIcon className="h-5 w-5 inline mr-2" />
+              Deals & Properties
+            </button>
+            <button
+              onClick={() => setActiveView('analytics')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeView === 'analytics'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ChartPieIcon className="h-5 w-5 inline mr-2" />
+              Analytics
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="flex flex-wrap space-x-1 md:space-x-6 px-4 md:px-6 overflow-x-auto">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-3 md:py-4 px-4 md:px-6 font-medium text-sm transition-all duration-200 whitespace-nowrap rounded-xl ${
-                  activeTab === 'overview'
-                    ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('investments')}
-                className={`py-3 md:py-4 px-4 md:px-6 font-medium text-sm transition-all duration-200 whitespace-nowrap rounded-xl ${
-                  activeTab === 'investments'
-                    ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                Investments
-              </button>
-              {currentUser?.role === 'ADMIN' && (
-                <>
-                  <button
-                    onClick={() => setActiveTab('users')}
-                    className={`py-3 md:py-4 px-4 md:px-6 font-medium text-sm transition-all duration-200 whitespace-nowrap rounded-xl ${
-                      activeTab === 'users'
-                        ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    Users
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('admin')}
-                    className={`py-3 md:py-4 px-4 md:px-6 font-medium text-sm transition-all duration-200 whitespace-nowrap rounded-xl ${
-                      activeTab === 'admin'
-                        ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    Admin
-                  </button>
-                </>
-              )}
-            </nav>
-          </div>
-
-          <div className="p-4 md:p-6">
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                    <div className="space-y-4">
-                      {investments.slice(0, 3).map((investment) => (
-                        <div key={investment.id} className="flex items-center space-x-3">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <BuildingOfficeIcon className="h-4 w-4 text-blue-600" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{investment.name}</p>
-                            <p className="text-sm text-gray-500">{investment.propertyAddress}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">{formatCurrency(investment.investmentAmount)}</p>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(investment.status)}`}>
-                              {investment.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeView === 'overview' && (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+              {/* Total Invested */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
                   </div>
-
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Active Investments</span>
-                        <span className="text-sm font-medium text-gray-900">{stats.activeInvestments}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Total Distributions</span>
-                        <span className="text-sm font-medium text-gray-900">{formatCurrency(stats.totalDistributions)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Average IRR</span>
-                        <span className="text-sm font-medium text-gray-900">{formatPercentage(stats.totalIrr)}</span>
-                      </div>
-                    </div>
-                  </div>
+                  <span className="text-xs font-medium text-gray-500">Total Invested</span>
                 </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">{formatCurrency(stats.totalInvested)}</h3>
+                <p className="text-sm text-green-600 flex items-center">
+                  <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
+                  Growing portfolio
+                </p>
               </div>
-            )}
 
-            {/* Investments Tab */}
-            {activeTab === 'investments' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Property Investments</h3>
-                  {currentUser?.role === 'ADMIN' && (
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => setShowCreateProject(true)}
-                        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 flex items-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                      >
-                        <PlusIcon className="h-5 w-5" />
-                        <span>New Project</span>
-                      </button>
-                      <button
-                        onClick={() => setShowAssignInvestors(true)}
-                        className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 flex items-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                      >
-                        <UserIcon className="h-5 w-5" />
-                        <span>Assign Investors</span>
-                      </button>
+              {/* Current Value */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <ChartBarIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">Current Value</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
+                <p className="text-sm text-blue-600 flex items-center">
+                  <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
+                  {formatCurrency(stats.currentValue - stats.totalInvested)} profit
+                </p>
+              </div>
+
+              {/* Total Distributions */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-purple-100 rounded-lg">
+                    <BanknotesIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">Total Distributions</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">{formatCurrency(stats.totalDistributions)}</h3>
+                <p className="text-sm text-purple-600">Cash flow received</p>
+              </div>
+
+              {/* Average IRR */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-orange-100 rounded-lg">
+                    <ArrowTrendingUpIcon className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">Average IRR</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">{formatPercentage(stats.averageIRR)}</h3>
+                <p className="text-sm text-orange-600">Performance metric</p>
+              </div>
+            </div>
+
+            {/* Portfolio Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* Active Investments */}
+              <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Active Deals</h2>
+                  <span className="text-sm text-gray-500">{stats.activeInvestments} properties</span>
+                </div>
+                
+                <div className="space-y-4">
+                  {investments.filter(inv => inv.status === 'ACTIVE').slice(0, 5).map((investment) => (
+                    <div
+                      key={investment.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                      onClick={() => handleViewInvestmentDetails(investment.id)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                            {investment.propertyName || investment.propertyAddress}
+                          </h3>
+                          <p className="text-sm text-gray-500 flex items-center mt-1">
+                            <MapPinIcon className="h-3 w-3 mr-1" />
+                            {investment.propertyAddress}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(investment.status)}`}>
+                          {investment.status}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Investment</p>
+                          <p className="font-semibold text-gray-900">{formatCurrency(investment.investmentAmount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Ownership</p>
+                          <p className="font-semibold text-gray-900">{investment.ownershipPercentage}%</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">IRR</p>
+                          <p className="font-semibold text-green-600">{formatPercentage(investment.irr || 0)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 flex items-center justify-end">
+                        <span className="text-sm text-blue-600 group-hover:text-blue-700 font-medium flex items-center">
+                          View Details
+                          <ArrowUpRightIcon className="h-4 w-4 ml-1" />
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {investments.filter(inv => inv.status === 'ACTIVE').length === 0 && (
+                    <div className="text-center py-12">
+                      <HomeIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">No active investments yet</p>
                     </div>
                   )}
-                </div>
-                
-                <div className="bg-white border border-gray-200 rounded-2xl overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Property
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Investment
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Ownership
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Expected Return
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Start Date
-                        </th>
-                        {currentUser?.role === 'ADMIN' && (
-                          <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {investments.map((investment) => {
-                        const waterfall = calculateWaterfall(investment)
-                        return (
-                          <tr key={investment.id} className="hover:bg-gray-50">
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{investment.propertyName || investment.name || 'Unnamed Property'}</div>
-                                <div className="text-sm text-gray-500">{investment.propertyAddress}</div>
-                                {investment.investmentType === 'ENTITY' && investment.entityName && (
-                                  <div className="text-xs text-blue-600 font-medium mt-1">
-                                    📋 {investment.entityName} ({investment.entityType})
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                investment.investmentType === 'ENTITY' 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {investment.investmentType === 'ENTITY' ? '📋 Entity' : '👤 Direct'}
-                              </span>
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{formatCurrency(investment.investmentAmount)}</div>
-                              <div className="text-sm text-gray-500">of {formatCurrency(investment.totalInvestment || investment.investmentAmount)}</div>
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {formatPercentage(investment.ownershipPercentage)}
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{formatCurrency(waterfall.investorReturn)}</div>
-                              <div className="text-sm text-gray-500">{formatPercentage(investment.expectedReturn || 0)} IRR</div>
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(investment.status)}`}>
-                                {investment.status}
-                              </span>
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {formatDate(investment.startDate || new Date().toISOString())}
-                            </td>
-                            <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
-                                <button 
-                                  onClick={() => handleViewInvestmentDetails(investment.id)}
-                                  className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200 border border-blue-200 hover:border-blue-300"
-                                >
-                                  View Details
-                                </button>
-                                {currentUser?.role === 'ADMIN' && (
-                                  <>
-                                    <button 
-                                      onClick={() => {
-                                        setSelectedInvestment(investment)
-                                        setShowViewInvestment(true)
-                                      }}
-                                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200"
-                                    >
-                                      <EyeIcon className="h-4 w-4" />
-                                    </button>
-                                    <button 
-                                      onClick={() => {
-                                        setSelectedInvestment(investment)
-                                        setNewInvestment({
-                                          projectId: investment.id,
-                                          investorId: investment.investorId || '',
-                                          investorEmail: investment.investorEmail || '',
-                                          investmentAmount: investment.investmentAmount.toString(),
-                                          ownershipPercentage: investment.ownershipPercentage.toString(),
-                                          startDate: investment.startDate || new Date().toISOString(),
-                                          expectedReturn: (investment.expectedReturn || 0).toString(),
-                                          status: investment.status as any
-                                        })
-                                        setShowEditInvestment(true)
-                                      }}
-                                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200"
-                                    >
-                                      <PencilIcon className="h-4 w-4" />
-                                    </button>
-                                    <button 
-                                      onClick={() => handleDeleteInvestment(investment.id)}
-                                      className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all duration-200"
-                                    >
-                                      <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                  
+                  {investments.filter(inv => inv.status === 'ACTIVE').length > 5 && (
+                    <button
+                      onClick={() => setActiveView('deals')}
+                      className="w-full py-3 text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                    >
+                      View all {stats.activeInvestments} investments →
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* Users Tab (Admin Only) */}
-            {activeTab === 'users' && currentUser?.role === 'ADMIN' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">User Management</h3>
-                  <button
-                    onClick={() => setShowCreateUser(true)}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-md hover:from-blue-700 hover:to-blue-800 flex items-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                    <span>Create Account</span>
-                  </button>
-                </div>
+              {/* Quick Stats */}
+              <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
+                <h2 className="text-xl font-bold mb-6">Portfolio Summary</h2>
                 
-                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          User
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Company
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Created
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Last Login
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {users.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                  <UserIcon className="h-6 w-6 text-gray-600" />
-                                </div>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {user.firstName} {user.lastName}
-                                </div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
-                              </div>
-                            </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-4 border-b border-blue-400/30">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <HomeIcon className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm">Properties</span>
+                    </div>
+                    <span className="text-xl font-bold">{stats.totalProperties}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pb-4 border-b border-blue-400/30">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <ChartBarIcon className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm">Square Feet</span>
+                    </div>
+                    <span className="text-xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pb-4 border-b border-blue-400/30">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <UsersIcon className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm">Active Deals</span>
+                    </div>
+                    <span className="text-xl font-bold">{stats.activeInvestments}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <BanknotesIcon className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm">Total Return</span>
+                    </div>
+                    <span className="text-xl font-bold">{formatCurrency(stats.totalReturn)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Distributions</h2>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {investments
+                      .flatMap(inv => inv.distributions?.map(dist => ({ ...dist, propertyName: inv.propertyName })) || [])
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 10)
+                      .map((distribution, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {distribution.propertyName || 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                              user.role === 'MANAGER' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {user.role}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(distribution.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                              {distribution.type}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {user.company || '-'}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-green-600">
+                            {formatCurrency(distribution.amount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(user.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(user.lastLogin)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setShowViewUser(true)
-                                }}
-                                className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
-                              >
-                                <EyeIcon className="h-4 w-4" />
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setNewUser({
-                                    firstName: user.firstName,
-                                    lastName: user.lastName,
-                                    email: user.email,
-                                    password: '',
-                                    role: user.role as any,
-                                    company: user.company || '',
-                                    phone: user.phone || ''
-                                  })
-                                  setShowEditUser(true)
-                                }}
-                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors duration-200"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md transition-colors duration-200"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium flex items-center">
+                              <CheckCircleIcon className="h-3 w-3 mr-1" />
+                              Processed
+                            </span>
                           </td>
                         </tr>
                       ))}
-                    </tbody>
-                  </table>
+                    {investments.flatMap(inv => inv.distributions || []).length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
+                          No distributions yet
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeView === 'deals' && (
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">All Deals & Properties</h2>
+              <div className="flex items-center space-x-2">
+                <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option>All Status</option>
+                  <option>Active</option>
+                  <option>Pending</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {investments.map((investment) => (
+                <div
+                  key={investment.id}
+                  className="border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer group"
+                  onClick={() => handleViewInvestmentDetails(investment.id)}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                      <HomeIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(investment.status)}`}>
+                      {investment.status}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {investment.propertyName || investment.propertyAddress}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4 flex items-center">
+                    <MapPinIcon className="h-4 w-4 mr-1" />
+                    {investment.propertyAddress}
+                  </p>
+                  
+                  {investment.bedrooms && (
+                    <p className="text-sm text-gray-600 mb-4">
+                      {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Investment</span>
+                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(investment.investmentAmount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Ownership</span>
+                      <span className="text-sm font-semibold text-gray-900">{investment.ownershipPercentage}%</span>
+                    </div>
+                    {investment.irr && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">IRR</span>
+                        <span className={`text-sm font-semibold ${investment.irr > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatPercentage(investment.irr)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                    <span className="text-xs text-gray-500">
+                      {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
+                    </span>
+                    <span className="text-sm text-blue-600 font-medium group-hover:text-blue-700 flex items-center">
+                      View Deal
+                      <ArrowUpRightIcon className="h-4 w-4 ml-1" />
+                    </span>
+                  </div>
                 </div>
+              ))}
+            </div>
+            
+            {investments.length === 0 && (
+              <div className="text-center py-16">
+                <BuildingOfficeIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-lg font-medium text-gray-900 mb-2">No investments yet</p>
+                <p className="text-gray-500">Start by creating your first deal or property</p>
               </div>
             )}
+          </div>
+        )}
 
-            {/* Admin Tab */}
-            {activeTab === 'admin' && currentUser?.role === 'ADMIN' && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Admin Panel</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h4 className="text-md font-semibold text-gray-900 mb-4">Quick Actions</h4>
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => setShowCreateUser(true)}
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-md hover:from-blue-700 hover:to-blue-800 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                      >
-                        <PlusIcon className="h-5 w-5" />
-                        <span>Create User Account</span>
-                      </button>
-                      <button
-                        onClick={() => setShowCreateProject(true)}
-                        className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-md hover:from-green-700 hover:to-green-800 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                      >
-                        <BuildingOfficeIcon className="h-5 w-5" />
-                        <span>Setup New Investment</span>
-                      </button>
+        {activeView === 'analytics' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Portfolio Performance</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Equity</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.currentValue)}</p>
+                    </div>
+                    <ChartBarIcon className="h-12 w-12 text-blue-600" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Returns</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalReturn)}</p>
+                    </div>
+                    <ArrowTrendingUpIcon className="h-12 w-12 text-green-600" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600">Cash Distributions</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalDistributions)}</p>
+                    </div>
+                    <BanknotesIcon className="h-12 w-12 text-purple-600" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Performance Metrics</h2>
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Average IRR</span>
+                      <span className="text-lg font-bold text-blue-600">{formatPercentage(stats.averageIRR)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all" 
+                        style={{ width: `${Math.min(Math.abs(stats.averageIRR) * 10, 100)}%` }}
+                      ></div>
                     </div>
                   </div>
                   
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <h4 className="text-md font-semibold text-gray-900 mb-4">System Overview</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Total Users</span>
-                        <span className="text-sm font-medium text-gray-900">{users.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Total Investments</span>
-                        <span className="text-sm font-medium text-gray-900">{investments.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Active Investments</span>
-                        <span className="text-sm font-medium text-gray-900">{stats.activeInvestments}</span>
-                      </div>
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Total Properties</span>
+                      <span className="text-lg font-bold text-green-600">{stats.totalProperties}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Portfolio Size</span>
+                      <span className="text-lg font-bold text-purple-600">{formatCurrency(stats.totalInvested)}</span>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Create User Modal */}
-      {showCreateUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Create New User Account</h3>
-              <button
-                onClick={() => setShowCreateUser(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">First Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newUser.firstName}
-                    onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newUser.lastName}
-                    onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="INVESTOR">Investor</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Company</label>
-                <input
-                  type="text"
-                  value={newUser.company}
-                  onChange={(e) => setNewUser({...newUser, company: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="tel"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Create User
-                </button>
-                                  <button
-                    type="button"
-                    onClick={() => setShowCreateUser(false)}
-                    className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                  >
-                    Cancel
-                  </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Create Project Modal */}
-      {showCreateProject && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Create New Project</h3>
-              <button
-                onClick={() => setShowCreateProject(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateProject} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Project Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({...newProject, name: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Property Address</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProject.propertyAddress}
-                    onChange={(e) => setNewProject({...newProject, propertyAddress: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Project Cost</label>
-                  <input
-                    type="number"
-                    required
-                    value={newProject.totalProjectCost}
-                    onChange={(e) => setNewProject({...newProject, totalProjectCost: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Amount Invested</label>
-                  <input
-                    type="number"
-                    required
-                    value={newProject.totalAmountInvested}
-                    onChange={(e) => setNewProject({...newProject, totalAmountInvested: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Debt</label>
-                  <input
-                    type="number"
-                    required
-                    value={newProject.totalDebt}
-                    onChange={(e) => setNewProject({...newProject, totalDebt: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  value={newProject.description}
-                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
-                  rows={3}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Property Type</label>
-                  <select
-                    value={newProject.propertyType}
-                    onChange={(e) => setNewProject({...newProject, propertyType: e.target.value as any})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="SINGLE_FAMILY">Single Family</option>
-                    <option value="MULTI_FAMILY">Multi Family</option>
-                    <option value="COMMERCIAL">Commercial</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
-                  <input
-                    type="number"
-                    value={newProject.bedrooms}
-                    onChange={(e) => setNewProject({...newProject, bedrooms: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
-                  <input
-                    type="number"
-                    value={newProject.bathrooms}
-                    onChange={(e) => setNewProject({...newProject, bathrooms: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Square Feet</label>
-                  <input
-                    type="number"
-                    value={newProject.squareFeet}
-                    onChange={(e) => setNewProject({...newProject, squareFeet: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Acquisition Date</label>
-                  <input
-                    type="date"
-                    value={newProject.acquisitionDate}
-                    onChange={(e) => setNewProject({...newProject, acquisitionDate: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Acquisition Price</label>
-                  <input
-                    type="number"
-                    value={newProject.acquisitionPrice}
-                    onChange={(e) => setNewProject({...newProject, acquisitionPrice: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Monthly Rent</label>
-                  <input
-                    type="number"
-                    value={newProject.monthlyRent}
-                    onChange={(e) => setNewProject({...newProject, monthlyRent: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Annual Expenses</label>
-                  <input
-                    type="number"
-                    value={newProject.annualExpenses}
-                    onChange={(e) => setNewProject({...newProject, annualExpenses: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Create Project
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateProject(false)}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Assign Investors Modal */}
-      {showAssignInvestors && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Assign Investors to Project</h3>
-              <button
-                onClick={() => setShowAssignInvestors(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateInvestment} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Select Project</label>
-                <select
-                  required
-                  value={newInvestment.projectId}
-                  onChange={(e) => setNewInvestment({...newInvestment, projectId: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select a Project</option>
-                  {/* We'll populate this with projects from the database */}
-                  <option value="project-1">2422 Joseph St. - Single Family</option>
-                  <option value="project-2">2424 Joseph St - Multi Family</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Select Investor</label>
-                <div className="flex space-x-2">
-                  <select
-                    required
-                    value={newInvestment.investorEmail}
-                    onChange={(e) => {
-                      const user = users.find(u => u.email === e.target.value)
-                      setNewInvestment({
-                        ...newInvestment, 
-                        investorEmail: e.target.value,
-                        investorId: user?.id || ''
-                      })
-                    }}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Investor</option>
-                    {users.filter(u => u.role === 'INVESTOR').map(user => (
-                      <option key={user.id} value={user.email}>
-                        {user.firstName} {user.lastName} ({user.email})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateInvestor(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
-                  >
-                    <PlusIcon className="h-4 w-4 mr-1" />
-                    New
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Investment Amount</label>
-                <input
-                  type="number"
-                  required
-                  value={newInvestment.investmentAmount}
-                  onChange={(e) => setNewInvestment({...newInvestment, investmentAmount: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Ownership Percentage</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newInvestment.ownershipPercentage}
-                  onChange={(e) => setNewInvestment({...newInvestment, ownershipPercentage: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                <input
-                  type="date"
-                  required
-                  value={newInvestment.startDate}
-                  onChange={(e) => setNewInvestment({...newInvestment, startDate: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Expected Return (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={newInvestment.expectedReturn}
-                  onChange={(e) => setNewInvestment({...newInvestment, expectedReturn: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Assign Investor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAssignInvestors(false)}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Create Investor Modal */}
-      {showCreateInvestor && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Create New Investor</h3>
-              <button
-                onClick={() => setShowCreateInvestor(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">First Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.firstName}
-                  onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.lastName}
-                  onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Company</label>
-                <input
-                  type="text"
-                  value={newUser.company}
-                  onChange={(e) => setNewUser({...newUser, company: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="tel"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Create Investor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateInvestor(false)}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* View Investment Modal */}
-      {showViewInvestment && selectedInvestment && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Investment Details</h3>
-              <button
-                onClick={() => {
-                  setShowViewInvestment(false)
-                  setSelectedInvestment(null)
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Investment Name</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedInvestment.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Property Address</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedInvestment.propertyAddress}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Investment Amount</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(selectedInvestment.investmentAmount)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Investment</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(selectedInvestment.totalInvestment || selectedInvestment.investmentAmount)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Ownership %</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatPercentage(selectedInvestment.ownershipPercentage)}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Expected Return</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatPercentage(selectedInvestment.expectedReturn || 0)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedInvestment.status)}`}>
-                    {selectedInvestment.status}
-                  </span>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedInvestment.startDate || new Date().toISOString())}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Investor</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedInvestment.investorEmail}</p>
-              </div>
-              
-              {selectedInvestment.distributions && selectedInvestment.distributions.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Distributions</label>
-                  <div className="mt-2 space-y-2">
-                    {selectedInvestment.distributions.map((dist) => (
-                      <div key={dist.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <span className="text-sm text-gray-900">{formatDate(dist.date)}</span>
-                        <span className="text-sm text-gray-900">{formatCurrency(dist.amount)}</span>
-                        <span className="text-sm text-gray-500">{dist.type}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowViewInvestment(false)
-                    setShowEditInvestment(true)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Edit Investment
-                </button>
-                <button
-                  onClick={() => {
-                    setShowViewInvestment(false)
-                    setSelectedInvestment(null)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Investment Modal */}
-      {showEditInvestment && selectedInvestment && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Investment</h3>
-              <button
-                onClick={() => {
-                  setShowEditInvestment(false)
-                  setSelectedInvestment(null)
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleUpdateInvestment} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Investment Amount</label>
-                <input
-                  type="number"
-                  required
-                  value={newInvestment.investmentAmount}
-                  onChange={(e) => setNewInvestment({...newInvestment, investmentAmount: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Ownership Percentage</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newInvestment.ownershipPercentage}
-                  onChange={(e) => setNewInvestment({...newInvestment, ownershipPercentage: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Expected Return (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={newInvestment.expectedReturn}
-                  onChange={(e) => setNewInvestment({...newInvestment, expectedReturn: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select
-                  value={newInvestment.status}
-                  onChange={(e) => setNewInvestment({...newInvestment, status: e.target.value as any})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="PENDING">Pending</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="COMPLETED">Completed</option>
-                </select>
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Update Investment
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditInvestment(false)
-                    setSelectedInvestment(null)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* View User Modal */}
-      {showViewUser && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">User Details</h3>
-              <button
-                onClick={() => {
-                  setShowViewUser(false)
-                  setSelectedUser(null)
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedUser.firstName} {selectedUser.lastName}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  selectedUser.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                  selectedUser.role === 'MANAGER' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {selectedUser.role}
-                </span>
-              </div>
-              
-              {selectedUser.company && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Company</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.company}</p>
-                </div>
-              )}
-              
-              {selectedUser.phone && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.phone}</p>
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Created</label>
-                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Last Login</label>
-                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.lastLogin)}</p>
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowViewUser(false)
-                    setShowEditUser(true)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Edit User
-                </button>
-                <button
-                  onClick={() => {
-                    setShowViewUser(false)
-                    setSelectedUser(null)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {showEditUser && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
-              <button
-                onClick={() => {
-                  setShowEditUser(false)
-                  setSelectedUser(null)
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleUpdateUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">First Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.firstName}
-                  onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.lastName}
-                  onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="INVESTOR">Investor</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Company</label>
-                <input
-                  type="text"
-                  value={newUser.company}
-                  onChange={(e) => setNewUser({...newUser, company: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="tel"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Update User
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditUser(false)
-                    setSelectedUser(null)
-                  }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-gray-800 px-6 py-2.5 rounded-lg hover:from-gray-500 hover:to-gray-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
-} 
+}
