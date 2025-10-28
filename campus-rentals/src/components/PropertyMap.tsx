@@ -132,9 +132,15 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
   }
 
   try {
+    // Create the icon inside the try block after checking for coordinates
+    if (!propertiesWithCoords || propertiesWithCoords.length === 0) {
+      throw new Error('No properties with valid coordinates');
+    }
+    
     const propertyIcon = createCustomIcon('#10b981'); // Green color for properties
 
     return (
+    <div className="relative h-full w-full">
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={zoom}
@@ -204,6 +210,7 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
         </Marker>
       ))}
     </MapContainer>
+    </div>
     );
   } catch (error) {
     console.error('Error rendering map:', error);
