@@ -58,7 +58,12 @@ function MapUpdater({ center, zoom }: { center: { lat: number; lng: number }; zo
 export default function PropertyMap({ properties, center, zoom = 14 }: PropertyMapProps) {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -108,11 +113,11 @@ export default function PropertyMap({ properties, center, zoom = 14 }: PropertyM
     }
   };
 
-  if (typeof window === 'undefined' || hasError) {
+  if (typeof window === 'undefined' || hasError || !mounted) {
     return (
       <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
         <div className="text-white text-center">
-          <p className="mb-2">Map unavailable</p>
+          <p className="mb-2">{!mounted ? 'Loading map...' : 'Map unavailable'}</p>
           <p className="text-sm text-gray-400">View properties in the list below</p>
         </div>
       </div>
