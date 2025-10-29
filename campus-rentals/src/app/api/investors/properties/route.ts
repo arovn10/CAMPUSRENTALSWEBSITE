@@ -72,6 +72,23 @@ export async function GET(request: NextRequest) {
           }
         }
       })
+
+      // Include additional properties explicitly granted via access table
+      const explicitAccess = await (prisma as any).userPropertyAccess.findMany({ where: { userId: user.id } })
+      if (explicitAccess.length > 0) {
+        const extraPropertyIds = explicitAccess.map((a: any) => a.propertyId)
+        const extraInvestments = await prisma.investment.findMany({
+          where: { propertyId: { in: extraPropertyIds } },
+          include: { property: true, distributions: true, user: true }
+        })
+        investments = investments.concat(extraInvestments)
+
+        const extraEntityInvestments = await prisma.entityInvestment.findMany({
+          where: { propertyId: { in: extraPropertyIds } },
+          include: { property: true, entityDistributions: true, entity: { include: { entityOwners: { include: { user: true } } } } }
+        })
+        entityInvestments = entityInvestments.concat(extraEntityInvestments)
+      }
     }
 
     // Transform the regular investments data

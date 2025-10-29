@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [users, setUsers] = useState<any[]>([])
+  const [properties, setProperties] = useState<any[]>([])
+  const [newUser, setNewUser] = useState({ email: '', firstName: '', lastName: '', role: 'INVESTOR', password: '' })
 
   useEffect(() => {
     fetchUser()
@@ -49,6 +52,49 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (!loading && user?.role === 'ADMIN') {
+      loadUsersAndProperties()
+    }
+  }, [loading, user])
+
+  const getToken = () => sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || ''
+
+  const loadUsersAndProperties = async () => {
+    try {
+      const headers: HeadersInit = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }
+      const [uRes, pRes] = await Promise.all([
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/investors/properties', { headers })
+      ])
+      if (uRes.ok) setUsers(await uRes.json())
+      if (pRes.ok) setProperties(await pRes.json())
+    } catch {}
+  }
+
+  const createUser = async () => {
+    const headers: HeadersInit = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }
+    const res = await fetch('/api/admin/users', { method: 'POST', headers, body: JSON.stringify(newUser) })
+    if (res.ok) {
+      setNewUser({ email: '', firstName: '', lastName: '', role: 'INVESTOR', password: '' })
+      loadUsersAndProperties()
+    } else {
+      alert('Failed to create user')
+    }
+  }
+
+  const deleteUser = async (id: string) => {
+    const headers: HeadersInit = { 'Authorization': `Bearer ${getToken()}` }
+    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers })
+    if (res.ok) loadUsersAndProperties()
+  }
+
+  const updateAccess = async (id: string, propertyIds: string[]) => {
+    const headers: HeadersInit = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }
+    const res = await fetch(`/api/admin/users/${id}`, { method: 'PUT', headers, body: JSON.stringify({ propertyIds }) })
+    if (!res.ok) alert('Failed to update access')
   }
 
   const handleCSVExport = async () => {
@@ -108,6 +154,66 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* User Management */}
+          <div className="bg-white p-6 rounded-lg shadow-md md:col-span-2 lg:col-span-3">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">User Management</h3>
+            <div className="grid md:grid-cols-5 gap-3 mb-4">
+              <input className="border rounded px-3 py-2" placeholder="Email" value={newUser.email} onChange={e=>setNewUser({...newUser,email:e.target.value})} />
+              <input className="border rounded px-3 py-2" placeholder="First name" value={newUser.firstName} onChange={e=>setNewUser({...newUser,firstName:e.target.value})} />
+              <input className="border rounded px-3 py-2" placeholder="Last name" value={newUser.lastName} onChange={e=>setNewUser({...newUser,lastName:e.target.value})} />
+              <select className="border rounded px-3 py-2" value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})}>
+                <option value="INVESTOR">INVESTOR</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+              <input className="border rounded px-3 py-2" placeholder="Temp password" value={newUser.password} onChange={e=>setNewUser({...newUser,password:e.target.value})} />
+            </div>
+            <button onClick={createUser} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Create User</button>
+
+            <div className="mt-6 overflow-auto">
+              <table className="min-w-full divide-y">
+                <thead>
+                  <tr className="text-left text-sm text-gray-600">
+                    <th className="py-2 pr-4">Name</th>
+                    <th className="py-2 pr-4">Email</th>
+                    <th className="py-2 pr-4">Role</th>
+                    <th className="py-2 pr-4">Access</th>
+                    <th className="py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {users.map(u => {
+                    const accessSet = new Set((u.propertyAccess || []).map((a:any)=>a.propertyId))
+                    const toggle = (pid: string) => {
+                      const next = new Set(accessSet)
+                      if (next.has(pid)) next.delete(pid); else next.add(pid)
+                      updateAccess(u.id, Array.from(next) as string[])
+                    }
+                    return (
+                      <tr key={u.id} className="text-sm">
+                        <td className="py-2 pr-4">{u.firstName} {u.lastName}</td>
+                        <td className="py-2 pr-4">{u.email}</td>
+                        <td className="py-2 pr-4">{u.role}</td>
+                        <td className="py-2 pr-4">
+                          <div className="flex flex-wrap gap-2 max-w-xl">
+                            {properties.map((p:any)=>(
+                              <label key={p.propertyId || p.property?.id || p.propertyId} className="inline-flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded border">
+                                <input type="checkbox" defaultChecked={accessSet.has(p.propertyId || p.propertyId || p.property?.id)} onChange={()=>toggle(p.propertyId || p.property?.id || p.propertyId)} />
+                                <span>{p.propertyName || p.property?.name || p.name || p.propertyAddress}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-2">
+                          <button onClick={()=>deleteUser(u.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
           {/* CSV Export */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center mb-4">

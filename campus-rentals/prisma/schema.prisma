@@ -61,6 +61,7 @@ model User {
   auditLogs         AuditLog[]
   fileUploads       FileUpload[]
   propertyLoans     PropertyLoan[]
+  propertyAccess    UserPropertyAccess[]
 
   @@map("users")
 }
@@ -104,8 +105,22 @@ model Property {
   propertyTaxes   PropertyTax[]
   waterfallStructures WaterfallStructure[]
   loans           PropertyLoan[]
+  userAccess      UserPropertyAccess[]
 
   @@map("properties")
+}
+model UserPropertyAccess {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@map("user_property_access")
 }
 
 model Fund {
