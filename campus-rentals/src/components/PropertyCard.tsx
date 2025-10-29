@@ -59,11 +59,13 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isMobile) {
-      // On mobile, first click shows preview
+      // On mobile, first tap shows preview
       e.preventDefault();
       setShowPreview(true);
+      return;
     }
-    // On desktop, direct navigation (default Link behavior)
+    // On desktop, navigate to details
+    window.location.href = `/properties/${property.property_id}`;
   };
 
   const handlePreviewClose = () => {

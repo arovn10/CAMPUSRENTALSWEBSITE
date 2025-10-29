@@ -21,9 +21,11 @@ interface PropertyMapProps {
 export default function PropertyMapClient({ properties, center, zoom = 14 }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const markersLayerRef = useRef<any>(null);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [geocodedProps, setGeocodedProps] = useState<Property[]>([]);
 
   // Filter properties that have valid coordinates
   const propertiesWithCoords = properties.filter(property => 
@@ -38,6 +40,55 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
   );
 
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
+
+  // Client-side geocoding fallback using OpenStreetMap Nominatim
+  useEffect(() => {
+    if (!mounted) return;
+    if (propertiesWithCoords.length > 0) {
+      setGeocodedProps([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const geocodeAddress = async (address: string) => {
+      const cacheKey = `geo:${address}`;
+      try {
+        const cached = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+        if (cached) return JSON.parse(cached);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const { lat, lon } = data[0];
+          const coords = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
+          sessionStorage.setItem(cacheKey, JSON.stringify(coords));
+          return coords;
+        }
+      } catch (e) {
+        console.error('Geocoding failed for', address, e);
+      }
+      return null;
+    };
+
+    const run = async () => {
+      const results: Property[] = [];
+      const toProcess = properties.slice(0, 20); // rate-limit
+      for (const p of toProcess) {
+        if (cancelled) break;
+        const coords = await geocodeAddress(p.address);
+        if (coords) {
+          results.push({ ...p, latitude: coords.latitude, longitude: coords.longitude } as Property);
+        }
+        // small delay to be polite
+        await new Promise(r => setTimeout(r, 150));
+      }
+      if (!cancelled) setGeocodedProps(results);
+    };
+
+    run();
+    return () => { cancelled = true; };
+  }, [mounted, properties, propertiesWithCoords.length]);
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +122,13 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // Prepare a layer group for markers
+        markersLayerRef.current = L.layerGroup().addTo(map);
+
+        const list = propertiesWithCoords.length > 0 ? propertiesWithCoords : geocodedProps;
+
         // Add markers for each property
-        propertiesWithCoords.forEach((property) => {
+        list.forEach((property) => {
           const customIcon = L.divIcon({
             className: 'custom-marker',
             html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
@@ -80,9 +136,9 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
             iconAnchor: [15, 30]
           });
           
-          const marker = L.marker([property.latitude, property.longitude], {
+          const marker = L.marker([property.latitude as number, property.longitude as number], {
             icon: customIcon
-          }).addTo(map);
+          }).addTo(markersLayerRef.current);
           
           const formatPrice = (price: number) => {
             return new Intl.NumberFormat('en-US', {
@@ -121,8 +177,41 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      markersLayerRef.current = null;
     };
-  }, [mounted, propertiesWithCoords, center, zoom]);
+  }, [mounted]);
+
+  // Update markers when data changes
+  useEffect(() => {
+    const updateMarkers = async () => {
+      if (!mounted || !mapInstanceRef.current || !markersLayerRef.current) return;
+      const L = await import('leaflet').then(m => m.default);
+      markersLayerRef.current.clearLayers();
+      const list = propertiesWithCoords.length > 0 ? propertiesWithCoords : geocodedProps;
+      list.forEach((property) => {
+        const customIcon = L.divIcon({
+          className: 'custom-marker',
+          html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style=\"position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;\"></div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 30]
+        });
+        const marker = L.marker([property.latitude as number, property.longitude as number], { icon: customIcon }).addTo(markersLayerRef.current);
+        const formatPrice = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
+        const content = `
+          <div style="max-width: 200px">
+            <h3 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px">${property.name}</h3>
+            <p style="margin: 0 0 4px 0; font-size: 0.9em; color: #666">${property.address}</p>
+            <p style="margin: 0; font-size: 0.85em; color: #10b981; font-weight: 600">${formatPrice(property.price)}</p>
+          </div>
+        `;
+        marker.bindPopup(content);
+        marker.on('click', () => {
+          window.location.href = `/properties/${property.property_id}`;
+        });
+      });
+    };
+    updateMarkers();
+  }, [mounted, propertiesWithCoords, geocodedProps]);
 
   if (!mounted) {
     return (
