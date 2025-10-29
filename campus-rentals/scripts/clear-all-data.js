@@ -17,8 +17,15 @@ async function clearAllData() {
     const deletedInvestments = await prisma.entityInvestment.deleteMany({})
     console.log(`   ✅ Deleted ${deletedInvestments.count} entity investments`)
     
-    // Delete property loans
-    const deletedLoans = await prisma.propertyLoan.deleteMany({})
+    // Delete property loans (check if model exists)
+    let deletedLoans = { count: 0 }
+    try {
+      if (prisma.propertyLoan) {
+        deletedLoans = await prisma.propertyLoan.deleteMany({})
+      }
+    } catch (error) {
+      console.log(`   ⚠️  Could not delete loans: ${error.message}`)
+    }
     console.log(`   ✅ Deleted ${deletedLoans.count} property loans`)
     
     // Reset property debt amounts
