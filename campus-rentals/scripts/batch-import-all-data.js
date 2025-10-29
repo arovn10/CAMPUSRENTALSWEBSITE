@@ -49,7 +49,7 @@ const propertyData = {
   },
   '7700 Burthe St, New Orleans, LA 70118': {
     entityName: 'Campus Rentals LLC',
-    investmentAmount: 0,
+    investmentAmount: 215000, // Purchase $1,075,000 - Original loan $860,000
     ownershipPercentage: 100,
     loans: [
       {
