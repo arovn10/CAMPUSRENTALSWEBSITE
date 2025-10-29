@@ -374,10 +374,9 @@ export default function InvestmentDetailPage() {
       }
 
       // Fetch documents for this investment
-      const token = sessionStorage.getItem('authToken') || user.email
       const docsResponse = await fetch(`/api/investors/documents?entityType=INVESTMENT&entityId=${params.id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       
