@@ -96,6 +96,11 @@ export default function InvestmentDetailPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
+
+  // Helper function to get auth token
+  const getAuthToken = (): string => {
+    return sessionStorage.getItem('authToken') || currentUser?.email || ''
+  }
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showCreateEntityModal, setShowCreateEntityModal] = useState(false)
@@ -304,11 +309,12 @@ export default function InvestmentDetailPage() {
   const fetchInvestmentDetails = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}')
+      const token = sessionStorage.getItem('authToken') || user.email
       
       // Fetch investment details
       const response = await fetch(`/api/investors/properties`, {
         headers: {
-          'Authorization': `Bearer ${user.email}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
@@ -368,9 +374,10 @@ export default function InvestmentDetailPage() {
       }
 
       // Fetch documents for this investment
+      const token = sessionStorage.getItem('authToken') || user.email
       const docsResponse = await fetch(`/api/investors/documents?entityType=INVESTMENT&entityId=${params.id}`, {
         headers: {
-          'Authorization': `Bearer ${user.email}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
@@ -410,7 +417,7 @@ export default function InvestmentDetailPage() {
       const response = await fetch('/api/investors/documents', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: formData
       })
@@ -475,7 +482,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(requestBody)
       })
@@ -524,7 +531,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(newEntity)
       })
@@ -554,7 +561,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch('/api/investors/users', {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       if (response.ok) {
@@ -743,7 +750,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(newEntity)
       })
@@ -1095,7 +1102,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(requestBody)
       })

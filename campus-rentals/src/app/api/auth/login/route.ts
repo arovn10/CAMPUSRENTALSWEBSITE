@@ -13,31 +13,33 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await authenticateWithPassword({ email, password })
-    const user = result?.user
 
-    if (!user) {
+    if (!result || !result.user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
 
-    // Return user data (in a real app, you'd set a session cookie or JWT)
+    // Return user data AND token
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role
-      }
+        id: result.user.id,
+        email: result.user.email,
+        firstName: result.user.firstName,
+        lastName: result.user.lastName,
+        role: result.user.role,
+        isActive: result.user.isActive,
+        emailVerified: result.user.emailVerified
+      },
+      token: result.token
     })
 
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Login failed. Please try again.' },
+      { error: error instanceof Error ? error.message : 'Login failed. Please try again.' },
       { status: 500 }
     )
   }

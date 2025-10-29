@@ -136,11 +136,12 @@ export default function InvestorDashboard() {
     try {
       setLoading(true)
       
+      const token = sessionStorage.getItem('authToken') || user.email
       const investmentsResponse = await fetch('/api/investors/properties', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.email}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
