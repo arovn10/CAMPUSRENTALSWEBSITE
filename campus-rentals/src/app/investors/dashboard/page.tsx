@@ -187,24 +187,24 @@ export default function InvestorDashboard() {
   }
 
   const calculateStats = (investmentData: Investment[]) => {
-    // Exclude UNDER_CONSTRUCTION from overall portfolio calculations
-    const included = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+    // For IRR we exclude UNDER_CONSTRUCTION, but totals still include them
+    const irrIncluded = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
 
-    const totalInvested = included.reduce((sum, inv) => sum + inv.investmentAmount, 0)
-    const currentValue = included.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
-    const totalReturn = included.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
-    const activeInvestments = included.filter(inv => inv.status === 'ACTIVE').length
-    const totalDistributions = included.reduce((sum, inv) => 
+    const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    const currentValue = investmentData.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
+    const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
+    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
+    const totalDistributions = investmentData.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
     )
-    const averageIRR = included.length > 0 
-      ? included.reduce((sum, inv) => sum + (inv.irr || 0), 0) / included.length 
+    const averageIRR = irrIncluded.length > 0 
+      ? irrIncluded.reduce((sum, inv) => sum + (inv.irr || 0), 0) / irrIncluded.length 
       : 0
-    const totalProperties = included.length
-    const totalSquareFeet = included.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
+    const totalProperties = investmentData.length
+    const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
 
     // NOI aggregates
-    const monthlyNOIBeforeDebt = included.reduce((sum, inv) => {
+    const monthlyNOIBeforeDebt = investmentData.reduce((sum: number, inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
@@ -212,7 +212,7 @@ export default function InvestorDashboard() {
       return sum + Math.max((rent + other) - monthlyExp, 0)
     }, 0)
 
-    const monthlyNOIAfterDebt = included.reduce((sum, inv) => {
+    const monthlyNOIAfterDebt = investmentData.reduce((sum: number, inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
@@ -226,7 +226,7 @@ export default function InvestorDashboard() {
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
     // Total Project Cost = Original Debt + Equity
-    const totalProjectCost = included.reduce((sum, inv) => {
+    const totalProjectCost = investmentData.reduce((sum: number, inv: Investment) => {
       const originalDebt = inv.totalOriginalDebt || 0
       const equity = inv.investmentAmount || 0
       // fallback if API value missing
