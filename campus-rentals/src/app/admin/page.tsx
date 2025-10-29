@@ -97,6 +97,20 @@ export default function AdminDashboard() {
     if (!res.ok) alert('Failed to update access')
   }
 
+  const changePassword = async (id: string, newPassword: string) => {
+    if (!newPassword || newPassword.length < 6) {
+      alert('Password must be at least 6 characters')
+      return
+    }
+    const headers: HeadersInit = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }
+    const res = await fetch(`/api/admin/users/${id}/change-password`, { method: 'POST', headers, body: JSON.stringify({ password: newPassword }) })
+    if (res.ok) {
+      alert('Password updated')
+    } else {
+      alert('Failed to update password')
+    }
+  }
+
   const handleCSVExport = async () => {
     try {
       setExporting(true)
@@ -204,8 +218,18 @@ export default function AdminDashboard() {
                             ))}
                           </div>
                         </td>
-                        <td className="py-2">
+                        <td className="py-2 space-x-2">
                           <button onClick={()=>deleteUser(u.id)} className="px-3 py-1 bg-red-600 text-white rounded">Delete</button>
+                          <details className="inline-block">
+                            <summary className="cursor-pointer px-3 py-1 bg-gray-100 rounded border text-gray-700 inline-block">Change Password</summary>
+                            <div className="mt-2 flex items-center gap-2">
+                              <input type="password" placeholder="New password" className="border rounded px-2 py-1" id={`pwd-${u.id}`} />
+                              <button onClick={()=>{
+                                const input = document.getElementById(`pwd-${u.id}`) as HTMLInputElement | null
+                                changePassword(u.id, input?.value || '')
+                              }} className="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
+                            </div>
+                          </details>
                         </td>
                       </tr>
                     )
