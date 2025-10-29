@@ -305,10 +305,12 @@ export async function GET(request: NextRequest) {
         })
 
         let estimatedCurrentDebt = 0
+        let totalOriginalDebt = 0
         let estimatedMonthlyDebtService = 0
         const now = new Date()
 
         for (const loan of loans) {
+          totalOriginalDebt += loan.originalAmount || 0
           const paymentType = (loan as any).paymentType || 'AMORTIZING'
           const amortYears = (loan as any).amortizationYears || null
           const rate = loan.interestRate || 0
@@ -369,7 +371,9 @@ export async function GET(request: NextRequest) {
           ...inv,
           estimatedCurrentDebt: Math.round(estimatedCurrentDebt),
           estimatedMonthlyDebtService: Math.round(estimatedMonthlyDebtService),
-          irr: Math.round(irrCalculated * 100) / 100
+          irr: Math.round(irrCalculated * 100) / 100,
+          totalOriginalDebt: Math.round(totalOriginalDebt),
+          totalProjectCost: Math.round((inv.investmentAmount || 0) + totalOriginalDebt)
         }
       } catch (_) {
         return { ...inv }

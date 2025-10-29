@@ -76,6 +76,8 @@ interface Investment {
     acquisitionPrice?: number
     constructionCost?: number
   }
+  totalOriginalDebt?: number
+  totalProjectCost?: number
 }
 
 interface Distribution {
@@ -115,6 +117,7 @@ interface DashboardStats {
   monthlyNOIAfterDebt: number
   yearlyNOIBeforeDebt: number
   yearlyNOIAfterDebt: number
+  totalProjectCost: number
 }
 
 export default function InvestorDashboard() {
@@ -137,7 +140,8 @@ export default function InvestorDashboard() {
     monthlyNOIBeforeDebt: 0,
     monthlyNOIAfterDebt: 0,
     yearlyNOIBeforeDebt: 0,
-    yearlyNOIAfterDebt: 0
+    yearlyNOIAfterDebt: 0,
+    totalProjectCost: 0
   })
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
@@ -216,11 +220,14 @@ export default function InvestorDashboard() {
     const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
-    // Total Project Cost (Equity Analysis baseline)
+    // Total Project Cost = Original Debt + Equity
     const totalProjectCost = investmentData.reduce((sum, inv) => {
-      const tc = inv.property?.totalCost
-      const fallback = (inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0)
-      return sum + (tc && tc > 0 ? tc : fallback)
+      const originalDebt = inv.totalOriginalDebt || 0
+      const equity = inv.investmentAmount || 0
+      // fallback if API value missing
+      const fallback = (inv.property?.totalCost || ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0)))
+      const derived = (originalDebt + equity) > 0 ? (originalDebt + equity) : fallback
+      return sum + derived
     }, 0)
     const portfolioYieldOnCost = totalProjectCost > 0 ? (yearlyNOIBeforeDebt / totalProjectCost) * 100 : 0
 
@@ -241,11 +248,7 @@ export default function InvestorDashboard() {
       monthlyNOIAfterDebt,
       yearlyNOIBeforeDebt,
       yearlyNOIAfterDebt,
-      // Extend stats object dynamically without changing type definition here
-      // @ts-ignore
-      totalProjectCost,
-      // @ts-ignore
-      portfolioYieldOnCost
+      totalProjectCost
     })
   }
 
@@ -857,22 +860,24 @@ export default function InvestorDashboard() {
                   
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-purple-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Portfolio Size (Cash Value)</span>
-                      <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.currentValue)}</span>
+                      <span className="text-sm font-semibold text-slate-700">Portfolio Size (Total Project Cost)</span>
+                      <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalProjectCost)}</span>
             </div>
               </div>
               
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-indigo-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-slate-700">Total Project Cost</span>
-                      <span className="text-2xl font-bold text-indigo-600">{formatCurrency((stats as any).totalProjectCost || 0)}</span>
+                      <span className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalProjectCost)}</span>
               </div>
               </div>
               
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-rose-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-slate-700">Portfolio Yield on Cost</span>
-                      <span className={`text-2xl font-bold ${(((stats as any).portfolioYieldOnCost || 0) >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>{formatPercentage(((stats as any).portfolioYieldOnCost || 0))}</span>
+                      <span className={`text-2xl font-bold ${(stats.totalProjectCost > 0 && stats.yearlyNOIBeforeDebt / stats.totalProjectCost >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {formatPercentage(stats.totalProjectCost > 0 ? (stats.yearlyNOIBeforeDebt / stats.totalProjectCost) * 100 : 0)}
+                      </span>
               </div>
               </div>
           </div>
