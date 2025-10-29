@@ -9,6 +9,9 @@ import { join } from 'path'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     console.log('Documents requested by:', user.email)
 
     // Get real documents from database
@@ -41,6 +44,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     console.log('Document upload attempt by:', user.email, 'Role:', user.role)
     
