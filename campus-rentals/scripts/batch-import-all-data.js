@@ -369,39 +369,51 @@ async function importAllData() {
     console.log('👤 Step 3: Setting up entity ownership...')
     
     // Campus Rentals LLC owners
-    const crStevenOwner = await prisma.entityOwner.upsert({
+    let crStevenOwner = await prisma.entityOwner.findFirst({
       where: {
-        entityId_userId: {
-          entityId: crLLC.id,
-          userId: steven.id
-        }
-      },
-      update: { ownershipPercentage: 51, isActive: true },
-      create: {
         entityId: crLLC.id,
-        userId: steven.id,
-        ownershipPercentage: 51,
-        investmentAmount: 0,
-        isActive: true
+        userId: steven.id
       }
     })
+    if (!crStevenOwner) {
+      crStevenOwner = await prisma.entityOwner.create({
+        data: {
+          entityId: crLLC.id,
+          userId: steven.id,
+          ownershipPercentage: 51,
+          investmentAmount: 0,
+          isActive: true
+        }
+      })
+    } else {
+      crStevenOwner = await prisma.entityOwner.update({
+        where: { id: crStevenOwner.id },
+        data: { ownershipPercentage: 51, isActive: true }
+      })
+    }
 
-    const crAlecOwner = await prisma.entityOwner.upsert({
+    let crAlecOwner = await prisma.entityOwner.findFirst({
       where: {
-        entityId_userId: {
-          entityId: crLLC.id,
-          userId: alec.id
-        }
-      },
-      update: { ownershipPercentage: 49, isActive: true },
-      create: {
         entityId: crLLC.id,
-        userId: alec.id,
-        ownershipPercentage: 49,
-        investmentAmount: 0,
-        isActive: true
+        userId: alec.id
       }
     })
+    if (!crAlecOwner) {
+      crAlecOwner = await prisma.entityOwner.create({
+        data: {
+          entityId: crLLC.id,
+          userId: alec.id,
+          ownershipPercentage: 49,
+          investmentAmount: 0,
+          isActive: true
+        }
+      })
+    } else {
+      crAlecOwner = await prisma.entityOwner.update({
+        where: { id: crAlecOwner.id },
+        data: { ownershipPercentage: 49, isActive: true }
+      })
+    }
 
     // Campus Rentals 2 LLC - CR LLC as owner (nested entity)
     // Note: This requires entity-to-entity ownership which may need special handling
