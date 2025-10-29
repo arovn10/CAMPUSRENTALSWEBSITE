@@ -546,6 +546,14 @@ async function importAllData() {
           investmentDate: investmentDate
         }
       })
+      // Ensure default statuses on property
+      await prisma.property.update({
+        where: { id: property.id },
+        data: {
+          dealStatus: 'STABILIZED',
+          fundingStatus: 'FUNDED'
+        }
+      })
       
       if (earliestLoanDate) {
         console.log(`   ✅ Created entity investment (date: ${investmentDate.toISOString().split('T')[0]})`)

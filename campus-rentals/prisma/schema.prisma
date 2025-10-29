@@ -90,6 +90,8 @@ model Property {
   otherIncome     Float?
   annualExpenses  Float?
   capRate         Float?
+  dealStatus      DealStatus     @default(STABILIZED)
+  fundingStatus   FundingStatus  @default(FUNDED)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -613,6 +615,19 @@ enum WaterfallDistributionType {
   PREFERRED_RETURN
   PROMOTE
   OTHER
+}
+
+// Deal lifecycle and funding status
+enum DealStatus {
+  STABILIZED
+  UNDER_CONSTRUCTION
+  UNDER_CONTRACT
+  SOLD
+}
+
+enum FundingStatus {
+  FUNDED
+  FUNDING
 }
 
 // Authentication and Security Models
