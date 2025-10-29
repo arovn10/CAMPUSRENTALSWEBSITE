@@ -5,6 +5,12 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
