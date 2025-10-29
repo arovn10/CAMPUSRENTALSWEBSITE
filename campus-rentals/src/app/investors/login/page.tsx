@@ -74,10 +74,10 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setForgotPasswordMessage('If an account with that email exists, a password reset link has been sent.')
+        setForgotPasswordMessage('Password reset requires admin assistance. Please contact your administrator.')
         setForgotPasswordEmail('')
       } else {
-        setForgotPasswordMessage(data.error || 'Failed to send reset email')
+        setForgotPasswordMessage(data.error || 'Password reset requires admin assistance.')
       }
     } catch (error) {
       setForgotPasswordMessage('Network error. Please try again.')

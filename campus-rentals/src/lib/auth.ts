@@ -86,9 +86,7 @@ export function generateSecureToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
-export function generateEmailVerificationToken(): string {
-  return crypto.randomBytes(32).toString('hex')
-}
+// Email verification token generation removed
 
 export function generatePasswordResetToken(): string {
   return crypto.randomBytes(32).toString('hex')
@@ -187,7 +185,7 @@ export async function registerUser(data: RegisterData): Promise<{ user: AuthUser
   // Hash password
   const hashedPassword = await hashPassword(password)
 
-  // Create user
+  // Create user (no email verification needed)
   const user = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
@@ -198,17 +196,8 @@ export async function registerUser(data: RegisterData): Promise<{ user: AuthUser
       phone,
       role: 'INVESTOR',
       isActive: true,
-      emailVerified: false
-    }
-  })
-
-  // Generate email verification token
-  const verificationToken = generateEmailVerificationToken()
-  await prisma.emailVerificationToken.create({
-    data: {
-      userId: user.id,
-      token: verificationToken,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      emailVerified: true,
+      emailVerifiedAt: new Date()
     }
   })
 
@@ -230,7 +219,7 @@ export async function registerUser(data: RegisterData): Promise<{ user: AuthUser
     lastName: user.lastName,
     role: user.role,
     isActive: user.isActive,
-    emailVerified: user.emailVerified
+    emailVerified: true
   }
 
   const token = generateToken(authUser)
@@ -329,48 +318,7 @@ export async function resetPassword(data: PasswordUpdateData): Promise<boolean> 
   return true
 }
 
-export async function verifyEmail(token: string): Promise<boolean> {
-  const verificationToken = await prisma.emailVerificationToken.findFirst({
-    where: {
-      token,
-      used: false,
-      expiresAt: { gt: new Date() }
-    },
-    include: { user: true }
-  })
-
-  if (!verificationToken) {
-    throw new Error('Invalid or expired verification token')
-  }
-
-  // Update user email verification status
-  await prisma.user.update({
-    where: { id: verificationToken.userId },
-    data: { 
-      emailVerified: true,
-      emailVerifiedAt: new Date()
-    }
-  })
-
-  // Mark token as used
-  await prisma.emailVerificationToken.update({
-    where: { id: verificationToken.id },
-    data: { used: true }
-  })
-
-  // Create audit log
-  await prisma.auditLog.create({
-    data: {
-      userId: verificationToken.userId,
-      action: 'EMAIL_VERIFY',
-      resource: 'USER',
-      resourceId: verificationToken.userId,
-      details: { email: verificationToken.user.email }
-    }
-  })
-
-  return true
-}
+// Email verification removed - users are automatically verified when created by admin
 
 export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
   const user = await prisma.user.findUnique({

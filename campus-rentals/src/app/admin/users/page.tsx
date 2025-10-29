@@ -347,7 +347,6 @@ export default function UserManagement() {
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Verified</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Login</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Activity</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -381,18 +380,6 @@ export default function UserManagement() {
                             )}
                             <span className={`text-sm font-medium ${user.isActive ? 'text-green-600' : 'text-red-600'}`}>
                               {user.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {user.emailVerified ? (
-                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                            ) : (
-                              <XCircleIcon className="h-5 w-5 text-red-500 mr-2" />
-                            )}
-                            <span className={`text-sm font-medium ${user.emailVerified ? 'text-green-600' : 'text-red-600'}`}>
-                              {user.emailVerified ? 'Verified' : 'Unverified'}
                             </span>
                           </div>
                         </td>
@@ -431,14 +418,6 @@ export default function UserManagement() {
                                 <CheckCircleIcon className="h-4 w-4" />
                               )}
                             </button>
-                            {!user.emailVerified && (
-                              <button
-                                onClick={() => handleResendVerification(user.id)}
-                                className="text-purple-600 hover:text-purple-900 transition-colors duration-200"
-                              >
-                                <EnvelopeIcon className="h-4 w-4" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -692,12 +671,6 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-gray-700">Status</label>
                 <p className={`text-sm font-medium ${selectedUser.isActive ? 'text-green-600' : 'text-red-600'}`}>
                   {selectedUser.isActive ? 'Active' : 'Inactive'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email Verified</label>
-                <p className={`text-sm font-medium ${selectedUser.emailVerified ? 'text-green-600' : 'text-red-600'}`}>
-                  {selectedUser.emailVerified ? 'Verified' : 'Unverified'}
                 </p>
               </div>
               <div>

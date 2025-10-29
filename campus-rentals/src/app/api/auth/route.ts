@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateUser, registerUser, requestPasswordReset, resetPassword, verifyEmail, changePassword, getUserById } from '@/lib/auth'
-import { emailService } from '@/lib/emailService'
+import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +15,6 @@ export async function POST(request: NextRequest) {
         return await handleRequestPasswordReset(data)
       case 'reset-password':
         return await handleResetPassword(data)
-      case 'verify-email':
-        return await handleVerifyEmail(data)
       case 'change-password':
         return await handleChangePassword(data, request)
       default:
@@ -40,8 +37,6 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'me':
         return await handleGetMe(request)
-      case 'verify-email':
-        return await handleVerifyEmailFromToken(searchParams.get('token'))
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -89,21 +84,11 @@ async function handleRegister(data: {
   try {
     const result = await registerUser(data)
 
-    // Send welcome email with verification
-    const verificationToken = await getVerificationToken(result.user.id)
-    if (verificationToken) {
-      await emailService.sendWelcomeEmail(
-        result.user.email,
-        result.user.firstName,
-        verificationToken
-      )
-    }
-
     return NextResponse.json({
       success: true,
       user: result.user,
       token: result.token,
-      message: 'Registration successful. Please check your email to verify your account.'
+      message: 'Registration successful.'
     })
   } catch (error) {
     return NextResponse.json(
@@ -117,19 +102,12 @@ async function handleRequestPasswordReset(data: { email: string }) {
   try {
     const result = await requestPasswordReset(data)
 
-    // Send password reset email
-    const user = await getUserByEmail(data.email)
-    if (user) {
-      await emailService.sendPasswordResetEmail(
-        user.email,
-        user.firstName,
-        result.token
-      )
-    }
+    // Password reset tokens are generated but emails are not sent
+    // Admin must manually reset passwords through admin panel
 
     return NextResponse.json({
       success: true,
-      message: 'If an account with that email exists, a password reset link has been sent.'
+      message: 'Password reset functionality requires admin assistance. Please contact your administrator.'
     })
   } catch (error) {
     return NextResponse.json(
@@ -155,44 +133,7 @@ async function handleResetPassword(data: { token: string; password: string }) {
   }
 }
 
-async function handleVerifyEmail(data: { token: string }) {
-  try {
-    await verifyEmail(data.token)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Email verified successfully'
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Email verification failed' },
-      { status: 400 }
-    )
-  }
-}
-
-async function handleVerifyEmailFromToken(token: string | null) {
-  if (!token) {
-    return NextResponse.json(
-      { error: 'Verification token is required' },
-      { status: 400 }
-    )
-  }
-
-  try {
-    await verifyEmail(token)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Email verified successfully'
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Email verification failed' },
-      { status: 400 }
-    )
-  }
-}
+// Email verification handlers removed
 
 async function handleChangePassword(data: {
   currentPassword: string
@@ -264,20 +205,6 @@ async function handleGetMe(request: NextRequest) {
 }
 
 // Helper functions
-async function getVerificationToken(userId: string): Promise<string | null> {
-  const { prisma } = await import('@/lib/prisma')
-  
-  const token = await prisma.emailVerificationToken.findFirst({
-    where: {
-      userId,
-      used: false,
-      expiresAt: { gt: new Date() }
-    }
-  })
-
-  return token?.token || null
-}
-
 async function getUserByEmail(email: string) {
   const { prisma } = await import('@/lib/prisma')
   

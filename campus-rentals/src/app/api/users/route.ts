@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createAdminUser, getUserById } from '@/lib/auth'
-import { emailService } from '@/lib/emailService'
 
 export async function GET(request: NextRequest) {
   try {
@@ -123,8 +122,6 @@ export async function POST(request: NextRequest) {
         return await handleDeactivateUser(data)
       case 'activate':
         return await handleActivateUser(data)
-      case 'resend-verification':
-        return await handleResendVerification(data)
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -149,16 +146,6 @@ async function handleCreateUser(data: {
   try {
     const { registerUser } = await import('@/lib/auth')
     const result = await registerUser(data)
-
-    // Send welcome email
-    const verificationToken = await getVerificationToken(result.user.id)
-    if (verificationToken) {
-      await emailService.sendWelcomeEmail(
-        result.user.email,
-        result.user.firstName,
-        verificationToken
-      )
-    }
 
     return NextResponse.json({
       success: true,
@@ -324,78 +311,4 @@ async function handleActivateUser(data: { userId: string }) {
   }
 }
 
-async function handleResendVerification(data: { userId: string }) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: data.userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        emailVerified: true
-      }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    if (user.emailVerified) {
-      return NextResponse.json(
-        { error: 'Email already verified' },
-        { status: 400 }
-      )
-    }
-
-    // Generate new verification token
-    const verificationToken = await generateVerificationToken(user.id)
-    
-    // Send verification email
-    await emailService.sendEmailVerificationEmail(
-      user.email,
-      user.firstName,
-      verificationToken
-    )
-
-    return NextResponse.json({
-      success: true,
-      message: 'Verification email sent successfully'
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to resend verification' },
-      { status: 400 }
-    )
-  }
-}
-
-// Helper functions
-async function getVerificationToken(userId: string): Promise<string | null> {
-  const token = await prisma.emailVerificationToken.findFirst({
-    where: {
-      userId,
-      used: false,
-      expiresAt: { gt: new Date() }
-    }
-  })
-
-  return token?.token || null
-}
-
-async function generateVerificationToken(userId: string): Promise<string> {
-  const { generateEmailVerificationToken } = await import('@/lib/auth')
-  const token = generateEmailVerificationToken()
-  
-  await prisma.emailVerificationToken.create({
-    data: {
-      userId,
-      token,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-    }
-  })
-
-  return token
-}
+// Email verification handlers removed - users are automatically verified when created by admin
