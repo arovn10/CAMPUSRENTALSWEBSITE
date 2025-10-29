@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Get investments based on user role
     let investments
@@ -72,8 +75,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the regular investments data
-    const formattedInvestments = investments.map(investment => {
-      const totalDistributions = investment.distributions.reduce((sum, dist) => sum + dist.amount, 0)
+    const formattedInvestments = investments.map((investment: any) => {
+      const totalDistributions = investment.distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
       const currentValue = investment.property.currentValue || investment.investmentAmount
       const totalReturn = currentValue - investment.investmentAmount + totalDistributions
       const irr = investment.investmentAmount > 0 ? ((currentValue / investment.investmentAmount - 1) * 100) : 0
@@ -90,10 +93,13 @@ export async function GET(request: NextRequest) {
         ownershipPercentage: investment.ownershipPercentage || 100,
         status: investment.status,
         investmentDate: investment.investmentDate.toISOString(),
+        // Expose deal/funding status at top-level for UI badges
+        dealStatus: (investment.property as any).dealStatus || 'STABILIZED',
+        fundingStatus: (investment.property as any).fundingStatus || 'FUNDED',
         // Include investor info for admin view
         investorName: user.role === 'ADMIN' && 'user' in investment ? `${(investment as any).user.firstName} ${(investment as any).user.lastName}` : null,
         investorEmail: user.role === 'ADMIN' && 'user' in investment ? (investment as any).user.email : null,
-        distributions: investment.distributions.map(dist => ({
+        distributions: investment.distributions.map((dist: any) => ({
           id: dist.id,
           amount: dist.amount,
           distributionDate: dist.distributionDate.toISOString(),
@@ -122,14 +128,16 @@ export async function GET(request: NextRequest) {
           otherIncome: investment.property.otherIncome || 0,
           annualExpenses: investment.property.annualExpenses || 0,
           capRate: investment.property.capRate || 0,
+          dealStatus: (investment.property as any).dealStatus || 'STABILIZED',
+          fundingStatus: (investment.property as any).fundingStatus || 'FUNDED',
         },
         investmentType: 'DIRECT' // Mark as direct investment
       }
     })
 
     // Transform the entity investments data
-    const formattedEntityInvestments = entityInvestments.map(entityInvestment => {
-      const totalDistributions = entityInvestment.entityDistributions.reduce((sum, dist) => sum + dist.amount, 0)
+    const formattedEntityInvestments = entityInvestments.map((entityInvestment: any) => {
+      const totalDistributions = entityInvestment.entityDistributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
       const currentValue = entityInvestment.property.currentValue || entityInvestment.investmentAmount
       const totalReturn = currentValue - entityInvestment.investmentAmount + totalDistributions
       const irr = entityInvestment.investmentAmount > 0 ? ((currentValue / entityInvestment.investmentAmount - 1) * 100) : 0
@@ -151,10 +159,13 @@ export async function GET(request: NextRequest) {
         ownershipPercentage: entityInvestment.ownershipPercentage || 100,
         status: entityInvestment.status,
         investmentDate: entityInvestment.investmentDate.toISOString(),
+        // Expose deal/funding status at top-level for UI badges
+        dealStatus: (entityInvestment.property as any).dealStatus || 'STABILIZED',
+        fundingStatus: (entityInvestment.property as any).fundingStatus || 'FUNDED',
         // Include investor info for admin view
         investorName: user.role === 'ADMIN' ? investorName : null,
         investorEmail: user.role === 'ADMIN' ? investorEmail : null,
-        distributions: entityInvestment.entityDistributions.map(dist => ({
+        distributions: entityInvestment.entityDistributions.map((dist: any) => ({
           id: dist.id,
           amount: dist.amount,
           distributionDate: dist.distributionDate.toISOString(),
@@ -183,15 +194,19 @@ export async function GET(request: NextRequest) {
           otherIncome: entityInvestment.property.otherIncome || 0,
           annualExpenses: entityInvestment.property.annualExpenses || 0,
           capRate: entityInvestment.property.capRate || 0,
+          dealStatus: (entityInvestment.property as any).dealStatus || 'STABILIZED',
+          fundingStatus: (entityInvestment.property as any).fundingStatus || 'FUNDED',
         },
         investmentType: 'ENTITY', // Mark as entity investment
         entityName: entityInvestment.entity.name,
         entityType: entityInvestment.entity.type,
-        entityOwners: entityInvestment.entity.entityOwners.map(owner => ({
+        entityOwners: entityInvestment.entity.entityOwners.map((owner: any) => ({
           id: owner.id,
-          userId: owner.userId,
-          userName: `${owner.user.firstName} ${owner.user.lastName}`,
-          userEmail: owner.user.email,
+          userId: owner.userId || null,
+          userName: owner.user ? `${owner.user.firstName} ${owner.user.lastName}` : (owner.investorEntity ? owner.investorEntity.name : 'Unknown Investor'),
+          userEmail: owner.user ? owner.user.email : null,
+          investorEntityId: owner.investorEntityId || null,
+          investorEntityName: owner.investorEntity ? owner.investorEntity.name : null,
           ownershipPercentage: owner.ownershipPercentage,
           investmentAmount: owner.investmentAmount
         }))
@@ -228,7 +243,7 @@ export async function GET(request: NextRequest) {
     })
     
     // Convert to final array - use primary entity investment for display if exists
-    const uniqueInvestments = Array.from(investmentsByPropertyId.values()).map(item => {
+    const uniqueInvestments = Array.from(investmentsByPropertyId.values()).map((item: any) => {
       // If there are entity investments, use the primary one (largest investment amount)
       if (item.allEntityInvestments.length > 0) {
         const primaryEntity = item.allEntityInvestments.reduce((prev: any, curr: any) => 
@@ -244,7 +259,107 @@ export async function GET(request: NextRequest) {
       return item
     })
 
-    return NextResponse.json(uniqueInvestments)
+    // Helper: monthly payment for amortizing loan
+    const calcMonthlyPayment = (principal: number, annualRate: number, years: number) => {
+      if (!principal || !annualRate || !years) return 0
+      const r = (annualRate / 100) / 12
+      const n = years * 12
+      if (r === 0) return principal / n
+      return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
+    }
+
+    // Helper: remaining balance after k payments for amortizing loan
+    const calcRemainingBalance = (principal: number, annualRate: number, years: number, monthsElapsed: number) => {
+      if (!principal || !annualRate || !years) return principal
+      const r = (annualRate / 100) / 12
+      const n = years * 12
+      const k = Math.min(Math.max(monthsElapsed, 0), n)
+      if (r === 0) return principal * (1 - k / n)
+      const pmt = calcMonthlyPayment(principal, annualRate, years)
+      const balance = principal * Math.pow(1 + r, k) - pmt * (Math.pow(1 + r, k) - 1) / r
+      return Math.max(balance, 0)
+    }
+
+    // Fetch loans and compute estimated debt/debt service per property
+    const withDebtEstimates = await Promise.all(uniqueInvestments.map(async (inv: any) => {
+      try {
+        const loans = await prisma.propertyLoan.findMany({
+          where: { propertyId: inv.propertyId, isActive: true }
+        })
+
+        let estimatedCurrentDebt = 0
+        let estimatedMonthlyDebtService = 0
+        const now = new Date()
+
+        for (const loan of loans) {
+          const paymentType = (loan as any).paymentType || 'AMORTIZING'
+          const amortYears = (loan as any).amortizationYears || null
+          const rate = loan.interestRate || 0
+          const principal = loan.currentBalance ?? loan.originalAmount
+          const start = loan.loanDate ? new Date(loan.loanDate) : null
+          const monthsElapsed = start ? Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())) : 0
+
+          if (paymentType === 'IO') {
+            // Interest-only: assume principal unchanged
+            estimatedCurrentDebt += principal
+            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : (loan.monthlyPayment || 0)
+          } else if (amortYears) {
+            // Amortizing: estimate remaining balance and monthly payment
+            const remaining = calcRemainingBalance(principal, rate || 0, amortYears, monthsElapsed)
+            estimatedCurrentDebt += remaining
+            const pmt = loan.monthlyPayment || calcMonthlyPayment(principal, rate || 0, amortYears)
+            estimatedMonthlyDebtService += pmt
+          } else {
+            // Fallback: treat as interest-only if no amort term
+            estimatedCurrentDebt += principal
+            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : (loan.monthlyPayment || 0)
+          }
+        }
+
+        // Compute estimated IRR per spec using simple 5-year model
+        const annualNOI = (((inv.property?.monthlyRent || 0) * 12) + ((inv.property?.otherIncome || 0) * 12)) - (inv.property?.annualExpenses || 0)
+        const annualDebtService = estimatedMonthlyDebtService * 12
+        const yearCashFlows: number[] = []
+        // Year 0 is negative equity (investment amount)
+        yearCashFlows.push(-(inv.investmentAmount || 0))
+        // Years 1-4
+        for (let y = 1; y <= 4; y++) {
+          yearCashFlows.push(annualNOI - annualDebtService)
+        }
+        // Year 5 adds sale proceeds (estimated value - payoff)
+        const estimatedValue = (inv.property?.capRate && inv.property.capRate > 0) ? (annualNOI / (inv.property.capRate / 100)) : 0
+        const saleProceeds = Math.max(estimatedValue - estimatedCurrentDebt, 0)
+        yearCashFlows.push((annualNOI - annualDebtService) + saleProceeds)
+
+        const calcIRR = (cfs: number[]) => {
+          // Bisection method between -0.99 and 1.0 (i.e., -99% to 100% annual IRR)
+          let low = -0.99, high = 1.0
+          const npv = (rate: number) => cfs.reduce((acc, cf, i) => acc + cf / Math.pow(1 + rate, i), 0)
+          let mid = 0
+          for (let i = 0; i < 60; i++) {
+            mid = (low + high) / 2
+            const v = npv(mid)
+            if (Math.abs(v) < 1e-6) break
+            if (v > 0) low = mid; else high = mid
+          }
+        
+          return mid * 100 // percentage
+        }
+
+        const irrCalculated = calcIRR(yearCashFlows)
+
+        return {
+          ...inv,
+          estimatedCurrentDebt: Math.round(estimatedCurrentDebt),
+          estimatedMonthlyDebtService: Math.round(estimatedMonthlyDebtService),
+          irr: Math.round(irrCalculated * 100) / 100
+        }
+      } catch (_) {
+        return { ...inv }
+      }
+    }))
+
+    return NextResponse.json(withDebtEstimates)
   } catch (error) {
     console.error('Error fetching investor properties:', error)
     return NextResponse.json(
@@ -257,6 +372,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
     // Check if user has permission to create investments
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {

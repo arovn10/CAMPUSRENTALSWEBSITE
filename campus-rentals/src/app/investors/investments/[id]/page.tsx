@@ -2846,6 +2846,7 @@ export default function InvestmentDetailPage() {
             )}
 
             {/* NOI Calculator */}
+            {(((investment as any)?.property as any)?.['dealStatus']) !== 'UNDER_CONSTRUCTION' && (
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">NOI Calculator</h2>
@@ -2918,6 +2919,7 @@ export default function InvestmentDetailPage() {
                 </button>
               </div>
             </div>
+            )}
 
             {/* Insurance Information */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
@@ -4311,7 +4313,7 @@ export default function InvestmentDetailPage() {
         </div>
       )}
       {/* NOI Calculator Modal */}
-      {showNOIModal && (
+      {(((investment as any)?.property as any)?.['dealStatus']) !== 'UNDER_CONSTRUCTION' && showNOIModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">

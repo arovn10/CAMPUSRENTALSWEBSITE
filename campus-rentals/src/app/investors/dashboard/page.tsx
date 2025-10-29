@@ -62,6 +62,10 @@ interface Investment {
   acquisitionDate?: string
   monthlyRent?: number
   capRate?: number
+  dealStatus?: 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'
+  fundingStatus?: 'FUNDED' | 'FUNDING'
+  estimatedCurrentDebt?: number
+  estimatedMonthlyDebtService?: number
 }
 
 interface Distribution {
@@ -215,6 +219,24 @@ export default function InvestorDashboard() {
       case 'PENDING': return 'bg-amber-50 text-amber-700 border-amber-200'
       case 'COMPLETED': return 'bg-blue-50 text-blue-700 border-blue-200'
       case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
+      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+    }
+  }
+
+  const getDealBadge = (dealStatus?: string) => {
+    switch (dealStatus) {
+      case 'STABILIZED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      case 'UNDER_CONSTRUCTION': return 'bg-amber-50 text-amber-700 border-amber-200'
+      case 'UNDER_CONTRACT': return 'bg-blue-50 text-blue-700 border-blue-200'
+      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
+      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+    }
+  }
+
+  const getFundingBadge = (fundingStatus?: string) => {
+    switch (fundingStatus) {
+      case 'FUNDED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      case 'FUNDING': return 'bg-indigo-50 text-indigo-700 border-indigo-200'
       default: return 'bg-slate-50 text-slate-700 border-slate-200'
     }
   }
@@ -418,9 +440,14 @@ export default function InvestorDashboard() {
                             {investment.propertyAddress}
                           </p>
                         </div>
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(investment.status)}`}>
-                          {investment.status}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                            {investment.dealStatus || 'STABILIZED'}
+                          </span>
+                          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                            {investment.fundingStatus || 'FUNDED'}
+                          </span>
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-3 gap-6 text-sm">
@@ -436,6 +463,20 @@ export default function InvestorDashboard() {
                           <p className="text-slate-500 font-medium mb-1">IRR</p>
                           <p className="font-bold text-emerald-600">{formatPercentage(investment.irr || 0)}</p>
                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6 text-sm mt-4">
+                        {typeof investment.estimatedCurrentDebt === 'number' && (
+                          <div className="text-center">
+                            <p className="text-slate-500 font-medium mb-1">Est. Current Debt</p>
+                            <p className="font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</p>
+                          </div>
+                        )}
+                        {typeof investment.estimatedMonthlyDebtService === 'number' && (
+                          <div className="text-center">
+                            <p className="text-slate-500 font-medium mb-1">Monthly Debt Service</p>
+                            <p className="font-bold text-slate-900">{formatCurrency(investment.estimatedMonthlyDebtService)}</p>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="mt-4 flex items-center justify-end">
@@ -614,9 +655,14 @@ export default function InvestorDashboard() {
                     <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <HomeIcon className="h-6 w-6 text-white" />
                     </div>
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(investment.status)}`}>
-                      {investment.status}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                        {investment.dealStatus || 'STABILIZED'}
+                      </span>
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                        {investment.fundingStatus || 'FUNDED'}
+                      </span>
+                    </div>
                   </div>
                   
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
@@ -642,6 +688,18 @@ export default function InvestorDashboard() {
                       <span className="text-sm text-slate-500 font-medium">Ownership</span>
                       <span className="text-sm font-bold text-slate-900">{investment.ownershipPercentage}%</span>
                     </div>
+                  {typeof investment.estimatedCurrentDebt === 'number' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Est. Current Debt</span>
+                      <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
+                    </div>
+                  )}
+                  {typeof investment.estimatedMonthlyDebtService === 'number' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Monthly Debt Service</span>
+                      <span className={`text-sm font-bold text-slate-900`}>{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
+                    </div>
+                  )}
                     {investment.irr && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-500 font-medium">IRR</span>

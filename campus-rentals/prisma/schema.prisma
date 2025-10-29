@@ -386,6 +386,7 @@ model Entity {
   user          User       @relation(fields: [createdBy], references: [id])
   entityInvestments EntityInvestment[]
   entityOwners  EntityOwner[]
+  investmentsAsEntityInvestor EntityOwner[] @relation("EntityToEntityInvestor")
 
   @@map("entities")
 }
@@ -413,7 +414,8 @@ model EntityInvestment {
 model EntityOwner {
   id                String   @id @default(cuid())
   entityId          String
-  userId            String
+  userId            String?
+  investorEntityId  String?
   ownershipPercentage Float
   investmentAmount  Float
   isActive          Boolean  @default(true)
@@ -422,7 +424,8 @@ model EntityOwner {
 
   // Relations
   entity            Entity   @relation(fields: [entityId], references: [id])
-  user              User     @relation(fields: [userId], references: [id])
+  user              User?    @relation(fields: [userId], references: [id])
+  investorEntity    Entity?  @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
 
   @@map("entity_owners")
 }
@@ -494,6 +497,8 @@ model PropertyLoan {
   maturityDate      DateTime? // Loan maturity date
   monthlyPayment    Float?   // Monthly payment amount
   loanType          String?  // e.g., "Mortgage", "Construction Loan", "Line of Credit"
+  paymentType       PaymentType @default(AMORTIZING) // Interest-Only vs Amortizing
+  amortizationYears Int?       // Amortization term in years when amortizing
   isActive          Boolean  @default(true)
   notes             String?  // Additional notes about the loan
   createdBy         String
@@ -628,6 +633,12 @@ enum DealStatus {
 enum FundingStatus {
   FUNDED
   FUNDING
+}
+
+// Loan payment style
+enum PaymentType {
+  IO
+  AMORTIZING
 }
 
 // Authentication and Security Models
