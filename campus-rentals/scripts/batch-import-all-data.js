@@ -434,12 +434,22 @@ async function importAllData() {
     let loansImported = 0
 
     for (const property of properties) {
-      const addressToMatch = property.address.trim()
-      const matchingData = propertyData[addressToMatch] || 
-                          propertyData[Object.keys(propertyData).find(key => 
-                            addressToMatch.toLowerCase().includes(key.toLowerCase()) ||
-                            key.toLowerCase().includes(addressToMatch.toLowerCase())
-                          )]
+      const addressToMatch = property.address.trim().toLowerCase()
+      // Try exact match first
+      let matchingData = propertyData[property.address.trim()]
+      
+      // Try fuzzy match with normalized addresses (handle Zimpel vs Zimple)
+      if (!matchingData) {
+        const normalizedAddress = addressToMatch.replace(/zimpel/g, 'zimple').replace(/zimple/g, 'zimpel')
+        matchingData = propertyData[Object.keys(propertyData).find(key => {
+          const keyLower = key.toLowerCase()
+          const normalizedKey = keyLower.replace(/zimpel/g, 'zimple').replace(/zimple/g, 'zimpel')
+          return addressToMatch === keyLower || 
+                 normalizedAddress === normalizedKey ||
+                 addressToMatch.includes(keyLower.split(',')[0]) ||
+                 keyLower.includes(addressToMatch.split(',')[0])
+        })]
+      }
 
       if (!matchingData) {
         console.log(`⏭️  Skipping ${property.name} (${property.address}) - no matching data`)
