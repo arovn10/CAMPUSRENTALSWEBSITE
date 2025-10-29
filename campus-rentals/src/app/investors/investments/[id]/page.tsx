@@ -499,7 +499,7 @@ export default function InvestmentDetailPage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentUser.email}`
+              'Authorization': `Bearer ${getAuthToken()}`
             },
             body: JSON.stringify({ action: 'refresh' })
           })
@@ -578,7 +578,7 @@ export default function InvestmentDetailPage() {
       console.log('Fetching available entities...')
       const response = await fetch('/api/investors/entities', {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       if (response.ok) {
@@ -601,7 +601,7 @@ export default function InvestmentDetailPage() {
       
       const response = await fetch('/api/investors/entity-investments', {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       if (response.ok) {
@@ -693,7 +693,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           entityId: multiInvestorData.entityId,
@@ -803,7 +803,7 @@ export default function InvestmentDetailPage() {
       const response = await fetch(`/api/investors/entity-investments/${entityInvestmentId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
@@ -821,7 +821,7 @@ export default function InvestmentDetailPage() {
         // check if we need to redirect to dashboard
         const updatedEntityInvestments = await fetch('/api/investors/entity-investments', {
           headers: {
-            'Authorization': `Bearer ${currentUser.email}`
+            'Authorization': `Bearer ${getAuthToken()}`
           }
         }).then(res => res.json())
         
@@ -968,7 +968,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           investmentAmount: parseFloat(editingEntityInvestment.investmentAmount),
@@ -1119,7 +1119,7 @@ export default function InvestmentDetailPage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentUser.email}`
+              'Authorization': `Bearer ${getAuthToken()}`
             },
             body: JSON.stringify({ action: 'refresh' })
           })
@@ -1152,7 +1152,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           propertyId: investment?.property?.id,
@@ -1189,7 +1189,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           propertyId: investment?.property?.id,
@@ -1219,7 +1219,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch(`/api/investors/insurance?propertyId=${investment?.property?.id}`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       
@@ -1236,7 +1236,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch(`/api/investors/taxes?propertyId=${investment?.property?.id}`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       
@@ -1253,7 +1253,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch(`/api/investors/waterfall-structures?propertyId=${investment?.property?.id}`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       if (response.ok) {
@@ -1270,7 +1270,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch('/api/investors/global-waterfall-structures', {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       if (response.ok) {
@@ -1297,7 +1297,7 @@ export default function InvestmentDetailPage() {
       // Fetch all distributions (including global ones)
       const allResponse = await fetch('/api/investors/waterfall-distributions/all', {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       
@@ -1345,7 +1345,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           propertyId: investment?.property?.id,
@@ -1390,7 +1390,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           name: waterfallData.name,
@@ -1434,7 +1434,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           waterfallStructureId: applyWaterfallData.waterfallStructureId,
@@ -1504,7 +1504,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           name: waterfallData.name,
@@ -1548,7 +1548,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           name: waterfallData.name,
@@ -1611,7 +1611,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           distributionId: editingDistribution.id,
@@ -1657,7 +1657,7 @@ export default function InvestmentDetailPage() {
       const response = await fetch(`/api/investors/waterfall-distributions?id=${distributionId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
@@ -1684,7 +1684,7 @@ export default function InvestmentDetailPage() {
       const response = await fetch(`/api/investors/waterfall-structures/${structureId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
@@ -1723,7 +1723,7 @@ export default function InvestmentDetailPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(editDocumentData)
       })
@@ -1754,7 +1754,7 @@ export default function InvestmentDetailPage() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
@@ -1806,7 +1806,7 @@ export default function InvestmentDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(requestBody)
       })
@@ -1892,7 +1892,7 @@ export default function InvestmentDetailPage() {
     try {
       const response = await fetch(`/api/investors/waterfall-distributions/breakdown?id=${distributionId}`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.email}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
