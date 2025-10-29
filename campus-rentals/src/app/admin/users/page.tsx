@@ -208,29 +208,7 @@ export default function UserManagement() {
     }
   }
 
-  const handleResendVerification = async (userId: string) => {
-    try {
-      const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}')
-      
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.email}`
-        },
-        body: JSON.stringify({
-          action: 'resend-verification',
-          userId
-        })
-      })
-
-      if (response.ok) {
-        alert('Verification email sent successfully')
-      }
-    } catch (error) {
-      console.error('Error resending verification:', error)
-    }
-  }
+  // Email verification removed - users are automatically verified when created by admin
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
