@@ -20,6 +20,7 @@ import {
   EyeIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
+import PropertyLoansManager from '@/components/PropertyLoansManager'
 
 interface Investment {
   id: string
@@ -263,48 +264,28 @@ export default function InvestmentDetailPage() {
   })
 
   useEffect(() => {
-    const user = sessionStorage.getItem('currentUser')
-    console.log('SessionStorage user data:', user)
-    if (user) {
-      const userData = JSON.parse(user)
-      console.log('Parsed user data:', userData)
-      setCurrentUser(userData)
-      fetchInvestmentDetails()
-    } else {
-      console.log('No user in sessionStorage, redirecting to login')
-      router.push('/investors/login')
-    }
+      const user = sessionStorage.getItem('currentUser')
+      if (user) {
+        const userData = JSON.parse(user)
+        setCurrentUser(userData)
+        fetchInvestmentDetails()
+      } else {
+        router.push('/investors/login')
+      }
   }, [params.id])
 
-  // Debug useEffect to monitor currentUser changes
-  useEffect(() => {
-    console.log('currentUser state changed:', currentUser)
-    console.log('currentUser role:', currentUser?.role)
-    console.log('currentUser email:', currentUser?.email)
-  }, [currentUser])
 
   useEffect(() => {
-    console.log('useEffect triggered. investment?.property?.id:', investment?.property?.id)
     if (investment?.property?.id) {
-      console.log('Calling fetch functions...')
       fetchPropertyEntityInvestments()
       fetchInsuranceHistory()
       fetchTaxHistory()
       fetchWaterfallStructures()
       fetchGlobalWaterfallStructures()
       fetchDistributions()
-    } else {
-      console.log('No property ID, not calling fetch functions')
     }
   }, [investment?.property?.id])
 
-  // Debug useEffect to monitor allDistributions state
-  useEffect(() => {
-    console.log('allDistributions state changed:', allDistributions.length, 'distributions')
-    if (allDistributions.length > 0) {
-      console.log('First distribution:', allDistributions[0])
-    }
-  }, [allDistributions])
 
   const fetchInvestmentDetails = async () => {
     try {
@@ -914,16 +895,6 @@ export default function InvestmentDetailPage() {
         
         const isValid = hasUserId || hasCompleteUserInfo
         
-        // Debug logging
-        console.log('Owner validation:', {
-          ownerId: owner.id,
-          userId: owner.userId,
-          hasUserId,
-          userInfo: owner.user,
-          hasCompleteUserInfo,
-          isValid
-        })
-        
         return !isValid
       })
 
@@ -1042,15 +1013,6 @@ export default function InvestmentDetailPage() {
     e.preventDefault()
     
     const calculations = calculateNOI()
-    
-    // Debug logging
-    console.log('NOI Calculation Debug:', {
-      investmentId: params.id,
-      investment: investment,
-      editData: editData,
-      noiData: noiData,
-      calculations: calculations
-    })
     
     try {
       const requestBody = {
@@ -1258,7 +1220,6 @@ export default function InvestmentDetailPage() {
       })
       if (response.ok) {
         const structures = await response.json()
-        console.log('Fetched waterfall structures:', structures)
         setWaterfallStructures(structures)
       }
     } catch (error) {
@@ -1283,54 +1244,34 @@ export default function InvestmentDetailPage() {
   }
 
   const fetchDistributions = async () => {
-    console.log('fetchDistributions called. investment:', investment)
-    console.log('investment?.property?.id:', investment?.property?.id)
     if (!investment?.property?.id) {
-      console.log('fetchDistributions: No property ID, returning early')
       return
     }
     
     try {
-      console.log('Fetching distributions for property:', investment.property.id)
-      console.log('Current user:', currentUser.email)
-      
-      // Fetch all distributions (including global ones)
-      const allResponse = await fetch('/api/investors/waterfall-distributions/all', {
+      // Fetch distributions filtered by property ID
+      const allResponse = await fetch(`/api/investors/waterfall-distributions/all?propertyId=${investment.property.id}`, {
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`
         }
       })
       
-      console.log('Response status:', allResponse.status)
-      console.log('Response ok:', allResponse.ok)
-      
       if (allResponse.ok) {
         const allData = await allResponse.json()
         
-        console.log('Fetched all distributions:', allData)
-        console.log('Number of distributions:', allData.length)
+        // Filter distributions to only show those for this property
+        const propertyDistributions = allData.filter((dist: any) => {
+          // Check if distribution's waterfall structure belongs to this property
+          return dist.waterfallStructure?.propertyId === investment.property.id
+        })
         
-        console.log('Waterfall structures:', waterfallStructures)
-        console.log('Distribution waterfallStructureIds:', allData.map((d: any) => d.waterfallStructureId))
-        
-        // Set all distributions regardless of structure matching
-        setAllDistributions(allData)
-        console.log('About to set allDistributions with:', allData.length, 'distributions')
-        // Temporary alert to confirm data is being set
-        setTimeout(() => {
-          console.log('allDistributions should now be set with:', allData.length, 'distributions')
-        }, 100)
+        setAllDistributions(propertyDistributions)
         
         // Update waterfall structures with their distributions (for the waterfall section)
         setWaterfallStructures(prev => prev.map(structure => ({
           ...structure,
-          waterfallDistributions: allData.filter((dist: any) => dist.waterfallStructureId === structure.id)
+          waterfallDistributions: propertyDistributions.filter((dist: any) => dist.waterfallStructureId === structure.id)
         })))
-        console.log('Set allDistributions state with:', allData.length, 'distributions')
-      } else {
-        console.error('Failed to fetch distributions. Status:', allResponse.status)
-        const errorText = await allResponse.text()
-        console.error('Error response:', errorText)
       }
     } catch (error) {
       console.error('Error fetching distributions:', error)
@@ -1799,7 +1740,6 @@ export default function InvestmentDetailPage() {
       })
     }
     
-    console.log('Processing distribution with data:', requestBody)
     
     try {
       const response = await fetch('/api/investors/waterfall-distributions', {
@@ -1813,8 +1753,6 @@ export default function InvestmentDetailPage() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('Distribution processed successfully:', result)
-        console.log('Detailed breakdown structure:', JSON.stringify(result.detailedBreakdown, null, 2))
         
         // Create detailed breakdown message
         let breakdownMessage = `🎉 Distribution processed successfully!\n\n`
@@ -2293,6 +2231,16 @@ export default function InvestmentDetailPage() {
               </div>
             </div>
 
+            {/* Loans Management Section - Only visible to Admin and Manager */}
+            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              <div className="mt-6">
+                <PropertyLoansManager 
+                  propertyId={investment.property.id} 
+                  authToken={getAuthToken()}
+                />
+              </div>
+            )}
+
             {/* Investor Details and Entity Structure */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investor Details & Entity Structure</h2>
@@ -2594,21 +2542,24 @@ export default function InvestmentDetailPage() {
                               >
                                 View Details
                               </button>
-                              {/* Debug: Always show buttons for testing */}
-                              <button
-                                onClick={() => handleEditDistribution(distribution)}
-                                className="text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 px-2 py-1 rounded transition-colors duration-200"
-                                title="Edit Distribution"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDistribution(distribution.id)}
-                                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 px-2 py-1 rounded transition-colors duration-200"
-                                title="Delete Distribution"
-                              >
-                                Delete
-                              </button>
+                              {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditDistribution(distribution)}
+                                    className="text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 px-2 py-1 rounded transition-colors duration-200"
+                                    title="Edit Distribution"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteDistribution(distribution.id)}
+                                    className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 px-2 py-1 rounded transition-colors duration-200"
+                                    title="Delete Distribution"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                           
@@ -2651,11 +2602,6 @@ export default function InvestmentDetailPage() {
                 </div>
               ) : null}
               
-              {/* Debug Info */}
-              <div className="mb-4 p-2 bg-yellow-100 rounded text-xs">
-                Debug: Current user role: {currentUser?.role || 'Not logged in'} | Email: {currentUser?.email || 'No email'}
-              </div>
-              
               {/* Distributions List */}
               {allDistributions.length > 0 ? (
                 <div className="space-y-3">
@@ -2683,24 +2629,7 @@ export default function InvestmentDetailPage() {
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
-                        {/* Debug: Always show buttons for testing */}
-                        <button
-                          onClick={() => handleEditDistribution(distribution)}
-                          className="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
-                          title="Edit Distribution"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDistribution(distribution.id)}
-                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                          title="Delete Distribution"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                        
-                        {/* Original role-based logic (commented out for debugging) */}
-                        {/* {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                           <>
                             <button
                               onClick={() => handleEditDistribution(distribution)}
@@ -2717,7 +2646,7 @@ export default function InvestmentDetailPage() {
                               <TrashIcon className="h-4 w-4" />
                             </button>
                           </>
-                        )} */}
+                        )}
                       </div>
                     </div>
                   ))}
@@ -3076,10 +3005,7 @@ export default function InvestmentDetailPage() {
             </div>
 
             {/* Waterfall Distributions - STRUCTURE CARDS SECTION */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6 border-4 border-green-500">
-              {/* Debug: Make this section very visible */}
-              <div className="text-lg font-bold text-green-600 mb-2">🔍 DEBUG: WATERFALL STRUCTURE CARDS SECTION</div>
-              <div className="text-lg font-bold text-red-600 mb-2" onClick={() => alert('WATERFALL STRUCTURE SECTION IS RENDERING!')}>🚨 CLICK HERE TO TEST IF THIS SECTION IS RENDERING 🚨</div>
+            <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
                 <div className="flex space-x-2">
@@ -3102,18 +3028,8 @@ export default function InvestmentDetailPage() {
               <div className="space-y-3">
                 {waterfallStructures.length > 0 ? (
                   <div className="space-y-2">
-                    {/* Debug info */}
-                    <div className="text-xs text-gray-500 mb-2">
-                      Showing {showAllWaterfallStructures ? waterfallStructures.length : Math.min(3, waterfallStructures.length)} of {waterfallStructures.length} structures
-                    </div>
-                    {/* Debug: Show structure details */}
-                    <div className="text-xs text-red-500 mb-2">
-                      DEBUG: {waterfallStructures.length} waterfall structures loaded
-                    </div>
                     {waterfallStructures.slice(0, showAllWaterfallStructures ? undefined : 3).map((structure: any) => (
-                      <div key={structure.id} className="p-3 bg-gray-50 rounded-lg border-2 border-red-200">
-                        {/* Debug: Show structure ID */}
-                        <div className="text-xs text-red-500 mb-1">DEBUG: Structure ID: {structure.id}</div>
+                      <div key={structure.id} className="p-3 bg-gray-50 rounded-lg border">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex justify-between items-start">
@@ -4988,7 +4904,7 @@ export default function InvestmentDetailPage() {
                         : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
                     </p>
                 </div>
-              )
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Distribution Date
@@ -5853,11 +5769,6 @@ export default function InvestmentDetailPage() {
                   >
                     Update Structure
                   </button>
-                </div>
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 mb-2">
-                    <strong>Debug Info:</strong> editingWaterfallStructure ID: {editingWaterfallStructure?.id || 'NOT SET'}
-                  </p>
                 </div>
                 <button
                   type="button"

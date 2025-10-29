@@ -6,8 +6,23 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Get all waterfall distributions (including global ones)
+    // Get propertyId from query params to filter distributions
+    const { searchParams } = new URL(request.url)
+    const propertyId = searchParams.get('propertyId')
+    
+    // Build where clause to filter by property
+    const whereClause: any = {}
+    
+    if (propertyId) {
+      // Only get distributions for structures tied to this specific property
+      whereClause.waterfallStructure = {
+        propertyId: propertyId
+      }
+    }
+    
+    // Get waterfall distributions filtered by property
     const distributions = await prisma.waterfallDistribution.findMany({
+      where: whereClause,
       include: {
         waterfallStructure: {
           include: {
@@ -24,27 +39,17 @@ export async function GET(request: NextRequest) {
                   }
                 }
               }
-            }
+            },
+            property: true
           }
         }
       },
       orderBy: { distributionDate: 'desc' }
     })
     
-    console.log('Fetching all distributions (including global)')
-    console.log('Found distributions:', distributions.length)
-    console.log('Distribution details:', distributions.map((d: any) => ({
-      id: d.id,
-      totalAmount: d.totalAmount,
-      distributionDate: d.distributionDate,
-      structureName: d.waterfallStructure.name,
-      structureId: d.waterfallStructure.id,
-      propertyId: d.waterfallStructure.propertyId
-    })))
-    
     return NextResponse.json(distributions)
   } catch (error) {
-    console.error('Error fetching all waterfall distributions:', error)
+    console.error('Error fetching waterfall distributions:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

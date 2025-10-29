@@ -150,7 +150,7 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <button
                       type="button"
-                      className="text-slate-400 hover:text-slate-600 transition-colors duration-200"
+                      className="text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -175,7 +175,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
+                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
                 >
                   Forgot your password?
                 </button>
@@ -202,7 +202,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => router.push('/register')}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
+                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
                 >
                   Contact us to get started
                 </button>

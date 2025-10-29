@@ -22,10 +22,27 @@ export default function AdminDashboard() {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/auth/me')
-      if (response.ok) {
-        const userData = await response.json()
+      // Get auth token from sessionStorage
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
+      const userStr = sessionStorage.getItem('currentUser')
+      
+      if (userStr) {
+        const userData = JSON.parse(userStr)
         setUser(userData)
+        setLoading(false)
+        return
+      }
+      
+      // Fallback to API call with token
+      const headers: HeadersInit = { 'Content-Type': 'application/json' }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch('/api/auth/me', { headers })
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user || data)
       }
     } catch (error) {
       console.error('Error fetching user:', error)

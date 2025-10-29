@@ -60,6 +60,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   auditLogs         AuditLog[]
   fileUploads       FileUpload[]
+  propertyLoans     PropertyLoan[]
 
   @@map("users")
 }
@@ -100,6 +101,7 @@ model Property {
   insurance       Insurance[]
   propertyTaxes   PropertyTax[]
   waterfallStructures WaterfallStructure[]
+  loans           PropertyLoan[]
 
   @@map("properties")
 }
@@ -476,6 +478,31 @@ model PropertyTax {
   user              User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@map("property_taxes")
+}
+
+model PropertyLoan {
+  id                String   @id @default(cuid())
+  propertyId        String
+  lenderName        String   // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
+  accountNumber     String?  // Account number or loan identifier
+  originalAmount    Float    // Original loan amount when first taken
+  currentBalance    Float    // Current outstanding balance
+  interestRate      Float?   // Annual interest rate (e.g., 5.5 for 5.5%)
+  loanDate          DateTime? // Date loan was originated
+  maturityDate      DateTime? // Loan maturity date
+  monthlyPayment    Float?   // Monthly payment amount
+  loanType          String?  // e.g., "Mortgage", "Construction Loan", "Line of Credit"
+  isActive          Boolean  @default(true)
+  notes             String?  // Additional notes about the loan
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@map("property_loans")
 }
 
 // Enums

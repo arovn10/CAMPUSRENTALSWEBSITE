@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    console.log('Properties API called for user:', user.email)
 
     // Get investments based on user role
     let investments
@@ -19,7 +18,6 @@ export async function GET(request: NextRequest) {
           user: true // Include user info for admin view
         }
       })
-      console.log(`Admin found ${investments.length} total investments`)
       
       // Also fetch entity investments for admin
       entityInvestments = await prisma.entityInvestment.findMany({
@@ -37,7 +35,6 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-      console.log(`Admin found ${entityInvestments.length} total entity investments`)
     } else {
       // Investors only see their own investments
       investments = await prisma.investment.findMany({
@@ -47,8 +44,6 @@ export async function GET(request: NextRequest) {
           distributions: true
         }
       })
-      console.log(`Found ${investments.length} investments for user ${user.email}`)
-      
       // For investors, get entity investments where they are owners
       entityInvestments = await prisma.entityInvestment.findMany({
         include: { 
@@ -74,7 +69,6 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-      console.log(`Found ${entityInvestments.length} entity investments for user ${user.email}`)
     }
 
     // Transform the regular investments data
@@ -204,10 +198,53 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Combine both types of investments
-    const allInvestments = [...formattedInvestments, ...formattedEntityInvestments]
+    // Group investments by property ID to prevent duplicate property cards
+    // Multiple entity investments for same property should show as ONE property with nested ownership
+    const investmentsByPropertyId = new Map<string, any>()
+    
+    // Process all investments and group by propertyId
+    const allInvestments = formattedInvestments.concat(formattedEntityInvestments)
+    allInvestments.forEach((investment: any) => {
+      const propertyId = investment.propertyId
+      
+      if (!investmentsByPropertyId.has(propertyId)) {
+        // First investment for this property - create base entry
+        investmentsByPropertyId.set(propertyId, {
+          ...investment,
+          // For entity investments, preserve all entity owner info
+          allEntityInvestments: investment.investmentType === 'ENTITY' ? [investment] : [],
+          directInvestments: investment.investmentType === 'DIRECT' ? [investment] : []
+        })
+      } else {
+        // Property already exists - add to existing
+        const existing = investmentsByPropertyId.get(propertyId)!
+        
+        if (investment.investmentType === 'ENTITY') {
+          existing.allEntityInvestments.push(investment)
+        } else {
+          existing.directInvestments.push(investment)
+        }
+      }
+    })
+    
+    // Convert to final array - use primary entity investment for display if exists
+    const uniqueInvestments = Array.from(investmentsByPropertyId.values()).map(item => {
+      // If there are entity investments, use the primary one (largest investment amount)
+      if (item.allEntityInvestments.length > 0) {
+        const primaryEntity = item.allEntityInvestments.reduce((prev: any, curr: any) => 
+          curr.investmentAmount > prev.investmentAmount ? curr : prev
+        )
+        return {
+          ...primaryEntity,
+          // Keep all entity info for nested ownership display
+          allEntityInvestments: item.allEntityInvestments,
+          directInvestments: item.directInvestments
+        }
+      }
+      return item
+    })
 
-    return NextResponse.json(allInvestments)
+    return NextResponse.json(uniqueInvestments)
   } catch (error) {
     console.error('Error fetching investor properties:', error)
     return NextResponse.json(
