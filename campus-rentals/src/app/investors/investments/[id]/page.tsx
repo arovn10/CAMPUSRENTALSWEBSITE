@@ -774,7 +774,6 @@ export default function InvestmentDetailPage() {
     setEditingEntityInvestment(entityInvestment)
     setShowEditEntityModal(true)
   }
-
   const handleDeleteEntity = async (entityInvestmentId: string) => {
     if (!confirm('Are you sure you want to delete this entity investment? This action cannot be undone.')) {
       return
@@ -1543,7 +1542,6 @@ export default function InvestmentDetailPage() {
     })
     setShowEditDistributionModal(true)
   }
-
   const handleUpdateDistribution = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -3972,7 +3970,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Create Entity in Modal */}
       {showCreateEntityInModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -4618,7 +4615,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Create Waterfall Structure Modal */}
       {showCreateWaterfallModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
@@ -4883,28 +4879,26 @@ export default function InvestmentDetailPage() {
                 </p>
               </div>
               {/* Total Amount - Greyed out (readOnly) when refinance, but still visible */}
-              (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total Amount
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={distributionData.totalAmount}
-                    onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${distributionData.distributionType === 'REFINANCE' ? 'bg-gray-100 text-gray-500' : ''}`}
-                    required
-                    readOnly={distributionData.distributionType === 'REFINANCE'}
-                    placeholder="0.00"
-                  />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {distributionData.distributionType === 'REFINANCE'
-                        ? 'Calculated distribution amount after subtracting old debt and all fees from refinance amount'
-                        : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
-                    </p>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Amount
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={distributionData.totalAmount}
+                  onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${distributionData.distributionType === 'REFINANCE' ? 'bg-gray-100 text-gray-500' : ''}`}
+                  required
+                  readOnly={distributionData.distributionType === 'REFINANCE'}
+                  placeholder="0.00"
+                />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {distributionData.distributionType === 'REFINANCE'
+                      ? 'Calculated distribution amount after subtracting old debt and all fees from refinance amount'
+                      : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
+                  </p>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Distribution Date
@@ -5284,7 +5278,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Create Global Waterfall Structure Modal */}
       {showCreateGlobalWaterfallModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
@@ -6027,7 +6020,6 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-
       {/* Edit Document Modal */}
       {showEditDocumentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
