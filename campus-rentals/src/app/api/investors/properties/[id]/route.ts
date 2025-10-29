@@ -70,6 +70,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         acquisitionDate: body.acquisitionDate ? new Date(body.acquisitionDate) : existingProperty.acquisitionDate,
         constructionCompletionDate: body.constructionCompletionDate ? new Date(body.constructionCompletionDate) : existingProperty.constructionCompletionDate,
         stabilizationDate: body.stabilizationDate ? new Date(body.stabilizationDate) : existingProperty.stabilizationDate,
+
+        // Deal status fields
+        dealStatus: body.dealStatus || existingProperty.dealStatus,
+        fundingStatus: body.fundingStatus || existingProperty.fundingStatus,
       }
     })
     

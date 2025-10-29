@@ -2921,6 +2921,62 @@ export default function InvestmentDetailPage() {
             </div>
             )}
 
+            {/* Deal Status Management (Admins/Managers) */}
+            {((currentUser as any)?.role === 'ADMIN' || (currentUser as any)?.role === 'MANAGER') && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Deal Status</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Deal Status</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={(investment as any)?.property?.dealStatus || 'STABILIZED'}
+                      onChange={async (e) => {
+                        const dealStatus = e.target.value
+                        try {
+                          await fetch(`/api/investors/properties/${(investment as any)?.property?.id}` ,{
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('authToken') || ''}` },
+                            body: JSON.stringify({ dealStatus })
+                          })
+                          // Optimistic update
+                          setInvestment(prev => prev ? ({...prev, property: ({...(prev as any).property, dealStatus})}) as any : prev)
+                        } catch {}
+                      }}
+                    >
+                      <option value="STABILIZED">STABILIZED</option>
+                      <option value="UNDER_CONSTRUCTION">UNDER_CONSTRUCTION</option>
+                      <option value="UNDER_CONTRACT">UNDER_CONTRACT</option>
+                      <option value="SOLD">SOLD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Funding Status</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={(investment as any)?.property?.fundingStatus || 'FUNDED'}
+                      onChange={async (e) => {
+                        const fundingStatus = e.target.value
+                        try {
+                          await fetch(`/api/investors/properties/${(investment as any)?.property?.id}` ,{
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('authToken') || ''}` },
+                            body: JSON.stringify({ fundingStatus })
+                          })
+                          setInvestment(prev => prev ? ({...prev, property: ({...(prev as any).property, fundingStatus})}) as any : prev)
+                        } catch {}
+                      }}
+                    >
+                      <option value="FUNDED">FUNDED</option>
+                      <option value="FUNDING">FUNDING</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Insurance Information */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
