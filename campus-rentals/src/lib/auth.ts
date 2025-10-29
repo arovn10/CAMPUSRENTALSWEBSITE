@@ -54,8 +54,8 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export function generateToken(user: AuthUser): string {
   return jwt.sign(
     { 
-      id: user.id, 
-      email: user.email, 
+      id: user.id,
+      email: user.email,
       role: user.role,
       emailVerified: user.emailVerified 
     },
@@ -135,8 +135,8 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<{
   }
 
   // Reset login attempts on successful login
-  await prisma.user.update({
-    where: { id: user.id },
+    await prisma.user.update({
+      where: { id: user.id },
     data: { 
       loginAttempts: 0,
       lockedUntil: null,
@@ -289,7 +289,7 @@ export async function resetPassword(data: PasswordUpdateData): Promise<boolean> 
   // Update user password
   await prisma.user.update({
     where: { id: resetToken.userId },
-    data: { 
+    data: {
       password: hashedPassword,
       passwordResetToken: null,
       passwordResetExpires: null,

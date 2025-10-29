@@ -4,7 +4,7 @@
 # Configuration - Update these values for your AWS instance
 $AWS_USER = "bitnami"
 $AWS_HOST = "23.21.76.187"
-$SSH_KEY_PATH = "./LightsailDefaultKey-us-east-1 (3).pem"
+$SSH_KEY_PATH = "../LightsailDefaultKey-us-east-1.pem"
 $REMOTE_DIR = "CAMPUSRENTALSWEBSITE/campus-rentals"
 
 Write-Host "🚀 Remote deployment with SSL refresh to AWS Lightsail..." -ForegroundColor Blue

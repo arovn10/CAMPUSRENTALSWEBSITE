@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@heroicons/react": "^2.2.0"
+    "@heroicons/react": "^2.2.0",
+    "expo": "^54.0.21"
   }
 }

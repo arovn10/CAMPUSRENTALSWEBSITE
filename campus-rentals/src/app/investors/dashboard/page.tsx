@@ -147,6 +147,8 @@ export default function InvestorDashboard() {
   const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
+  const [analyticsScope, setAnalyticsScope] = useState<'ALL' | 'PERSON' | 'ENTITY'>('ALL')
+  const [analyticsTarget, setAnalyticsTarget] = useState<string>('ALL')
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -185,21 +187,24 @@ export default function InvestorDashboard() {
   }
 
   const calculateStats = (investmentData: Investment[]) => {
-    const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
-    const currentValue = investmentData.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
-    const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
-    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
-    const totalDistributions = investmentData.reduce((sum, inv) => 
+    // Exclude UNDER_CONSTRUCTION from overall portfolio calculations
+    const included = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+
+    const totalInvested = included.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    const currentValue = included.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
+    const totalReturn = included.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
+    const activeInvestments = included.filter(inv => inv.status === 'ACTIVE').length
+    const totalDistributions = included.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
     )
-    const averageIRR = investmentData.length > 0 
-      ? investmentData.reduce((sum, inv) => sum + (inv.irr || 0), 0) / investmentData.length 
+    const averageIRR = included.length > 0 
+      ? included.reduce((sum, inv) => sum + (inv.irr || 0), 0) / included.length 
       : 0
-    const totalProperties = investmentData.length
-    const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
+    const totalProperties = included.length
+    const totalSquareFeet = included.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
 
     // NOI aggregates
-    const monthlyNOIBeforeDebt = investmentData.reduce((sum, inv) => {
+    const monthlyNOIBeforeDebt = included.reduce((sum, inv) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
@@ -207,7 +212,7 @@ export default function InvestorDashboard() {
       return sum + Math.max((rent + other) - monthlyExp, 0)
     }, 0)
 
-    const monthlyNOIAfterDebt = investmentData.reduce((sum, inv) => {
+    const monthlyNOIAfterDebt = included.reduce((sum, inv) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
@@ -221,7 +226,7 @@ export default function InvestorDashboard() {
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
     // Total Project Cost = Original Debt + Equity
-    const totalProjectCost = investmentData.reduce((sum, inv) => {
+    const totalProjectCost = included.reduce((sum, inv) => {
       const originalDebt = inv.totalOriginalDebt || 0
       const equity = inv.investmentAmount || 0
       // fallback if API value missing
@@ -888,7 +893,31 @@ export default function InvestorDashboard() {
             <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
-                <span className="text-sm text-slate-500 font-medium">Computed from NOI minus debt service with year-5 sale</span>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={analyticsScope}
+                    onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                  >
+                    <option value="ALL">All</option>
+                    <option value="PERSON">By Person</option>
+                    <option value="ENTITY">By Entity</option>
+                  </select>
+                  <select
+                    value={analyticsTarget}
+                    onChange={(e)=>setAnalyticsTarget(e.target.value)}
+                    disabled={analyticsScope==='ALL'}
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
+                  >
+                    <option value="ALL">All</option>
+                    {analyticsScope==='PERSON' && Array.from(new Set(investments.map(inv => (inv as any).investorName).filter(Boolean))).map(name=> (
+                      <option key={name as string} value={name as string}>{name as string}</option>
+                    ))}
+                    {analyticsScope==='ENTITY' && Array.from(new Set(investments.map(inv => inv.entityName).filter(Boolean))).map(name=> (
+                      <option key={name as string} value={name as string}>{name as string}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="overflow-hidden rounded-2xl border border-slate-200/60">
                 <table className="min-w-full divide-y divide-slate-200/60">
@@ -904,7 +933,15 @@ export default function InvestorDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
-                    {investments.map((inv) => {
+                    {investments
+                      .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+                      .filter(inv => {
+                        if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
+                        if (analyticsScope==='PERSON') return ((inv as any).investorName) === analyticsTarget
+                        if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
+                        return true
+                      })
+                      .map((inv) => {
                       const rent = inv.property?.monthlyRent || 0
                       const other = inv.property?.otherIncome || 0
                       const annualExp = inv.property?.annualExpenses || 0
