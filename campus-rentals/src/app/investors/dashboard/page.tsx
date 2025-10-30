@@ -160,6 +160,9 @@ export default function InvestorDashboard() {
   const [showProformaModal, setShowProformaModal] = useState(false)
   const [proformaRows, setProformaRows] = useState<any[]>([])
   const [proformaTitle, setProformaTitle] = useState<string>('')
+  const [showCalcModal, setShowCalcModal] = useState(false)
+  const [calcTitle, setCalcTitle] = useState('')
+  const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -425,8 +428,13 @@ export default function InvestorDashboard() {
     const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
-    // Portfolio Size on analytics equals current value from overview
-    const totalProjectCost = currentValue
+    // Total Original Debt (FUNDED + STABILIZED)
+    const totalOriginalDebtFundedStabilized = investmentData
+      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
+      .reduce((sum, inv) => sum + (inv.totalOriginalDebt || 0), 0)
+
+    // Total Project Cost (current) = Total Original Debt (FUNDED+STABILIZED) + Total Equity Today
+    const totalProjectCost = totalOriginalDebtFundedStabilized + totalEquityToday
     const portfolioYieldOnCost = totalProjectCost > 0 ? (yearlyNOIBeforeDebt / totalProjectCost) * 100 : 0
 
     setStats({
@@ -990,7 +998,15 @@ export default function InvestorDashboard() {
               <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
                 <h2 className="text-2xl font-bold text-slate-900 mb-8">Portfolio Performance</h2>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
+                    setCalcTitle('Total Equity Today (Estimated)')
+                    setCalcLines([
+                      { label: 'Current Value (Current Portfolio Value)', value: stats.currentValue },
+                      { label: '− Invested (FUNDED & STABILIZED)', value: -(stats as any).totalInvested },
+                      { label: '− Current Debt (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
+                    ])
+                    setShowCalcModal(true)
+                  }}>
                 <div>
                       <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
                       <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
@@ -998,7 +1014,15 @@ export default function InvestorDashboard() {
                     <ChartBarIcon className="h-16 w-16 text-blue-600" />
               </div>
 
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
+                    setCalcTitle('Total Projected Future Equity (Estimated)')
+                    setCalcLines([
+                      { label: 'Projected Value (Includes pipeline)', value: stats.projectedValue },
+                      { label: '− Invested (FUNDED)', value: -(stats.totalInvested) },
+                      { label: '− Current Debt (FUNDED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
+                    ])
+                    setShowCalcModal(true)
+                  }}>
                 <div>
                       <p className="text-sm text-slate-600 font-semibold mb-1" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
                       <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
@@ -1049,14 +1073,14 @@ export default function InvestorDashboard() {
                   
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-purple-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Portfolio Size equals Portfolio Value">Portfolio Size (Portfolio Value)</span>
+                      <span className="text-sm font-semibold text-slate-700" title="Current Portfolio Value">Portfolio Size (Current)</span>
                       <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalProjectCost)}</span>
             </div>
               </div>
               
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-indigo-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Excludes under construction; equals equity + original debt">Total Project Cost</span>
+                      <span className="text-sm font-semibold text-slate-700" title="Total Original Debt (FUNDED + STABILIZED) + Total Equity Today">Total Project Cost (Current)</span>
                       <span className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalProjectCost)}</span>
               </div>
               </div>
@@ -1269,6 +1293,32 @@ export default function InvestorDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCalcModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">{calcTitle}</h3>
+              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ul className="space-y-3">
+                {calcLines.map((l, idx) => (
+                  <li key={idx} className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">{l.label}</span>
+                    <span className={`text-sm font-semibold ${l.value < 0 ? 'text-red-600' : 'text-slate-900'}`}>{formatCurrency(l.value)}</span>
+                  </li>
+                ))}
+                <li className="flex items-center justify-between pt-3 border-t border-slate-200 mt-2">
+                  <span className="text-sm font-semibold text-slate-900">Result</span>
+                  <span className="text-sm font-bold text-blue-600">{formatCurrency(calcLines.reduce((s,l)=> s + l.value, 0))}</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
