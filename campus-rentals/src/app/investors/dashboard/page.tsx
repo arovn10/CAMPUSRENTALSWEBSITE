@@ -342,10 +342,12 @@ export default function InvestorDashboard() {
   }
 
   const calculateStats = (investmentData: Investment[]) => {
-    // For IRR we exclude UNDER_CONSTRUCTION, but totals still include them
-    const irrIncluded = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+    // Exclude UNDER_CONSTRUCTION for equity and project cost metrics
+    const notUnderConstruction = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+    const irrIncluded = notUnderConstruction
 
-    const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    // Total Equity = sum invested across non-under-construction deals
+    const totalInvested = notUnderConstruction.reduce((sum, inv) => sum + inv.investmentAmount, 0)
     // Helpers to estimate value from NOI calculator
     const estimateValue = (inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
@@ -363,7 +365,10 @@ export default function InvestorDashboard() {
     const projectedValue = investmentData
       .filter(inv => inv.dealStatus !== 'SOLD')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
-    const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
+    // Total Returns = (Portfolio Value - Equity) + all cash flows to date (distributions)
+    const totalDistributionsSum = notUnderConstruction.reduce((sum, inv) => 
+      sum + ((inv.distributions || []).reduce((s, d) => s + d.amount, 0)), 0)
+    const totalReturn = (currentValue - totalInvested) + totalDistributionsSum
     const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
     const totalDistributions = investmentData.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
@@ -396,8 +401,8 @@ export default function InvestorDashboard() {
     const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
-    // Total Project Cost = Original Debt + Equity
-    const totalProjectCost = investmentData.reduce((sum: number, inv: Investment) => {
+    // Total Project Cost (completed and not under construction) = Original Debt + Equity
+    const totalProjectCost = notUnderConstruction.reduce((sum: number, inv: Investment) => {
       const originalDebt = inv.totalOriginalDebt || 0
       const equity = inv.investmentAmount || 0
       // fallback if API value missing
@@ -590,7 +595,7 @@ export default function InvestorDashboard() {
               {/* Total Distributions */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300" title="Portfolio Value = sum of estimated values of stabilized properties">
                     <BanknotesIcon className="h-6 w-6 text-white" />
                           </div>
                           <div className="text-right">
@@ -633,9 +638,9 @@ export default function InvestorDashboard() {
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">Active Deals</h2>
                     <p className="text-slate-500 font-medium">{stats.activeInvestments} properties in portfolio</p>
                                   </div>
-                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl">
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl" title="Excludes under construction deals">
                     <HomeIcon className="h-6 w-6 text-white" />
-                              </div>
+                  </div>
                               </div>
                 
                 <div className="space-y-4">
@@ -996,7 +1001,7 @@ export default function InvestorDashboard() {
                 <div className="space-y-6">
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-blue-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-semibold text-slate-700">Average IRR</span>
+                      <span className="text-sm font-semibold text-slate-700" title="IRR excludes under construction">Average IRR</span>
                       <span className="text-2xl font-bold text-blue-600">{formatPercentage(stats.averageIRR)}</span>
               </div>
                     <div className="w-full bg-slate-200 rounded-full h-2">
@@ -1016,14 +1021,14 @@ export default function InvestorDashboard() {
                   
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-purple-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Portfolio Size (Total Project Cost)</span>
+                      <span className="text-sm font-semibold text-slate-700" title="Portfolio Size equals Portfolio Value">Portfolio Size (Portfolio Value)</span>
                       <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalProjectCost)}</span>
             </div>
               </div>
               
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-indigo-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Total Project Cost</span>
+                      <span className="text-sm font-semibold text-slate-700" title="Excludes under construction; equals equity + original debt">Total Project Cost</span>
                       <span className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalProjectCost)}</span>
               </div>
               </div>
