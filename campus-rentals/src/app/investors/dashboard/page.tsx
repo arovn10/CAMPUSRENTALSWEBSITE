@@ -213,6 +213,7 @@ export default function InvestorDashboard() {
       type: (l.paymentType || 'AMORTIZING') as string,
       amortYears: (l.amortizationYears || 30) as number
     }))
+    const hasLoans = loanStates.length > 0
 
     const annualRevenue = ((inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)) * 12
     const annualExpenses = inv.property?.annualExpenses || 0
@@ -239,29 +240,36 @@ export default function InvestorDashboard() {
 
       let interestPaid = 0
       let principalPaid = 0
-      loanStates.forEach(ls => {
-        if (ls.balance <= 0) return
-        if (ls.type === 'IO') {
-          const annualInterest = ls.balance * ls.rate
-          interestPaid += annualInterest
-        } else {
-          let monthlyPay = ls.monthlyPayment
-          if (!monthlyPay || monthlyPay <= 0) {
-            const i = ls.rate / 12
-            const n = (ls.amortYears || 30) * 12
-            monthlyPay = i > 0 ? (ls.balance * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)) : (ls.balance / n)
+      if (hasLoans) {
+        loanStates.forEach(ls => {
+          if (ls.balance <= 0) return
+          if (ls.type === 'IO') {
+            const annualInterest = ls.balance * ls.rate
+            interestPaid += annualInterest
+          } else {
+            let monthlyPay = ls.monthlyPayment
+            if (!monthlyPay || monthlyPay <= 0) {
+              const i = ls.rate / 12
+              const n = (ls.amortYears || 30) * 12
+              monthlyPay = i > 0 ? (ls.balance * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)) : (ls.balance / n)
+            }
+            for (let m = 0; m < 12; m++) {
+              const monthlyInterest = ls.balance * (ls.rate / 12)
+              const monthlyPrincipal = Math.max(monthlyPay - monthlyInterest, 0)
+              interestPaid += monthlyInterest
+              const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance)
+              principalPaid += appliedPrincipal
+              ls.balance = Math.max(ls.balance - appliedPrincipal, 0)
+              if (ls.balance <= 0) break
+            }
           }
-          for (let m = 0; m < 12; m++) {
-            const monthlyInterest = ls.balance * (ls.rate / 12)
-            const monthlyPrincipal = Math.max(monthlyPay - monthlyInterest, 0)
-            interestPaid += monthlyInterest
-            const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance)
-            principalPaid += appliedPrincipal
-            ls.balance = Math.max(ls.balance - appliedPrincipal, 0)
-            if (ls.balance <= 0) break
-          }
-        }
-      })
+        })
+      } else {
+        // Fallback to estimated monthly debt service when loans are not available
+        const annualDebtSvc = (inv.estimatedMonthlyDebtService || 0) * 12
+        interestPaid = annualDebtSvc
+        principalPaid = 0
+      }
 
       const revenue = annualRevenue
       const expenses = annualExpenses
@@ -289,7 +297,7 @@ export default function InvestorDashboard() {
         interest: interestPaid,
         principal: principalPaid,
         debtService,
-        endingDebt: loanStates.reduce((s, l) => s + l.balance, 0),
+        endingDebt: hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0),
         exitSaleValue,
         debtPayoff,
         exitProceeds: Math.max(exitSaleValue - debtPayoff, 0),
