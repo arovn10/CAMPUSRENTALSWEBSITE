@@ -268,14 +268,14 @@ export default function InvestorDashboard() {
       const noi = Math.max(revenue - expenses, 0)
       const debtService = interestPaid + principalPaid
 
-      let exitProceeds = 0
+      let exitSaleValue = 0
+      let debtPayoff = 0
       if (yr === 5) {
-        const estimatedValue = estimateValueFromNOI(inv)
-        const remainingDebt = loanStates.reduce((s, l) => s + l.balance, 0)
-        exitProceeds = Math.max(estimatedValue - remainingDebt, 0)
+        exitSaleValue = estimateValueFromNOI(inv)
+        debtPayoff = loanStates.reduce((s, l) => s + l.balance, 0)
       }
 
-      const cashFlow = (noi - debtService) + exitProceeds
+      const cashFlow = (noi - debtService) + (exitSaleValue - debtPayoff)
       cashflows.push(cashFlow)
 
       const dscr = debtService > 0 ? (noi / debtService) : null
@@ -290,7 +290,9 @@ export default function InvestorDashboard() {
         principal: principalPaid,
         debtService,
         endingDebt: loanStates.reduce((s, l) => s + l.balance, 0),
-        exitProceeds,
+        exitSaleValue,
+        debtPayoff,
+        exitProceeds: Math.max(exitSaleValue - debtPayoff, 0),
         cashFlow,
         dscr,
         irrToDate,
@@ -1195,7 +1197,9 @@ export default function InvestorDashboard() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Value</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Payoff (Y5)</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds (Net)</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
@@ -1212,7 +1216,9 @@ export default function InvestorDashboard() {
                       <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.principal)}</td>
                       <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.debtService)}</td>
                       <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.endingDebt)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">{formatCurrency(r.exitProceeds)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.exitSaleValue || 0)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-red-600 font-semibold">{formatCurrency(r.debtPayoff || 0)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">{formatCurrency(r.exitProceeds || 0)}</td>
                       <td className={`px-4 py-3 text-sm text-right font-bold ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
                       <td className={`px-4 py-3 text-sm text-right font-semibold ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
                       <td className={`px-4 py-3 text-sm text-right font-semibold ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
