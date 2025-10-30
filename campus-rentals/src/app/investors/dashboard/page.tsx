@@ -191,7 +191,16 @@ export default function InvestorDashboard() {
     const irrIncluded = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
 
     const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
-    const currentValue = investmentData.reduce((sum, inv) => sum + (inv.currentValue || inv.investmentAmount * 1.15), 0)
+    // Current value = sum of estimated values from NOI calculator per property
+    const currentValue = investmentData.reduce((sum: number, inv: Investment) => {
+      const rent = inv.property?.monthlyRent || 0
+      const other = inv.property?.otherIncome || 0
+      const annualExp = inv.property?.annualExpenses || 0
+      const capRate = inv.property?.capRate || 0
+      const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
+      const estimatedValue = capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
+      return sum + estimatedValue
+    }, 0)
     const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
     const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
     const totalDistributions = investmentData.reduce((sum, inv) => 
