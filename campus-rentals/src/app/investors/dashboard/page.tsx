@@ -280,7 +280,8 @@ export default function InvestorDashboard() {
       let debtPayoff = 0
       if (yr === 5) {
         exitSaleValue = estimateValueFromNOI(inv)
-        debtPayoff = loanStates.reduce((s, l) => s + l.balance, 0)
+        const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
+        debtPayoff = endingDebtVal
       }
 
       const cashFlow = (noi - debtService) + (exitSaleValue - debtPayoff)
@@ -289,6 +290,7 @@ export default function InvestorDashboard() {
       const dscr = debtService > 0 ? (noi / debtService) : null
       const irrToDate = computeIRR(cashflows)
 
+      const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
       rows.push({
         year: yr,
         revenue,
@@ -297,9 +299,9 @@ export default function InvestorDashboard() {
         interest: interestPaid,
         principal: principalPaid,
         debtService,
-        endingDebt: hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0),
+        endingDebt: endingDebtVal,
         exitSaleValue,
-        debtPayoff,
+        debtPayoff: yr === 5 ? endingDebtVal : 0,
         exitProceeds: Math.max(exitSaleValue - debtPayoff, 0),
         cashFlow,
         dscr,
