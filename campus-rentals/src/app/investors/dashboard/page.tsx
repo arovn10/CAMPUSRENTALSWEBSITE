@@ -1002,7 +1002,7 @@ export default function InvestorDashboard() {
                     setCalcTitle('Total Equity Today (Estimated)')
                     setCalcLines([
                       { label: 'Current Value (Current Portfolio Value)', value: stats.currentValue },
-                      { label: '− Invested (FUNDED & STABILIZED)', value: -(stats as any).totalInvested },
+                      { label: '− Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
                       { label: '− Current Debt (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
                     ])
                     setShowCalcModal(true)
@@ -1030,7 +1030,14 @@ export default function InvestorDashboard() {
                     <ChartBarIcon className="h-16 w-16 text-indigo-600" />
               </div>
               
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl">
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer" onClick={() => {
+                    setCalcTitle('Total Returns (Current)')
+                    setCalcLines([
+                      { label: 'Total Equity Today (Estimated)', value: (stats as any).totalEquityToday || 0 },
+                      { label: '− Total Invested (FUNDED)', value: -(stats.totalInvested || 0) },
+                    ])
+                    setShowCalcModal(true)
+                  }}>
                 <div>
                       <p className="text-sm text-slate-600 font-semibold mb-1">Total Returns</p>
                       <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.totalReturn)}</p>
