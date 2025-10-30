@@ -4249,6 +4249,7 @@ export default function InvestmentDetailPage() {
                               } else if (selectedEntity) {
                                 updateEntityInvestor(index, 'userId', '')
                                 updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
+                                updateEntityInvestor(index, 'isEntityInvestor', true)
                                 updateEntityInvestor(index, 'user', { firstName: '', lastName: '', email: '' })
                               }
                             }}
@@ -4274,7 +4275,7 @@ export default function InvestmentDetailPage() {
                             </optgroup>
                           </select>
                           
-                          {(!owner.userId && !owner.investorEntityId) ? (
+                          {(!owner.userId && !owner.investorEntityId && !owner.isEntityInvestor) ? (
                             <div className="grid grid-cols-3 gap-2">
                               <input
                                 type="text"
