@@ -6,9 +6,17 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Get all entities
+    // Get all entities with owners (users and investor entities)
     const entities = await prisma.entity.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: {
+        entityOwners: {
+          include: {
+            user: true,
+            investorEntity: true,
+          }
+        }
+      }
     })
     
     return NextResponse.json(entities)

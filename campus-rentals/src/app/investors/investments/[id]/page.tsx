@@ -4251,6 +4251,7 @@ export default function InvestmentDetailPage() {
                                 updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
                                 updateEntityInvestor(index, 'isEntityInvestor', true)
                                 updateEntityInvestor(index, 'entityName', selectedEntity.name)
+                                updateEntityInvestor(index, 'entityOwnersSnapshot', (selectedEntity as any).entityOwners || [])
                                 updateEntityInvestor(index, 'user', { firstName: '', lastName: '', email: '' })
                               }
                             }}
@@ -4280,6 +4281,18 @@ export default function InvestmentDetailPage() {
                             <div className="text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2">
                               <span className="font-medium">Investing Entity:</span>{' '}
                               {owner.entityName || (availableEntities.find(e => e.id === owner.investorEntityId)?.name) || 'Selected entity'}
+                              {Array.isArray(owner.entityOwnersSnapshot) && owner.entityOwnersSnapshot.length > 0 && (
+                                <div className="mt-2 text-xs text-gray-600">
+                                  <div className="font-semibold mb-1">Members preset in entity:</div>
+                                  <ul className="list-disc ml-5 space-y-0.5">
+                                    {owner.entityOwnersSnapshot.map((m: any, i: number) => (
+                                      <li key={i}>
+                                        {(m.user && (m.user.firstName || m.user.lastName)) ? `${m.user.firstName || ''} ${m.user.lastName || ''}`.trim() : (m.investorEntity?.name || 'Entity Member')} — {parseFloat(m.ownershipPercentage || 0).toFixed(1)}%
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           ) : (!owner.userId && !owner.isEntityInvestor) ? (
                             <div className="grid grid-cols-3 gap-2">
