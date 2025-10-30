@@ -770,6 +770,10 @@ export default function InvestmentDetailPage() {
     if (availableUsers.length === 0) {
       await fetchAvailableUsers()
     }
+    // Ensure existing entities are loaded for selection
+    if (availableEntities.length === 0) {
+      await fetchAvailableEntities()
+    }
     
     setEditingEntityInvestment(entityInvestment)
     setShowEditEntityModal(true)
