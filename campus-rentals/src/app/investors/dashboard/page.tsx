@@ -104,6 +104,7 @@ interface DashboardStats {
   totalInvested: number
   currentValue: number
   projectedValue: number
+  totalEquity?: number
   totalReturn: number
   totalIrr: number
   activeInvestments: number
@@ -129,6 +130,7 @@ export default function InvestorDashboard() {
     totalInvested: 0,
     currentValue: 0,
     projectedValue: 0,
+    totalEquity: 0,
     totalReturn: 0,
     totalIrr: 0,
     activeInvestments: 0,
@@ -346,8 +348,10 @@ export default function InvestorDashboard() {
     const notUnderConstruction = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
     const irrIncluded = notUnderConstruction
 
-    // Total Equity = sum invested across non-under-construction deals
-    const totalInvested = notUnderConstruction.reduce((sum, inv) => sum + inv.investmentAmount, 0)
+    // Overview: Total Invested = sum of investments for FUNDED deals (any status)
+    const totalInvestedOverview = investmentData
+      .filter(inv => inv.fundingStatus === 'FUNDED')
+      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
     // Helpers to estimate value from NOI calculator
     const estimateValue = (inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
@@ -365,10 +369,14 @@ export default function InvestorDashboard() {
     const projectedValue = investmentData
       .filter(inv => inv.dealStatus !== 'SOLD')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
-    // Total Returns = (Portfolio Value - Equity) + all cash flows to date (distributions)
-    const totalDistributionsSum = notUnderConstruction.reduce((sum, inv) => 
-      sum + ((inv.distributions || []).reduce((s, d) => s + d.amount, 0)), 0)
-    const totalReturn = (currentValue - totalInvested) + totalDistributionsSum
+    // Analytics Total Equity = currentValue (overview) - total invested (funded) - current debt (funded)
+    const totalFundedDebt = investmentData
+      .filter(inv => inv.fundingStatus === 'FUNDED')
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+    const totalEquity = currentValue - totalInvestedOverview - totalFundedDebt
+
+    // Total Returns = Total Equity - Total Invested (overview)
+    const totalReturn = totalEquity - totalInvestedOverview
     const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
     const totalDistributions = investmentData.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
@@ -401,21 +409,15 @@ export default function InvestorDashboard() {
     const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
 
-    // Total Project Cost (completed and not under construction) = Original Debt + Equity
-    const totalProjectCost = notUnderConstruction.reduce((sum: number, inv: Investment) => {
-      const originalDebt = inv.totalOriginalDebt || 0
-      const equity = inv.investmentAmount || 0
-      // fallback if API value missing
-      const fallback = (inv.property?.totalCost || ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0)))
-      const derived = (originalDebt + equity) > 0 ? (originalDebt + equity) : fallback
-      return sum + derived
-    }, 0)
+    // Portfolio Size on analytics equals current value from overview
+    const totalProjectCost = currentValue
     const portfolioYieldOnCost = totalProjectCost > 0 ? (yearlyNOIBeforeDebt / totalProjectCost) * 100 : 0
 
     setStats({
-      totalInvested,
+      totalInvested: totalInvestedOverview,
       currentValue,
       projectedValue,
+      totalEquity,
       totalReturn,
       totalIrr: averageIRR,
       activeInvestments,
@@ -972,8 +974,8 @@ export default function InvestorDashboard() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
                 <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1">Total Equity</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.currentValue)}</p>
+                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value (overview) - Funded Equity - Funded Current Debt">Total Equity</p>
+                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquity || 0)}</p>
                 </div>
                     <ChartBarIcon className="h-16 w-16 text-blue-600" />
               </div>
