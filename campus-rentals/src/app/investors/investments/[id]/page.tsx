@@ -4250,6 +4250,7 @@ export default function InvestmentDetailPage() {
                                 updateEntityInvestor(index, 'userId', '')
                                 updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
                                 updateEntityInvestor(index, 'isEntityInvestor', true)
+                                updateEntityInvestor(index, 'entityName', selectedEntity.name)
                                 updateEntityInvestor(index, 'user', { firstName: '', lastName: '', email: '' })
                               }
                             }}
@@ -4275,7 +4276,12 @@ export default function InvestmentDetailPage() {
                             </optgroup>
                           </select>
                           
-                          {(!owner.userId && !owner.investorEntityId && !owner.isEntityInvestor) ? (
+                          {owner.investorEntityId ? (
+                            <div className="text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2">
+                              <span className="font-medium">Investing Entity:</span>{' '}
+                              {owner.entityName || (availableEntities.find(e => e.id === owner.investorEntityId)?.name) || 'Selected entity'}
+                            </div>
+                          ) : (!owner.userId && !owner.isEntityInvestor) ? (
                             <div className="grid grid-cols-3 gap-2">
                               <input
                                 type="text"
