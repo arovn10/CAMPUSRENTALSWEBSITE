@@ -885,14 +885,15 @@ export default function InvestmentDetailPage() {
     try {
       // Validate that each entity owner has proper user information
       const invalidOwners = editingEntityInvestment.entity.entityOwners.filter((owner: any) => {
-        // Must have either a userId (existing user) or complete user info (new user)
+        // Must have either a userId, an investorEntityId, or complete user info
         const hasUserId = owner.userId && owner.userId.trim() !== ''
+        const hasInvestorEntity = owner.investorEntityId && String(owner.investorEntityId).trim() !== ''
         const hasCompleteUserInfo = owner.user && 
           owner.user.firstName && owner.user.firstName.trim() !== '' &&
           owner.user.lastName && owner.user.lastName.trim() !== '' &&
           owner.user.email && owner.user.email.trim() !== ''
         
-        const isValid = hasUserId || hasCompleteUserInfo
+        const isValid = hasUserId || hasInvestorEntity || hasCompleteUserInfo
         
         return !isValid
       })
@@ -4228,14 +4229,14 @@ export default function InvestmentDetailPage() {
                         </div>
                         <div className="space-y-2">
                           <select
-                            value={owner.userId || owner.entityId || ''}
+                            value={owner.userId || owner.investorEntityId || ''}
                             onChange={(e) => {
                               const selectedUser = availableUsers.find(u => u.id === e.target.value)
                               const selectedEntity = availableEntities.find(entity => entity.id === e.target.value)
                               
                               if (selectedUser) {
                                 updateEntityInvestor(index, 'userId', selectedUser.id)
-                                updateEntityInvestor(index, 'entityId', '')
+                                updateEntityInvestor(index, 'investorEntityId', '')
                                 updateEntityInvestor(index, 'user', {
                                   firstName: selectedUser.firstName,
                                   lastName: selectedUser.lastName,
@@ -4243,12 +4244,8 @@ export default function InvestmentDetailPage() {
                                 })
                               } else if (selectedEntity) {
                                 updateEntityInvestor(index, 'userId', '')
-                                updateEntityInvestor(index, 'entityId', selectedEntity.id)
-                                updateEntityInvestor(index, 'user', {
-                                  firstName: '',
-                                  lastName: '',
-                                  email: ''
-                                })
+                                updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
+                                updateEntityInvestor(index, 'user', { firstName: '', lastName: '', email: '' })
                               }
                             }}
                             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
@@ -4273,7 +4270,7 @@ export default function InvestmentDetailPage() {
                             </optgroup>
                           </select>
                           
-                          {(!owner.userId && !owner.entityId) ? (
+                          {(!owner.userId && !owner.investorEntityId) ? (
                             <div className="grid grid-cols-3 gap-2">
                               <input
                                 type="text"

@@ -137,6 +137,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             investmentAmount: owner.investmentAmount
           })
           
+          const investorEntityId: string | null = owner.investorEntityId || null
           let userId = owner.userId
           
           // If no userId is provided but we have user info, create a new user
@@ -196,15 +197,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             }
           }
           
-          if (!userId) {
-            throw new Error(`Invalid entity owner: missing userId and user information for owner ${owner.id || 'unknown'}`)
+          if (!userId && !investorEntityId) {
+            throw new Error(`Invalid entity owner: missing userId/investorEntityId and user information for owner ${owner.id || 'unknown'}`)
           }
           
           try {
             const entityOwner = await tx.entityOwner.create({
               data: {
                 entityId: entityInvestment.entityId,
-                userId: userId,
+                userId: userId || null,
+                investorEntityId: investorEntityId || null,
                 ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,
                 investmentAmount: parseFloat(owner.investmentAmount) || 0
               }
