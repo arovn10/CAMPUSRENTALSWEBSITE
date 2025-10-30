@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     
     console.log('Document upload attempt by:', user.email, 'Role:', user.role)
     
-    // Allow admins, managers, and investors to upload documents
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
+    // Only admins and managers may upload documents
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       console.log('Unauthorized upload attempt by:', user.email, 'Role:', user.role)
       return NextResponse.json({ error: 'Unauthorized - Insufficient permissions' }, { status: 403 })
     }

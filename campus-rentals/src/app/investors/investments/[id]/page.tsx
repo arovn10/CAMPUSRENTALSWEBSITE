@@ -2660,12 +2660,14 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Documents</h2>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                </button>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                  <button
+                    onClick={() => setShowUploadModal(true)}
+                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </button>
+                )}
               </div>
               <div className="space-y-3">
                 {documents.map((doc) => (
@@ -3072,13 +3074,15 @@ export default function InvestmentDetailPage() {
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
-                  <button
-                    onClick={() => setShowWaterfallModal(true)}
-                    className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                    title="Process Distribution"
-                  >
-                    <BanknotesIcon className="h-5 w-5" />
-                  </button>
+                  {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                    <button
+                      onClick={() => setShowWaterfallModal(true)}
+                      className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                      title="Process Distribution"
+                    >
+                      <BanknotesIcon className="h-5 w-5" />
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="space-y-3">
@@ -4892,8 +4896,8 @@ export default function InvestmentDetailPage() {
           </div>
         </div>
       )}
-      {/* Process Distribution Modal */}
-      {showWaterfallModal && (
+      {/* Process Distribution Modal (admins/managers only) */}
+      {showWaterfallModal && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
