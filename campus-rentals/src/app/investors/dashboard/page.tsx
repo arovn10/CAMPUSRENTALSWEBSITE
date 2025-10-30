@@ -103,6 +103,7 @@ interface User {
 interface DashboardStats {
   totalInvested: number
   currentValue: number
+  projectedValue: number
   totalReturn: number
   totalIrr: number
   activeInvestments: number
@@ -127,6 +128,7 @@ export default function InvestorDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalInvested: 0,
     currentValue: 0,
+    projectedValue: 0,
     totalReturn: 0,
     totalIrr: 0,
     activeInvestments: 0,
@@ -191,16 +193,23 @@ export default function InvestorDashboard() {
     const irrIncluded = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
 
     const totalInvested = investmentData.reduce((sum, inv) => sum + inv.investmentAmount, 0)
-    // Current value = sum of estimated values from NOI calculator per property
-    const currentValue = investmentData.reduce((sum: number, inv: Investment) => {
+    // Helpers to estimate value from NOI calculator
+    const estimateValue = (inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
       const capRate = inv.property?.capRate || 0
       const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
-      const estimatedValue = capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
-      return sum + estimatedValue
-    }, 0)
+      return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
+    }
+    // Current value: sum of estimated values for active (stabilized) properties
+    const currentValue = investmentData
+      .filter(inv => inv.dealStatus === 'STABILIZED')
+      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
+    // Projected value: sum for all not SOLD projects (includes under construction)
+    const projectedValue = investmentData
+      .filter(inv => inv.dealStatus !== 'SOLD')
+      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
     const totalReturn = investmentData.reduce((sum, inv) => sum + (inv.totalReturn || 0), 0)
     const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
     const totalDistributions = investmentData.reduce((sum, inv) => 
@@ -248,6 +257,7 @@ export default function InvestorDashboard() {
     setStats({
       totalInvested,
       currentValue,
+      projectedValue,
       totalReturn,
       totalIrr: averageIRR,
       activeInvestments,
@@ -444,6 +454,24 @@ export default function InvestorDashboard() {
                 <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
                 <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
           </div>
+
+              {/* Projected Value */}
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <ChartBarIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Projected Value</p>
+                    <div className="flex items-center mt-1">
+                      <SparklesIcon className="h-3 w-3 text-indigo-500 mr-1" />
+                      <span className="text-xs text-indigo-600 font-medium">Includes pipeline</span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.projectedValue)}</h3>
+                <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
+              </div>
 
               {/* Total Distributions */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:-translate-y-1">
