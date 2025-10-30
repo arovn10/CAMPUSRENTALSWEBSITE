@@ -151,6 +151,9 @@ export default function InvestorDashboard() {
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
   const [analyticsScope, setAnalyticsScope] = useState<'ALL' | 'PERSON' | 'ENTITY'>('ALL')
   const [analyticsTarget, setAnalyticsTarget] = useState<string>('ALL')
+  const [showProformaModal, setShowProformaModal] = useState(false)
+  const [proformaRows, setProformaRows] = useState<any[]>([])
+  const [proformaTitle, setProformaTitle] = useState<string>('')
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -186,6 +189,144 @@ export default function InvestorDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const estimateValueFromNOI = (inv: Investment) => {
+    const rent = inv.property?.monthlyRent || 0
+    const other = inv.property?.otherIncome || 0
+    const annualExp = inv.property?.annualExpenses || 0
+    const capRate = inv.property?.capRate || 0
+    const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
+    return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
+  }
+
+  const openProforma = (inv: Investment) => {
+    const years = [0,1,2,3,4,5]
+    const rows: any[] = []
+    const cashflows: number[] = []
+
+    const loans: any[] = (inv as any).loans || []
+    const loanStates = loans.map(l => ({
+      balance: (l.currentBalance ?? l.originalAmount ?? 0) as number,
+      rate: ((l.interestRate ?? 0) as number) / 100,
+      monthlyPayment: (l.monthlyPayment ?? 0) as number,
+      type: (l.paymentType || 'AMORTIZING') as string,
+      amortYears: (l.amortizationYears || 30) as number
+    }))
+
+    const annualRevenue = ((inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)) * 12
+    const annualExpenses = inv.property?.annualExpenses || 0
+
+    years.forEach((yr) => {
+      if (yr === 0) {
+        rows.push({
+          year: 0,
+          revenue: 0,
+          expenses: 0,
+          noi: 0,
+          interest: 0,
+          principal: 0,
+          debtService: 0,
+          endingDebt: loanStates.reduce((s, l) => s + l.balance, 0),
+          exitProceeds: 0,
+          cashFlow: -(inv.investmentAmount || 0),
+          dscr: null,
+          irrToDate: null
+        })
+        cashflows.push(-(inv.investmentAmount || 0))
+        return
+      }
+
+      let interestPaid = 0
+      let principalPaid = 0
+      loanStates.forEach(ls => {
+        if (ls.balance <= 0) return
+        if (ls.type === 'IO') {
+          const annualInterest = ls.balance * ls.rate
+          interestPaid += annualInterest
+        } else {
+          let monthlyPay = ls.monthlyPayment
+          if (!monthlyPay || monthlyPay <= 0) {
+            const i = ls.rate / 12
+            const n = (ls.amortYears || 30) * 12
+            monthlyPay = i > 0 ? (ls.balance * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)) : (ls.balance / n)
+          }
+          for (let m = 0; m < 12; m++) {
+            const monthlyInterest = ls.balance * (ls.rate / 12)
+            const monthlyPrincipal = Math.max(monthlyPay - monthlyInterest, 0)
+            interestPaid += monthlyInterest
+            const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance)
+            principalPaid += appliedPrincipal
+            ls.balance = Math.max(ls.balance - appliedPrincipal, 0)
+            if (ls.balance <= 0) break
+          }
+        }
+      })
+
+      const revenue = annualRevenue
+      const expenses = annualExpenses
+      const noi = Math.max(revenue - expenses, 0)
+      const debtService = interestPaid + principalPaid
+
+      let exitProceeds = 0
+      if (yr === 5) {
+        const estimatedValue = estimateValueFromNOI(inv)
+        const remainingDebt = loanStates.reduce((s, l) => s + l.balance, 0)
+        exitProceeds = Math.max(estimatedValue - remainingDebt, 0)
+      }
+
+      const cashFlow = (noi - debtService) + exitProceeds
+      cashflows.push(cashFlow)
+
+      const dscr = debtService > 0 ? (noi / debtService) : null
+      const irrToDate = computeIRR(cashflows)
+
+      rows.push({
+        year: yr,
+        revenue,
+        expenses,
+        noi,
+        interest: interestPaid,
+        principal: principalPaid,
+        debtService,
+        endingDebt: loanStates.reduce((s, l) => s + l.balance, 0),
+        exitProceeds,
+        cashFlow,
+        dscr,
+        irrToDate,
+      })
+    })
+
+    setProformaRows(rows)
+    setProformaTitle(inv.propertyName || inv.propertyAddress)
+    setShowProformaModal(true)
+  }
+
+  // Internal IRR calculator (Newton-Raphson with guardrails)
+  const computeIRR = (flows: number[]) => {
+    if (!flows || flows.length < 2) return null
+    // Ensure at least one negative and one positive for convergence
+    const hasNeg = flows.some(f => f < 0)
+    const hasPos = flows.some(f => f > 0)
+    if (!hasNeg || !hasPos) return null
+    let rate = 0.1
+    for (let iter = 0; iter < 50; iter++) {
+      let npv = 0
+      let dnpv = 0
+      for (let t = 0; t < flows.length; t++) {
+        const denom = Math.pow(1 + rate, t)
+        npv += flows[t] / denom
+        if (t > 0) {
+          dnpv -= (t * flows[t]) / (denom * (1 + rate))
+        }
+      }
+      if (Math.abs(npv) < 1e-6) return rate * 100
+      const step = dnpv !== 0 ? (npv / dnpv) : 0
+      rate -= step
+      if (!isFinite(rate)) return null
+      if (rate <= -0.99) rate = -0.99
+    }
+    return null
   }
 
   const calculateStats = (investmentData: Investment[]) => {
@@ -340,49 +481,10 @@ export default function InvestorDashboard() {
     )
   }
 
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Premium Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between py-5">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-3.5 rounded-2xl shadow-lg shadow-blue-500/25">
-                  <BuildingOfficeIcon className="h-8 w-8 text-white" />
-            </div>
-                <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></div>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
-                  Campus Rentals LLC
-                </h1>
-                <p className="text-sm text-slate-500 font-medium">Investment Portal</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-6">
-              <button
-                onClick={() => router.push('/admin')}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-all duration-200 hover:bg-blue-50 rounded-xl"
-              >
-                Admin
-              </button>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-900">
-                  {currentUser?.firstName} {currentUser?.lastName}
-                </p>
-                <p className="text-xs text-slate-500">{currentUser?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2.5 text-slate-500 hover:text-red-500 transition-all duration-200 hover:bg-red-50 rounded-xl"
-              >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Premium Navigation */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40">
@@ -967,6 +1069,7 @@ export default function InvestorDashboard() {
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
@@ -1015,6 +1118,14 @@ export default function InvestorDashboard() {
                           <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
                             {dscr !== null ? dscr.toFixed(2) : '—'}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <button
+                              onClick={() => openProforma(inv)}
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs font-semibold"
+                            >
+                              View 5Y Proforma
+                            </button>
+                          </td>
                         </tr>
                       )
                     })}
@@ -1054,6 +1165,62 @@ export default function InvestorDashboard() {
               </div>
                 <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.yearlyNOIAfterDebt)}</h3>
               </div>
+          </div>
+        </div>
+      )}
+      {showProformaModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl border border-slate-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">5-Year Proforma</h3>
+                <p className="text-sm text-slate-500">{proformaTitle}</p>
+              </div>
+              <button
+                onClick={() => setShowProformaModal(false)}
+                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Year</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Revenue</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Expenses</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">NOI</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Interest</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-100">
+                  {proformaRows.map((r, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{r.year}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.revenue)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.expenses)}</td>
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-slate-900">{formatCurrency(r.noi)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.interest)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.principal)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.debtService)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.endingDebt)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">{formatCurrency(r.exitProceeds)}</td>
+                      <td className={`px-4 py-3 text-sm text-right font-bold ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
+                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
+                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
