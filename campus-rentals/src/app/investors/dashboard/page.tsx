@@ -105,6 +105,8 @@ interface DashboardStats {
   currentValue: number
   projectedValue: number
   totalEquity?: number
+  totalEquityToday?: number
+  totalEquityProjected?: number
   totalReturn: number
   totalIrr: number
   activeInvestments: number
@@ -131,6 +133,8 @@ export default function InvestorDashboard() {
     currentValue: 0,
     projectedValue: 0,
     totalEquity: 0,
+    totalEquityToday: 0,
+    totalEquityProjected: 0,
     totalReturn: 0,
     totalIrr: 0,
     activeInvestments: 0,
@@ -369,11 +373,23 @@ export default function InvestorDashboard() {
     const projectedValue = investmentData
       .filter(inv => inv.dealStatus !== 'SOLD')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
-    // Analytics Total Equity = currentValue (overview) - total invested (funded) - current debt (funded)
+    // Totals for FUNDED
     const totalFundedDebt = investmentData
       .filter(inv => inv.fundingStatus === 'FUNDED')
       .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
-    const totalEquity = currentValue - totalInvestedOverview - totalFundedDebt
+    const totalFundedAndStabilizedDebt = investmentData
+      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+    const totalInvestedFundedAndStabilized = investmentData
+      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
+      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
+
+    // Equity (Today): currentValue (stabilized) - invested (FUNDED & STABILIZED) - current debt (FUNDED & STABILIZED)
+    const totalEquityToday = currentValue - totalInvestedFundedAndStabilized - totalFundedAndStabilizedDebt
+    // Equity (Projected): projectedValue (all non-sold) - invested (FUNDED) - current debt (FUNDED)
+    const totalEquityProjected = projectedValue - totalInvestedOverview - totalFundedDebt
+    // Backward compatibility single totalEquity mirrors Today
+    const totalEquity = totalEquityToday
 
     // Total Returns = Total Equity - Total Invested (overview)
     const totalReturn = totalEquity - totalInvestedOverview
@@ -418,6 +434,8 @@ export default function InvestorDashboard() {
       currentValue,
       projectedValue,
       totalEquity,
+      totalEquityToday,
+      totalEquityProjected,
       totalReturn,
       totalIrr: averageIRR,
       activeInvestments,
@@ -974,10 +992,18 @@ export default function InvestorDashboard() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
                 <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value (overview) - Funded Equity - Funded Current Debt">Total Equity</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquity || 0)}</p>
+                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
+                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
                 </div>
                     <ChartBarIcon className="h-16 w-16 text-blue-600" />
+              </div>
+
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl">
+                <div>
+                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
+                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
+                </div>
+                    <ChartBarIcon className="h-16 w-16 text-indigo-600" />
               </div>
               
                   <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl">
