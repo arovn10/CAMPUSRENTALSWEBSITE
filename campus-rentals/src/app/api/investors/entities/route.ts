@@ -43,6 +43,14 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json()
     
+    // Validate required fields
+    if (!body.contactPerson || body.contactPerson.trim() === '') {
+      return NextResponse.json(
+        { error: 'Contact Person is required' },
+        { status: 400 }
+      )
+    }
+    
     // Create new entity
     const entity = await prisma.entity.create({
       data: {
