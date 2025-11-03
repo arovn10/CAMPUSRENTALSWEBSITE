@@ -394,8 +394,8 @@ export default function InvestorDashboard() {
     // Backward compatibility single totalEquity mirrors Today
     const totalEquity = totalEquityToday
 
-    // Total Returns = Total Equity - Total Invested (overview)
-    const totalReturn = totalEquity - totalInvestedOverview
+    // Total Returns to date = Total Equity Today − Total Invested (FUNDED & STABILIZED)
+    const totalReturn = totalEquityToday - totalInvestedFundedAndStabilized
     const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
     const totalDistributions = investmentData.reduce((sum, inv) => 
       sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
@@ -1034,7 +1034,7 @@ export default function InvestorDashboard() {
                     setCalcTitle('Total Returns (Current)')
                     setCalcLines([
                       { label: 'Total Equity Today (Estimated)', value: (stats as any).totalEquityToday || 0 },
-                      { label: '− Total Invested (FUNDED)', value: -(stats.totalInvested || 0) },
+                      { label: '− Total Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
                     ])
                     setShowCalcModal(true)
                   }}>
