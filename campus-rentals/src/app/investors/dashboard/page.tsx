@@ -529,26 +529,26 @@ export default function InvestorDashboard() {
     const totalProperties = investmentData.length
     const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
 
+    // Filter for stabilized, funded properties only (used for revenue/NOI calculations)
+    const stabilizedFunded = investmentData.filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
+
     // Monthly Revenue (from stabilized, funded properties only) - sum of rent + other income
-    const monthlyRevenue = investmentData
-      .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
-      .reduce((sum: number, inv: Investment) => {
-        const rent = inv.property?.monthlyRent || 0
-        const other = inv.property?.otherIncome || 0
-        return sum + (rent + other)
-      }, 0)
+    const monthlyRevenue = stabilizedFunded.reduce((sum: number, inv: Investment) => {
+      const rent = inv.property?.monthlyRent || 0
+      const other = inv.property?.otherIncome || 0
+      return sum + (rent + other)
+    }, 0)
 
     // Monthly Debt Service and Condo Fees (from stabilized, funded properties only)
-    const monthlyDebtServiceAndCondoFees = investmentData
-      .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
-      .reduce((sum: number, inv: Investment) => {
-        const debtSvc = inv.estimatedMonthlyDebtService || 0
-        // TODO: Add condo fees if available in property data
-        return sum + debtSvc
-      }, 0)
+    const monthlyDebtServiceAndCondoFees = stabilizedFunded.reduce((sum: number, inv: Investment) => {
+      const debtSvc = inv.estimatedMonthlyDebtService || 0
+      // TODO: Add condo fees if available in property data
+      return sum + debtSvc
+    }, 0)
 
-    // NOI aggregates
-    const monthlyNOIBeforeDebt = investmentData.reduce((sum: number, inv: Investment) => {
+    // NOI aggregates (from stabilized, funded properties only)
+    // Monthly NOI Before Debt = Revenue (rent + other income) - Operating Expenses
+    const monthlyNOIBeforeDebt = stabilizedFunded.reduce((sum: number, inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
       const other = inv.property?.otherIncome || 0
       const annualExp = inv.property?.annualExpenses || 0
@@ -556,15 +556,8 @@ export default function InvestorDashboard() {
       return sum + Math.max((rent + other) - monthlyExp, 0)
     }, 0)
 
-    const monthlyNOIAfterDebt = investmentData.reduce((sum: number, inv: Investment) => {
-      const rent = inv.property?.monthlyRent || 0
-      const other = inv.property?.otherIncome || 0
-      const annualExp = inv.property?.annualExpenses || 0
-      const monthlyExp = annualExp / 12
-      const beforeDebt = Math.max((rent + other) - monthlyExp, 0)
-      const debtSvc = inv.estimatedMonthlyDebtService || 0
-      return sum + (beforeDebt - debtSvc)
-    }, 0)
+    // Monthly NOI After Debt = Monthly NOI Before Debt - Monthly Debt Service
+    const monthlyNOIAfterDebt = monthlyNOIBeforeDebt - monthlyDebtServiceAndCondoFees
 
     const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
     const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
@@ -1347,6 +1340,8 @@ export default function InvestorDashboard() {
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Start</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Complete</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
                     </tr>
                   </thead>
@@ -1357,7 +1352,6 @@ export default function InvestorDashboard() {
                       
                       if (analyticsScope === 'PERSON') {
                         investments
-                          .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
                           .forEach(inv => {
                             if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
                               // Expand entity investment into individual person rows
@@ -1388,7 +1382,6 @@ export default function InvestorDashboard() {
                       } else {
                         // Non-person view - use existing filter logic
                         displayInvestments = investments
-                          .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
                           .filter(inv => {
                             if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
                             if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
@@ -1439,6 +1432,12 @@ export default function InvestorDashboard() {
                           <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
                             {dscr !== null ? dscr.toFixed(2) : '—'}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            {inv.property?.acquisitionDate ? new Date(inv.property.acquisitionDate).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            {inv.property?.constructionCompletionDate ? new Date(inv.property.constructionCompletionDate).toLocaleDateString() : '—'}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                             <button
                               onClick={() => openProforma(inv)}
@@ -1456,7 +1455,6 @@ export default function InvestorDashboard() {
                         const personInvestments = (() => {
                           let result: any[] = []
                           investments
-                            .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
                             .forEach(inv => {
                               if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
                                 (inv as any).entityOwners.forEach((owner: any) => {
@@ -1557,6 +1555,12 @@ export default function InvestorDashboard() {
                                 <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgDSCR >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
                                   {avgDSCR > 0 ? avgDSCR.toFixed(2) : '—'}
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                  <span className="text-xs text-slate-500">—</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                  <span className="text-xs text-slate-500">—</span>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                                   <span className="text-xs text-slate-500">Summary</span>
                                 </td>
@@ -1570,7 +1574,6 @@ export default function InvestorDashboard() {
                         if (analyticsScope === 'PERSON') {
                           let result: any[] = []
                           investments
-                            .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
                             .forEach(inv => {
                               if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
                                 (inv as any).entityOwners.forEach((owner: any) => {
@@ -1585,7 +1588,6 @@ export default function InvestorDashboard() {
                           return result
                         } else {
                           return investments.filter(inv => {
-                            if (inv.dealStatus === 'UNDER_CONSTRUCTION') return false
                             if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
                             if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
                             return true
@@ -1594,7 +1596,7 @@ export default function InvestorDashboard() {
                       })()
                       return displayInvestments.length === 0 && (
                         <tr>
-                          <td colSpan={analyticsScope === 'PERSON' ? 9 : 8} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
+                          <td colSpan={analyticsScope === 'PERSON' ? 11 : 10} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
                         </tr>
                       )
                     })()}

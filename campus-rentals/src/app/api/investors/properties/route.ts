@@ -327,6 +327,7 @@ export async function GET(request: NextRequest) {
         let totalOriginalDebt = 0
         let estimatedMonthlyDebtService = 0
         const now = new Date()
+        let earliestLoanDate: Date | null = null
 
         for (const loan of loans) {
           totalOriginalDebt += loan.originalAmount || 0
@@ -335,6 +336,12 @@ export async function GET(request: NextRequest) {
           const rate = loan.interestRate || 0
           const principal = loan.currentBalance ?? loan.originalAmount
           const start = loan.loanDate ? new Date(loan.loanDate) : null
+          
+          // Track earliest loan closing date for IRR calculation
+          if (start && (!earliestLoanDate || start < earliestLoanDate)) {
+            earliestLoanDate = start
+          }
+          
           const monthsElapsed = start ? Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())) : 0
 
           if (paymentType === 'IO') {
@@ -355,10 +362,15 @@ export async function GET(request: NextRequest) {
         }
 
         // Compute estimated IRR per spec using simple 5-year model
+        // Start date for proforma: use earliest loan closing date if available, otherwise use investment date or acquisition date
+        const proformaStartDate = earliestLoanDate || 
+          (inv.investmentDate ? new Date(inv.investmentDate) : null) ||
+          (inv.property?.acquisitionDate ? new Date(inv.property.acquisitionDate) : new Date())
+        
         const annualNOI = (((inv.property?.monthlyRent || 0) * 12) + ((inv.property?.otherIncome || 0) * 12)) - (inv.property?.annualExpenses || 0)
         const annualDebtService = estimatedMonthlyDebtService * 12
         const yearCashFlows: number[] = []
-        // Year 0 is negative equity (investment amount)
+        // Year 0 is negative equity (investment amount) - this represents the loan closing date
         yearCashFlows.push(-(inv.investmentAmount || 0))
         // Years 1-4
         for (let y = 1; y <= 4; y++) {
@@ -392,7 +404,8 @@ export async function GET(request: NextRequest) {
           estimatedMonthlyDebtService: Math.round(estimatedMonthlyDebtService),
           irr: Math.round(irrCalculated * 100) / 100,
           totalOriginalDebt: Math.round(totalOriginalDebt),
-          totalProjectCost: Math.round((inv.investmentAmount || 0) + totalOriginalDebt)
+          totalProjectCost: Math.round((inv.investmentAmount || 0) + totalOriginalDebt),
+          proformaStartDate: proformaStartDate.toISOString() // Store the start date for proforma calculations
         }
       } catch (_) {
         return { ...inv }
