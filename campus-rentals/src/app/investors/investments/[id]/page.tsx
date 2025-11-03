@@ -4301,7 +4301,7 @@ export default function InvestmentDetailPage() {
               {/* Unified selector: add entity or individual as investor */}
               <div className="bg-blue-50 rounded-lg p-4 mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Entity to Add as Investor
+                  Select Entity or Individual to Add as Investor
                 </label>
                 <select
                   value={selectedEntityToAdd}
@@ -4422,13 +4422,6 @@ export default function InvestmentDetailPage() {
               <div>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-lg font-medium text-gray-900">Entity Investors</h4>
-                    <button
-                      type="button"
-                      onClick={addEntityInvestor}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                    >
-                      Add Investor
-                    </button>
                   </div>
                   <div className="space-y-4">
                     {editingEntityInvestment.entity.entityOwners && editingEntityInvestment.entity.entityOwners.length > 0 ? (
@@ -4445,63 +4438,7 @@ export default function InvestmentDetailPage() {
                           </button>
                         </div>
                         <div className="space-y-2">
-                          <select
-                            value={String(owner.userId || owner.investorEntityId || '')}
-                            onChange={(e) => {
-                              const selectedUser = availableUsers.find(u => String(u.id) === e.target.value)
-                              const selectedEntity = availableEntities.find(entity => String(entity.id) === e.target.value)
-                              
-                              if (selectedUser) {
-                                updateEntityInvestor(index, 'userId', selectedUser.id)
-                                updateEntityInvestor(index, 'investorEntityId', '')
-                                updateEntityInvestor(index, 'user', {
-                                  firstName: selectedUser.firstName,
-                                  lastName: selectedUser.lastName,
-                                  email: selectedUser.email
-                                })
-                              } else if (selectedEntity) {
-                                // If the entity has no contact person, prompt to collect it first
-                                if (!selectedEntity.contactPerson || String(selectedEntity.contactPerson).trim() === '') {
-                                  setPendingEntitySelectionIndex(index)
-                                  setPendingEntityContact({
-                                    id: selectedEntity.id,
-                                    name: selectedEntity.name,
-                                    contactPerson: '',
-                                    contactEmail: '',
-                                    contactPhone: ''
-                                  })
-                                  setShowUpdateEntityContactModal(true)
-                                  return
-                                }
-                                updateEntityInvestor(index, 'userId', '')
-                                updateEntityInvestor(index, 'investorEntityId', String(selectedEntity.id))
-                                updateEntityInvestor(index, 'isEntityInvestor', true)
-                                updateEntityInvestor(index, 'entityName', selectedEntity.name)
-                                updateEntityInvestor(index, 'entityOwnersSnapshot', (selectedEntity as any).entityOwners || [])
-                                updateEntityInvestor(index, 'user', { firstName: '', lastName: '', email: '' })
-                              }
-                            }}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">Select an entity or individual to add as investor...</option>
-                            <optgroup label="Create New Individual">
-                              <option value="NEW_INDIVIDUAL">👤 + New Individual Investor</option>
-                            </optgroup>
-                            <optgroup label="Existing Individual Investors">
-                              {availableUsers.map(user => (
-                                <option key={user.id} value={String(user.id)}>
-                                  {user.firstName} {user.lastName}
-                                </option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Existing Entities">
-                              {availableEntities.map(entity => (
-                                <option key={entity.id} value={String(entity.id)}>
-                                  🏢 {entity.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                          </select>
+                          {/* Selection of investors is now done via the top unified selector */}
                           
                           {owner.investorEntityId ? (
                             <div className="text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2">
