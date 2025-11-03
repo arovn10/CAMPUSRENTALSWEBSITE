@@ -19,12 +19,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     
     const body = await request.json()
     
-    console.log('Entity investment update request body:', {
-      investmentAmount: body.investmentAmount,
-      ownershipPercentage: body.ownershipPercentage,
-      entityOwnersCount: body.entityOwners?.length || 0,
-      entityOwners: body.entityOwners
-    })
+    try {
+      const ownersSummary = (body.entityOwners || []).map((o: any) => ({
+        userId: o.userId || null,
+        investorEntityId: o.investorEntityId || null,
+        ownershipPercentage: o.ownershipPercentage,
+        investmentAmount: o.investmentAmount,
+        breakdownCount: Array.isArray(o.breakdown) ? o.breakdown.length : 0,
+        breakdownTotal: Array.isArray(o.breakdown) ? o.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) : 0
+      }))
+      console.log('Entity investment update request body (summary):', {
+        investmentAmount: body.investmentAmount,
+        ownershipPercentage: body.ownershipPercentage,
+        entityOwnersCount: body.entityOwners?.length || 0,
+        owners: ownersSummary
+      })
+      // Raw payload (truncated)
+      console.log('Raw owners payload (truncated):', JSON.stringify(body.entityOwners || []).slice(0, 2000))
+    } catch (logErr) {
+      console.warn('Failed logging request body:', logErr)
+    }
     
     // First check if the entity investment exists
     const existingEntityInvestment = await prisma.entityInvestment.findUnique({
@@ -129,12 +143,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         // Create new owners
         const entityOwners = []
         for (const owner of body.entityOwners) {
-          console.log('Processing entity owner:', {
+          console.log('Processing entity owner (summary):', {
             entityId: entityInvestment.entityId,
             userId: owner.userId,
-            user: owner.user,
+            investorEntityId: owner.investorEntityId,
             ownershipPercentage: owner.ownershipPercentage,
-            investmentAmount: owner.investmentAmount
+            investmentAmount: owner.investmentAmount,
+            breakdownCount: Array.isArray(owner.breakdown) ? owner.breakdown.length : 0,
+            breakdownTotal: Array.isArray(owner.breakdown) ? owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) : 0
           })
           
           const investorEntityId: string | null = owner.investorEntityId || null

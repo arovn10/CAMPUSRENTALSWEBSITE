@@ -972,25 +972,53 @@ export default function InvestmentDetailPage() {
         return
       }
 
+      const requestBody = {
+        investmentAmount: parseFloat(editingEntityInvestment.investmentAmount),
+        ownershipPercentage: parseFloat(editingEntityInvestment.ownershipPercentage),
+        entityOwners: editingEntityInvestment.entity.entityOwners.map((owner: any) => ({
+          ...owner,
+          ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,
+          investmentAmount: parseFloat(owner.investmentAmount) || 0,
+          breakdown: owner.breakdown || null
+        }))
+      }
+
+      // Verbose client-side logging to inspect what will be saved
+      try {
+        const ownersSummary = requestBody.entityOwners.map((o: any) => ({
+          userId: o.userId || null,
+          investorEntityId: o.investorEntityId || null,
+          ownershipPercentage: o.ownershipPercentage,
+          investmentAmount: o.investmentAmount,
+          breakdownCount: Array.isArray(o.breakdown) ? o.breakdown.length : 0,
+          breakdownTotal: Array.isArray(o.breakdown) ? o.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) : 0
+        }))
+        console.log('[Save] EntityInvestment PUT request body summary:', {
+          investmentAmount: requestBody.investmentAmount,
+          ownershipPercentage: requestBody.ownershipPercentage,
+          owners: ownersSummary
+        })
+        // Also log the raw body in a safe way (truncated)
+        console.log('[Save] Raw owners payload (truncated):', JSON.stringify(requestBody.entityOwners).slice(0, 2000))
+      } catch (logErr) {
+        console.warn('Failed to log request body summary:', logErr)
+      }
+
       const response = await fetch(`/api/investors/entity-investments/${editingEntityInvestment.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAuthToken()}`
         },
-        body: JSON.stringify({
-          investmentAmount: parseFloat(editingEntityInvestment.investmentAmount),
-          ownershipPercentage: parseFloat(editingEntityInvestment.ownershipPercentage),
-          entityOwners: editingEntityInvestment.entity.entityOwners.map((owner: any) => ({
-            ...owner,
-            ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,
-            investmentAmount: parseFloat(owner.investmentAmount) || 0,
-            breakdown: owner.breakdown || null
-          }))
-        })
+        body: JSON.stringify(requestBody)
       })
 
       console.log('Entity investment update response status:', response.status)
+      try {
+        const clone = response.clone()
+        const text = await clone.text()
+        console.log('[Save] Response text (truncated):', text.slice(0, 2000))
+      } catch {}
 
       if (response.ok) {
         setShowEditEntityModal(false)
