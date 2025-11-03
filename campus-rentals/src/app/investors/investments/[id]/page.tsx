@@ -4555,7 +4555,7 @@ export default function InvestmentDetailPage() {
                 </label>
                 <select
                   value={selectedEntityToAdd}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const value = e.target.value
                     if (!value) { setSelectedEntityToAdd(''); return }
 
