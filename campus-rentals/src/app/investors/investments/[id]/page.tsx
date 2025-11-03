@@ -4310,7 +4310,7 @@ export default function InvestmentDetailPage() {
                 </div>
               </div>
 
-              {/* Select Entity to Add as Investor */}
+              {/* Unified selector: add entity or individual as investor */}
               <div className="bg-blue-50 rounded-lg p-4 mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Entity to Add as Investor
@@ -4318,63 +4318,112 @@ export default function InvestmentDetailPage() {
                 <select
                   value={selectedEntityToAdd}
                   onChange={(e) => {
-                    const selectedEntityId = e.target.value
-                    if (!selectedEntityId) {
-                      setSelectedEntityToAdd('')
-                      return
-                    }
-                    
-                    const selectedEntity = availableEntities.find(e => String(e.id) === String(selectedEntityId))
-                    if (!selectedEntity) {
-                      setSelectedEntityToAdd('')
-                      return
-                    }
-                    
-                    // Check if this entity is already added
-                    const alreadyAdded = editingEntityInvestment.entity.entityOwners?.some(
-                      (owner: any) => owner.investorEntityId === selectedEntityId
-                    )
-                    
-                    if (alreadyAdded) {
-                      alert('This entity is already added as an investor.')
-                      setSelectedEntityToAdd('')
-                      return
-                    }
-                    
-                    // Add the selected entity as an investor
-                    const newEntityInvestor = {
-                      id: `temp-${Date.now()}`,
-                      userId: '',
-                      investorEntityId: selectedEntity.id,
-                      isEntityInvestor: true,
-                      entityName: selectedEntity.name,
-                      entityOwnersSnapshot: (selectedEntity as any).entityOwners || [],
-                      user: { firstName: '', lastName: '', email: '' },
-                      ownershipPercentage: 0,
-                      investmentAmount: 0
-                    }
-                    
-                    setEditingEntityInvestment({
-                      ...editingEntityInvestment,
-                      entity: {
-                        ...editingEntityInvestment.entity,
-                        entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newEntityInvestor]
+                    const value = e.target.value
+                    if (!value) { setSelectedEntityToAdd(''); return }
+
+                    if (value === 'NEW_INDIVIDUAL') {
+                      const newOwner = {
+                        id: `temp_${Date.now()}`,
+                        userId: '',
+                        investorEntityId: '',
+                        isEntityInvestor: false,
+                        entityName: '',
+                        entityOwnersSnapshot: [],
+                        user: { firstName: '', lastName: '', email: '' },
+                        ownershipPercentage: 0,
+                        investmentAmount: 0
                       }
-                    })
-                    
-                    // Reset the select
+                      setEditingEntityInvestment({
+                        ...editingEntityInvestment,
+                        entity: {
+                          ...editingEntityInvestment.entity,
+                          entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newOwner]
+                        }
+                      })
+                      setSelectedEntityToAdd('')
+                      return
+                    }
+
+                    const [kind, id] = value.split(':')
+                    if (kind === 'user') {
+                      const selectedUser = availableUsers.find(u => String(u.id) === id)
+                      if (!selectedUser) { setSelectedEntityToAdd(''); return }
+                      const newOwner = {
+                        id: `temp_${Date.now()}`,
+                        userId: String(selectedUser.id),
+                        investorEntityId: '',
+                        isEntityInvestor: false,
+                        entityName: '',
+                        entityOwnersSnapshot: [],
+                        user: { firstName: selectedUser.firstName, lastName: selectedUser.lastName, email: selectedUser.email },
+                        ownershipPercentage: 0,
+                        investmentAmount: 0
+                      }
+                      setEditingEntityInvestment({
+                        ...editingEntityInvestment,
+                        entity: {
+                          ...editingEntityInvestment.entity,
+                          entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newOwner]
+                        }
+                      })
+                      setSelectedEntityToAdd('')
+                      return
+                    }
+
+                    if (kind === 'entity') {
+                      const selectedEntity = availableEntities.find(en => String(en.id) === id)
+                      if (!selectedEntity) { setSelectedEntityToAdd(''); return }
+                      const alreadyAdded = editingEntityInvestment.entity.entityOwners?.some((owner: any) => String(owner.investorEntityId) === String(id))
+                      if (alreadyAdded) { alert('This entity is already added as an investor.'); setSelectedEntityToAdd(''); return }
+                      if (!selectedEntity.contactPerson || String(selectedEntity.contactPerson).trim() === '') {
+                        setPendingEntitySelectionIndex(editingEntityInvestment.entity.entityOwners?.length || 0)
+                        setPendingEntityContact({ id: selectedEntity.id, name: selectedEntity.name, contactPerson: '', contactEmail: '', contactPhone: '' })
+                        setShowUpdateEntityContactModal(true)
+                        return
+                      }
+                      const newEntityInvestor = {
+                        id: `temp_${Date.now()}`,
+                        userId: '',
+                        investorEntityId: String(selectedEntity.id),
+                        isEntityInvestor: true,
+                        entityName: selectedEntity.name,
+                        entityOwnersSnapshot: (selectedEntity as any).entityOwners || [],
+                        user: { firstName: '', lastName: '', email: '' },
+                        ownershipPercentage: 0,
+                        investmentAmount: 0
+                      }
+                      setEditingEntityInvestment({
+                        ...editingEntityInvestment,
+                        entity: { ...editingEntityInvestment.entity, entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newEntityInvestor] }
+                      })
+                      setSelectedEntityToAdd('')
+                      return
+                    }
+
                     setSelectedEntityToAdd('')
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select an entity or individual to add as investor...</option>
-                  {availableEntities
-                    .filter(entity => entity.id !== editingEntityInvestment.entity.id) // Exclude current entity
-                    .map(entity => (
-                      <option key={entity.id} value={String(entity.id)}>
-                        {entity.name} ({entity.type})
+                  <optgroup label="Create New Individual">
+                    <option value="NEW_INDIVIDUAL">👤 + New Individual Investor</option>
+                  </optgroup>
+                  <optgroup label="Existing Individual Investors">
+                    {availableUsers.map(user => (
+                      <option key={user.id} value={`user:${String(user.id)}`}>
+                        {user.firstName} {user.lastName}
                       </option>
                     ))}
+                  </optgroup>
+                  <optgroup label="Existing Entities">
+                    {availableEntities
+                      .filter(entity => entity.id !== editingEntityInvestment.entity.id)
+                      .map(entity => (
+                        <option key={entity.id} value={`entity:${String(entity.id)}`}>
+                          🏢 {entity.name}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
                 <p className="text-xs text-gray-500 mt-2">
                   Select an entity or individual to automatically add them as an investor and view entity members below.
