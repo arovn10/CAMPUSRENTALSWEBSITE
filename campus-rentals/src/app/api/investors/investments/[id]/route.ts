@@ -60,6 +60,7 @@ export async function PUT(
       data: {
         investmentAmount: parseFloat(body.investmentAmount) || 0,
         ownershipPercentage: parseFloat(body.ownershipPercentage) || 0,
+        investmentDate: body.investmentDate ? new Date(body.investmentDate) : undefined,
         status: body.status || 'ACTIVE',
       }
     })

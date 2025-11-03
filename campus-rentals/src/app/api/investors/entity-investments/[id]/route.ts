@@ -70,7 +70,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         where: { id: params.id },
         data: {
           investmentAmount: body.investmentAmount,
-          ownershipPercentage: body.ownershipPercentage
+          ownershipPercentage: body.ownershipPercentage,
+          investmentDate: body.investmentDate ? new Date(body.investmentDate) : undefined
         }
       })
 

@@ -434,6 +434,7 @@ export default function InvestmentDetailPage() {
       const requestBody = {
         // investmentAmount is calculated from entity investments, not editable here
         ownershipPercentage: parseFloat(editData.ownershipPercentage),
+        investmentDate: editData.investmentDate ? new Date(editData.investmentDate) : null,
         status: investment?.status || 'ACTIVE',
         monthlyRent: parseFloat(editData.monthlyRent),
         capRate: parseFloat(editData.capRate),
@@ -2162,30 +2163,32 @@ export default function InvestmentDetailPage() {
             {/* Investment Overview */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investment Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Investment Amount</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(() => {
-                          // Sum individual investor amounts from all entity investments
-                          const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
-                            // Use per-deal owners if available, otherwise fall back to global entity owners
-                            const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
-                              ? ei.entityInvestmentOwners 
-                              : (ei.entity?.entityOwners || [])
-                            const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
-                              ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
-                            )
-                            return sum + ownersSum
-                          }, 0)
-                          return totalFromOwners || investment.investmentAmount || 0
-                        }())}
-                      </p>
-                    </div>
-                  </div>
+              {(() => {
+                // Calculate total investment from individual investor amounts
+                const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
+                  // Use per-deal owners if available, otherwise fall back to global entity owners
+                  const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                    ? ei.entityInvestmentOwners 
+                    : (ei.entity?.entityOwners || [])
+                  const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
+                    ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
+                  )
+                  return sum + ownersSum
+                }, 0)
+                const displayInvestmentAmount = totalFromOwners || investment.investmentAmount || 0
+                
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600">Investment Amount</p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {formatCurrency(displayInvestmentAmount)}
+                          </p>
+                        </div>
+                      </div>
                   <div className="flex items-center space-x-3">
                     <ChartBarIcon className="h-5 w-5 text-gray-400" />
                     <div>
@@ -2232,6 +2235,8 @@ export default function InvestmentDetailPage() {
                   </div>
                 </div>
               </div>
+                )
+              })()}
             </div>
 
             {/* Property Details */}
