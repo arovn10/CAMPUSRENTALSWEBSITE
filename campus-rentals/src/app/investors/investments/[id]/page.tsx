@@ -2438,7 +2438,8 @@ export default function InvestmentDetailPage() {
                 </div>
               )}
 
-              {/* All Investors Summary */}
+              {/* All Investors Summary (hidden to avoid redundancy with section above) */}
+              {false && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">All Investors Summary</h3>
                 
@@ -2562,6 +2563,7 @@ export default function InvestmentDetailPage() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Property Timeline */}
               <div className="mt-6 pt-6 border-t border-gray-200">
