@@ -2164,29 +2164,36 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investment Overview</h2>
               {(() => {
-                // For investors, show only their individual investment amount from entity owners
-                // For admins/managers, show total investment from all owners
-                if (currentUser?.role === 'INVESTOR' && investment.investmentType === 'ENTITY') {
-                  const investorName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                  let individualAmount = 0
-                  
-                  // Find this investor's amount in entity owners
-                  for (const ei of propertyEntityInvestments) {
-                    const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
-                      ? ei.entityInvestmentOwners 
-                      : (ei.entity?.entityOwners || [])
+                // For investors, show their individual investment amount
+                // For entity investments, extract from entity owners
+                // For direct investments, show the investment amount directly
+                if (currentUser?.role === 'INVESTOR') {
+                  if (investment.investmentType === 'ENTITY') {
+                    // Entity investment - find this investor's individual amount
+                    const investorName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                    let individualAmount = 0
                     
-                    const matchingOwner = owners.find((owner: any) => {
-                      const ownerName = (owner.userName || '').trim().toLowerCase()
-                      return ownerName === investorName
-                    })
-                    
-                    if (matchingOwner && matchingOwner.investmentAmount) {
-                      individualAmount += parseFloat(matchingOwner.investmentAmount || 0)
+                    // Find this investor's amount in entity owners
+                    for (const ei of propertyEntityInvestments) {
+                      const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                        ? ei.entityInvestmentOwners 
+                        : (ei.entity?.entityOwners || [])
+                      
+                      const matchingOwner = owners.find((owner: any) => {
+                        const ownerName = (owner.userName || '').trim().toLowerCase()
+                        return ownerName === investorName
+                      })
+                      
+                      if (matchingOwner && matchingOwner.investmentAmount) {
+                        individualAmount += parseFloat(matchingOwner.investmentAmount || 0)
+                      }
                     }
+                    
+                    var displayInvestmentAmount = individualAmount || investment.investmentAmount || 0
+                  } else {
+                    // Direct investment - show the investment amount directly
+                    var displayInvestmentAmount = investment.investmentAmount || 0
                   }
-                  
-                  const displayInvestmentAmount = individualAmount || investment.investmentAmount || 0
                 } else {
                   // For admins/managers, calculate total investment from individual investor amounts
                   const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
