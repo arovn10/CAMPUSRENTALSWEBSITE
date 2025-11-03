@@ -204,8 +204,6 @@ export default function InvestorDashboard() {
       
       if (investmentsResponse.ok) {
         const investmentsData = await investmentsResponse.json()
-        setInvestments(investmentsData || [])
-        
         // For investors, if they're auto-filtered, we need to recalculate stats
         // But first, just calculate with all returned investments (API already filters for investors)
         // The useEffect will handle the person filter recalculation
@@ -245,25 +243,47 @@ export default function InvestorDashboard() {
             }
           })
           
+          // CRITICAL: Set investments state with processed data that has entityOwners preserved
+          setInvestments(investorInvestments)
+          
+          // Debug: Log raw API response to see what entityOwners data we're getting
+          const entityInvestmentsFromAPI = investmentsData.filter((inv: any) => inv.investmentType === 'ENTITY')
           console.log('Investor stats calculation:', {
             investorName,
             totalInvestments: investmentsData.length,
+            entityInvestmentsCount: entityInvestmentsFromAPI.length,
             processedInvestments: investorInvestments.length,
             totalInvested: investorInvestments.reduce((sum: number, inv: any) => sum + (inv.investmentAmount || 0), 0),
-            sampleInvestment: investorInvestments[0] ? {
+            rawAPISample: investmentsData[0] ? {
+              property: investmentsData[0].propertyName,
+              type: investmentsData[0].investmentType,
+              hasEntityOwners: !!(investmentsData[0] as any).entityOwners,
+              entityOwnersCount: (investmentsData[0] as any).entityOwners?.length || 0,
+              entityOwnerNames: (investmentsData[0] as any).entityOwners?.map((o: any) => o.userName) || []
+            } : null,
+            processedSample: investorInvestments[0] ? {
               property: investorInvestments[0].propertyName,
               amount: investorInvestments[0].investmentAmount,
               type: investorInvestments[0].investmentType,
               hasEntityOwners: !!(investorInvestments[0] as any).entityOwners,
+              entityOwnersCount: (investorInvestments[0] as any).entityOwners?.length || 0,
               entityOwners: (investorInvestments[0] as any).entityOwners?.map((o: any) => ({
                 name: o.userName,
                 amount: o.investmentAmount
-              })) || []
+              })) || [],
+              investorName: (investorInvestments[0] as any).investorName
+            } : null,
+            sampleEntityInvestment: investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') ? {
+              property: investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY')?.propertyName,
+              hasEntityOwners: !!(investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners,
+              entityOwnersCount: (investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners?.length || 0,
+              entityOwnerNames: (investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners?.map((o: any) => o.userName) || []
             } : null
           })
           
           calculateStats(investorInvestments)
         } else {
+          setInvestments(investmentsData || [])
           calculateStats(investmentsData || [])
         }
       }
