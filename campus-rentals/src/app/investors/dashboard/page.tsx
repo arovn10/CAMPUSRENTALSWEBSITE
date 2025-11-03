@@ -212,22 +212,47 @@ export default function InvestorDashboard() {
         if (user.role === 'INVESTOR') {
           // For investors, the API already filters to their investments
           // But we need to extract individual amounts from entity owners
+          const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
           const investorInvestments = investmentsData.map((inv: any) => {
             if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
-              // Find the owner that matches this investor
-              const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
-              const matchingOwner = inv.entityOwners.find((owner: any) => 
-                (owner.userName || '').trim() === investorName
-              )
-              if (matchingOwner) {
+              // Find the owner that matches this investor (case-insensitive)
+              const targetNameLower = investorName.toLowerCase()
+              const matchingOwner = inv.entityOwners.find((owner: any) => {
+                const ownerName = (owner.userName || '').trim()
+                return ownerName.toLowerCase() === targetNameLower
+              })
+              if (matchingOwner && matchingOwner.investmentAmount) {
                 return {
                   ...inv,
-                  investmentAmount: matchingOwner.investmentAmount || 0
+                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0
                 }
+              }
+              // If no match found, return with 0 investment amount
+              return {
+                ...inv,
+                investmentAmount: 0
               }
             }
             return inv
           })
+          
+          console.log('Investor stats calculation:', {
+            investorName,
+            totalInvestments: investmentsData.length,
+            processedInvestments: investorInvestments.length,
+            totalInvested: investorInvestments.reduce((sum: number, inv: any) => sum + (inv.investmentAmount || 0), 0),
+            sampleInvestment: investorInvestments[0] ? {
+              property: investorInvestments[0].propertyName,
+              amount: investorInvestments[0].investmentAmount,
+              type: investorInvestments[0].investmentType,
+              hasEntityOwners: !!(investorInvestments[0] as any).entityOwners,
+              entityOwners: (investorInvestments[0] as any).entityOwners?.map((o: any) => ({
+                name: o.userName,
+                amount: o.investmentAmount
+              })) || []
+            } : null
+          })
+          
           calculateStats(investorInvestments)
         } else {
           calculateStats(investmentsData || [])
@@ -1057,11 +1082,41 @@ export default function InvestorDashboard() {
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-500 font-medium">Investment</span>
-                      <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.investmentAmount)}</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {(() => {
+                          // If this is an entity investment and we're filtering by person, extract individual amount
+                          if (investment.investmentType === 'ENTITY' && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL' && (investment as any).entityOwners) {
+                            const targetName = analyticsTarget.trim().toLowerCase()
+                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                              (owner.userName || '').trim().toLowerCase() === targetName
+                            )
+                            if (matchingOwner && matchingOwner.investmentAmount) {
+                              return formatCurrency(matchingOwner.investmentAmount)
+                            }
+                          }
+                          return formatCurrency(investment.investmentAmount)
+                        })()}
+                      </span>
               </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-500 font-medium">Ownership</span>
-                      <span className="text-sm font-bold text-slate-900">{investment.ownershipPercentage}%</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {(() => {
+                          // If this is an entity investment and we're filtering by person, extract individual ownership
+                          if (investment.investmentType === 'ENTITY' && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL' && (investment as any).entityOwners) {
+                            const targetName = analyticsTarget.trim().toLowerCase()
+                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                              (owner.userName || '').trim().toLowerCase() === targetName
+                            )
+                            if (matchingOwner && matchingOwner.ownershipPercentage) {
+                              // Calculate effective ownership: entity ownership % * individual ownership %
+                              const effectiveOwnership = ((investment.ownershipPercentage || 0) / 100) * (matchingOwner.ownershipPercentage || 0)
+                              return `${effectiveOwnership.toFixed(1)}%`
+                            }
+                          }
+                          return `${investment.ownershipPercentage}%`
+                        })()}
+                      </span>
               </div>
                   {typeof investment.estimatedCurrentDebt === 'number' && (
                     <div className="flex items-center justify-between">

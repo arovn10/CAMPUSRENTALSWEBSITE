@@ -3138,91 +3138,96 @@ export default function InvestmentDetailPage() {
               </div>
             )}
 
-            {/* Insurance Information */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Insurance</h2>
-                <button
-                  onClick={() => setShowInsuranceModal(true)}
-                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                {insuranceHistory.length > 0 ? (
-                  <div className="space-y-2">
-                    {insuranceHistory.slice(0, 3).map((insurance: any) => (
-                      <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-gray-900">{insurance.provider}</p>
-                            <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
-                            <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
+            {/* Insurance Information - Only visible to ADMIN and MANAGER */}
+            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Insurance</h2>
+                  <button
+                    onClick={() => setShowInsuranceModal(true)}
+                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {insuranceHistory.length > 0 ? (
+                    <div className="space-y-2">
+                      {insuranceHistory.slice(0, 3).map((insurance: any) => (
+                        <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium text-gray-900">{insurance.provider}</p>
+                              <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
+                              <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
+                            </div>
+                            <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
                         </div>
-                      </div>
-                    ))}
-                    {insuranceHistory.length > 3 && (
-                      <p className="text-sm text-gray-500">+{insuranceHistory.length - 3} more records</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No insurance records</p>
-                )}
-                <button
-                  onClick={() => setShowInsuranceModal(true)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                >
-                  Add Insurance
-                </button>
+                      ))}
+                      {insuranceHistory.length > 3 && (
+                        <p className="text-sm text-gray-500">+{insuranceHistory.length - 3} more records</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No insurance records</p>
+                  )}
+                  <button
+                    onClick={() => setShowInsuranceModal(true)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                  >
+                    Add Insurance
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Tax Information */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Property Taxes</h2>
-                <button
-                  onClick={() => setShowTaxModal(true)}
-                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                {taxHistory.length > 0 ? (
-                  <div className="space-y-2">
-                    {taxHistory.slice(0, 3).map((tax: any) => (
-                      <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
-                            <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
+            {/* Tax Information - Only visible to ADMIN and MANAGER */}
+            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Property Taxes</h2>
+                  <button
+                    onClick={() => setShowTaxModal(true)}
+                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {taxHistory.length > 0 ? (
+                    <div className="space-y-2">
+                      {taxHistory.slice(0, 3).map((tax: any) => (
+                        <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
+                              <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
+                            </div>
+                            <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
                         </div>
-                      </div>
-                    ))}
-                    {taxHistory.length > 3 && (
-                      <p className="text-sm text-gray-500">+{taxHistory.length - 3} more records</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No tax records</p>
-                )}
-                <button
-                  onClick={() => setShowTaxModal(true)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                >
-                  Add Tax Information
-                </button>
+                      ))}
+                      {taxHistory.length > 3 && (
+                        <p className="text-sm text-gray-500">+{taxHistory.length - 3} more records</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No tax records</p>
+                  )}
+                  <button
+                    onClick={() => setShowTaxModal(true)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                  >
+                    Add Tax Information
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Waterfall Distributions - STRUCTURE CARDS SECTION */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            {/* Waterfall Distributions - Only visible to ADMIN and MANAGER */}
+            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
                 <div className="flex space-x-2">
@@ -3372,6 +3377,7 @@ export default function InvestmentDetailPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
