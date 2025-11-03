@@ -31,11 +31,13 @@ export async function GET(request: NextRequest) {
             include: {
               entityOwners: {
                 include: {
-                  user: true
+                  user: true,
+                  investorEntity: true
                 }
               }
             }
-          }
+          },
+          entityInvestmentOwners: { include: { user: true, investorEntity: true } }
         }
       })
     } else {
@@ -160,11 +162,17 @@ export async function GET(request: NextRequest) {
       const owners = hasPerDealOwners 
         ? entityInvestment.entityInvestmentOwners 
         : (entityInvestment.entity?.entityOwners || [])
-      const calculatedInvestmentAmount = owners.reduce((sum: number, owner: any) => 
-        sum + (parseFloat(owner.investmentAmount || 0)), 0
-      )
-      // Use calculated amount if available, otherwise fall back to entityInvestment.investmentAmount
-      const finalInvestmentAmount = calculatedInvestmentAmount > 0 ? calculatedInvestmentAmount : entityInvestment.investmentAmount
+      
+      // If we have owners, always calculate from their amounts (even if sum is 0)
+      // Otherwise fall back to entityInvestment.investmentAmount
+      let finalInvestmentAmount = entityInvestment.investmentAmount || 0
+      if (owners.length > 0) {
+        const calculatedInvestmentAmount = owners.reduce((sum: number, owner: any) => {
+          const ownerAmount = parseFloat(owner.investmentAmount || 0)
+          return sum + ownerAmount
+        }, 0)
+        finalInvestmentAmount = calculatedInvestmentAmount
+      }
 
       const totalDistributions = entityInvestment.entityDistributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
       const currentValue = entityInvestment.property.currentValue || finalInvestmentAmount
