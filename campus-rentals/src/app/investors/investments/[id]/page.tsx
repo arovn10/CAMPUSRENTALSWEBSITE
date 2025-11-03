@@ -432,14 +432,14 @@ export default function InvestmentDetailPage() {
     
     try {
       const requestBody = {
-        investmentAmount: parseFloat(editData.investmentAmount),
+        // investmentAmount is calculated from entity investments, not editable here
         ownershipPercentage: parseFloat(editData.ownershipPercentage),
         status: investment?.status || 'ACTIVE',
         monthlyRent: parseFloat(editData.monthlyRent),
         capRate: parseFloat(editData.capRate),
         occupancyRate: parseFloat(editData.occupancyRate),
         annualExpenses: parseFloat(editData.annualExpenses),
-        debtAmount: parseFloat(editData.debtAmount),
+        // debtAmount is managed in Property Loans section, not editable here
         debtDetails: editData.debtDetails,
         acquisitionPrice: parseFloat(editData.acquisitionPrice),
         constructionCost: parseFloat(editData.constructionCost),
@@ -2169,7 +2169,20 @@ export default function InvestmentDetailPage() {
                     <div>
                       <p className="text-sm text-gray-600">Investment Amount</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(propertyEntityInvestments.reduce((sum, ei) => sum + (parseFloat(ei.investmentAmount || 0)), 0) || investment.investmentAmount || 0)}
+                        {formatCurrency(() => {
+                          // Sum individual investor amounts from all entity investments
+                          const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
+                            // Use per-deal owners if available, otherwise fall back to global entity owners
+                            const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                              ? ei.entityInvestmentOwners 
+                              : (ei.entity?.entityOwners || [])
+                            const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
+                              ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
+                            )
+                            return sum + ownersSum
+                          }, 0)
+                          return totalFromOwners || investment.investmentAmount || 0
+                        }())}
                       </p>
                     </div>
                   </div>
@@ -3468,17 +3481,10 @@ export default function InvestmentDetailPage() {
                 <div>
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Investment Details</h4>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Investment Amount
-                      </label>
-                      <input
-                        type="number"
-                        value={editData.investmentAmount}
-                        onChange={(e) => setEditData({ ...editData, investmentAmount: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> Investment amount is calculated from entity investments and cannot be edited here.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3688,16 +3694,10 @@ export default function InvestmentDetailPage() {
                 <div>
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Debt Information</h4>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Debt Amount
-                      </label>
-                      <input
-                        type="number"
-                        value={editData.debtAmount}
-                        onChange={(e) => setEditData({ ...editData, debtAmount: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> Debt amount is managed in the Property Loans section and cannot be edited here.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
