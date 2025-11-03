@@ -3638,12 +3638,7 @@ export default function InvestmentDetailPage() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Set Contact For: {pendingEntityContact.name}</h3>
-              <button
-                onClick={() => { setShowUpdateEntityContactModal(false); setPendingEntityContact(null); setPendingEntitySelectionIndex(null) }}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
+              <span className="text-xs text-gray-500">Required before adding entity</span>
             </div>
             <form
               onSubmit={async (e) => {
@@ -3725,17 +3720,10 @@ export default function InvestmentDetailPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => { setShowUpdateEntityContactModal(false); setPendingEntityContact(null); setPendingEntitySelectionIndex(null) }}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
-                >
-                  Cancel
-                </button>
+              <div className="flex pt-4">
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
                 >
                   Save Contact Info
                 </button>
