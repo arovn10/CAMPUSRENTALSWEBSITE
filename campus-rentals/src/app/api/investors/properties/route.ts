@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
                 }
               }
             }
-          }
+          },
+          entityInvestmentOwners: { include: { user: true, investorEntity: true } }
         },
         where: {
           entity: {
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
         const extraEntityInvestments = await prisma.entityInvestment.findMany({
           where: { propertyId: { in: extraPropertyIds } },
-          include: { property: true, entityDistributions: true, entity: { include: { entityOwners: { include: { user: true } } } } }
+          include: { property: true, entityDistributions: true, entity: { include: { entityOwners: { include: { user: true } } } }, entityInvestmentOwners: { include: { user: true, investorEntity: true } } }
         })
         entityInvestments = entityInvestments.concat(extraEntityInvestments)
       }

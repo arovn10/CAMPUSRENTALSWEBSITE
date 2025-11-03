@@ -130,15 +130,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         })
       }
       
-      // Update entity owners
+      // Update per-investment entity owners (does not change global entity membership)
       if (body.entityOwners) {
-        console.log('Updating entity owners for entity:', entityInvestment.entityId)
+        console.log('Updating entity investment owners for investment:', entityInvestment.id)
         
-        // Delete existing owners
-        const deletedOwners = await tx.entityOwner.deleteMany({
-          where: { entityId: entityInvestment.entityId }
+        // Delete existing owners for this investment only
+        const deletedOwners = await tx.entityInvestmentOwner.deleteMany({
+          where: { entityInvestmentId: entityInvestment.id }
         })
-        console.log('Deleted existing owners:', deletedOwners.count)
+        console.log('Deleted existing investment owners:', deletedOwners.count)
         
         // Create new owners
         const entityOwners = []
@@ -218,9 +218,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           }
           
           try {
-            const entityOwner = await tx.entityOwner.create({
+            const entityOwner = await tx.entityInvestmentOwner.create({
               data: {
-                entityId: entityInvestment.entityId,
+                entityInvestmentId: entityInvestment.id,
                 userId: userId || null,
                 investorEntityId: investorEntityId || null,
                 ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,

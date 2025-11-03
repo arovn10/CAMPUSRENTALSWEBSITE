@@ -56,6 +56,7 @@ model User {
   insurance         Insurance[]
   propertyTaxes     PropertyTax[]
   waterfallTierDistributions WaterfallTierDistribution[]
+  entityInvestmentOwners EntityInvestmentOwner[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   auditLogs         AuditLog[]
@@ -401,6 +402,7 @@ model Entity {
   user          User       @relation(fields: [createdBy], references: [id])
   entityInvestments EntityInvestment[]
   entityOwners  EntityOwner[]
+  entityInvestmentOwnerInvestors EntityInvestmentOwner[] @relation("EntityToEntityInvestmentOwner")
   investmentsAsEntityInvestor EntityOwner[] @relation("EntityToEntityInvestor")
 
   @@map("entities")
@@ -422,6 +424,7 @@ model EntityInvestment {
   property          Property         @relation(fields: [propertyId], references: [id])
   entityDistributions EntityDistribution[]
   waterfallTierDistributions WaterfallTierDistribution[]
+  entityInvestmentOwners EntityInvestmentOwner[]
 
   @@map("entity_investments")
 }
@@ -444,6 +447,26 @@ model EntityOwner {
   investorEntity    Entity?  @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
 
   @@map("entity_owners")
+}
+
+// Per-property owners for an entity investment (does not change global entity membership)
+model EntityInvestmentOwner {
+  id                   String   @id @default(cuid())
+  entityInvestmentId   String
+  userId               String?
+  investorEntityId     String?
+  ownershipPercentage  Float
+  investmentAmount     Float
+  breakdown            Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  entityInvestment     EntityInvestment @relation(fields: [entityInvestmentId], references: [id], onDelete: Cascade)
+  user                 User?            @relation(fields: [userId], references: [id])
+  investorEntity       Entity?          @relation("EntityToEntityInvestmentOwner", fields: [investorEntityId], references: [id])
+
+  @@map("entity_investment_owners")
 }
 
 model EntityDistribution {

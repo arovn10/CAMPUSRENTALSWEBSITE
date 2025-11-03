@@ -797,12 +797,17 @@ export default function InvestmentDetailPage() {
       await fetchAvailableEntities()
     }
     
+    // Determine owners: prefer per-deal owners, else fallback to global entity owners
+    const ownersFromApi = (entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0)
+      ? entityInvestment.entityInvestmentOwners
+      : (entityInvestment.entity?.entityOwners || [])
+
     // Map breakdown data from database to owners
     const entityInvestmentWithBreakdown = {
       ...entityInvestment,
       entity: {
         ...entityInvestment.entity,
-        entityOwners: entityInvestment.entity?.entityOwners?.map((owner: any) => ({
+        entityOwners: ownersFromApi.map((owner: any) => ({
           ...owner,
           breakdown: owner.breakdown ? (Array.isArray(owner.breakdown) ? owner.breakdown : []) : null,
           showBreakdown: Array.isArray(owner.breakdown) && owner.breakdown.length > 0
@@ -2355,17 +2360,17 @@ export default function InvestmentDetailPage() {
                         </div>
                       </div>
 
-                      {/* Entity Owners */}
-                      {entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0 && (
+                      {/* Entity Owners - prefer per-deal owners if available */}
+                      {((entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0) || (entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0)) && (
                         <div className="mt-4">
                           <div className="flex items-center justify-between mb-3">
-                            <h5 className="text-sm font-medium text-gray-700">Individual Investors ({entityInvestment.entity.entityOwners.length})</h5>
+                            <h5 className="text-sm font-medium text-gray-700">Individual Investors ({(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length)})</h5>
                             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              {entityInvestment.entity.entityOwners.length} investor{entityInvestment.entity.entityOwners.length !== 1 ? 's' : ''}
+                              {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length)} investor{(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length) !== 1 ? 's' : ''}
                             </span>
                           </div>
                           <div className="space-y-3">
-                            {entityInvestment.entity.entityOwners.map((owner: any) => (
+                            {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners : entityInvestment.entity.entityOwners).map((owner: any) => (
                               <div key={owner.id} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center space-x-3">

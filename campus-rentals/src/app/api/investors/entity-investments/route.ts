@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
+        entityInvestmentOwners: { include: { user: true, investorEntity: true } },
         property: true,
         entityDistributions: {
           include: {
