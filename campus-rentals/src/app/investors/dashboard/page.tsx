@@ -1125,9 +1125,27 @@ export default function InvestorDashboard() {
                     className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
                   >
                     <option value="ALL">All</option>
-                    {analyticsScope==='PERSON' && Array.from(new Set(investments.map(inv => (inv as any).investorName).filter(Boolean))).map(name=> (
-                      <option key={name as string} value={name as string}>{name as string}</option>
-                    ))}
+                    {analyticsScope==='PERSON' && (() => {
+                      // Collect all individual people from direct investments and entity owners
+                      const allPeople = new Set<string>()
+                      investments.forEach(inv => {
+                        // Direct investments
+                        if ((inv as any).investorName) {
+                          allPeople.add((inv as any).investorName)
+                        }
+                        // Entity investments - get individual owners
+                        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners) {
+                          (inv as any).entityOwners.forEach((owner: any) => {
+                            if (owner.userName) {
+                              allPeople.add(owner.userName)
+                            }
+                          })
+                        }
+                      })
+                      return Array.from(allPeople).sort().map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))
+                    })()}
                     {analyticsScope==='ENTITY' && Array.from(new Set(investments.map(inv => inv.entityName).filter(Boolean))).map(name=> (
                       <option key={name as string} value={name as string}>{name as string}</option>
                     ))}
@@ -1138,6 +1156,9 @@ export default function InvestorDashboard() {
                 <table className="min-w-full divide-y divide-slate-200/60">
                   <thead className="bg-slate-50/80">
                     <tr>
+                      {analyticsScope === 'PERSON' && (
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Person</th>
+                      )}
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Current Debt</th>
@@ -1149,15 +1170,53 @@ export default function InvestorDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
-                    {investments
-                      .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
-                      .filter(inv => {
-                        if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
-                        if (analyticsScope==='PERSON') return ((inv as any).investorName) === analyticsTarget
-                        if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
-                        return true
-                      })
-                      .map((inv) => {
+                    {(() => {
+                      // Transform investments for "By Person" view - expand entity investments into individual person rows
+                      let displayInvestments: any[] = []
+                      
+                      if (analyticsScope === 'PERSON') {
+                        investments
+                          .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+                          .forEach(inv => {
+                            if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
+                              // Expand entity investment into individual person rows
+                              (inv as any).entityOwners.forEach((owner: any) => {
+                                // Apply person filter if specified
+                                if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) {
+                                  return
+                                }
+                                displayInvestments.push({
+                                  ...inv,
+                                  id: `${inv.id}_${owner.id}`,
+                                  personName: owner.userName,
+                                  investmentAmount: owner.investmentAmount || 0,
+                                  ownershipPercentage: owner.ownershipPercentage || 0
+                                })
+                              })
+                            } else {
+                              // Direct investment - apply person filter if specified
+                              if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) {
+                                return
+                              }
+                              displayInvestments.push({
+                                ...inv,
+                                personName: (inv as any).investorName || 'Direct Investor'
+                              })
+                            }
+                          })
+                      } else {
+                        // Non-person view - use existing filter logic
+                        displayInvestments = investments
+                          .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+                          .filter(inv => {
+                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
+                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
+                            return true
+                          })
+                      }
+                      
+                      return displayInvestments
+                    })().map((inv) => {
                       const rent = inv.property?.monthlyRent || 0
                       const other = inv.property?.otherIncome || 0
                       const annualExp = inv.property?.annualExpenses || 0
@@ -1173,6 +1232,11 @@ export default function InvestorDashboard() {
 
                       return (
                         <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors duration-200">
+                          {analyticsScope === 'PERSON' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                              {inv.personName || 'Unknown'}
+                            </td>
+                          )}
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
                             {inv.propertyName || inv.propertyAddress}
                           </td>
@@ -1205,11 +1269,39 @@ export default function InvestorDashboard() {
                         </tr>
                       )
                     })}
-                    {investments.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
-                      </tr>
-                    )}
+                    {(() => {
+                      const displayInvestments = (() => {
+                        if (analyticsScope === 'PERSON') {
+                          let result: any[] = []
+                          investments
+                            .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+                            .forEach(inv => {
+                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
+                                (inv as any).entityOwners.forEach((owner: any) => {
+                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) return
+                                  result.push(inv)
+                                })
+                              } else {
+                                if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) return
+                                result.push(inv)
+                              }
+                            })
+                          return result
+                        } else {
+                          return investments.filter(inv => {
+                            if (inv.dealStatus === 'UNDER_CONSTRUCTION') return false
+                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
+                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
+                            return true
+                          })
+                        }
+                      })()
+                      return displayInvestments.length === 0 && (
+                        <tr>
+                          <td colSpan={analyticsScope === 'PERSON' ? 9 : 8} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
+                        </tr>
+                      )
+                    })()}
                   </tbody>
                 </table>
                 </div>
