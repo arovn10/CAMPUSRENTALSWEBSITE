@@ -2267,38 +2267,53 @@ export default function InvestmentDetailPage() {
                 {/* Equity Analysis */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Equity Analysis</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600 font-medium">Total Investment</p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {formatCurrency(investment.property.totalCost || 0)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-600 font-medium">Equity to Cost</p>
-                      <p className="text-xl font-bold text-blue-900">
-                        {formatCurrency((investment.property.totalCost || 0) - (investment.property.debtAmount || 0))}
-                      </p>
-                      <p className="text-sm text-blue-700 mt-1">
-                        {investment.property.totalCost > 0 ? 
-                          formatPercentage(((investment.property.totalCost - (investment.property.debtAmount || 0)) / investment.property.totalCost) * 100) : 
-                          '0%'
-                        } of total cost
-                      </p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-green-600 font-medium">Equity to Value</p>
-                      <p className="text-xl font-bold text-green-900">
-                        {formatCurrency(getCurrentNOICalculation() - (investment.property.debtAmount || 0))}
-                      </p>
-                      <p className="text-sm text-green-700 mt-1">
-                        {getCurrentNOICalculation() > 0 ? 
-                          formatPercentage(((getCurrentNOICalculation() - (investment.property.debtAmount || 0)) / getCurrentNOICalculation()) * 100) : 
-                          '0%'
-                        } of current value
-                      </p>
-                    </div>
-                  </div>
+                  {(() => {
+                    // Calculate total investment from entity investments
+                    const totalInvestmentFromEntities = propertyEntityInvestments.reduce(
+                      (sum: number, ei: any) => sum + (parseFloat(ei.investmentAmount || 0)), 
+                      0
+                    )
+                    // Calculate total cost from acquisition price + construction cost
+                    const acquisitionPrice = parseFloat(investment.property.acquisitionPrice || 0)
+                    const constructionCost = parseFloat(investment.property.constructionCost || 0)
+                    const totalCost = investment.property.totalCost 
+                      ? parseFloat(investment.property.totalCost) 
+                      : (acquisitionPrice + constructionCost)
+                    const equityToCostAmount = totalInvestmentFromEntities
+                    const equityToCostPercentage = totalCost > 0 ? (totalInvestmentFromEntities / totalCost) * 100 : 0
+                    const currentValue = getCurrentNOICalculation()
+                    const equityToValueAmount = currentValue - (investment.property.debtAmount || 0)
+                    const equityToValuePercentage = currentValue > 0 ? (equityToValueAmount / currentValue) * 100 : 0
+                    
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-600 font-medium">Total Investment</p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {formatCurrency(totalInvestmentFromEntities)}
+                          </p>
+                        </div>
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-blue-600 font-medium">Equity to Cost</p>
+                          <p className="text-xl font-bold text-blue-900">
+                            {formatCurrency(equityToCostAmount)}
+                          </p>
+                          <p className="text-sm text-blue-700 mt-1">
+                            {formatPercentage(equityToCostPercentage)} of total cost
+                          </p>
+                        </div>
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <p className="text-sm text-green-600 font-medium">Equity to Value</p>
+                          <p className="text-xl font-bold text-green-900">
+                            {formatCurrency(equityToValueAmount)}
+                          </p>
+                          <p className="text-sm text-green-700 mt-1">
+                            {formatPercentage(equityToValuePercentage)} of current value
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
