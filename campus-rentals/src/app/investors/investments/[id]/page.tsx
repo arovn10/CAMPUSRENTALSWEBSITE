@@ -232,6 +232,7 @@ export default function InvestmentDetailPage() {
     visibleToInvestor: true
   })
   const [showBreakdownModal, setShowBreakdownModal] = useState(false)
+  const [openOwnerBreakdownId, setOpenOwnerBreakdownId] = useState<string | null>(null)
   const [breakdownData, setBreakdownData] = useState<any>(null)
   const [showAllWaterfallStructures, setShowAllWaterfallStructures] = useState(false)
   const [waterfallData, setWaterfallData] = useState({
@@ -803,7 +804,8 @@ export default function InvestmentDetailPage() {
         ...entityInvestment.entity,
         entityOwners: entityInvestment.entity?.entityOwners?.map((owner: any) => ({
           ...owner,
-          breakdown: owner.breakdown ? (Array.isArray(owner.breakdown) ? owner.breakdown : []) : null
+          breakdown: owner.breakdown ? (Array.isArray(owner.breakdown) ? owner.breakdown : []) : null,
+          showBreakdown: Array.isArray(owner.breakdown) && owner.breakdown.length > 0
         })) || []
       }
     }
@@ -2369,12 +2371,12 @@ export default function InvestmentDetailPage() {
                                   <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
                                       <span className="text-blue-700 font-semibold text-sm">
-                                        {(owner.user?.firstName || '').charAt(0)}{(owner.user?.lastName || '').charAt(0)}
+                                        {owner.user?.firstName || owner.user?.lastName ? `${(owner.user?.firstName || '').charAt(0)}${(owner.user?.lastName || '').charAt(0)}` : '🏢'}
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</p>
-                                      <p className="text-sm text-gray-600">{owner.user?.email || ''}</p>
+                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : 'Investing Entity'}</p>
+                                      <p className="text-sm text-gray-600">{owner.user?.email || (owner.investorEntityId ? 'Entity investor' : '')}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
@@ -2399,6 +2401,27 @@ export default function InvestmentDetailPage() {
                                     </p>
                                   </div>
                                 </div>
+                                {Array.isArray(owner.breakdown) && owner.breakdown.length > 0 && (
+                                  <div className="mt-3 pt-3 border-t border-gray-100">
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenOwnerBreakdownId(openOwnerBreakdownId === owner.id ? null : owner.id)}
+                                      className="text-xs text-blue-600 hover:text-blue-700"
+                                    >
+                                      {openOwnerBreakdownId === owner.id ? 'Hide entity investment breakdown' : 'View entity investment breakdown'}
+                                    </button>
+                                    {openOwnerBreakdownId === owner.id && (
+                                      <div className="mt-2 space-y-1">
+                                        {owner.breakdown.map((row: any) => (
+                                          <div key={row.id} className="flex justify-between text-xs text-gray-700">
+                                            <span>{row.label}</span>
+                                            <span className="font-medium">{formatCurrency(parseFloat(row.amount || 0))}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="mt-3 pt-3 border-t border-gray-100">
                                   <div className="flex justify-between text-xs text-gray-500">
                                     <span className="font-medium">Entity: {entityInvestment.entity.name}</span>
