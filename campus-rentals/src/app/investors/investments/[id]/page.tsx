@@ -3927,7 +3927,7 @@ export default function InvestmentDetailPage() {
                         {loadingEntities ? 'Loading entities...' : 'Select an entity...'}
                       </option>
                       {availableEntities.map(entity => (
-                        <option key={entity.id} value={entity.id}>
+                        <option key={entity.id} value={String(entity.id)}>
                           {entity.name} ({entity.type})
                         </option>
                       ))}
@@ -4051,7 +4051,7 @@ export default function InvestmentDetailPage() {
                             <select
                               value={investor.entityId}
                               onChange={(e) => {
-                                const selectedEntity = availableEntities.find(e => e.id === e.target.value)
+                                const selectedEntity = availableEntities.find(e => String(e.id) === e.target.value)
                                 updateInvestor(index, 'entityId', e.target.value)
                                 updateInvestor(index, 'entityName', selectedEntity?.name || '')
                               }}
@@ -4060,7 +4060,7 @@ export default function InvestmentDetailPage() {
                             >
                               <option value="">Select entity...</option>
                               {availableEntities.map(entity => (
-                                <option key={entity.id} value={entity.id}>
+                                <option key={entity.id} value={String(entity.id)}>
                                   {entity.name} ({entity.type})
                                 </option>
                               ))}
@@ -4355,7 +4355,7 @@ export default function InvestmentDetailPage() {
                       return
                     }
                     
-                    const selectedEntity = availableEntities.find(e => e.id === selectedEntityId)
+                    const selectedEntity = availableEntities.find(e => String(e.id) === String(selectedEntityId))
                     if (!selectedEntity) {
                       setSelectedEntityToAdd('')
                       return
@@ -4402,7 +4402,7 @@ export default function InvestmentDetailPage() {
                   {availableEntities
                     .filter(entity => entity.id !== editingEntityInvestment.entity.id) // Exclude current entity
                     .map(entity => (
-                      <option key={entity.id} value={entity.id}>
+                      <option key={entity.id} value={String(entity.id)}>
                         {entity.name} ({entity.type})
                       </option>
                     ))}
@@ -4440,10 +4440,10 @@ export default function InvestmentDetailPage() {
                         </div>
                         <div className="space-y-2">
                           <select
-                            value={owner.userId || owner.investorEntityId || ''}
+                            value={String(owner.userId || owner.investorEntityId || '')}
                             onChange={(e) => {
-                              const selectedUser = availableUsers.find(u => u.id === e.target.value)
-                              const selectedEntity = availableEntities.find(entity => entity.id === e.target.value)
+                              const selectedUser = availableUsers.find(u => String(u.id) === e.target.value)
+                              const selectedEntity = availableEntities.find(entity => String(entity.id) === e.target.value)
                               
                               if (selectedUser) {
                                 updateEntityInvestor(index, 'userId', selectedUser.id)
@@ -4468,7 +4468,7 @@ export default function InvestmentDetailPage() {
                                   return
                                 }
                                 updateEntityInvestor(index, 'userId', '')
-                                updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
+                                updateEntityInvestor(index, 'investorEntityId', String(selectedEntity.id))
                                 updateEntityInvestor(index, 'isEntityInvestor', true)
                                 updateEntityInvestor(index, 'entityName', selectedEntity.name)
                                 updateEntityInvestor(index, 'entityOwnersSnapshot', (selectedEntity as any).entityOwners || [])
@@ -4483,14 +4483,14 @@ export default function InvestmentDetailPage() {
                             </optgroup>
                             <optgroup label="Existing Individual Investors">
                               {availableUsers.map(user => (
-                                <option key={user.id} value={user.id}>
+                                <option key={user.id} value={String(user.id)}>
                                   {user.firstName} {user.lastName}
                                 </option>
                               ))}
                             </optgroup>
                             <optgroup label="Existing Entities">
                               {availableEntities.map(entity => (
-                                <option key={entity.id} value={entity.id}>
+                                <option key={entity.id} value={String(entity.id)}>
                                   🏢 {entity.name}
                                 </option>
                               ))}
