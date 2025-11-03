@@ -4531,6 +4531,60 @@ export default function InvestmentDetailPage() {
                                   </ul>
                                 </div>
                               )}
+
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const next = !owner.showBreakdown
+                                    updateEntityInvestor(index, 'showBreakdown', next)
+                                    if (next && (!owner.breakdown || owner.breakdown.length === 0)) {
+                                      const initial = (owner.entityOwnersSnapshot || []).map((m: any) => ({
+                                        id: m.user?.id || m.investorEntity?.id || `m-${Math.random().toString(36).slice(2)}`,
+                                        label: (m.user && (m.user.firstName || m.user.lastName)) ? `${m.user.firstName || ''} ${m.user.lastName || ''}`.trim() : (m.investorEntity?.name || 'Entity Member'),
+                                        amount: 0
+                                      }))
+                                      updateEntityInvestor(index, 'breakdown', initial)
+                                    }
+                                  }}
+                                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                >
+                                  {owner.showBreakdown ? 'Hide entity investment breakdown' : 'Specify entity investment breakdown'}
+                                </button>
+                              </div>
+
+                              {owner.showBreakdown && Array.isArray(owner.breakdown) && (
+                                <div className="mt-3 rounded border border-blue-200 bg-white p-3">
+                                  <div className="text-xs font-semibold text-blue-900 mb-2">Breakdown for this deal</div>
+                                  <div className="space-y-2">
+                                    {owner.breakdown.map((row: any, bi: number) => (
+                                      <div key={row.id || bi} className="flex items-center justify-between gap-3">
+                                        <span className="text-xs text-gray-700 flex-1">{row.label}</span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          value={row.amount || 0}
+                                          onChange={(e) => {
+                                            const amt = parseFloat(e.target.value || '0')
+                                            const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
+                                            updateEntityInvestor(index, 'breakdown', next)
+                                          }}
+                                          className="w-32 px-2 py-1 text-xs border rounded"
+                                          placeholder="0.00"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="mt-2 text-xs text-gray-700 flex justify-between">
+                                    <span>Breakdown total</span>
+                                    <span className={(owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) === parseFloat(owner.investmentAmount || 0) ? 'text-green-600' : 'text-red-600') + ' font-medium'}>
+                                      ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString()}
+                                      {` / $${parseFloat(owner.investmentAmount || 0).toLocaleString()}`}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-gray-500 mt-1">This breakdown is specific to this deal and does not change entity membership.</div>
+                                </div>
+                              )}
                             </div>
                           ) : (!owner.userId && !owner.isEntityInvestor) ? (
                             <div className="grid grid-cols-3 gap-2">
