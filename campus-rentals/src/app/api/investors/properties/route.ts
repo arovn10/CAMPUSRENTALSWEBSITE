@@ -159,12 +159,9 @@ export async function GET(request: NextRequest) {
       const totalReturn = currentValue - entityInvestment.investmentAmount + totalDistributions
       const irr = entityInvestment.investmentAmount > 0 ? ((currentValue / entityInvestment.investmentAmount - 1) * 100) : 0
 
-      // Get the primary investor (first entity owner) for display
-      const primaryOwner = entityInvestment.entity.entityOwners[0]
-      const investorName = (primaryOwner && primaryOwner.user)
-        ? `${primaryOwner.user.firstName} ${primaryOwner.user.lastName}`
-        : 'Multiple Investors'
-      const investorEmail = (primaryOwner && primaryOwner.user) ? (primaryOwner.user.email || '') : ''
+      // For entity investments, show the entity itself as the investor on dashboards
+      const investorName = entityInvestment.entity?.name || 'Entity Investor'
+      const investorEmail = entityInvestment.entity?.contactEmail || ''
 
       return {
         id: entityInvestment.id,
@@ -181,7 +178,7 @@ export async function GET(request: NextRequest) {
         // Expose deal/funding status at top-level for UI badges
         dealStatus: (entityInvestment.property as any).dealStatus || 'STABILIZED',
         fundingStatus: (entityInvestment.property as any).fundingStatus || 'FUNDED',
-        // Include investor info for admin view
+        // Include investor info (entity) for admin view
         investorName: user.role === 'ADMIN' ? investorName : null,
         investorEmail: user.role === 'ADMIN' ? investorEmail : null,
         distributions: entityInvestment.entityDistributions.map((dist: any) => ({
