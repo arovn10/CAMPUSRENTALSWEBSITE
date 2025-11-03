@@ -4351,10 +4351,26 @@ export default function InvestmentDetailPage() {
                     <input
                       type="number"
                       value={editingEntityInvestment.investmentAmount}
-                      onChange={(e) => setEditingEntityInvestment({
-                        ...editingEntityInvestment,
-                        investmentAmount: e.target.value
-                      })}
+                      onChange={(e) => {
+                        const newTotal = e.target.value
+                        const updated = {
+                          ...editingEntityInvestment,
+                          investmentAmount: newTotal,
+                          entity: {
+                            ...editingEntityInvestment.entity,
+                            entityOwners: editingEntityInvestment.entity.entityOwners.map((owner: any) => {
+                              // Only recalculate if no breakdown exists
+                              if (!owner.showBreakdown || !Array.isArray(owner.breakdown) || owner.breakdown.length === 0) {
+                                const ownershipPct = parseFloat(owner.ownershipPercentage || 0)
+                                const calculatedAmount = (parseFloat(newTotal || 0) * ownershipPct) / 100
+                                return { ...owner, investmentAmount: calculatedAmount }
+                              }
+                              return owner // Keep existing amount if breakdown exists
+                            })
+                          }
+                        }
+                        setEditingEntityInvestment(updated)
+                      }}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
@@ -4582,8 +4598,11 @@ export default function InvestmentDetailPage() {
                                           value={row.amount || 0}
                                           onChange={(e) => {
                                             const amt = parseFloat(e.target.value || '0')
-                                        const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
-                                        updateEntityInvestor(index, 'breakdown', next)
+                                            const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
+                                            updateEntityInvestor(index, 'breakdown', next)
+                                            // Auto-sync investment amount from breakdown total
+                                            const breakdownTotal = next.reduce((sum: number, r: any) => sum + parseFloat(r.amount || 0), 0)
+                                            updateEntityInvestor(index, 'investmentAmount', breakdownTotal)
                                           }}
                                           className="w-32 px-2 py-1 text-xs border rounded"
                                           placeholder="0.00"
@@ -4592,25 +4611,10 @@ export default function InvestmentDetailPage() {
                                     ))}
                                   </div>
                                   <div className="mt-2 text-xs text-gray-700 flex items-center justify-between gap-3">
-                                    <span>Breakdown total</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className={(owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) === parseFloat(owner.investmentAmount || 0) ? 'text-green-600' : 'text-red-600') + ' font-medium'}>
-                                        ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString()}
-                                        {` / $${parseFloat(owner.investmentAmount || 0).toLocaleString()}`}
-                                      </span>
-                                      {owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) !== parseFloat(owner.investmentAmount || 0) && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const total = owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0)
-                                            updateEntityInvestor(index, 'investmentAmount', total)
-                                          }}
-                                          className="px-2 py-0.5 border border-blue-300 text-blue-700 rounded hover:bg-blue-50"
-                                        >
-                                          Apply to Amount
-                                        </button>
-                                      )}
-                                    </div>
+                                    <span>Breakdown total (auto-synced to investment amount)</span>
+                                    <span className="text-green-600 font-medium">
+                                      ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
                                   </div>
                                   <div className="text-[10px] text-gray-500 mt-1">This breakdown is specific to this deal and does not change entity membership.</div>
                                 </div>
@@ -4643,21 +4647,46 @@ export default function InvestmentDetailPage() {
                           ) : null}
                           
                           <div className="grid grid-cols-2 gap-2">
-                            <input
-                              type="number"
-                              placeholder="Amount"
-                              value={owner.investmentAmount || ''}
-                              onChange={(e) => updateEntityInvestor(index, 'investmentAmount', e.target.value)}
-                              className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
-                            />
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder="Ownership %"
-                              value={owner.ownershipPercentage || ''}
-                              onChange={(e) => updateEntityInvestor(index, 'ownershipPercentage', e.target.value)}
-                              className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
-                            />
+                            <div>
+                              <label className="block text-xs text-gray-500 mb-1">Investment Amount</label>
+                              <input
+                                type="number"
+                                placeholder="Auto-calculated"
+                                value={(() => {
+                                  // If breakdown exists, use sum of breakdown
+                                  if (owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
+                                    return owner.breakdown.reduce((sum: number, row: any) => sum + parseFloat(row.amount || 0), 0).toFixed(2)
+                                  }
+                                  // Otherwise calculate from ownership percentage
+                                  const totalEntityInvestment = parseFloat(editingEntityInvestment.investmentAmount || 0)
+                                  const ownershipPct = parseFloat(owner.ownershipPercentage || 0)
+                                  return ((totalEntityInvestment * ownershipPct) / 100).toFixed(2)
+                                })()}
+                                readOnly
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                                title="Investment amount is automatically calculated from breakdown or ownership percentage"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-500 mb-1">Ownership %</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                placeholder="Ownership %"
+                                value={owner.ownershipPercentage || ''}
+                                onChange={(e) => {
+                                  const newPct = e.target.value
+                                  updateEntityInvestor(index, 'ownershipPercentage', newPct)
+                                  // Auto-calculate investment amount if no breakdown
+                                  if (!owner.showBreakdown || !Array.isArray(owner.breakdown) || owner.breakdown.length === 0) {
+                                    const totalEntityInvestment = parseFloat(editingEntityInvestment.investmentAmount || 0)
+                                    const calculatedAmount = (totalEntityInvestment * parseFloat(newPct || 0)) / 100
+                                    updateEntityInvestor(index, 'investmentAmount', calculatedAmount)
+                                  }
+                                }}
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
