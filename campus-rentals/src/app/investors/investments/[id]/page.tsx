@@ -153,6 +153,10 @@ export default function InvestmentDetailPage() {
   })
   const [showMultiInvestorModal, setShowMultiInvestorModal] = useState(false)
   const [showCreateEntityInModal, setShowCreateEntityInModal] = useState(false)
+  // Prompt for contact person if an existing entity lacks one
+  const [showUpdateEntityContactModal, setShowUpdateEntityContactModal] = useState(false)
+  const [pendingEntityContact, setPendingEntityContact] = useState<{ id: string; name: string; contactPerson: string; contactEmail: string; contactPhone: string } | null>(null)
+  const [pendingEntitySelectionIndex, setPendingEntitySelectionIndex] = useState<number | null>(null)
   const [multiInvestorData, setMultiInvestorData] = useState({
     entityId: '',
     propertyId: '',
@@ -3659,6 +3663,119 @@ export default function InvestmentDetailPage() {
         </div>
       )}
 
+      {/* Update Entity Contact Person Modal */}
+      {showUpdateEntityContactModal && pendingEntityContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Set Contact For: {pendingEntityContact.name}</h3>
+              <button
+                onClick={() => { setShowUpdateEntityContactModal(false); setPendingEntityContact(null); setPendingEntitySelectionIndex(null) }}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (!pendingEntityContact) return
+                if (!pendingEntityContact.contactPerson || pendingEntityContact.contactPerson.trim() === '') {
+                  alert('Contact Person is required.')
+                  return
+                }
+                try {
+                  const res = await fetch(`/api/investors/entities/${pendingEntityContact.id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                      contactPerson: pendingEntityContact.contactPerson,
+                      contactEmail: pendingEntityContact.contactEmail,
+                      contactPhone: pendingEntityContact.contactPhone,
+                    })
+                  })
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    alert(err.error || 'Failed to update entity contact info')
+                    return
+                  }
+                  // Refresh entities to get updated record
+                  await fetchAvailableEntities()
+                  // If this was triggered from a selection within entity investors, apply the selection now
+                  if (pendingEntitySelectionIndex !== null) {
+                    const updatedEntity = availableEntities.find(e => e.id === pendingEntityContact.id)
+                    if (updatedEntity) {
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'userId', '')
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'investorEntityId', updatedEntity.id)
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'isEntityInvestor', true)
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'entityName', updatedEntity.name)
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'entityOwnersSnapshot', (updatedEntity as any).entityOwners || [])
+                      updateEntityInvestor(pendingEntitySelectionIndex, 'user', { firstName: '', lastName: '', email: '' })
+                    }
+                  }
+                  setShowUpdateEntityContactModal(false)
+                  setPendingEntityContact(null)
+                  setPendingEntitySelectionIndex(null)
+                } catch (err) {
+                  console.error('Failed updating entity contact:', err)
+                  alert('Error updating entity contact. Please try again.')
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Person <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={pendingEntityContact.contactPerson}
+                  onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactPerson: e.target.value } : prev)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+                <input
+                  type="email"
+                  value={pendingEntityContact.contactEmail}
+                  onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactEmail: e.target.value } : prev)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
+                <input
+                  type="tel"
+                  value={pendingEntityContact.contactPhone}
+                  onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactPhone: e.target.value } : prev)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowUpdateEntityContactModal(false); setPendingEntityContact(null); setPendingEntitySelectionIndex(null) }}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                >
+                  Save Contact Info
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Create Entity Modal */}
       {showCreateEntityModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
@@ -4337,6 +4454,19 @@ export default function InvestmentDetailPage() {
                                   email: selectedUser.email
                                 })
                               } else if (selectedEntity) {
+                                // If the entity has no contact person, prompt to collect it first
+                                if (!selectedEntity.contactPerson || String(selectedEntity.contactPerson).trim() === '') {
+                                  setPendingEntitySelectionIndex(index)
+                                  setPendingEntityContact({
+                                    id: selectedEntity.id,
+                                    name: selectedEntity.name,
+                                    contactPerson: '',
+                                    contactEmail: '',
+                                    contactPhone: ''
+                                  })
+                                  setShowUpdateEntityContactModal(true)
+                                  return
+                                }
                                 updateEntityInvestor(index, 'userId', '')
                                 updateEntityInvestor(index, 'investorEntityId', selectedEntity.id)
                                 updateEntityInvestor(index, 'isEntityInvestor', true)
