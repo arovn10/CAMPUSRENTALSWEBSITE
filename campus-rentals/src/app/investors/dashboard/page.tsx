@@ -310,10 +310,26 @@ export default function InvestorDashboard() {
             // Also try matching by first and last name separately if userName is a full name
             const ownerNameParts = ownerName.split(' ')
             const targetNameParts = targetName.split(' ')
-            return ownerName === targetName || 
-                   (ownerNameParts.length >= 2 && targetNameParts.length >= 2 && 
-                    ownerNameParts[0] === targetNameParts[0] && 
-                    ownerNameParts[1] === targetNameParts[1])
+            const exactMatch = ownerName === targetName
+            const namePartsMatch = ownerNameParts.length >= 2 && targetNameParts.length >= 2 && 
+                                  ownerNameParts[0] === targetNameParts[0] && 
+                                  ownerNameParts[1] === targetNameParts[1]
+            
+            // Debug logging for Joseph St specifically
+            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
+              console.log(`[Person Filter] Checking Joseph St investment:`, {
+                property: inv.propertyName,
+                ownerName,
+                targetName,
+                exactMatch,
+                namePartsMatch,
+                ownerNameParts,
+                targetNameParts,
+                allOwners: (inv as any).entityOwners.map((o: any) => o.userName)
+              })
+            }
+            
+            return exactMatch || namePartsMatch
           })
           
           if (matchingOwner) {
@@ -322,6 +338,22 @@ export default function InvestorDashboard() {
               ...inv,
               investmentAmount: matchingOwner.investmentAmount || 0
             })
+            
+            // Debug logging
+            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
+              console.log(`[Person Filter] Matched Joseph St for ${targetName}:`, {
+                individualInvestment: matchingOwner.investmentAmount,
+                totalInvestment: inv.investmentAmount
+              })
+            }
+          } else {
+            // Debug logging for unmatched entity investments
+            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
+              console.log(`[Person Filter] Joseph St NOT matched for ${targetName}. Entity owners:`, (inv as any).entityOwners.map((o: any) => ({
+                userName: o.userName,
+                userNameLower: (o.userName || '').trim().toLowerCase()
+              })))
+            }
           }
         } else if (inv.investmentType === 'DIRECT') {
           // Direct investment - check if investor name matches (case-insensitive)

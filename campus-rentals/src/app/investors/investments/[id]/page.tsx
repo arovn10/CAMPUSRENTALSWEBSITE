@@ -2164,18 +2164,43 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investment Overview</h2>
               {(() => {
-                // Calculate total investment from individual investor amounts
-                const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
-                  // Use per-deal owners if available, otherwise fall back to global entity owners
-                  const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
-                    ? ei.entityInvestmentOwners 
-                    : (ei.entity?.entityOwners || [])
-                  const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
-                    ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
-                  )
-                  return sum + ownersSum
-                }, 0)
-                const displayInvestmentAmount = totalFromOwners || investment.investmentAmount || 0
+                // For investors, show only their individual investment amount from entity owners
+                // For admins/managers, show total investment from all owners
+                if (currentUser?.role === 'INVESTOR' && investment.investmentType === 'ENTITY') {
+                  const investorName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                  let individualAmount = 0
+                  
+                  // Find this investor's amount in entity owners
+                  for (const ei of propertyEntityInvestments) {
+                    const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                      ? ei.entityInvestmentOwners 
+                      : (ei.entity?.entityOwners || [])
+                    
+                    const matchingOwner = owners.find((owner: any) => {
+                      const ownerName = (owner.userName || '').trim().toLowerCase()
+                      return ownerName === investorName
+                    })
+                    
+                    if (matchingOwner && matchingOwner.investmentAmount) {
+                      individualAmount += parseFloat(matchingOwner.investmentAmount || 0)
+                    }
+                  }
+                  
+                  const displayInvestmentAmount = individualAmount || investment.investmentAmount || 0
+                } else {
+                  // For admins/managers, calculate total investment from individual investor amounts
+                  const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
+                    // Use per-deal owners if available, otherwise fall back to global entity owners
+                    const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                      ? ei.entityInvestmentOwners 
+                      : (ei.entity?.entityOwners || [])
+                    const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
+                      ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
+                    )
+                    return sum + ownersSum
+                  }, 0)
+                  var displayInvestmentAmount = totalFromOwners || investment.investmentAmount || 0
+                }
                 
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
