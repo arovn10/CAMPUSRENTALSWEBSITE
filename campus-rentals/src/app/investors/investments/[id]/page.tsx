@@ -2169,12 +2169,7 @@ export default function InvestmentDetailPage() {
                     <div>
                       <p className="text-sm text-gray-600">Investment Amount</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(investment.investmentAmount)}
-                        {propertyEntityInvestments.length > 0 && (
-                          <span className="text-sm text-blue-600 ml-2">
-                            + {formatCurrency(propertyEntityInvestments.reduce((sum, ei) => sum + ei.investmentAmount, 0))} from entities
-                          </span>
-                        )}
+                        {formatCurrency(propertyEntityInvestments.reduce((sum, ei) => sum + (parseFloat(ei.investmentAmount || 0)), 0) || investment.investmentAmount || 0)}
                       </p>
                     </div>
                   </div>
