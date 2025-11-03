@@ -105,6 +105,7 @@ export default function InvestmentDetailPage() {
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showCreateEntityModal, setShowCreateEntityModal] = useState(false)
+  const [showSelectEntityModal, setShowSelectEntityModal] = useState(false)
   const [newDocument, setNewDocument] = useState({
     title: '',
     description: '',
@@ -529,6 +530,7 @@ export default function InvestmentDetailPage() {
       })
 
       if (response.ok) {
+        const createdEntity = await response.json()
         setShowCreateEntityModal(false)
         setNewEntity({
           name: '',
@@ -540,7 +542,13 @@ export default function InvestmentDetailPage() {
           contactPhone: ''
         })
         await fetchAvailableEntities() // Refresh entities list
-        alert('Entity created successfully!')
+        
+        // Automatically add the newly created entity to the property
+        if (investment?.property?.id && createdEntity.id) {
+          await handleAddExistingEntityToProperty(createdEntity.id)
+        } else {
+          alert('Entity created successfully! You can now add it to this project from the entity list.')
+        }
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'Failed to create entity')
@@ -548,6 +556,43 @@ export default function InvestmentDetailPage() {
     } catch (error) {
       console.error('Error creating entity:', error)
       alert('Error creating entity. Please try again.')
+    }
+  }
+
+  const handleAddExistingEntityToProperty = async (entityId: string) => {
+    try {
+      if (!investment?.property?.id) {
+        alert('Property information is missing')
+        return
+      }
+
+      // Create entity investment with default values
+      const response = await fetch('/api/investors/entity-investments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({
+          entityId: entityId,
+          propertyId: investment.property.id,
+          investmentAmount: 0,
+          ownershipPercentage: 0,
+          status: 'ACTIVE'
+        })
+      })
+
+      if (response.ok) {
+        setShowSelectEntityModal(false)
+        await fetchPropertyEntityInvestments()
+        alert('Entity added to property successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to add entity to property')
+      }
+    } catch (error) {
+      console.error('Error adding entity to property:', error)
+      alert('Error adding entity to property. Please try again.')
     }
   }
 
@@ -2858,7 +2903,12 @@ export default function InvestmentDetailPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">Entity Management</h2>
                   <button
-                    onClick={() => setShowCreateEntityModal(true)}
+                    onClick={async () => {
+                      if (availableEntities.length === 0) {
+                        await fetchAvailableEntities()
+                      }
+                      setShowSelectEntityModal(true)
+                    }}
                     className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
@@ -2923,7 +2973,12 @@ export default function InvestmentDetailPage() {
                   )}
                   
                   <button
-                    onClick={() => setShowCreateEntityModal(true)}
+                    onClick={async () => {
+                      if (availableEntities.length === 0) {
+                        await fetchAvailableEntities()
+                      }
+                      setShowSelectEntityModal(true)
+                    }}
                     className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add New Entity
@@ -3824,6 +3879,89 @@ export default function InvestmentDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Select Existing Entity Modal */}
+      {showSelectEntityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 my-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Add Entity to Project</h3>
+              <button
+                onClick={() => setShowSelectEntityModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Select from Existing Entities</h4>
+                {(() => {
+                  // Filter out entities already in this project
+                  const existingEntityIds = propertyEntityInvestments.map((ei: any) => String(ei.entityId))
+                  const availableToAdd = availableEntities.filter((entity: any) => !existingEntityIds.includes(String(entity.id)))
+                  
+                  if (availableToAdd.length === 0) {
+                    return (
+                      <p className="text-sm text-gray-500 italic py-4">
+                        No other entities available. All existing entities are already added to this project.
+                      </p>
+                    )
+                  }
+                  
+                  return (
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {availableToAdd.map((entity: any) => (
+                        <div
+                          key={entity.id}
+                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{entity.name}</p>
+                            <p className="text-sm text-gray-600">{entity.type}</p>
+                            {entity.contactPerson && (
+                              <p className="text-xs text-gray-500 mt-1">Contact: {entity.contactPerson}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleAddExistingEntityToProperty(entity.id)}
+                            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 text-sm font-medium"
+                          >
+                            Add to Project
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+              
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setShowSelectEntityModal(false)
+                    setShowCreateEntityModal(true)
+                  }}
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
+                >
+                  Create New Entity Instead
+                </button>
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSelectEntityModal(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
