@@ -796,7 +796,19 @@ export default function InvestmentDetailPage() {
       await fetchAvailableEntities()
     }
     
-    setEditingEntityInvestment(entityInvestment)
+    // Map breakdown data from database to owners
+    const entityInvestmentWithBreakdown = {
+      ...entityInvestment,
+      entity: {
+        ...entityInvestment.entity,
+        entityOwners: entityInvestment.entity?.entityOwners?.map((owner: any) => ({
+          ...owner,
+          breakdown: owner.breakdown ? (Array.isArray(owner.breakdown) ? owner.breakdown : []) : null
+        })) || []
+      }
+    }
+    
+    setEditingEntityInvestment(entityInvestmentWithBreakdown)
     setShowEditEntityModal(true)
   }
   const handleDeleteEntity = async (entityInvestmentId: string) => {
@@ -972,7 +984,8 @@ export default function InvestmentDetailPage() {
           entityOwners: editingEntityInvestment.entity.entityOwners.map((owner: any) => ({
             ...owner,
             ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,
-            investmentAmount: parseFloat(owner.investmentAmount) || 0
+            investmentAmount: parseFloat(owner.investmentAmount) || 0,
+            breakdown: owner.breakdown || null
           }))
         })
       })

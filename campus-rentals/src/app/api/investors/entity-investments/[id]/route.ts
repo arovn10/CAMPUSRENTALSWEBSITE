@@ -208,7 +208,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                 userId: userId || null,
                 investorEntityId: investorEntityId || null,
                 ownershipPercentage: parseFloat(owner.ownershipPercentage) || 0,
-                investmentAmount: parseFloat(owner.investmentAmount) || 0
+                investmentAmount: parseFloat(owner.investmentAmount) || 0,
+                breakdown: owner.breakdown ? JSON.parse(JSON.stringify(owner.breakdown)) : null
               }
             })
             entityOwners.push(entityOwner)
@@ -217,7 +218,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               entityId: entityOwner.entityId,
               userId: entityOwner.userId,
               ownershipPercentage: entityOwner.ownershipPercentage,
-              investmentAmount: entityOwner.investmentAmount
+              investmentAmount: entityOwner.investmentAmount,
+              hasBreakdown: !!entityOwner.breakdown
             })
           } catch (ownerError) {
             console.error('Error creating entity owner:', ownerError)

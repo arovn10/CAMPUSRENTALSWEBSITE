@@ -433,6 +433,7 @@ model EntityOwner {
   investorEntityId  String?
   ownershipPercentage Float
   investmentAmount  Float
+  breakdown         Json?    // Breakdown of entity member investments for this specific deal
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
