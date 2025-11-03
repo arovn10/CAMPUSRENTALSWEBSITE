@@ -173,6 +173,16 @@ export default function InvestorDashboard() {
     if (user) {
       const userData = JSON.parse(user)
       setCurrentUser(userData)
+      
+      // For investors (non-admin), automatically filter by their name
+      if (userData.role === 'INVESTOR') {
+        const investorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+        if (investorName) {
+          setAnalyticsScope('PERSON')
+          setAnalyticsTarget(investorName)
+        }
+      }
+      
       fetchDashboardData(userData)
     } else {
       router.push('/investors/login')
@@ -203,6 +213,37 @@ export default function InvestorDashboard() {
       setLoading(false)
     }
   }
+
+  // Recalculate stats when person filter changes
+  useEffect(() => {
+    if (investments.length > 0 && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
+      // Filter investments to only this person's investments
+      const personInvestments: Investment[] = []
+      
+      investments.forEach(inv => {
+        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
+          // Check if this person is an owner in this entity investment
+          const isOwner = (inv as any).entityOwners.some((owner: any) => owner.userName === analyticsTarget)
+          if (isOwner) {
+            // Create a modified investment with this person's investment amount
+            const owner = (inv as any).entityOwners.find((o: any) => o.userName === analyticsTarget)
+            personInvestments.push({
+              ...inv,
+              investmentAmount: owner?.investmentAmount || 0
+            })
+          }
+        } else if ((inv as any).investorName === analyticsTarget) {
+          personInvestments.push(inv)
+        }
+      })
+      
+      // Recalculate stats based on person's investments only
+      calculateStats(personInvestments)
+    } else if (investments.length > 0 && (analyticsScope === 'ALL' || analyticsTarget === 'ALL')) {
+      // Recalculate stats for all investments
+      calculateStats(investments)
+    }
+  }, [analyticsScope, analyticsTarget, investments])
 
   const estimateValueFromNOI = (inv: Investment) => {
     const rent = inv.property?.monthlyRent || 0
@@ -1133,21 +1174,23 @@ export default function InvestorDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
                 <div className="flex items-center gap-3">
-                  <select
-                    value={analyticsScope}
-                    onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                  >
-                    <option value="ALL">All</option>
-                    <option value="PERSON">By Person</option>
-                    <option value="ENTITY">By Entity</option>
-                  </select>
-                  <select
-                    value={analyticsTarget}
-                    onChange={(e)=>setAnalyticsTarget(e.target.value)}
-                    disabled={analyticsScope==='ALL'}
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
-                  >
+                  {currentUser?.role === 'ADMIN' ? (
+                    <>
+                      <select
+                        value={analyticsScope}
+                        onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
+                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      >
+                        <option value="ALL">All</option>
+                        <option value="PERSON">By Person</option>
+                        <option value="ENTITY">By Entity</option>
+                      </select>
+                      <select
+                        value={analyticsTarget}
+                        onChange={(e)=>setAnalyticsTarget(e.target.value)}
+                        disabled={analyticsScope==='ALL'}
+                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
+                      >
                     <option value="ALL">All</option>
                     {analyticsScope==='PERSON' && (() => {
                       // Collect all individual people from direct investments and entity owners
@@ -1174,6 +1217,12 @@ export default function InvestorDashboard() {
                       <option key={name as string} value={name as string}>{name as string}</option>
                     ))}
                   </select>
+                    </>
+                  ) : (
+                    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 font-semibold">
+                      Viewing: {analyticsTarget || 'Your Investments'}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="overflow-hidden rounded-2xl border border-slate-200/60">
