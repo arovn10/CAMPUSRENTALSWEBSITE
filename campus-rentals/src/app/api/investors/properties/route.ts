@@ -161,8 +161,10 @@ export async function GET(request: NextRequest) {
 
       // Get the primary investor (first entity owner) for display
       const primaryOwner = entityInvestment.entity.entityOwners[0]
-      const investorName = primaryOwner ? `${primaryOwner.user.firstName} ${primaryOwner.user.lastName}` : 'Multiple Investors'
-      const investorEmail = primaryOwner ? primaryOwner.user.email : ''
+      const investorName = (primaryOwner && primaryOwner.user)
+        ? `${primaryOwner.user.firstName} ${primaryOwner.user.lastName}`
+        : 'Multiple Investors'
+      const investorEmail = (primaryOwner && primaryOwner.user) ? (primaryOwner.user.email || '') : ''
 
       return {
         id: entityInvestment.id,
