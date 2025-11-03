@@ -117,6 +117,8 @@ interface DashboardStats {
   totalProperties: number
   totalSquareFeet: number
   averageIRR: number
+  monthlyRevenue: number
+  monthlyDebtServiceAndCondoFees: number
   monthlyNOIBeforeDebt: number
   monthlyNOIAfterDebt: number
   yearlyNOIBeforeDebt: number
@@ -145,6 +147,8 @@ export default function InvestorDashboard() {
     totalProperties: 0,
     totalSquareFeet: 0,
     averageIRR: 0,
+    monthlyRevenue: 0,
+    monthlyDebtServiceAndCondoFees: 0,
     monthlyNOIBeforeDebt: 0,
     monthlyNOIAfterDebt: 0,
     yearlyNOIBeforeDebt: 0,
@@ -406,6 +410,24 @@ export default function InvestorDashboard() {
     const totalProperties = investmentData.length
     const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
 
+    // Monthly Revenue (from stabilized, funded properties only) - sum of rent + other income
+    const monthlyRevenue = investmentData
+      .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
+      .reduce((sum: number, inv: Investment) => {
+        const rent = inv.property?.monthlyRent || 0
+        const other = inv.property?.otherIncome || 0
+        return sum + (rent + other)
+      }, 0)
+
+    // Monthly Debt Service and Condo Fees (from stabilized, funded properties only)
+    const monthlyDebtServiceAndCondoFees = investmentData
+      .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
+      .reduce((sum: number, inv: Investment) => {
+        const debtSvc = inv.estimatedMonthlyDebtService || 0
+        // TODO: Add condo fees if available in property data
+        return sum + debtSvc
+      }, 0)
+
     // NOI aggregates
     const monthlyNOIBeforeDebt = investmentData.reduce((sum: number, inv: Investment) => {
       const rent = inv.property?.monthlyRent || 0
@@ -454,6 +476,8 @@ export default function InvestorDashboard() {
       totalProperties,
       totalSquareFeet,
       averageIRR,
+      monthlyRevenue,
+      monthlyDebtServiceAndCondoFees,
       monthlyNOIBeforeDebt,
       monthlyNOIAfterDebt,
       yearlyNOIBeforeDebt,
@@ -1270,6 +1294,121 @@ export default function InvestorDashboard() {
                       )
                     })}
                     {(() => {
+                      // Calculate summary stats for selected person
+                      if (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
+                        const personInvestments = (() => {
+                          let result: any[] = []
+                          investments
+                            .filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
+                            .forEach(inv => {
+                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
+                                (inv as any).entityOwners.forEach((owner: any) => {
+                                  if (owner.userName === analyticsTarget) {
+                                    result.push({
+                                      ...inv,
+                                      personName: owner.userName,
+                                      investmentAmount: owner.investmentAmount || 0,
+                                      ownershipPercentage: owner.ownershipPercentage || 0
+                                    })
+                                  }
+                                })
+                              } else {
+                                if ((inv as any).investorName === analyticsTarget) {
+                                  result.push({
+                                    ...inv,
+                                    personName: (inv as any).investorName || 'Direct Investor'
+                                  })
+                                }
+                              }
+                            })
+                          return result
+                        })()
+
+                        if (personInvestments.length > 0) {
+                          const totalInvested = personInvestments.reduce((sum, inv) => sum + (inv.investmentAmount || 0), 0)
+                          const totalDebt = personInvestments.reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+                          const totalMonthlyDebtService = personInvestments.reduce((sum, inv) => sum + (inv.estimatedMonthlyDebtService || 0), 0)
+                          const avgIRR = personInvestments.length > 0 
+                            ? personInvestments.reduce((sum, inv) => sum + (inv.irr || 0), 0) / personInvestments.length 
+                            : 0
+                          const totalProperties = personInvestments.length
+
+                          // Calculate weighted average yield on cost
+                          let totalYield = 0
+                          let totalCost = 0
+                          personInvestments.forEach(inv => {
+                            const rent = inv.property?.monthlyRent || 0
+                            const other = inv.property?.otherIncome || 0
+                            const annualExp = inv.property?.annualExpenses || 0
+                            const monthlyExp = annualExp / 12
+                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
+                            const annualNOI = monthlyNOI * 12
+                            const projectCost = (inv.property?.totalCost && inv.property?.totalCost! > 0)
+                              ? (inv.property?.totalCost as number)
+                              : ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0))
+                            if (projectCost > 0) {
+                              totalYield += (annualNOI / projectCost) * 100
+                              totalCost += projectCost
+                            }
+                          })
+                          const avgYieldOnCost = totalCost > 0 ? (totalYield / personInvestments.length) : 0
+
+                          // Calculate weighted average DSCR
+                          let totalDSCR = 0
+                          let dscrCount = 0
+                          personInvestments.forEach(inv => {
+                            const rent = inv.property?.monthlyRent || 0
+                            const other = inv.property?.otherIncome || 0
+                            const annualExp = inv.property?.annualExpenses || 0
+                            const monthlyExp = annualExp / 12
+                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
+                            const annualNOI = monthlyNOI * 12
+                            const annualDebtService = (inv.estimatedMonthlyDebtService || 0) * 12
+                            if (annualDebtService > 0) {
+                              totalDSCR += annualNOI / annualDebtService
+                              dscrCount++
+                            }
+                          })
+                          const avgDSCR = dscrCount > 0 ? totalDSCR / dscrCount : 0
+
+                          return (
+                            <>
+                              <tr className="bg-slate-100/50 border-t-2 border-slate-300">
+                                {analyticsScope === 'PERSON' && (
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                    TOTAL
+                                  </td>
+                                )}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                  {analyticsScope === 'PERSON' ? `${totalProperties} Properties` : 'TOTAL'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
+                                  {formatCurrency(totalInvested)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
+                                  {formatCurrency(totalDebt)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
+                                  {formatCurrency(totalMonthlyDebtService)}
+                                </td>
+                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgIRR >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  {formatPercentage(avgIRR)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right">
+                                  {avgYieldOnCost > 0 ? formatPercentage(avgYieldOnCost) : '—'}
+                                </td>
+                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgDSCR >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  {avgDSCR > 0 ? avgDSCR.toFixed(2) : '—'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                  <span className="text-xs text-slate-500">Summary</span>
+                                </td>
+                              </tr>
+                            </>
+                          )
+                        }
+                      }
+
                       const displayInvestments = (() => {
                         if (analyticsScope === 'PERSON') {
                           let result: any[] = []
@@ -1308,16 +1447,41 @@ export default function InvestorDashboard() {
               </div>
               
             {/* NOI Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div 
+                className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                onClick={() => {
+                  // Show revenue breakdown for stabilized, funded properties
+                  const revenueBreakdown = investments
+                    .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
+                    .map(inv => ({
+                      label: inv.propertyName || inv.propertyAddress,
+                      value: (inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)
+                    }))
+                    .filter(item => item.value > 0)
+                  
+                  setCalcTitle('Monthly Revenue Breakdown (Stabilized & Funded Properties)')
+                  setCalcLines(revenueBreakdown)
+                  setShowCalcModal(true)
+                }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Revenue (Before Debt)</span>
+              </div>
+                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyRevenue)}</h3>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <CalculatorIcon className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI (Before Debt)</span>
-              </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyNOIBeforeDebt)}</h3>
-              </div>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service and Condo Fees</span>
+            </div>
+                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyDebtServiceAndCondoFees)}</h3>
+          </div>
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI (After Debt)</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI</span>
             </div>
                 <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyNOIAfterDebt)}</h3>
           </div>
