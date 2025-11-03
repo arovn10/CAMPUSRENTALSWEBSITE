@@ -2375,8 +2375,8 @@ export default function InvestmentDetailPage() {
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : 'Investing Entity'}</p>
-                                      <p className="text-sm text-gray-600">{owner.user?.email || (owner.investorEntityId ? 'Entity investor' : '')}</p>
+                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</p>
+                                      <p className="text-sm text-gray-600">{owner.user?.email || (owner.investorEntity?.name ? 'Entity investor' : '')}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">

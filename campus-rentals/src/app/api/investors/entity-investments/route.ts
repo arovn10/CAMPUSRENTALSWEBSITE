@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
           include: {
             entityOwners: {
               include: {
-                user: true
+                user: true,
+                investorEntity: true
               }
             }
           }
