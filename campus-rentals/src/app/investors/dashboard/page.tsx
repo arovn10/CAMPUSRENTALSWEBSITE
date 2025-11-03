@@ -205,7 +205,33 @@ export default function InvestorDashboard() {
       if (investmentsResponse.ok) {
         const investmentsData = await investmentsResponse.json()
         setInvestments(investmentsData || [])
-        calculateStats(investmentsData || [])
+        
+        // For investors, if they're auto-filtered, we need to recalculate stats
+        // But first, just calculate with all returned investments (API already filters for investors)
+        // The useEffect will handle the person filter recalculation
+        if (user.role === 'INVESTOR') {
+          // For investors, the API already filters to their investments
+          // But we need to extract individual amounts from entity owners
+          const investorInvestments = investmentsData.map((inv: any) => {
+            if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
+              // Find the owner that matches this investor
+              const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+              const matchingOwner = inv.entityOwners.find((owner: any) => 
+                (owner.userName || '').trim() === investorName
+              )
+              if (matchingOwner) {
+                return {
+                  ...inv,
+                  investmentAmount: matchingOwner.investmentAmount || 0
+                }
+              }
+            }
+            return inv
+          })
+          calculateStats(investorInvestments)
+        } else {
+          calculateStats(investmentsData || [])
+        }
       }
     } catch (error) {
       // Silent error handling for smooth UX
@@ -219,22 +245,49 @@ export default function InvestorDashboard() {
     if (investments.length > 0 && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
       // Filter investments to only this person's investments
       const personInvestments: Investment[] = []
+      const targetName = analyticsTarget.trim().toLowerCase()
       
       investments.forEach(inv => {
         if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-          // Check if this person is an owner in this entity investment
-          const isOwner = (inv as any).entityOwners.some((owner: any) => owner.userName === analyticsTarget)
-          if (isOwner) {
+          // Check if this person is an owner in this entity investment (case-insensitive match)
+          const matchingOwner = (inv as any).entityOwners.find((owner: any) => {
+            const ownerName = (owner.userName || '').trim().toLowerCase()
+            return ownerName === targetName
+          })
+          
+          if (matchingOwner) {
             // Create a modified investment with this person's investment amount
-            const owner = (inv as any).entityOwners.find((o: any) => o.userName === analyticsTarget)
             personInvestments.push({
               ...inv,
-              investmentAmount: owner?.investmentAmount || 0
+              investmentAmount: matchingOwner.investmentAmount || 0
             })
           }
-        } else if ((inv as any).investorName === analyticsTarget) {
-          personInvestments.push(inv)
+        } else {
+          // Direct investment - check if investor name matches (case-insensitive)
+          const invName = ((inv as any).investorName || '').trim().toLowerCase()
+          if (invName === targetName) {
+            personInvestments.push(inv)
+          }
         }
+      })
+      
+      console.log('Person filter stats calculation:', {
+        targetName,
+        totalInvestments: investments.length,
+        personInvestments: personInvestments.length,
+        personInvestmentsDetails: personInvestments.map(inv => ({
+          property: inv.propertyName,
+          amount: inv.investmentAmount,
+          type: inv.investmentType
+        })),
+        firstInvestmentDetails: investments[0] ? {
+          property: investments[0].propertyName,
+          amount: investments[0].investmentAmount,
+          type: investments[0].investmentType,
+          hasEntityOwners: !!(investments[0] as any).entityOwners,
+          entityOwnersCount: (investments[0] as any).entityOwners?.length || 0,
+          entityOwnerNames: (investments[0] as any).entityOwners?.map((o: any) => o.userName) || []
+        } : null
       })
       
       // Recalculate stats based on person's investments only
