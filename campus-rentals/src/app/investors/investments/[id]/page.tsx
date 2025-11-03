@@ -4491,10 +4491,8 @@ export default function InvestmentDetailPage() {
                                           value={row.amount || 0}
                                           onChange={(e) => {
                                             const amt = parseFloat(e.target.value || '0')
-                                            const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
-                                            const nextTotal = next.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0)
-                                            updateEntityInvestor(index, 'breakdown', next)
-                                            updateEntityInvestor(index, 'investmentAmount', nextTotal)
+                                        const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
+                                        updateEntityInvestor(index, 'breakdown', next)
                                           }}
                                           className="w-32 px-2 py-1 text-xs border rounded"
                                           placeholder="0.00"
@@ -4502,12 +4500,26 @@ export default function InvestmentDetailPage() {
                                       </div>
                                     ))}
                                   </div>
-                                  <div className="mt-2 text-xs text-gray-700 flex justify-between">
+                                  <div className="mt-2 text-xs text-gray-700 flex items-center justify-between gap-3">
                                     <span>Breakdown total</span>
-                                    <span className={(owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) === parseFloat(owner.investmentAmount || 0) ? 'text-green-600' : 'text-red-600') + ' font-medium'}>
-                                      ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString()}
-                                      {` / $${parseFloat(owner.investmentAmount || 0).toLocaleString()}`}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className={(owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) === parseFloat(owner.investmentAmount || 0) ? 'text-green-600' : 'text-red-600') + ' font-medium'}>
+                                        ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString()}
+                                        {` / $${parseFloat(owner.investmentAmount || 0).toLocaleString()}`}
+                                      </span>
+                                      {owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0) !== parseFloat(owner.investmentAmount || 0) && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const total = owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0)
+                                            updateEntityInvestor(index, 'investmentAmount', total)
+                                          }}
+                                          className="px-2 py-0.5 border border-blue-300 text-blue-700 rounded hover:bg-blue-50"
+                                        >
+                                          Apply to Amount
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="text-[10px] text-gray-500 mt-1">This breakdown is specific to this deal and does not change entity membership.</div>
                                 </div>
