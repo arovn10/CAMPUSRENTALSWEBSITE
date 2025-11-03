@@ -4492,7 +4492,9 @@ export default function InvestmentDetailPage() {
                                           onChange={(e) => {
                                             const amt = parseFloat(e.target.value || '0')
                                             const next = owner.breakdown.map((r: any, i: number) => i === bi ? { ...r, amount: amt } : r)
+                                            const nextTotal = next.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0)
                                             updateEntityInvestor(index, 'breakdown', next)
+                                            updateEntityInvestor(index, 'investmentAmount', nextTotal)
                                           }}
                                           className="w-32 px-2 py-1 text-xs border rounded"
                                           placeholder="0.00"
