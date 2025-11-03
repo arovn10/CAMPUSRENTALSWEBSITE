@@ -67,18 +67,20 @@ export async function POST(request: NextRequest) {
         }
       })
       
-      // Create entity owners (multiple investors)
+      // Create entity owners (multiple investors) - optional
       const entityOwners = []
-      for (const owner of body.owners) {
-        const entityOwner = await tx.entityOwner.create({
-          data: {
-            entityId: body.entityId,
-            userId: owner.userId,
-            ownershipPercentage: owner.ownershipPercentage,
-            investmentAmount: owner.investmentAmount
-          }
-        })
-        entityOwners.push(entityOwner)
+      if (body.owners && Array.isArray(body.owners)) {
+        for (const owner of body.owners) {
+          const entityOwner = await tx.entityOwner.create({
+            data: {
+              entityId: body.entityId,
+              userId: owner.userId,
+              ownershipPercentage: owner.ownershipPercentage,
+              investmentAmount: owner.investmentAmount
+            }
+          })
+          entityOwners.push(entityOwner)
+        }
       }
       
       return { entityInvestment, entityOwners }

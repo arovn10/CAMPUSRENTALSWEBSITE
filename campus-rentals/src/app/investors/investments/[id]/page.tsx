@@ -578,7 +578,8 @@ export default function InvestmentDetailPage() {
           propertyId: investment.property.id,
           investmentAmount: 0,
           ownershipPercentage: 0,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          owners: [] // Empty array - owners will be added later through the edit modal
         })
       })
 
