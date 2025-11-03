@@ -250,8 +250,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return { entityInvestment }
     })
     
+    // Fetch the full entity investment with all relations to return to client
+    const fullEntityInvestment = await prisma.entityInvestment.findUnique({
+      where: { id: result.entityInvestment.id },
+      include: {
+        entity: {
+          include: {
+            entityOwners: {
+              include: {
+                user: true,
+                investorEntity: true
+              }
+            }
+          }
+        },
+        entityInvestmentOwners: {
+          include: {
+            user: true,
+            investorEntity: true
+          }
+        },
+        property: true,
+        entityDistributions: {
+          include: {
+            user: true
+          }
+        }
+      }
+    })
+    
     console.log('Entity investment updated successfully:', result.entityInvestment.id)
-    return NextResponse.json(result)
+    return NextResponse.json({ 
+      entityInvestment: fullEntityInvestment,
+      entityInvestmentOwners: fullEntityInvestment?.entityInvestmentOwners || []
+    })
   } catch (error) {
     console.error('Error updating entity investment:', error)
     return NextResponse.json(

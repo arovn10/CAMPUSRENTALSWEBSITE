@@ -2361,16 +2361,24 @@ export default function InvestmentDetailPage() {
                       </div>
 
                       {/* Entity Owners - prefer per-deal owners if available */}
-                      {((entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0) || (entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0)) && (
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h5 className="text-sm font-medium text-gray-700">Individual Investors ({(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length)})</h5>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length)} investor{(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners.length : entityInvestment.entity.entityOwners.length) !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <div className="space-y-3">
-                            {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners : entityInvestment.entity.entityOwners).map((owner: any) => (
+                      {(() => {
+                        // Determine which owners to display - prioritize per-deal owners
+                        const hasPerDealOwners = entityInvestment.entityInvestmentOwners && Array.isArray(entityInvestment.entityInvestmentOwners) && entityInvestment.entityInvestmentOwners.length > 0
+                        const hasGlobalOwners = entityInvestment.entity?.entityOwners && Array.isArray(entityInvestment.entity.entityOwners) && entityInvestment.entity.entityOwners.length > 0
+                        const ownersToDisplay = hasPerDealOwners ? entityInvestment.entityInvestmentOwners : (hasGlobalOwners ? entityInvestment.entity.entityOwners : [])
+                        
+                        if (ownersToDisplay.length === 0) return null
+                        
+                        return (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h5 className="text-sm font-medium text-gray-700">Individual Investors ({ownersToDisplay.length})</h5>
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                {ownersToDisplay.length} investor{ownersToDisplay.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {ownersToDisplay.map((owner: any) => (
                               <div key={owner.id} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center space-x-3">
@@ -2437,7 +2445,8 @@ export default function InvestmentDetailPage() {
                             ))}
                           </div>
                         </div>
-                      )}
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>
