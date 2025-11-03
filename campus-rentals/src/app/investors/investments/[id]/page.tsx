@@ -4494,7 +4494,18 @@ export default function InvestmentDetailPage() {
                       editingEntityInvestment.entity.entityOwners.map((owner: any, index: number) => (
                       <div key={owner.id} className="border rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-sm font-medium text-gray-700">Investor {index + 1}</h5>
+                          <h5 className="text-sm font-medium text-gray-700">
+                            Investor {index + 1}
+                            <span className="ml-2 text-gray-500 font-normal">
+                              — {owner.investorEntityId
+                                ? (owner.entityName || (availableEntities.find(e => String(e.id) === String(owner.investorEntityId))?.name) || 'Entity')
+                                : ((owner.user?.firstName || owner.user?.lastName)
+                                    ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim()
+                                    : (availableUsers.find(u => String(u.id) === String(owner.userId))
+                                        ? `${availableUsers.find(u => String(u.id) === String(owner.userId))!.firstName} ${availableUsers.find(u => String(u.id) === String(owner.userId))!.lastName}`
+                                        : 'Individual'))}
+                            </span>
+                          </h5>
                           <button
                             type="button"
                             onClick={() => removeEntityInvestor(index)}
