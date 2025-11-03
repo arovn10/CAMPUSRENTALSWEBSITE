@@ -2328,12 +2328,12 @@ export default function InvestmentDetailPage() {
                                   <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
                                       <span className="text-blue-700 font-semibold text-sm">
-                                        {owner.user.firstName.charAt(0)}{owner.user.lastName.charAt(0)}
+                                        {(owner.user?.firstName || '').charAt(0)}{(owner.user?.lastName || '').charAt(0)}
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-gray-900">{owner.user.firstName} {owner.user.lastName}</p>
-                                      <p className="text-sm text-gray-600">{owner.user.email}</p>
+                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</p>
+                                      <p className="text-sm text-gray-600">{owner.user?.email || ''}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
@@ -2448,12 +2448,12 @@ export default function InvestmentDetailPage() {
                                   <div className="flex items-center space-x-2">
                                     <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
                                       <span className="text-gray-600 font-medium text-xs">
-                                        {owner.user.firstName.charAt(0)}{owner.user.lastName.charAt(0)}
+                                        {(owner.user?.firstName || '').charAt(0)}{(owner.user?.lastName || '').charAt(0)}
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="text-sm font-medium text-gray-900">{owner.user.firstName} {owner.user.lastName}</p>
-                                      <p className="text-xs text-gray-600">{owner.user.email}</p>
+                                      <p className="text-sm font-medium text-gray-900">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</p>
+                                      <p className="text-xs text-gray-600">{owner.user?.email || ''}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
@@ -2813,7 +2813,7 @@ export default function InvestmentDetailPage() {
                               <div className="space-y-1">
                                 {entityInvestment.entity.entityOwners.map((owner: any) => (
                                   <div key={owner.id} className="flex justify-between text-xs">
-                                    <span className="text-gray-600">{owner.user.firstName} {owner.user.lastName}</span>
+                                    <span className="text-gray-600">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</span>
                                     <span className="text-gray-800">{formatPercentage(owner.ownershipPercentage)} • {formatCurrency(owner.investmentAmount)}</span>
                                   </div>
                                 ))}
@@ -4591,7 +4591,7 @@ export default function InvestmentDetailPage() {
                               <input
                                 type="text"
                                 placeholder="First Name"
-                                value={owner.user.firstName || ''}
+                                value={owner.user?.firstName || ''}
                                 onChange={(e) => updateEntityInvestor(index, 'user', { firstName: e.target.value })}
                                 className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
                               />
