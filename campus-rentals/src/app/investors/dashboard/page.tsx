@@ -211,7 +211,7 @@ export default function InvestorDashboard() {
         // The useEffect will handle the person filter recalculation
         if (user.role === 'INVESTOR') {
           // For investors, the API already filters to their investments
-          // But we need to extract individual amounts from entity owners
+          // But we need to extract individual amounts from entity owners and scale by ownership
           const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
           const investorInvestments = investmentsData.map((inv: any) => {
             if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
@@ -222,9 +222,30 @@ export default function InvestorDashboard() {
                 return ownerName.toLowerCase() === targetNameLower
               })
               if (matchingOwner && matchingOwner.investmentAmount) {
+                // Calculate effective ownership percentage
+                const entityOwnershipPct = inv.ownershipPercentage || 0
+                const individualOwnershipPct = matchingOwner.ownershipPercentage || 0
+                const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
+                
+                // Scale all property-level values by ownership percentage
                 return {
                   ...inv,
-                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0
+                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0,
+                  ownershipPercentage: effectiveOwnershipPct * 100,
+                  estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
+                  estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
+                  currentValue: (inv.currentValue || 0) * effectiveOwnershipPct,
+                  property: inv.property ? {
+                    ...inv.property,
+                    monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
+                    otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
+                    annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
+                    currentValue: (inv.property.currentValue || 0) * effectiveOwnershipPct,
+                    totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
+                    acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
+                    constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
+                  } : undefined,
+                  totalOriginalDebt: (inv.totalOriginalDebt || 0) * effectiveOwnershipPct
                 }
               }
               // If no match found, return with 0 investment amount
@@ -268,7 +289,7 @@ export default function InvestorDashboard() {
   // Recalculate stats when person filter changes
   useEffect(() => {
     if (investments.length > 0 && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
-      // Filter investments to only this person's investments
+      // Filter investments to only this person's investments and scale by ownership
       const personInvestments: Investment[] = []
       const targetName = analyticsTarget.trim().toLowerCase()
       
@@ -281,16 +302,38 @@ export default function InvestorDashboard() {
           })
           
           if (matchingOwner) {
-            // Create a modified investment with this person's investment amount
-            personInvestments.push({
+            // Calculate effective ownership percentage: (entity ownership % / 100) * (individual ownership % / 100)
+            const entityOwnershipPct = inv.ownershipPercentage || 0
+            const individualOwnershipPct = matchingOwner.ownershipPercentage || 0
+            const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
+            
+            // Scale all property-level values by ownership percentage
+            const scaledInvestment: Investment = {
               ...inv,
-              investmentAmount: matchingOwner.investmentAmount || 0
-            })
+              investmentAmount: matchingOwner.investmentAmount || 0,
+              ownershipPercentage: effectiveOwnershipPct * 100,
+              estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
+              estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
+              currentValue: (inv.currentValue || 0) * effectiveOwnershipPct,
+              property: inv.property ? {
+                ...inv.property,
+                monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
+                otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
+                annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
+                currentValue: (inv.property.currentValue || 0) * effectiveOwnershipPct,
+                totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
+                acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
+                constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
+              } : undefined,
+              totalOriginalDebt: (inv.totalOriginalDebt || 0) * effectiveOwnershipPct
+            }
+            personInvestments.push(scaledInvestment)
           }
         } else {
           // Direct investment - check if investor name matches (case-insensitive)
           const invName = ((inv as any).investorName || '').trim().toLowerCase()
           if (invName === targetName) {
+            // For direct investments, ownership is already 100% for this person
             personInvestments.push(inv)
           }
         }
@@ -492,10 +535,12 @@ export default function InvestorDashboard() {
       return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
     }
     // Current value: sum of estimated values for active (stabilized) properties
+    // When scaled for person, values are already scaled in the investment data
     const currentValue = investmentData
       .filter(inv => inv.dealStatus === 'STABILIZED')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
     // Projected value: sum for all not SOLD projects (includes under construction)
+    // When scaled for person, values are already scaled in the investment data
     const projectedValue = investmentData
       .filter(inv => inv.dealStatus !== 'SOLD')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
