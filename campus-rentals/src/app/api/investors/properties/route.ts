@@ -155,10 +155,21 @@ export async function GET(request: NextRequest) {
 
     // Transform the entity investments data
     const formattedEntityInvestments = entityInvestments.map((entityInvestment: any) => {
+      // Calculate total investment from individual entity owners (prefer per-deal owners)
+      const hasPerDealOwners = entityInvestment.entityInvestmentOwners && Array.isArray(entityInvestment.entityInvestmentOwners) && entityInvestment.entityInvestmentOwners.length > 0
+      const owners = hasPerDealOwners 
+        ? entityInvestment.entityInvestmentOwners 
+        : (entityInvestment.entity?.entityOwners || [])
+      const calculatedInvestmentAmount = owners.reduce((sum: number, owner: any) => 
+        sum + (parseFloat(owner.investmentAmount || 0)), 0
+      )
+      // Use calculated amount if available, otherwise fall back to entityInvestment.investmentAmount
+      const finalInvestmentAmount = calculatedInvestmentAmount > 0 ? calculatedInvestmentAmount : entityInvestment.investmentAmount
+
       const totalDistributions = entityInvestment.entityDistributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
-      const currentValue = entityInvestment.property.currentValue || entityInvestment.investmentAmount
-      const totalReturn = currentValue - entityInvestment.investmentAmount + totalDistributions
-      const irr = entityInvestment.investmentAmount > 0 ? ((currentValue / entityInvestment.investmentAmount - 1) * 100) : 0
+      const currentValue = entityInvestment.property.currentValue || finalInvestmentAmount
+      const totalReturn = currentValue - finalInvestmentAmount + totalDistributions
+      const irr = finalInvestmentAmount > 0 ? ((currentValue / finalInvestmentAmount - 1) * 100) : 0
 
       // For entity investments, show the entity itself as the investor on dashboards
       const investorName = entityInvestment.entity?.name || 'Entity Investor'
@@ -169,7 +180,7 @@ export async function GET(request: NextRequest) {
         propertyId: entityInvestment.propertyId,
         propertyName: entityInvestment.property.name,
         propertyAddress: entityInvestment.property.address,
-        investmentAmount: entityInvestment.investmentAmount,
+        investmentAmount: finalInvestmentAmount,
         currentValue: currentValue,
         totalReturn: totalReturn,
         irr: Math.round(irr * 100) / 100,
@@ -217,7 +228,7 @@ export async function GET(request: NextRequest) {
         investmentType: 'ENTITY', // Mark as entity investment
         entityName: entityInvestment.entity.name,
         entityType: entityInvestment.entity.type,
-        entityOwners: entityInvestment.entity.entityOwners.map((owner: any) => ({
+        entityOwners: owners.map((owner: any) => ({
           id: owner.id,
           userId: owner.userId || null,
           userName: owner.user ? `${owner.user.firstName} ${owner.user.lastName}` : (owner.investorEntity ? owner.investorEntity.name : 'Unknown Investor'),
