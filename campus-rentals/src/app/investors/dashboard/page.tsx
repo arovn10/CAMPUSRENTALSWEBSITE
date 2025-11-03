@@ -224,19 +224,25 @@ export default function InvestorDashboard() {
               })
               if (matchingOwner && matchingOwner.investmentAmount) {
                 // Only update investmentAmount to individual amount, but keep all property values at full amount
-                // This ensures overview cards show correct totals, not scaled amounts
+                // IMPORTANT: Preserve entityOwners array for person filter to work
                 return {
                   ...inv,
-                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0
+                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0,
+                  entityOwners: inv.entityOwners // Preserve for filtering
                 }
               }
-              // If no match found, return with 0 investment amount
+              // If no match found, return with 0 investment amount but preserve entityOwners
               return {
                 ...inv,
-                investmentAmount: 0
+                investmentAmount: 0,
+                entityOwners: inv.entityOwners // Preserve for filtering
               }
             }
-            return inv
+            // For direct investments, add investorName field for filtering
+            return {
+              ...inv,
+              investorName: inv.user ? `${inv.user.firstName || ''} ${inv.user.lastName || ''}`.trim() : investorName
+            }
           })
           
           console.log('Investor stats calculation:', {
@@ -277,7 +283,7 @@ export default function InvestorDashboard() {
       const targetName = analyticsTarget.trim().toLowerCase()
       
       investments.forEach(inv => {
-        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
+        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0) {
           // Check if this person is an owner in this entity investment (case-insensitive match)
           const matchingOwner = (inv as any).entityOwners.find((owner: any) => {
             const ownerName = (owner.userName || '').trim().toLowerCase()
@@ -297,37 +303,50 @@ export default function InvestorDashboard() {
               investmentAmount: matchingOwner.investmentAmount || 0
             })
           }
-        } else {
+        } else if (inv.investmentType === 'DIRECT') {
           // Direct investment - check if investor name matches (case-insensitive)
-          const invName = ((inv as any).investorName || '').trim().toLowerCase()
+          // Try multiple name fields
+          const invName = (
+            (inv as any).investorName || 
+            ((inv as any).user ? `${(inv as any).user.firstName || ''} ${(inv as any).user.lastName || ''}`.trim() : '') ||
+            ''
+          ).trim().toLowerCase()
           if (invName === targetName) {
             personInvestments.push(inv)
           }
         }
       })
       
+      // Enhanced debugging - check all entity investments
+      const entityInvestments = investments.filter((inv: any) => inv.investmentType === 'ENTITY')
+      const directInvestments = investments.filter((inv: any) => inv.investmentType === 'DIRECT')
+      
       console.log('Person filter stats calculation:', {
         targetName,
         totalInvestments: investments.length,
+        entityInvestmentsCount: entityInvestments.length,
+        directInvestmentsCount: directInvestments.length,
         personInvestments: personInvestments.length,
-        personInvestmentsDetails: personInvestments.map(inv => ({
+        entityInvestmentsWithOwners: entityInvestments.filter((inv: any) => (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0).length,
+        entityInvestmentsDetails: entityInvestments.slice(0, 3).map((inv: any) => ({
           property: inv.propertyName,
-          amount: inv.investmentAmount,
-          type: inv.investmentType
-        })),
-        sampleEntityInvestment: investments.find((inv: any) => inv.investmentType === 'ENTITY' && (inv as any).entityOwners) ? {
-          property: investments.find((inv: any) => inv.investmentType === 'ENTITY' && (inv as any).entityOwners)?.propertyName,
-          hasEntityOwners: true,
-          entityOwnersCount: (investments.find((inv: any) => inv.investmentType === 'ENTITY' && (inv as any).entityOwners) as any)?.entityOwners?.length || 0,
-          entityOwnerNames: (investments.find((inv: any) => inv.investmentType === 'ENTITY' && (inv as any).entityOwners) as any)?.entityOwners?.map((o: any) => ({
+          hasEntityOwners: !!(inv as any).entityOwners,
+          entityOwnersCount: (inv as any).entityOwners?.length || 0,
+          entityOwnerNames: (inv as any).entityOwners?.map((o: any) => ({
             userName: o.userName,
             userNameLower: (o.userName || '').trim().toLowerCase(),
             investmentAmount: o.investmentAmount
           })) || [],
-          matchesTarget: (investments.find((inv: any) => inv.investmentType === 'ENTITY' && (inv as any).entityOwners) as any)?.entityOwners?.some((o: any) => 
+          matchesTarget: (inv as any).entityOwners?.some((o: any) => 
             (o.userName || '').trim().toLowerCase() === targetName
           ) || false
-        } : null
+        })),
+        directInvestmentsDetails: directInvestments.slice(0, 3).map((inv: any) => ({
+          property: inv.propertyName,
+          investorName: (inv as any).investorName,
+          investorNameLower: ((inv as any).investorName || '').trim().toLowerCase(),
+          matchesTarget: ((inv as any).investorName || '').trim().toLowerCase() === targetName
+        }))
       })
       
       // Recalculate stats based on person's investments only
@@ -1788,4 +1807,5 @@ export default function InvestorDashboard() {
       </div>
     </div>
   )
+} 
 } 
