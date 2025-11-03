@@ -4611,7 +4611,11 @@ export default function InvestmentDetailPage() {
                     if (kind === 'entity') {
                       const selectedEntity = availableEntities.find(en => String(en.id) === id)
                       if (!selectedEntity) { setSelectedEntityToAdd(''); return }
-                      const alreadyAdded = editingEntityInvestment.entity.entityOwners?.some((owner: any) => String(owner.investorEntityId) === String(id))
+                      // Check if entity is already added (either as entity investor or as expanded members)
+                      const alreadyAdded = editingEntityInvestment.entity.entityOwners?.some((owner: any) => 
+                        String(owner.investorEntityId) === String(id) || 
+                        (owner.fromEntity && owner.entityId === String(id))
+                      )
                       if (alreadyAdded) { alert('This entity is already added as an investor.'); setSelectedEntityToAdd(''); return }
                       if (!selectedEntity.contactPerson || String(selectedEntity.contactPerson).trim() === '') {
                         setPendingEntitySelectionIndex(editingEntityInvestment.entity.entityOwners?.length || 0)
@@ -4619,23 +4623,68 @@ export default function InvestmentDetailPage() {
                         setShowUpdateEntityContactModal(true)
                         return
                       }
-                      const newEntityInvestor = {
-                        id: `temp_${Date.now()}`,
-                        userId: '',
-                        investorEntityId: String(selectedEntity.id),
-                        isEntityInvestor: true,
-                        entityName: selectedEntity.name,
-                        entityOwnersSnapshot: (selectedEntity as any).entityOwners || [],
-                        user: { firstName: '', lastName: '', email: '' },
-                        ownershipPercentage: 0,
-                        investmentAmount: 0
+                      
+                      // Fetch full entity details to get members
+                      try {
+                        const entityResponse = await fetch(`/api/investors/entities/${selectedEntity.id}`, {
+                          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+                        })
+                        const fullEntity = entityResponse.ok ? await entityResponse.json() : selectedEntity
+                        
+                        // Expand entity members into individual owners
+                        const entityMembers = fullEntity.entityOwners || (selectedEntity as any).entityOwners || []
+                        const newOwners = entityMembers.map((member: any) => ({
+                          id: `temp_${Date.now()}_${member.id || Math.random()}`,
+                          userId: member.userId ? String(member.userId) : '',
+                          investorEntityId: member.investorEntityId ? String(member.investorEntityId) : '',
+                          isEntityInvestor: false,
+                          entityName: '',
+                          entityOwnersSnapshot: [],
+                          user: member.user ? {
+                            firstName: member.user.firstName || '',
+                            lastName: member.user.lastName || '',
+                            email: member.user.email || ''
+                          } : (member.investorEntity ? {
+                            firstName: '',
+                            lastName: '',
+                            email: ''
+                          } : { firstName: '', lastName: '', email: '' }),
+                          ownershipPercentage: parseFloat(member.ownershipPercentage || 0), // Pre-populate from entity
+                          investmentAmount: 0, // Will be editable
+                          fromEntity: true, // Flag to mark as read-only ownership %
+                          entityId: String(selectedEntity.id) // Track which entity this came from
+                        }))
+                        
+                        setEditingEntityInvestment({
+                          ...editingEntityInvestment,
+                          entity: { 
+                            ...editingEntityInvestment.entity, 
+                            entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), ...newOwners] 
+                          }
+                        })
+                        setSelectedEntityToAdd('')
+                        return
+                      } catch (error) {
+                        console.error('Error fetching entity details:', error)
+                        // Fallback to old behavior if fetch fails
+                        const newEntityInvestor = {
+                          id: `temp_${Date.now()}`,
+                          userId: '',
+                          investorEntityId: String(selectedEntity.id),
+                          isEntityInvestor: true,
+                          entityName: selectedEntity.name,
+                          entityOwnersSnapshot: (selectedEntity as any).entityOwners || [],
+                          user: { firstName: '', lastName: '', email: '' },
+                          ownershipPercentage: 0,
+                          investmentAmount: 0
+                        }
+                        setEditingEntityInvestment({
+                          ...editingEntityInvestment,
+                          entity: { ...editingEntityInvestment.entity, entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newEntityInvestor] }
+                        })
+                        setSelectedEntityToAdd('')
+                        return
                       }
-                      setEditingEntityInvestment({
-                        ...editingEntityInvestment,
-                        entity: { ...editingEntityInvestment.entity, entityOwners: [...(editingEntityInvestment.entity.entityOwners || []), newEntityInvestor] }
-                      })
-                      setSelectedEntityToAdd('')
-                      return
                     }
 
                     setSelectedEntityToAdd('')
@@ -4805,20 +4854,25 @@ export default function InvestmentDetailPage() {
                               <label className="block text-xs text-gray-500 mb-1">Investment Amount</label>
                               <input
                                 type="number"
-                                placeholder="Auto-calculated"
+                                step="0.01"
+                                placeholder="0.00"
                                 value={(() => {
-                                  // If breakdown exists, use sum of breakdown
+                                  // If breakdown exists, use sum of breakdown (read-only)
                                   if (owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
                                     return owner.breakdown.reduce((sum: number, row: any) => sum + parseFloat(row.amount || 0), 0).toFixed(2)
                                   }
-                                  // Otherwise calculate from ownership percentage
-                                  const totalEntityInvestment = parseFloat(editingEntityInvestment.investmentAmount || 0)
-                                  const ownershipPct = parseFloat(owner.ownershipPercentage || 0)
-                                  return ((totalEntityInvestment * ownershipPct) / 100).toFixed(2)
+                                  // Otherwise use stored investment amount (editable)
+                                  return owner.investmentAmount || 0
                                 })()}
-                                readOnly
-                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
-                                title="Investment amount is automatically calculated from breakdown or ownership percentage"
+                                readOnly={owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0}
+                                onChange={(e) => {
+                                  if (!owner.showBreakdown || !Array.isArray(owner.breakdown) || owner.breakdown.length === 0) {
+                                    const amt = parseFloat(e.target.value || '0')
+                                    updateEntityInvestor(index, 'investmentAmount', amt)
+                                  }
+                                }}
+                                className={`px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 ${owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0 ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}`}
+                                title={owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0 ? "Investment amount is auto-calculated from breakdown" : "Enter the investment amount for this investor"}
                               />
                             </div>
                             <div>
@@ -4828,17 +4882,15 @@ export default function InvestmentDetailPage() {
                                 step="0.01"
                                 placeholder="Ownership %"
                                 value={owner.ownershipPercentage || ''}
+                                readOnly={owner.fromEntity === true}
                                 onChange={(e) => {
-                                  const newPct = e.target.value
-                                  updateEntityInvestor(index, 'ownershipPercentage', newPct)
-                                  // Auto-calculate investment amount if no breakdown
-                                  if (!owner.showBreakdown || !Array.isArray(owner.breakdown) || owner.breakdown.length === 0) {
-                                    const totalEntityInvestment = parseFloat(editingEntityInvestment.investmentAmount || 0)
-                                    const calculatedAmount = (totalEntityInvestment * parseFloat(newPct || 0)) / 100
-                                    updateEntityInvestor(index, 'investmentAmount', calculatedAmount)
+                                  if (!owner.fromEntity) {
+                                    const newPct = e.target.value
+                                    updateEntityInvestor(index, 'ownershipPercentage', newPct)
                                   }
                                 }}
-                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                                className={`px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 ${owner.fromEntity === true ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}`}
+                                title={owner.fromEntity === true ? "Ownership percentage comes from the entity and cannot be changed" : "Enter the ownership percentage"}
                               />
                             </div>
                           </div>
