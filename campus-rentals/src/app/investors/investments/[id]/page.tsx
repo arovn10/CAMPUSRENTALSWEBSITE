@@ -2839,39 +2839,8 @@ export default function InvestmentDetailPage() {
 
 
 
-            {/* Multi-Investor Management (Admin only) */}
-            {currentUser?.role === 'ADMIN' && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Multi-Investor Setup</h2>
-                  <button
-                    onClick={async () => {
-                      setMultiInvestorData(prev => ({ ...prev, propertyId: investment?.property?.id || '' }))
-                      await fetchAvailableUsers()
-                      await fetchAvailableEntities()
-                      setShowMultiInvestorModal(true)
-                    }}
-                    className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600">Set up entities with multiple investors and ownership breakdowns.</p>
-                  <button
-                    onClick={async () => {
-                      setMultiInvestorData(prev => ({ ...prev, propertyId: investment?.property?.id || '' }))
-                      await fetchAvailableUsers()
-                      await fetchAvailableEntities()
-                      setShowMultiInvestorModal(true)
-                    }}
-                    className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors duration-200 font-medium"
-                  >
-                    Create Multi-Investor Investment
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Multi-Investor Management removed per request */}
+            {false && currentUser?.role === 'ADMIN' && (<div />)}
 
             {/* NOI Calculator */}
             {(((investment as any)?.property as any)?.['dealStatus']) !== 'UNDER_CONSTRUCTION' && (
@@ -3895,8 +3864,8 @@ export default function InvestmentDetailPage() {
       )}
 
       {/* Add Entity as Investor Modal */}
-      {/* Multi-Investor Modal */}
-      {showMultiInvestorModal && (
+      {/* Multi-Investor Modal removed per request */}
+      {false && showMultiInvestorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
@@ -4398,7 +4367,7 @@ export default function InvestmentDetailPage() {
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">Select an entity to add as investor...</option>
+                  <option value="">Select an entity or individual to add as investor...</option>
                   {availableEntities
                     .filter(entity => entity.id !== editingEntityInvestment.entity.id) // Exclude current entity
                     .map(entity => (
@@ -4408,7 +4377,7 @@ export default function InvestmentDetailPage() {
                     ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-2">
-                  Select an entity to automatically add it as an investor and view its members below.
+                  Select an entity or individual to automatically add them as an investor and view entity members below.
                 </p>
               </div>
 
@@ -4477,7 +4446,7 @@ export default function InvestmentDetailPage() {
                             }}
                             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           >
-                            <option value="">Create new or select existing...</option>
+                            <option value="">Select an entity or individual to add as investor...</option>
                             <optgroup label="Create New Individual">
                               <option value="NEW_INDIVIDUAL">👤 + New Individual Investor</option>
                             </optgroup>
