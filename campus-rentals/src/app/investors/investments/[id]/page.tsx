@@ -2877,14 +2877,14 @@ export default function InvestmentDetailPage() {
                             </div>
                           </div>
                           
-                          {/* Entity Owners */}
-                          {entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0 && (
+                          {/* Entity Owners - prefer per-deal owners if available */}
+                          {((entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0) || (entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0)) && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               <p className="text-xs font-medium text-gray-700 mb-1">Investors:</p>
                               <div className="space-y-1">
-                                {entityInvestment.entity.entityOwners.map((owner: any) => (
+                                {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners : entityInvestment.entity.entityOwners).map((owner: any) => (
                                   <div key={owner.id} className="flex justify-between text-xs">
-                                    <span className="text-gray-600">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</span>
+                                    <span className="text-gray-600">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</span>
                                     <span className="text-gray-800">{formatPercentage(owner.ownershipPercentage)} • {formatCurrency(owner.investmentAmount)}</span>
                                   </div>
                                 ))}
