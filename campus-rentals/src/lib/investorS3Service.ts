@@ -33,6 +33,7 @@ export interface InvestorPhotoResult {
 class InvestorS3Service {
   /**
    * Generate a unique key for investor deal photos
+   * Organized by investment ID (deal ID) in separate folders
    */
   private generateKey(fileName: string, investmentId?: string, dealId?: string): string {
     const timestamp = Date.now()
@@ -43,9 +44,10 @@ class InvestorS3Service {
     // Clean base name (remove special chars)
     const cleanBaseName = baseName.replace(/[^a-zA-Z0-9]/g, '_')
     
-    // Build path: investor-deals/{investmentId or dealId}/{timestamp}_{random}{ext}
-    const folder = investmentId ? `investments/${investmentId}` : dealId ? `deals/${dealId}` : 'general'
-    return `${INVESTOR_PREFIX}/${folder}/${cleanBaseName}_${timestamp}_${random}${ext}`
+    // Build path: investor-deals/deals/{investmentId or dealId}/{timestamp}_{random}{ext}
+    // Each deal gets its own folder for organization
+    const dealIdentifier = investmentId || dealId || 'general'
+    return `${INVESTOR_PREFIX}/deals/${dealIdentifier}/${cleanBaseName}_${timestamp}_${random}${ext}`
   }
 
   /**

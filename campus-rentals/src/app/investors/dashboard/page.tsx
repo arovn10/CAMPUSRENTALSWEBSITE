@@ -275,10 +275,11 @@ export default function InvestorDashboard() {
                 }
               }
               
-              // If no match found (direct or nested), return with 0 investment amount but preserve entityOwners
+              // If no match found (direct or nested), use API's calculated amount (API already handles nested entities correctly)
+              // Only set to 0 if API also returned 0
               return {
                 ...inv,
-                investmentAmount: 0,
+                investmentAmount: inv.investmentAmount || 0, // Preserve API's calculated amount
                 entityOwners: inv.entityOwners // Preserve for filtering
               }
             }
@@ -1533,34 +1534,73 @@ export default function InvestorDashboard() {
                             if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
                               // Expand entity investment into individual person rows
                               (inv as any).entityOwners.forEach((owner: any) => {
-                                // Apply person filter if specified
-                                if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) {
-                                  return
+                                // Check if this is a direct user owner
+                                if (owner.userName && owner.userId) {
+                                  // Apply person filter if specified
+                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) {
+                                    return
+                                  }
+                                  // Calculate effective ownership percentage for scaling
+                                  const entityOwnershipPct = inv.ownershipPercentage || 0
+                                  const individualOwnershipPct = owner.ownershipPercentage || 0
+                                  const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
+                                  
+                                  displayInvestments.push({
+                                    ...inv,
+                                    id: `${inv.id}_${owner.id}`,
+                                    personName: owner.userName,
+                                    investmentAmount: owner.investmentAmount || 0,
+                                    ownershipPercentage: owner.ownershipPercentage || 0,
+                                    // Scale property-level values by ownership for Analytics table
+                                    estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
+                                    estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
+                                    property: inv.property ? {
+                                      ...inv.property,
+                                      monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
+                                      otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
+                                      annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
+                                      totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
+                                      acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
+                                      constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
+                                    } : undefined
+                                  })
+                                } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
+                                  // This owner is an entity with a breakdown array - check nested investors
+                                  owner.breakdown.forEach((breakdownItem: any) => {
+                                    const breakdownLabel = (breakdownItem.label || '').trim()
+                                    // Apply person filter if specified (case-insensitive comparison)
+                                    if (analyticsTarget !== 'ALL' && breakdownLabel.toLowerCase() !== analyticsTarget.toLowerCase()) {
+                                      return
+                                    }
+                                    // Calculate effective ownership: (entity % of property / 100) * (entity owner % / 100) * (breakdown item % / 100)
+                                    const entityOwnershipPct = inv.ownershipPercentage || 0
+                                    const entityOwnerPct = owner.ownershipPercentage || 0
+                                    // Note: breakdown items don't have ownership %, so we use the amount proportion
+                                    const breakdownTotal = owner.breakdown.reduce((sum: number, item: any) => sum + (parseFloat(item.amount || 0)), 0)
+                                    const breakdownItemPct = breakdownTotal > 0 ? (parseFloat(breakdownItem.amount || 0) / breakdownTotal) * 100 : 0
+                                    const effectiveOwnershipPct = (entityOwnershipPct / 100) * (entityOwnerPct / 100) * (breakdownItemPct / 100)
+                                    
+                                    displayInvestments.push({
+                                      ...inv,
+                                      id: `${inv.id}_${owner.id}_${breakdownItem.id || breakdownItem.label}`,
+                                      personName: breakdownLabel,
+                                      investmentAmount: parseFloat(breakdownItem.amount || 0),
+                                      ownershipPercentage: effectiveOwnershipPct * 100,
+                                      // Scale property-level values by ownership for Analytics table
+                                      estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
+                                      estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
+                                      property: inv.property ? {
+                                        ...inv.property,
+                                        monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
+                                        otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
+                                        annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
+                                        totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
+                                        acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
+                                        constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
+                                      } : undefined
+                                    })
+                                  })
                                 }
-                                // Calculate effective ownership percentage for scaling
-                                const entityOwnershipPct = inv.ownershipPercentage || 0
-                                const individualOwnershipPct = owner.ownershipPercentage || 0
-                                const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
-                                
-                                displayInvestments.push({
-                                  ...inv,
-                                  id: `${inv.id}_${owner.id}`,
-                                  personName: owner.userName,
-                                  investmentAmount: owner.investmentAmount || 0,
-                                  ownershipPercentage: owner.ownershipPercentage || 0,
-                                  // Scale property-level values by ownership for Analytics table
-                                  estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
-                                  estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
-                                  property: inv.property ? {
-                                    ...inv.property,
-                                    monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
-                                    otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
-                                    annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
-                                    totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
-                                    acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
-                                    constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
-                                  } : undefined
-                                })
                               })
                             } else {
                               // Direct investment - apply person filter if specified
@@ -1652,12 +1692,26 @@ export default function InvestorDashboard() {
                             .forEach(inv => {
                               if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
                                 (inv as any).entityOwners.forEach((owner: any) => {
-                                  if (owner.userName === analyticsTarget) {
+                                  // Check if this is a direct user owner
+                                  if (owner.userName && owner.userId && owner.userName === analyticsTarget) {
                                     result.push({
                                       ...inv,
                                       personName: owner.userName,
                                       investmentAmount: owner.investmentAmount || 0,
                                       ownershipPercentage: owner.ownershipPercentage || 0
+                                    })
+                                  } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
+                                    // Check breakdown array for nested investors
+                                    owner.breakdown.forEach((breakdownItem: any) => {
+                                      const breakdownLabel = (breakdownItem.label || '').trim()
+                                      if (breakdownLabel.toLowerCase() === analyticsTarget.toLowerCase()) {
+                                        result.push({
+                                          ...inv,
+                                          personName: breakdownLabel,
+                                          investmentAmount: parseFloat(breakdownItem.amount || 0),
+                                          ownershipPercentage: 0 // Will be calculated in display logic
+                                        })
+                                      }
                                     })
                                   }
                                 })

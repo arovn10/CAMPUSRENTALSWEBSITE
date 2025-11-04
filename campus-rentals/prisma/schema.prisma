@@ -63,6 +63,7 @@ model User {
   fileUploads       FileUpload[]
   propertyLoans     PropertyLoan[]
   propertyAccess    UserPropertyAccess[]
+  dealPhotos        DealPhoto[]
 
   @@map("users")
 }
@@ -158,6 +159,7 @@ model Investment {
   user          User           @relation(fields: [userId], references: [id])
   property      Property       @relation(fields: [propertyId], references: [id])
   distributions Distribution[]
+  dealPhotos    DealPhoto[]
 
   @@map("investments")
 }
@@ -366,6 +368,30 @@ model PropertyPhoto {
   property   Property @relation(fields: [propertyId], references: [id])
 
   @@map("property_photos")
+}
+
+model DealPhoto {
+  id            String   @id @default(cuid())
+  investmentId  String
+  photoUrl      String   // S3 URL
+  s3Key         String   // S3 object key for deletion
+  fileName      String
+  description   String?
+  displayOrder  Int      @default(0) // Order for display
+  isThumbnail   Boolean  @default(false) // Thumbnail photo for the deal
+  fileSize      Int?
+  mimeType      String?
+  uploadedBy    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  investment    Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  uploader      User       @relation(fields: [uploadedBy], references: [id])
+
+  @@index([investmentId])
+  @@index([investmentId, displayOrder])
+  @@map("deal_photos")
 }
 
 model Notification {
