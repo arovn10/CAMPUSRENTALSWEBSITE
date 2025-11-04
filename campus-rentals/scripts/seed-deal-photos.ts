@@ -136,6 +136,31 @@ async function seedDealPhotos() {
 
     console.log(`Using admin user: ${adminUser.email} (${adminUser.id})\n`)
 
+    // Verify AWS credentials are available
+    const accessKeyId = process.env.INVESTOR_AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || ''
+    const secretAccessKey = process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ''
+    const bucketName = process.env.INVESTOR_S3_BUCKET_NAME || process.env.NEXT_PUBLIC_S3_BUCKET_NAME || 'campusrentalswebsitebucket'
+    const region = process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-2'
+
+    if (!accessKeyId || !secretAccessKey) {
+      console.error('ERROR: AWS credentials not found!')
+      console.error('Required environment variables:')
+      console.error('  - INVESTOR_AWS_ACCESS_KEY_ID or NEXT_PUBLIC_AWS_ACCESS_KEY_ID')
+      console.error('  - INVESTOR_AWS_SECRET_ACCESS_KEY or AWS_SECRET_ACCESS_KEY')
+      console.error('\nCurrent values:')
+      console.error(`  - accessKeyId: ${accessKeyId ? '***SET***' : 'NOT SET'}`)
+      console.error(`  - secretAccessKey: ${secretAccessKey ? '***SET***' : 'NOT SET'}`)
+      console.error(`  - bucketName: ${bucketName}`)
+      console.error(`  - region: ${region}`)
+      throw new Error('AWS credentials not configured. Cannot proceed with photo uploads.')
+    }
+
+    console.log('AWS Configuration:')
+    console.log(`  - Bucket: ${bucketName}`)
+    console.log(`  - Region: ${region}`)
+    console.log(`  - Access Key ID: ${accessKeyId.substring(0, 8)}...${accessKeyId.length > 8 ? '***' : ''}`)
+    console.log(`  - Secret Key: ${secretAccessKey ? '***SET***' : 'NOT SET'}\n`)
+
     // Get all direct investments with their properties
     const directInvestments = await prisma.investment.findMany({
       where: {
