@@ -338,20 +338,69 @@ export async function GET(request: NextRequest) {
     // Multiple entity investments for same property should show as ONE property with nested ownership
     const investmentsByPropertyId = new Map<string, any>()
     
+    // Log what we have before filtering (for debugging)
+    try {
+      console.log('[INVESTORS/PROPERTIES] Before filtering', JSON.stringify({
+        role: user.role,
+        directInvestmentsCount: formattedInvestments.length,
+        directInvestmentsSample: formattedInvestments.slice(0, 3).map((di: any) => ({
+          property: di.propertyName,
+          propertyId: di.propertyId,
+          amount: di.investmentAmount,
+          type: di.investmentType || 'DIRECT'
+        })),
+        entityInvestmentsCount: formattedEntityInvestments.length,
+        entityInvestmentsSample: formattedEntityInvestments.slice(0, 3).map((ei: any) => ({
+          property: ei.propertyName,
+          propertyId: ei.propertyId,
+          amount: ei.investmentAmount,
+          type: ei.investmentType || 'ENTITY',
+          entityName: ei.entityName,
+          hasOwners: (ei.entityOwners || []).length > 0
+        }))
+      }))
+    } catch {}
+    
     // For investors: filter out direct investments that have corresponding entity investments
     // (This prevents duplicate/correct data from inflating totals)
     let filteredDirectInvestments = formattedInvestments
     if (user.role === 'INVESTOR' && formattedEntityInvestments.length > 0) {
-      const entityPropertyIds = new Set(formattedEntityInvestments.map((ei: any) => ei.propertyId))
+      const entityPropertyIds = new Set(formattedEntityInvestments.map((ei: any) => String(ei.propertyId)))
       const originalCount = filteredDirectInvestments.length
+      
+      // Log entity property IDs for debugging
+      try {
+        console.log('[INVESTORS/PROPERTIES] Entity property IDs', JSON.stringify({
+          entityPropertyIds: Array.from(entityPropertyIds),
+          entityPropertyIdsCount: entityPropertyIds.size
+        }))
+      } catch {}
+      
       filteredDirectInvestments = formattedInvestments.filter((di: any) => {
-        const hasEntityVersion = entityPropertyIds.has(di.propertyId)
+        const diPropertyId = String(di.propertyId)
+        const hasEntityVersion = entityPropertyIds.has(diPropertyId)
         if (hasEntityVersion) {
           try {
             console.log('[INVESTORS/PROPERTIES] Filtering out direct investment (entity exists)', JSON.stringify({
               property: di.propertyName,
               directAmount: di.investmentAmount,
-              propertyId: di.propertyId
+              directPropertyId: diPropertyId,
+              matchingEntityInvestments: formattedEntityInvestments
+                .filter((ei: any) => String(ei.propertyId) === diPropertyId)
+                .map((ei: any) => ({
+                  entityName: ei.entityName,
+                  entityAmount: ei.investmentAmount,
+                  owners: (ei.entityOwners || []).map((o: any) => ({ name: o.userName, amount: o.investmentAmount }))
+                }))
+            }))
+          } catch {}
+        } else {
+          // Log when keeping a direct investment (no entity version)
+          try {
+            console.log('[INVESTORS/PROPERTIES] Keeping direct investment (no entity)', JSON.stringify({
+              property: di.propertyName,
+              directAmount: di.investmentAmount,
+              directPropertyId: diPropertyId
             }))
           } catch {}
         }
