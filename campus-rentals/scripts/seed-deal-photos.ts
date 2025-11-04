@@ -225,75 +225,66 @@ async function seedDealPhotos() {
     console.log(`  - Access Key ID: ${accessKeyId.substring(0, 8)}...${accessKeyId.length > 8 ? '***' : ''}`)
     console.log(`  - Secret Key: ${secretAccessKey ? '***SET***' : 'NOT SET'}\n`)
 
-    // Get all direct investments with their properties
-    const directInvestments = await prisma.investment.findMany({
+    // Get all properties (both direct and entity investments can have photos)
+    // We'll process all unique properties to ensure photos are linked correctly
+    const allProperties = await prisma.property.findMany({
       where: {
-        status: 'ACTIVE',
+        isActive: true,
       },
-      include: {
-        property: {
-          select: {
-            id: true,
-            name: true,
-            propertyId: true, // Numeric ID from old backend
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        propertyId: true, // Numeric ID from old backend - this is the key!
+        address: true,
+      },
+      orderBy: {
+        propertyId: 'asc',
       },
     })
-
-    // Note: DealPhoto only references Investment (direct investments), not EntityInvestment
-    // Entity investments are handled separately through their property relationship
-    // For now, we'll only seed photos for direct investments
-    // If entity investments need photos, they would need to be linked through the property
     
-    console.log(`Found ${directInvestments.length} direct investments to process\n`)
-
-    const allInvestments = directInvestments.map(inv => ({ ...inv, type: 'DIRECT' as const }))
+    console.log(`Found ${allProperties.length} properties to process\n`)
 
     let totalPhotosProcessed = 0
     let totalPhotosCreated = 0
     let totalErrors = 0
+    let skippedNoPropertyId = 0
+    let skippedExisting = 0
+    let skippedNoPhotos = 0
 
-    for (const investment of allInvestments) {
-      if (!investment.property) {
-        console.log(`Skipping investment ${investment.id} - no property`)
+    for (const property of allProperties) {
+      console.log(`\nProcessing property: ${property.name} (ID: ${property.id})`)
+      console.log(`  Old backend propertyId: ${property.propertyId}`)
+      console.log(`  Address: ${property.address}`)
+
+      // Check if property has a numeric propertyId from old backend
+      if (!property.propertyId || property.propertyId <= 0) {
+        console.log(`  ⚠ No valid propertyId from old backend - skipping`)
+        skippedNoPropertyId++
         continue
       }
 
-      const propertyName = investment.property.name
-
-      console.log(`\nProcessing ${investment.type} investment: ${investment.id}`)
-      console.log(`  Property: ${propertyName}`)
-
-      // Check if photos already exist for this property (photos are linked to property, not investment)
+      // Check if photos already exist for this property
       const existingPhotos = await prisma.dealPhoto.findMany({
-        where: { propertyId: investment.property.id },
+        where: { propertyId: property.id },
       })
 
       if (existingPhotos.length > 0) {
-        console.log(`  Already has ${existingPhotos.length} photos for this property - skipping`)
+        console.log(`  ℹ Already has ${existingPhotos.length} photos for this property - skipping`)
+        skippedExisting++
         continue
       }
 
-      // Get old backend IDs for this property
-      const oldBackendIds = getOldBackendIdsForProperty(propertyName)
-      
-      if (oldBackendIds.length === 0) {
-        console.log(`  No mapping found for property name - skipping`)
-        continue
-      }
-
-      console.log(`  Checking old backend IDs: ${oldBackendIds.join(', ')}`)
-
-      // Fetch photos from all mapped old backend property IDs
-      const oldPhotos = await fetchAllPhotosForProperty(propertyName)
+      // Fetch photos directly from old backend using the propertyId
+      console.log(`  Fetching photos from old backend for propertyId: ${property.propertyId}`)
+      const oldPhotos = await fetchPhotosFromOldBackend(property.propertyId)
 
       if (oldPhotos.length === 0) {
-        console.log(`  No photos found in old backend`)
+        console.log(`  ⚠ No photos found in old backend for propertyId ${property.propertyId}`)
+        skippedNoPhotos++
         continue
       }
 
-      console.log(`  Found ${oldPhotos.length} photos in old backend`)
+      console.log(`  ✓ Found ${oldPhotos.length} photos in old backend`)
 
       // Process each photo
       for (let i = 0; i < oldPhotos.length; i++) {
@@ -315,13 +306,13 @@ async function seedDealPhotos() {
             fileName,
             buffer: imageBuffer,
             contentType,
-            investmentId: investment.property.id, // Use propertyId for folder organization
+            investmentId: property.id, // Use property.id for folder organization
           })
 
-          // Create DealPhoto record - linked to property, not investment
+          // Create DealPhoto record - linked to property
           const dealPhoto = await prisma.dealPhoto.create({
             data: {
-              propertyId: investment.property.id,
+              propertyId: property.id,
               photoUrl: uploadResult.url,
               s3Key: uploadResult.key,
               fileName,
@@ -338,7 +329,7 @@ async function seedDealPhotos() {
           console.log(`  ✓ Created deal photo: ${dealPhoto.id}`)
         } catch (error) {
           totalErrors++
-          console.error(`  ✗ Error processing photo ${i + 1}:`, error)
+          console.error(`  ✗ Error processing photo ${i + 1}:`, error instanceof Error ? error.message : String(error))
         }
       }
     }
@@ -348,6 +339,9 @@ async function seedDealPhotos() {
     console.log(`Total photos processed: ${totalPhotosProcessed}`)
     console.log(`Total photos created: ${totalPhotosCreated}`)
     console.log(`Total errors: ${totalErrors}`)
+    console.log(`Skipped (no propertyId): ${skippedNoPropertyId}`)
+    console.log(`Skipped (already has photos): ${skippedExisting}`)
+    console.log(`Skipped (no photos in old backend): ${skippedNoPhotos}`)
     console.log('='.repeat(50))
   } catch (error) {
     console.error('Fatal error during seeding:', error)
