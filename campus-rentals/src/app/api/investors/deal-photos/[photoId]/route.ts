@@ -28,18 +28,18 @@ export async function PUT(
     // Get the photo
     const photo = await prisma.dealPhoto.findUnique({
       where: { id: params.photoId },
-      include: { investment: true }
+      include: { property: true }
     })
 
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
     }
 
-    // If setting as thumbnail, unset other thumbnails for this investment
+    // If setting as thumbnail, unset other thumbnails for this property
     if (isThumbnail === true) {
       await prisma.dealPhoto.updateMany({
         where: {
-          investmentId: photo.investmentId,
+          propertyId: photo.propertyId,
           isThumbnail: true,
           id: { not: params.photoId }
         },

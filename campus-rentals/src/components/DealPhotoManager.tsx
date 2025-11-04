@@ -32,11 +32,12 @@ interface DealPhoto {
 }
 
 interface DealPhotoManagerProps {
-  investmentId: string
+  investmentId?: string // Optional - for backward compatibility
+  propertyId?: string   // Preferred - links photos to property/deal
   onThumbnailChange?: (photoUrl: string | null) => void
 }
 
-export default function DealPhotoManager({ investmentId, onThumbnailChange }: DealPhotoManagerProps) {
+export default function DealPhotoManager({ investmentId, propertyId, onThumbnailChange }: DealPhotoManagerProps) {
   const [photos, setPhotos] = useState<DealPhoto[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -58,9 +59,22 @@ export default function DealPhotoManager({ investmentId, onThumbnailChange }: De
     try {
       setLoading(true)
       setError(null)
-      console.log('[DealPhotoManager] Fetching photos for investmentId:', investmentId)
       
-      const response = await fetch(`/api/investors/deal-photos?investmentId=${investmentId}`, {
+      // Build query string - prefer propertyId if provided
+      const params = new URLSearchParams()
+      if (propertyId) {
+        params.append('propertyId', propertyId)
+        console.log('[DealPhotoManager] Fetching photos for propertyId:', propertyId)
+      } else if (investmentId) {
+        params.append('investmentId', investmentId)
+        console.log('[DealPhotoManager] Fetching photos for investmentId:', investmentId)
+      } else {
+        setError('propertyId or investmentId is required')
+        setLoading(false)
+        return
+      }
+      
+      const response = await fetch(`/api/investors/deal-photos?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`
         }
@@ -94,10 +108,10 @@ export default function DealPhotoManager({ investmentId, onThumbnailChange }: De
   }
 
   useEffect(() => {
-    if (investmentId) {
+    if (propertyId || investmentId) {
       fetchPhotos()
     }
-  }, [investmentId])
+  }, [propertyId, investmentId])
 
   // Upload photo
   const handleUpload = async () => {
@@ -109,7 +123,11 @@ export default function DealPhotoManager({ investmentId, onThumbnailChange }: De
     try {
       const formData = new FormData()
       formData.append('file', uploadFile)
-      formData.append('investmentId', investmentId)
+      if (propertyId) {
+        formData.append('propertyId', propertyId)
+      } else if (investmentId) {
+        formData.append('investmentId', investmentId)
+      }
       if (uploadDescription) {
         formData.append('description', uploadDescription)
       }

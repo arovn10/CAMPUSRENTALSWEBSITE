@@ -16,25 +16,55 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const investmentId = searchParams.get('investmentId')
+    const propertyId = searchParams.get('propertyId')
 
-    if (!investmentId) {
-      return NextResponse.json({ error: 'investmentId is required' }, { status: 400 })
+    let targetPropertyId: string | null = null
+
+    // If propertyId is provided directly, use it
+    if (propertyId) {
+      targetPropertyId = propertyId
+    } else if (investmentId) {
+      // Otherwise, get propertyId from the investment
+      // Check direct investment first
+      const directInvestment = await prisma.investment.findUnique({
+        where: { id: investmentId },
+        select: { propertyId: true }
+      })
+
+      if (directInvestment) {
+        targetPropertyId = directInvestment.propertyId
+      } else {
+        // Check entity investment
+        const entityInvestment = await prisma.entityInvestment.findUnique({
+          where: { id: investmentId },
+          select: { propertyId: true }
+        })
+
+        if (entityInvestment) {
+          targetPropertyId = entityInvestment.propertyId
+        }
+      }
     }
 
-    // Verify user has access to this investment (direct or entity investment)
+    if (!targetPropertyId) {
+      return NextResponse.json({ error: 'propertyId or investmentId is required' }, { status: 400 })
+    }
+
+    // Verify user has access to this property through investments
     if (user.role === 'INVESTOR') {
-      // Check direct investment first
-      const directInvestment = await prisma.investment.findFirst({
+      // Check if user has access via direct investment
+      const hasDirectAccess = await prisma.investment.findFirst({
         where: {
-          id: investmentId,
+          propertyId: targetPropertyId,
           userId: user.id
         }
       })
 
-      // If not a direct investment, check entity investment access
-      if (!directInvestment) {
-        const entityInvestment = await prisma.entityInvestment.findFirst({
-          where: { id: investmentId },
+      // Check if user has access via entity investment
+      let hasEntityAccess = false
+      if (!hasDirectAccess) {
+        const entityInvestments = await prisma.entityInvestment.findMany({
+          where: { propertyId: targetPropertyId },
           include: {
             entityInvestmentOwners: true,
             entity: {
@@ -45,97 +75,56 @@ export async function GET(request: NextRequest) {
           }
         })
 
-        if (!entityInvestment) {
-          return NextResponse.json(
-            { error: 'Investment not found or access denied' },
-            { status: 403 }
-          )
-        }
+        hasEntityAccess = entityInvestments.some((ei: any) => {
+          const hasDirectOwnerAccess = 
+            ei.entityInvestmentOwners.some((owner: any) => owner.userId === user.id) ||
+            ei.entity?.entityOwners.some((owner: any) => owner.userId === user.id)
 
-        // Check if user has access through entityInvestmentOwners or entity.entityOwners
-        const hasDirectAccess = 
-          entityInvestment.entityInvestmentOwners.some((owner: any) => owner.userId === user.id) ||
-          entityInvestment.entity?.entityOwners.some((owner: any) => owner.userId === user.id)
+          if (hasDirectOwnerAccess) return true
 
-        // Check nested access through breakdown
-        const hasNestedAccess = entityInvestment.entityInvestmentOwners.some((owner: any) => {
-          if (owner.breakdown && Array.isArray(owner.breakdown)) {
-            return owner.breakdown.some((item: any) => {
-              const itemId = item.id || null
-              const itemLabel = (item.label || '').trim().toLowerCase()
-              const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase()
-              return (
-                (itemId && String(itemId) === String(user.id)) ||
-                (itemLabel === userName)
-              )
-            })
-          }
-          return false
+          // Check nested access through breakdown
+          return ei.entityInvestmentOwners.some((owner: any) => {
+            if (owner.breakdown && Array.isArray(owner.breakdown)) {
+              return owner.breakdown.some((item: any) => {
+                const itemId = item.id || null
+                const itemLabel = (item.label || '').trim().toLowerCase()
+                const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase()
+                return (
+                  (itemId && String(itemId) === String(user.id)) ||
+                  (itemLabel === userName)
+                )
+              })
+            }
+            return false
+          })
         })
+      }
 
-        if (!hasDirectAccess && !hasNestedAccess) {
-          return NextResponse.json(
-            { error: 'Investment not found or access denied' },
-            { status: 403 }
-          )
-        }
+      if (!hasDirectAccess && !hasEntityAccess) {
+        return NextResponse.json(
+          { error: 'Property not found or access denied' },
+          { status: 403 }
+        )
       }
     }
 
-    // Check if this is an entity investment or direct investment
-    const entityInvestment = await prisma.entityInvestment.findUnique({
-      where: { id: investmentId },
-      include: { property: true }
+    // Get all photos for this property
+    const photos = await prisma.dealPhoto.findMany({
+      where: { propertyId: targetPropertyId },
+      orderBy: [
+        { displayOrder: 'asc' },
+        { createdAt: 'asc' }
+      ],
+      include: {
+        uploader: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
     })
-
-    let photos: any[] = []
-
-    if (entityInvestment) {
-      // This is an entity investment - get photos from all direct investments for the same property
-      const directInvestments = await prisma.investment.findMany({
-        where: { propertyId: entityInvestment.propertyId },
-        select: { id: true }
-      })
-
-      const directInvestmentIds = directInvestments.map(inv => inv.id)
-
-      if (directInvestmentIds.length > 0) {
-        photos = await prisma.dealPhoto.findMany({
-          where: { investmentId: { in: directInvestmentIds } },
-          orderBy: [
-            { displayOrder: 'asc' },
-            { createdAt: 'asc' }
-          ],
-          include: {
-            uploader: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
-          }
-        })
-      }
-    } else {
-      // This is a direct investment - get photos normally
-      photos = await prisma.dealPhoto.findMany({
-        where: { investmentId },
-        orderBy: [
-          { displayOrder: 'asc' },
-          { createdAt: 'asc' }
-        ],
-        include: {
-          uploader: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          }
-        }
-      })
-    }
 
     return NextResponse.json({
       photos: photos.map(photo => ({
@@ -193,14 +182,38 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const investmentId = formData.get('investmentId') as string | null
+    const propertyId = formData.get('propertyId') as string | null
     const description = formData.get('description') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (!investmentId) {
-      return NextResponse.json({ error: 'investmentId is required' }, { status: 400 })
+    let targetPropertyId: string | null = propertyId
+
+    // If propertyId not provided, get it from investmentId
+    if (!targetPropertyId && investmentId) {
+      const directInvestment = await prisma.investment.findUnique({
+        where: { id: investmentId },
+        select: { propertyId: true }
+      })
+
+      if (directInvestment) {
+        targetPropertyId = directInvestment.propertyId
+      } else {
+        const entityInvestment = await prisma.entityInvestment.findUnique({
+          where: { id: investmentId },
+          select: { propertyId: true }
+        })
+
+        if (entityInvestment) {
+          targetPropertyId = entityInvestment.propertyId
+        }
+      }
+    }
+
+    if (!targetPropertyId) {
+      return NextResponse.json({ error: 'propertyId or investmentId is required' }, { status: 400 })
     }
 
     // Validate file type - only images
@@ -229,30 +242,65 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify user has access to this investment
+    // Verify user has access to this property
     if (user.role === 'INVESTOR') {
-      const investment = await prisma.investment.findFirst({
+      const hasDirectAccess = await prisma.investment.findFirst({
         where: {
-          id: investmentId,
+          propertyId: targetPropertyId,
           userId: user.id
         }
       })
 
-      if (!investment) {
-        return NextResponse.json(
-          { error: 'Investment not found or access denied' },
-          { status: 403 }
-        )
+      if (!hasDirectAccess) {
+        const entityInvestments = await prisma.entityInvestment.findMany({
+          where: { propertyId: targetPropertyId },
+          include: {
+            entityInvestmentOwners: true,
+            entity: {
+              include: {
+                entityOwners: true
+              }
+            }
+          }
+        })
+
+        const hasEntityAccess = entityInvestments.some((ei: any) => {
+          return (
+            ei.entityInvestmentOwners.some((owner: any) => owner.userId === user.id) ||
+            ei.entity?.entityOwners.some((owner: any) => owner.userId === user.id) ||
+            ei.entityInvestmentOwners.some((owner: any) => {
+              if (owner.breakdown && Array.isArray(owner.breakdown)) {
+                return owner.breakdown.some((item: any) => {
+                  const itemId = item.id || null
+                  const itemLabel = (item.label || '').trim().toLowerCase()
+                  const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase()
+                  return (
+                    (itemId && String(itemId) === String(user.id)) ||
+                    (itemLabel === userName)
+                  )
+                })
+              }
+              return false
+            })
+          )
+        })
+
+        if (!hasEntityAccess) {
+          return NextResponse.json(
+            { error: 'Property not found or access denied' },
+            { status: 403 }
+          )
+        }
       }
     } else {
-      // For admins/managers, verify investment exists
-      const investment = await prisma.investment.findUnique({
-        where: { id: investmentId }
+      // For admins/managers, verify property exists
+      const property = await prisma.property.findUnique({
+        where: { id: targetPropertyId }
       })
 
-      if (!investment) {
+      if (!property) {
         return NextResponse.json(
-          { error: 'Investment not found' },
+          { error: 'Property not found' },
           { status: 404 }
         )
       }
@@ -261,17 +309,17 @@ export async function POST(request: NextRequest) {
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Upload to S3 - organized by investment ID
+    // Upload to S3 - organized by property ID
     const result = await investorS3Service.uploadPhoto({
       fileName: file.name,
       buffer,
       contentType: file.type,
-      investmentId: investmentId,
+      investmentId: targetPropertyId, // Use propertyId for folder organization
     })
 
-    // Get the next display order for this investment
+    // Get the next display order for this property
     const maxOrder = await prisma.dealPhoto.aggregate({
-      where: { investmentId },
+      where: { propertyId: targetPropertyId },
       _max: { displayOrder: true }
     })
     const nextOrder = (maxOrder._max.displayOrder ?? -1) + 1
@@ -279,7 +327,7 @@ export async function POST(request: NextRequest) {
     // Check if this should be the thumbnail (first photo or if no thumbnail exists)
     const existingThumbnail = await prisma.dealPhoto.findFirst({
       where: {
-        investmentId,
+        propertyId: targetPropertyId,
         isThumbnail: true
       }
     })
@@ -288,7 +336,7 @@ export async function POST(request: NextRequest) {
     // Save photo metadata to database
     const dealPhoto = await prisma.dealPhoto.create({
       data: {
-        investmentId,
+        propertyId: targetPropertyId,
         photoUrl: result.url,
         s3Key: result.key,
         fileName: result.fileName,

@@ -2272,10 +2272,11 @@ export default function InvestmentDetailPage() {
             </div>
 
             {/* Deal Photos */}
-            {investment && (
+            {investment && investment.property && (
               <div className="bg-white rounded-2xl shadow-sm border p-6">
                 <DealPhotoManager 
-                  investmentId={investment.id || (params.id as string)}
+                  propertyId={investment.property.id}
+                  investmentId={investment.id} // Fallback for backward compatibility
                   onThumbnailChange={(photoUrl) => {
                     // Update thumbnail if needed
                     console.log('Thumbnail changed:', photoUrl)

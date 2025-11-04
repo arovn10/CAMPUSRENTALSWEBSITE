@@ -265,13 +265,13 @@ async function seedDealPhotos() {
       console.log(`\nProcessing ${investment.type} investment: ${investment.id}`)
       console.log(`  Property: ${propertyName}`)
 
-      // Check if photos already exist for this investment
+      // Check if photos already exist for this property (photos are linked to property, not investment)
       const existingPhotos = await prisma.dealPhoto.findMany({
-        where: { investmentId: investment.id },
+        where: { propertyId: investment.property.id },
       })
 
       if (existingPhotos.length > 0) {
-        console.log(`  Already has ${existingPhotos.length} photos - skipping`)
+        console.log(`  Already has ${existingPhotos.length} photos for this property - skipping`)
         continue
       }
 
@@ -315,13 +315,13 @@ async function seedDealPhotos() {
             fileName,
             buffer: imageBuffer,
             contentType,
-            investmentId: investment.id,
+            investmentId: investment.property.id, // Use propertyId for folder organization
           })
 
-          // Create DealPhoto record
+          // Create DealPhoto record - linked to property, not investment
           const dealPhoto = await prisma.dealPhoto.create({
             data: {
-              investmentId: investment.id,
+              propertyId: investment.property.id,
               photoUrl: uploadResult.url,
               s3Key: uploadResult.key,
               fileName,

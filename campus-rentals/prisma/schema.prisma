@@ -103,6 +103,7 @@ model Property {
   investments     Investment[]
   entityInvestments EntityInvestment[]
   photos          PropertyPhoto[]
+  dealPhotos     DealPhoto[]
   insurance       Insurance[]
   propertyTaxes   PropertyTax[]
   waterfallStructures WaterfallStructure[]
@@ -159,7 +160,6 @@ model Investment {
   user          User           @relation(fields: [userId], references: [id])
   property      Property       @relation(fields: [propertyId], references: [id])
   distributions Distribution[]
-  dealPhotos    DealPhoto[]
 
   @@map("investments")
 }
@@ -473,13 +473,13 @@ model EntityInvestmentOwner {
 
 model DealPhoto {
   id            String   @id @default(cuid())
-  investmentId  String
+  propertyId    String   // Property/deal ID - photos are linked to the property, not individual investments
   photoUrl      String   // S3 URL
   s3Key         String   // S3 object key for deletion
   fileName      String
   description   String?
   displayOrder  Int      @default(0) // Order for display
-  isThumbnail  Boolean  @default(false) // Thumbnail photo for the deal
+  isThumbnail   Boolean  @default(false) // Thumbnail photo for the deal
   fileSize      Int?
   mimeType      String?
   uploadedBy    String
@@ -487,11 +487,11 @@ model DealPhoto {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  investment    Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
-  uploader      User       @relation(fields: [uploadedBy], references: [id])
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  uploader      User     @relation(fields: [uploadedBy], references: [id])
 
-  @@index([investmentId])
-  @@index([investmentId, displayOrder])
+  @@index([propertyId])
+  @@index([propertyId, displayOrder])
   @@map("deal_photos")
 }
 
