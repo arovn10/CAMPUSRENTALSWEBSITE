@@ -82,23 +82,60 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all photos for this investment, ordered by displayOrder
-    const photos = await prisma.dealPhoto.findMany({
-      where: { investmentId },
-      orderBy: [
-        { displayOrder: 'asc' },
-        { createdAt: 'asc' }
-      ],
-      include: {
-        uploader: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
+    // Check if this is an entity investment or direct investment
+    const entityInvestment = await prisma.entityInvestment.findUnique({
+      where: { id: investmentId },
+      include: { property: true }
+    })
+
+    let photos: any[] = []
+
+    if (entityInvestment) {
+      // This is an entity investment - get photos from all direct investments for the same property
+      const directInvestments = await prisma.investment.findMany({
+        where: { propertyId: entityInvestment.propertyId },
+        select: { id: true }
+      })
+
+      const directInvestmentIds = directInvestments.map(inv => inv.id)
+
+      if (directInvestmentIds.length > 0) {
+        photos = await prisma.dealPhoto.findMany({
+          where: { investmentId: { in: directInvestmentIds } },
+          orderBy: [
+            { displayOrder: 'asc' },
+            { createdAt: 'asc' }
+          ],
+          include: {
+            uploader: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        })
+      }
+    } else {
+      // This is a direct investment - get photos normally
+      photos = await prisma.dealPhoto.findMany({
+        where: { investmentId },
+        orderBy: [
+          { displayOrder: 'asc' },
+          { createdAt: 'asc' }
+        ],
+        include: {
+          uploader: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
           }
         }
-      }
-    })
+      })
+    }
 
     return NextResponse.json({
       photos: photos.map(photo => ({
