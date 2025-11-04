@@ -40,7 +40,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         setLoading(true);
         // First try to get DealPhoto thumbnail (from investor portal)
         try {
-          const response = await fetch(`/api/properties/${property.property_id}/thumbnail`);
+          const response = await fetch(`/api/properties/thumbnail/${property.property_id}`);
           if (response.ok) {
             const data = await response.json();
             if (data.thumbnail) {

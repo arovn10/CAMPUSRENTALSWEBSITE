@@ -341,7 +341,7 @@ export default function InvestorDashboard() {
           if (!propertyId) return null
           
           try {
-            const response = await fetch(`/api/properties/${propertyId}/thumbnail`, {
+            const response = await fetch(`/api/properties/thumbnail/${propertyId}`, {
               headers: {
                 'Authorization': `Bearer ${token || ''}`
               }
