@@ -232,6 +232,7 @@ export async function GET(request: NextRequest) {
           const investorEmail = (user as any).email || ''
           const investorName = `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim().toLowerCase()
           
+          // First, check for direct owner match (user directly owns share in entity)
           const matchingOwner = owners.find((owner: any) => {
             const ownerId = owner.userId || owner.user?.id || null
             const ownerEmail = (owner.userEmail || owner.user?.email || '').trim().toLowerCase()
@@ -245,10 +246,41 @@ export async function GET(request: NextRequest) {
           })
           
           if (matchingOwner) {
+            // Direct owner match found
             finalInvestmentAmount = parseFloat(matchingOwner.investmentAmount || 0)
           } else {
-            // No matching owner found - set to 0 for this investor
-            finalInvestmentAmount = 0
+            // Check if investor is nested inside an entity owner (e.g., Campus Rentals LLC inside Campus Rentals 2 LLC)
+            // Look for owners that are entities (have investorEntityId) with a breakdown array
+            const entityOwnerWithBreakdown = owners.find((owner: any) => {
+              // Owner must be an entity (has investorEntityId) and have a breakdown array
+              const isEntityOwner = !!owner.investorEntityId
+              const hasBreakdown = Array.isArray(owner.breakdown) && owner.breakdown.length > 0
+              return isEntityOwner && hasBreakdown
+            })
+            
+            if (entityOwnerWithBreakdown && Array.isArray(entityOwnerWithBreakdown.breakdown)) {
+              // Search the breakdown array for the investor
+              const breakdownMatch = entityOwnerWithBreakdown.breakdown.find((item: any) => {
+                const itemId = item.id || null
+                const itemLabel = (item.label || '').trim().toLowerCase()
+                
+                return (
+                  (itemId && investorId && String(itemId) === String(investorId)) ||
+                  (!!itemLabel && !!investorName && itemLabel === investorName)
+                )
+              })
+              
+              if (breakdownMatch && breakdownMatch.amount) {
+                // Found investor in nested entity breakdown
+                finalInvestmentAmount = parseFloat(breakdownMatch.amount || 0)
+              } else {
+                // No match in breakdown - set to 0
+                finalInvestmentAmount = 0
+              }
+            } else {
+              // No matching owner found - set to 0 for this investor
+              finalInvestmentAmount = 0
+            }
           }
         } else {
           // Admin: sum all owners
@@ -330,7 +362,8 @@ export async function GET(request: NextRequest) {
           investorEntityId: owner.investorEntityId || null,
           investorEntityName: owner.investorEntity ? owner.investorEntity.name : null,
           ownershipPercentage: owner.ownershipPercentage,
-          investmentAmount: owner.investmentAmount
+          investmentAmount: owner.investmentAmount,
+          breakdown: owner.breakdown || null // Include breakdown array for nested entity investments
         }))
       }
 
