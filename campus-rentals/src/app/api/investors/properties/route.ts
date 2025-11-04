@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
         }))
       } catch {}
       // For investors, get entity investments where they are owners
+      // Check both entity-level owners (entity.entityOwners) AND per-deal owners (entityInvestmentOwners)
       entityInvestments = await prisma.entityInvestment.findMany({
         include: { 
           property: true,
@@ -98,13 +99,26 @@ export async function GET(request: NextRequest) {
           entityInvestmentOwners: { include: { user: true, investorEntity: true } }
         },
         where: {
-          entity: {
-            entityOwners: {
-              some: {
-                userId: user.id
+          OR: [
+            {
+              // User is in entity-level owners
+              entity: {
+                entityOwners: {
+                  some: {
+                    userId: user.id
+                  }
+                }
+              }
+            },
+            {
+              // User is in per-deal owners (entityInvestmentOwners)
+              entityInvestmentOwners: {
+                some: {
+                  userId: user.id
+                }
               }
             }
-          }
+          ]
         }
       })
 
