@@ -132,7 +132,7 @@ async function seedDealPhotos() {
 
     // Verify AWS credentials are available
     const accessKeyId = process.env.INVESTOR_AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || ''
-    const secretAccessKey = process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ''
+    const secretAccessKey = process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || ''
     const bucketName = process.env.INVESTOR_S3_BUCKET_NAME || process.env.NEXT_PUBLIC_S3_BUCKET_NAME || 'campusrentalswebsitebucket'
     const region = process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-2'
 
