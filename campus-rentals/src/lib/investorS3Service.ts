@@ -4,11 +4,13 @@ import crypto from 'crypto'
 
 // Initialize S3 client for investor dashboard
 // Uses separate bucket or separate prefix for isolation
+// Note: Secret keys should NEVER be in NEXT_PUBLIC_* variables for security
+// Use AWS_SECRET_ACCESS_KEY in server-side only
 const investorS3Client = new S3Client({
   region: process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-2',
   credentials: {
     accessKeyId: process.env.INVESTOR_AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || '',
+    secretAccessKey: process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
   },
 })
 
