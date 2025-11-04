@@ -3,6 +3,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { prisma } from './prisma'
 import { FileCategory, FilePermissions } from '@prisma/client'
+import { s3Service } from './s3Service'
 
 interface FileUploadData {
   userId: string
@@ -26,10 +27,16 @@ interface FileShareData {
 class FileService {
   private uploadDir: string
   private maxFileSize: number = 50 * 1024 * 1024 // 50MB
+  private useS3: boolean
 
   constructor() {
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
-    this.initializeDirectories()
+    // Use S3 if AWS credentials are configured
+    this.useS3 = !!(process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID && 
+                     (process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY))
+    if (!this.useS3) {
+      this.initializeDirectories()
+    }
   }
 
   private async initializeDirectories(): Promise<void> {
@@ -98,14 +105,29 @@ class FileService {
 
     // Generate unique filename
     const fileName = this.generateUniqueFileName(data.fileName)
-    const categoryDir = this.getCategoryDirectory(data.category)
-    const filePath = path.join(categoryDir, fileName)
+    let filePath: string
 
-    // Ensure directory exists
-    await fs.mkdir(categoryDir, { recursive: true })
-
-    // Write file to disk
-    await fs.writeFile(filePath, buffer)
+    if (this.useS3) {
+      // Upload to S3
+      const s3Key = s3Service.generateKey(data.category, fileName)
+      const result = await s3Service.uploadFile({
+        key: s3Key,
+        buffer,
+        contentType: data.mimeType,
+        isPublic: data.isPublic || false
+      })
+      filePath = result.url
+    } else {
+      // Upload to local disk
+      const categoryDir = this.getCategoryDirectory(data.category)
+      filePath = path.join(categoryDir, fileName)
+      
+      // Ensure directory exists
+      await fs.mkdir(categoryDir, { recursive: true })
+      
+      // Write file to disk
+      await fs.writeFile(filePath, buffer)
+    }
 
     // Save file record to database
     const fileUpload = await prisma.fileUpload.create({
@@ -158,11 +180,22 @@ class FileService {
       throw new Error('Access denied')
     }
 
-    // Check if file exists on disk
-    try {
-      await fs.access(file.filePath)
-    } catch (error) {
-      throw new Error('File not found on disk')
+    // If using S3, check if URL is valid; otherwise check local disk
+    if (this.useS3 && file.filePath.startsWith('http')) {
+      // S3 URL - extract key and verify existence
+      const url = new URL(file.filePath)
+      const key = url.pathname.substring(1) // Remove leading slash
+      const exists = await s3Service.fileExists(key)
+      if (!exists) {
+        throw new Error('File not found in S3')
+      }
+    } else {
+      // Local file - check if exists on disk
+      try {
+        await fs.access(file.filePath)
+      } catch (error) {
+        throw new Error('File not found on disk')
+      }
     }
 
     // Create audit log
@@ -178,8 +211,16 @@ class FileService {
       })
     }
 
+    // If using S3 and file is private, generate signed URL
+    let filePath = file.filePath
+    if (this.useS3 && !file.isPublic && file.filePath.startsWith('http')) {
+      const url = new URL(file.filePath)
+      const key = url.pathname.substring(1)
+      filePath = await s3Service.getSignedUrl(key)
+    }
+
     return {
-      filePath: file.filePath,
+      filePath,
       fileName: file.originalName,
       mimeType: file.mimeType
     }
@@ -200,10 +241,17 @@ class FileService {
     }
 
     try {
-      // Delete file from disk
-      await fs.unlink(file.filePath)
+      if (this.useS3 && file.filePath.startsWith('http')) {
+        // Delete from S3
+        const url = new URL(file.filePath)
+        const key = url.pathname.substring(1) // Remove leading slash
+        await s3Service.deleteFile(key)
+      } else {
+        // Delete from local disk
+        await fs.unlink(file.filePath)
+      }
     } catch (error) {
-      console.error('Failed to delete file from disk:', error)
+      console.error('Failed to delete file:', error)
     }
 
     // Delete file record from database
@@ -270,15 +318,32 @@ class FileService {
 
     const file = fileShare.fileUpload
 
-    // Check if file exists on disk
-    try {
-      await fs.access(file.filePath)
-    } catch (error) {
-      throw new Error('File not found on disk')
+    // If using S3, check if URL is valid; otherwise check local disk
+    if (this.useS3 && file.filePath.startsWith('http')) {
+      const url = new URL(file.filePath)
+      const key = url.pathname.substring(1)
+      const exists = await s3Service.fileExists(key)
+      if (!exists) {
+        throw new Error('File not found in S3')
+      }
+    } else {
+      try {
+        await fs.access(file.filePath)
+      } catch (error) {
+        throw new Error('File not found on disk')
+      }
+    }
+
+    // If using S3 and file is private, generate signed URL
+    let filePath = file.filePath
+    if (this.useS3 && !file.isPublic && file.filePath.startsWith('http')) {
+      const url = new URL(file.filePath)
+      const key = url.pathname.substring(1)
+      filePath = await s3Service.getSignedUrl(key)
     }
 
     return {
-      filePath: file.filePath,
+      filePath,
       fileName: file.originalName,
       mimeType: file.mimeType
     }
@@ -325,7 +390,13 @@ class FileService {
 
     for (const file of expiredFiles) {
       try {
-        await fs.unlink(file.filePath)
+        if (this.useS3 && file.filePath.startsWith('http')) {
+          const url = new URL(file.filePath)
+          const key = url.pathname.substring(1)
+          await s3Service.deleteFile(key)
+        } else {
+          await fs.unlink(file.filePath)
+        }
       } catch (error) {
         console.error('Failed to delete expired file:', error)
       }

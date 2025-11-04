@@ -216,11 +216,37 @@ export async function GET(request: NextRequest) {
 
     // Transform the entity investments data
     const formattedEntityInvestments = entityInvestments.map((entityInvestment: any) => {
+      const propertyName = entityInvestment.property?.name || 'Unknown'
+      const isFreretSt = propertyName.toLowerCase().includes('freret')
+      
       // Calculate total investment from individual entity owners (prefer per-deal owners)
       const hasPerDealOwners = entityInvestment.entityInvestmentOwners && Array.isArray(entityInvestment.entityInvestmentOwners) && entityInvestment.entityInvestmentOwners.length > 0
       const owners = hasPerDealOwners 
         ? entityInvestment.entityInvestmentOwners 
         : (entityInvestment.entity?.entityOwners || [])
+      
+      // VERBOSE LOGGING FOR FRERET ST
+      if (isFreretSt && user.role === 'INVESTOR') {
+        try {
+          console.log('[FRERET DEBUG] Processing entity investment', JSON.stringify({
+            property: propertyName,
+            entityName: entityInvestment.entity?.name,
+            hasPerDealOwners,
+            ownersCount: owners.length,
+            owners: owners.map((o: any) => ({
+              id: o.id,
+              userId: o.userId,
+              investorEntityId: o.investorEntityId,
+              investorEntityName: o.investorEntity?.name,
+              userName: o.userName || (o.user ? `${o.user.firstName} ${o.user.lastName}` : null),
+              investmentAmount: o.investmentAmount,
+              hasBreakdown: Array.isArray(o.breakdown),
+              breakdownLength: o.breakdown ? o.breakdown.length : 0,
+              breakdown: o.breakdown || null
+            }))
+          }))
+        } catch {}
+      }
       
       // For investors: show only their individual amount, not the entity total
       // For admins: show the sum of all owners (entity total)
@@ -231,6 +257,18 @@ export async function GET(request: NextRequest) {
           const investorId = user.id
           const investorEmail = (user as any).email || ''
           const investorName = `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim().toLowerCase()
+          
+          // VERBOSE LOGGING FOR FRERET ST
+          if (isFreretSt) {
+            try {
+              console.log('[FRERET DEBUG] Investor search params', JSON.stringify({
+                property: propertyName,
+                investorId,
+                investorEmail,
+                investorName
+              }))
+            } catch {}
+          }
           
           // First, check for direct owner match (user directly owns share in entity)
           const matchingOwner = owners.find((owner: any) => {
@@ -245,9 +283,35 @@ export async function GET(request: NextRequest) {
             )
           })
           
+          // VERBOSE LOGGING FOR FRERET ST
+          if (isFreretSt) {
+            try {
+              console.log('[FRERET DEBUG] Direct owner match result', JSON.stringify({
+                property: propertyName,
+                foundDirectMatch: !!matchingOwner,
+                matchingOwner: matchingOwner ? {
+                  id: matchingOwner.id,
+                  userId: matchingOwner.userId,
+                  userName: matchingOwner.userName,
+                  investmentAmount: matchingOwner.investmentAmount
+                } : null
+              }))
+            } catch {}
+          }
+          
           if (matchingOwner) {
             // Direct owner match found
             finalInvestmentAmount = parseFloat(matchingOwner.investmentAmount || 0)
+            
+            // VERBOSE LOGGING FOR FRERET ST
+            if (isFreretSt) {
+              try {
+                console.log('[FRERET DEBUG] Using direct owner amount', JSON.stringify({
+                  property: propertyName,
+                  finalInvestmentAmount
+                }))
+              } catch {}
+            }
           } else {
             // Check if investor is nested inside an entity owner (e.g., Campus Rentals LLC inside Campus Rentals 2 LLC)
             // Look for owners that are entities (have investorEntityId) with a breakdown array
@@ -257,6 +321,23 @@ export async function GET(request: NextRequest) {
               const hasBreakdown = Array.isArray(owner.breakdown) && owner.breakdown.length > 0
               return isEntityOwner && hasBreakdown
             })
+            
+            // VERBOSE LOGGING FOR FRERET ST
+            if (isFreretSt) {
+              try {
+                console.log('[FRERET DEBUG] Entity owner with breakdown search', JSON.stringify({
+                  property: propertyName,
+                  foundEntityOwnerWithBreakdown: !!entityOwnerWithBreakdown,
+                  entityOwnerWithBreakdown: entityOwnerWithBreakdown ? {
+                    id: entityOwnerWithBreakdown.id,
+                    investorEntityId: entityOwnerWithBreakdown.investorEntityId,
+                    investorEntityName: entityOwnerWithBreakdown.investorEntity?.name,
+                    investmentAmount: entityOwnerWithBreakdown.investmentAmount,
+                    breakdown: entityOwnerWithBreakdown.breakdown
+                  } : null
+                }))
+              } catch {}
+            }
             
             if (entityOwnerWithBreakdown && Array.isArray(entityOwnerWithBreakdown.breakdown)) {
               // Search the breakdown array for the investor
@@ -270,16 +351,64 @@ export async function GET(request: NextRequest) {
                 )
               })
               
+              // VERBOSE LOGGING FOR FRERET ST
+              if (isFreretSt) {
+                try {
+                  console.log('[FRERET DEBUG] Breakdown search', JSON.stringify({
+                    property: propertyName,
+                    breakdownArray: entityOwnerWithBreakdown.breakdown,
+                    searchingFor: { investorId, investorName },
+                    foundBreakdownMatch: !!breakdownMatch,
+                    breakdownMatch: breakdownMatch || null
+                  }))
+                } catch {}
+              }
+              
               if (breakdownMatch && breakdownMatch.amount) {
                 // Found investor in nested entity breakdown
                 finalInvestmentAmount = parseFloat(breakdownMatch.amount || 0)
+                
+                // VERBOSE LOGGING FOR FRERET ST
+                if (isFreretSt) {
+                  try {
+                    console.log('[FRERET DEBUG] Using breakdown amount', JSON.stringify({
+                      property: propertyName,
+                      finalInvestmentAmount
+                    }))
+                  } catch {}
+                }
               } else {
                 // No match in breakdown - set to 0
                 finalInvestmentAmount = 0
+                
+                // VERBOSE LOGGING FOR FRERET ST
+                if (isFreretSt) {
+                  try {
+                    console.log('[FRERET DEBUG] No breakdown match - setting to 0', JSON.stringify({
+                      property: propertyName,
+                      breakdownArray: entityOwnerWithBreakdown.breakdown,
+                      searchingFor: { investorId, investorName }
+                    }))
+                  } catch {}
+                }
               }
             } else {
               // No matching owner found - set to 0 for this investor
               finalInvestmentAmount = 0
+              
+              // VERBOSE LOGGING FOR FRERET ST
+              if (isFreretSt) {
+                try {
+                  console.log('[FRERET DEBUG] No entity owner with breakdown found - setting to 0', JSON.stringify({
+                    property: propertyName,
+                    ownersChecked: owners.map((o: any) => ({
+                      hasInvestorEntityId: !!o.investorEntityId,
+                      hasBreakdown: Array.isArray(o.breakdown),
+                      breakdownLength: o.breakdown ? o.breakdown.length : 0
+                    }))
+                  }))
+                } catch {}
+              }
             }
           }
         } else {
@@ -377,6 +506,24 @@ export async function GET(request: NextRequest) {
           owners: (result as any).entityOwners?.map((o: any) => ({ name: o.userName, amount: o.investmentAmount, pct: o.ownershipPercentage }))
         }))
       } catch {}
+      
+      // VERBOSE LOGGING FOR FRERET ST - Final result
+      if (isFreretSt && user.role === 'INVESTOR') {
+        try {
+          console.log('[FRERET DEBUG] Final result', JSON.stringify({
+            property: (result as any).propertyName,
+            finalInvestmentAmount: (result as any).investmentAmount,
+            entityOwners: (result as any).entityOwners?.map((o: any) => ({
+              userName: o.userName,
+              investorEntityId: o.investorEntityId,
+              investorEntityName: o.investorEntityName,
+              investmentAmount: o.investmentAmount,
+              hasBreakdown: !!o.breakdown,
+              breakdown: o.breakdown
+            }))
+          }))
+        } catch {}
+      }
 
       return result
     })
