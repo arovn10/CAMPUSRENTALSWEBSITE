@@ -338,8 +338,38 @@ export async function GET(request: NextRequest) {
     // Multiple entity investments for same property should show as ONE property with nested ownership
     const investmentsByPropertyId = new Map<string, any>()
     
+    // For investors: filter out direct investments that have corresponding entity investments
+    // (This prevents duplicate/correct data from inflating totals)
+    let filteredDirectInvestments = formattedInvestments
+    if (user.role === 'INVESTOR' && formattedEntityInvestments.length > 0) {
+      const entityPropertyIds = new Set(formattedEntityInvestments.map((ei: any) => ei.propertyId))
+      const originalCount = filteredDirectInvestments.length
+      filteredDirectInvestments = formattedInvestments.filter((di: any) => {
+        const hasEntityVersion = entityPropertyIds.has(di.propertyId)
+        if (hasEntityVersion) {
+          try {
+            console.log('[INVESTORS/PROPERTIES] Filtering out direct investment (entity exists)', JSON.stringify({
+              property: di.propertyName,
+              directAmount: di.investmentAmount,
+              propertyId: di.propertyId
+            }))
+          } catch {}
+        }
+        return !hasEntityVersion // Keep only if NO entity investment exists
+      })
+      if (originalCount !== filteredDirectInvestments.length) {
+        try {
+          console.log('[INVESTORS/PROPERTIES] Filtered direct investments', JSON.stringify({
+            before: originalCount,
+            after: filteredDirectInvestments.length,
+            excluded: originalCount - filteredDirectInvestments.length
+          }))
+        } catch {}
+      }
+    }
+    
     // Process all investments and group by propertyId
-    const allInvestments = formattedInvestments.concat(formattedEntityInvestments)
+    const allInvestments = filteredDirectInvestments.concat(formattedEntityInvestments)
     allInvestments.forEach((investment: any) => {
       const propertyId = investment.propertyId
       
@@ -370,11 +400,28 @@ export async function GET(request: NextRequest) {
         const primaryEntity = item.allEntityInvestments.reduce((prev: any, curr: any) => 
           curr.investmentAmount > prev.investmentAmount ? curr : prev
         )
+        
+        // For investors: if entity investment exists, ignore direct investments (they're duplicates/incorrect data)
+        // For admins: keep both for reference
+        if (user.role === 'INVESTOR') {
+          // Log when we're excluding a direct investment due to entity investment
+          if (item.directInvestments.length > 0) {
+            try {
+              console.log('[INVESTORS/PROPERTIES] Excluding direct investment in favor of entity', JSON.stringify({
+                property: primaryEntity.propertyName,
+                excludedDirectAmount: item.directInvestments.reduce((s: number, d: any) => s + (d.investmentAmount || 0), 0),
+                usingEntityAmount: primaryEntity.investmentAmount
+              }))
+            } catch {}
+          }
+        }
+        
         return {
           ...primaryEntity,
           // Keep all entity info for nested ownership display
           allEntityInvestments: item.allEntityInvestments,
-          directInvestments: item.directInvestments
+          // For investors, exclude direct investments when entity exists
+          directInvestments: user.role === 'INVESTOR' ? [] : item.directInvestments
         }
       }
       return item
