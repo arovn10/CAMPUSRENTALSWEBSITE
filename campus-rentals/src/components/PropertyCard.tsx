@@ -37,6 +37,24 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   useEffect(() => {
     const loadThumbnail = async () => {
       try {
+        setLoading(true);
+        // First try to get DealPhoto thumbnail (from investor portal)
+        try {
+          const response = await fetch(`/api/properties/${property.property_id}/thumbnail`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.thumbnail) {
+              console.log(`Setting DealPhoto thumbnail for property ${property.property_id}:`, data.thumbnail);
+              setThumbnail(data.thumbnail);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (dealPhotoError) {
+          console.log('No DealPhoto thumbnail found, trying old photos...');
+        }
+        
+        // Fallback to old photo system
         console.log(`Loading photos for property ${property.property_id}...`);
         const photos = await fetchPropertyPhotos(property.property_id);
         console.log(`Received ${photos.length} photos for property ${property.property_id}:`, photos);

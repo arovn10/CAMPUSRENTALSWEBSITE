@@ -158,6 +158,7 @@ export default function InvestorDashboard() {
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+  const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
   const [analyticsScope, setAnalyticsScope] = useState<'ALL' | 'PERSON' | 'ENTITY'>('ALL')
   const [analyticsTarget, setAnalyticsTarget] = useState<string>('ALL')
@@ -333,6 +334,32 @@ export default function InvestorDashboard() {
           setInvestments(investmentsData || [])
           calculateStats(investmentsData || [])
         }
+        
+        // Fetch thumbnails for all investments
+        const thumbnailPromises = (investmentsData || []).map(async (inv: any) => {
+          const propertyId = inv.property?.id || inv.propertyId
+          if (!propertyId) return null
+          
+          try {
+            const response = await fetch(`/api/properties/${propertyId}/thumbnail`)
+            if (response.ok) {
+              const data = await response.json()
+              return { propertyId, thumbnail: data.thumbnail }
+            }
+          } catch (error) {
+            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
+          }
+          return { propertyId, thumbnail: null }
+        })
+        
+        const thumbnailResults = await Promise.all(thumbnailPromises)
+        const thumbnailMap: { [key: string]: string | null } = {}
+        thumbnailResults.forEach((result) => {
+          if (result) {
+            thumbnailMap[result.propertyId] = result.thumbnail
+          }
+        })
+        setPropertyThumbnails(thumbnailMap)
       }
     } catch (error) {
       // Silent error handling for smooth UX
@@ -1207,15 +1234,33 @@ export default function InvestorDashboard() {
                 .map((investment) => (
                 <div
                   key={investment.id}
-                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
+                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl overflow-hidden hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
                   onClick={() => handleViewInvestmentDetails(investment.id)}
                   onMouseEnter={() => setHoveredCard(investment.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
+                  {/* Thumbnail Image */}
+                  {(() => {
+                    const propertyId = (investment as any).property?.id || investment.propertyId
+                    const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
+                    return thumbnail ? (
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <img
+                          src={thumbnail}
+                          alt={investment.propertyName || investment.propertyAddress}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    ) : (
+                      <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <HomeIcon className="h-12 w-12 text-blue-400" />
+                      </div>
+                    )
+                  })()}
+                  
+                  <div className="p-6">
                   <div className="flex items-start justify-between mb-6">
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <HomeIcon className="h-6 w-6 text-white" />
-                </div>
                     <div className="flex items-center space-x-2">
                       <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
                         {investment.dealStatus || 'STABILIZED'}
@@ -1223,9 +1268,9 @@ export default function InvestorDashboard() {
                       <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
                         {investment.fundingStatus || 'FUNDED'}
                       </span>
-              </div>
-              </div>
-              
+                    </div>
+                  </div>
+                  
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
                     {investment.propertyName || investment.propertyAddress}
                   </h3>
@@ -1319,8 +1364,9 @@ export default function InvestorDashboard() {
                       View Deal
                       <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
                     </span>
-              </div>
-              </div>
+                  </div>
+                  </div>
+                </div>
               ))}
               </div>
               
