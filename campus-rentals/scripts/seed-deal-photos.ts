@@ -96,20 +96,45 @@ function getOldBackendIdsForProperty(propertyName: string): number[] {
 
 /**
  * Fetch photos from old backend for a property ID
+ * Uses the same endpoint as the main website
  */
 async function fetchPhotosFromOldBackend(propertyId: number): Promise<OldBackendPhoto[]> {
   try {
+    // Use the same endpoint as the main website uses
     const response = await fetch(`https://abode-backend.onrender.com/api/photos/get/${propertyId}`, {
       cache: 'no-store',
     })
     
     if (!response.ok) {
+      console.log(`  ⚠ API returned status ${response.status} for propertyId ${propertyId}`)
       return []
     }
     
     const photos = await response.json()
-    return Array.isArray(photos) ? photos : []
+    
+    // Handle different response formats
+    if (Array.isArray(photos)) {
+      return photos.map((photo: any) => ({
+        photoId: photo.photoId || photo.id || 0,
+        photoLink: photo.photoLink || photo.url || photo.link || '',
+        description: photo.description || undefined,
+        photoOrder: photo.photoOrder || photo.order || photo.displayOrder || undefined,
+      }))
+    }
+    
+    // If response is an object with a photos array
+    if (photos && Array.isArray(photos.photos)) {
+      return photos.photos.map((photo: any) => ({
+        photoId: photo.photoId || photo.id || 0,
+        photoLink: photo.photoLink || photo.url || photo.link || '',
+        description: photo.description || undefined,
+        photoOrder: photo.photoOrder || photo.order || photo.displayOrder || undefined,
+      }))
+    }
+    
+    return []
   } catch (error) {
+    console.error(`  ✗ Error fetching photos for propertyId ${propertyId}:`, error instanceof Error ? error.message : String(error))
     return []
   }
 }
