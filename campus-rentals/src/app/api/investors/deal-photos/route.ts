@@ -21,20 +21,64 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'investmentId is required' }, { status: 400 })
     }
 
-    // Verify user has access to this investment
+    // Verify user has access to this investment (direct or entity investment)
     if (user.role === 'INVESTOR') {
-      const investment = await prisma.investment.findFirst({
+      // Check direct investment first
+      const directInvestment = await prisma.investment.findFirst({
         where: {
           id: investmentId,
           userId: user.id
         }
       })
 
-      if (!investment) {
-        return NextResponse.json(
-          { error: 'Investment not found or access denied' },
-          { status: 403 }
-        )
+      // If not a direct investment, check entity investment access
+      if (!directInvestment) {
+        const entityInvestment = await prisma.entityInvestment.findFirst({
+          where: { id: investmentId },
+          include: {
+            entityInvestmentOwners: true,
+            entity: {
+              include: {
+                entityOwners: true
+              }
+            }
+          }
+        })
+
+        if (!entityInvestment) {
+          return NextResponse.json(
+            { error: 'Investment not found or access denied' },
+            { status: 403 }
+          )
+        }
+
+        // Check if user has access through entityInvestmentOwners or entity.entityOwners
+        const hasDirectAccess = 
+          entityInvestment.entityInvestmentOwners.some((owner: any) => owner.userId === user.id) ||
+          entityInvestment.entity?.entityOwners.some((owner: any) => owner.userId === user.id)
+
+        // Check nested access through breakdown
+        const hasNestedAccess = entityInvestment.entityInvestmentOwners.some((owner: any) => {
+          if (owner.breakdown && Array.isArray(owner.breakdown)) {
+            return owner.breakdown.some((item: any) => {
+              const itemId = item.id || null
+              const itemLabel = (item.label || '').trim().toLowerCase()
+              const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase()
+              return (
+                (itemId && String(itemId) === String(user.id)) ||
+                (itemLabel === userName)
+              )
+            })
+          }
+          return false
+        })
+
+        if (!hasDirectAccess && !hasNestedAccess) {
+          return NextResponse.json(
+            { error: 'Investment not found or access denied' },
+            { status: 403 }
+          )
+        }
       }
     }
 
