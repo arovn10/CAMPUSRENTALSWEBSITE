@@ -406,49 +406,56 @@ export default function DealPhotoManager({ investmentId, propertyId, onThumbnail
 
               {/* Controls */}
               <div className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                      className={`p-1 rounded ${
-                        index === 0
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                      title="Move up"
-                    >
-                      <ArrowUpIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === photos.length - 1}
-                      className={`p-1 rounded ${
-                        index === photos.length - 1
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                      title="Move down"
-                    >
-                      <ArrowDownIcon className="h-4 w-4" />
-                    </button>
+                {!isReadOnly && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0}
+                        className={`p-1 rounded ${
+                          index === 0
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title="Move up"
+                      >
+                        <ArrowUpIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index === photos.length - 1}
+                        className={`p-1 rounded ${
+                          index === photos.length - 1
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title="Move down"
+                      >
+                        <ArrowDownIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <span className="text-xs text-gray-500">Order: {photo.displayOrder + 1}</span>
                   </div>
-                  <span className="text-xs text-gray-500">Order: {photo.displayOrder + 1}</span>
-                </div>
+                )}
 
                 {/* Description */}
-                <input
-                  type="text"
-                  value={photo.description || ''}
-                  onChange={(e) => {
-                    const newPhotos = [...photos]
-                    newPhotos[index].description = e.target.value
-                    setPhotos(newPhotos)
-                  }}
-                  onBlur={(e) => handleUpdateDescription(photo.id, e.target.value)}
-                  placeholder="Add description..."
-                  className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                {photo.description && (
+                  <p className="text-sm text-gray-600">{photo.description}</p>
+                )}
+                {!isReadOnly && (
+                  <input
+                    type="text"
+                    value={photo.description || ''}
+                    onChange={(e) => {
+                      const newPhotos = [...photos]
+                      newPhotos[index].description = e.target.value
+                      setPhotos(newPhotos)
+                    }}
+                    onBlur={(e) => handleUpdateDescription(photo.id, e.target.value)}
+                    placeholder="Add description..."
+                    className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
               </div>
             </div>
           ))}
