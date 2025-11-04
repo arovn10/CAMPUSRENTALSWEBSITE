@@ -9,21 +9,15 @@ import https from 'https'
 import http from 'http'
 import { URL } from 'url'
 // Load environment variables
-try {
-  const { config } = require('dotenv')
-  const { resolve } = require('path')
-  const path = require('path')
-  
-  // Try to load .env.local first, then .env
-  const envLocalPath = path.resolve(process.cwd(), '.env.local')
-  const envPath = path.resolve(process.cwd(), '.env')
-  
-  config({ path: envLocalPath })
-  config({ path: envPath })
-} catch (e) {
-  // dotenv not available, continue with existing env vars
-  console.log('Note: dotenv not available, using existing environment variables')
-}
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Try to load .env.local first, then .env
+const envLocalPath = resolve(process.cwd(), '.env.local')
+const envPath = resolve(process.cwd(), '.env')
+
+config({ path: envLocalPath })
+config({ path: envPath })
 
 const prisma = new PrismaClient()
 
