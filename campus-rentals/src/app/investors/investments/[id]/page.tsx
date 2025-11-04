@@ -21,6 +21,7 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
 import PropertyLoansManager from '@/components/PropertyLoansManager'
+import DealPhotoManager from '@/components/DealPhotoManager'
 
 interface Investment {
   id: string
@@ -2269,6 +2270,19 @@ export default function InvestmentDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Deal Photos */}
+            {investment && (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <DealPhotoManager 
+                  investmentId={investment.id || (params.id as string)}
+                  onThumbnailChange={(photoUrl) => {
+                    // Update thumbnail if needed
+                    console.log('Thumbnail changed:', photoUrl)
+                  }}
+                />
+              </div>
+            )}
 
             {/* Financial Breakdown */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
