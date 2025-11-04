@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
- * GET /api/properties/[propertyId]/thumbnail
+ * GET /api/properties/thumbnail/[id]
  * Get thumbnail photo for a property by numeric propertyId or string id
  * Public endpoint - no authentication required
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { propertyId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const propertyId = params.propertyId
+    const propertyId = params.id
 
     // Check if propertyId is numeric (old backend ID) or string (new ID)
     const isNumeric = /^\d+$/.test(propertyId)
