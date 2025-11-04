@@ -341,7 +341,11 @@ export default function InvestorDashboard() {
           if (!propertyId) return null
           
           try {
-            const response = await fetch(`/api/properties/${propertyId}/thumbnail`)
+            const response = await fetch(`/api/properties/${propertyId}/thumbnail`, {
+              headers: {
+                'Authorization': `Bearer ${token || ''}`
+              }
+            })
             if (response.ok) {
               const data = await response.json()
               return { propertyId, thumbnail: data.thumbnail }
@@ -1260,18 +1264,18 @@ export default function InvestorDashboard() {
                   })()}
                   
                   <div className="p-6">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
-                        {investment.dealStatus || 'STABILIZED'}
-                      </span>
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
-                        {investment.fundingStatus || 'FUNDED'}
-                      </span>
+                    <div className="flex items-center justify-end mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                          {investment.dealStatus || 'STABILIZED'}
+                        </span>
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                          {investment.fundingStatus || 'FUNDED'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
                   
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
                     {investment.propertyName || investment.propertyAddress}
                   </h3>
                   <p className="text-sm text-slate-500 mb-4 flex items-center">
