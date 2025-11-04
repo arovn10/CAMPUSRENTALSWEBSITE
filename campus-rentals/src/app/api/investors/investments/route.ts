@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    console.log('Investments API called for user:', user.email)
+    try {
+      console.log('[INVESTORS/INVESTMENTS] Request start', JSON.stringify({ role: user.role, userId: user.id, email: (user as any).email || null }))
+    } catch {}
 
     // Get real investments from database
     const investments = await prisma.investment.findMany({
@@ -43,7 +45,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log(`Found ${investments.length} investments for user ${user.email}`)
+    try {
+      const totalAmount = investments.reduce((s, i) => s + (i.investmentAmount || 0), 0)
+      console.log('[INVESTORS/INVESTMENTS] Direct investments', JSON.stringify({ count: investments.length, totalAmount }))
+    } catch {}
 
     // Transform the data to match the expected format
     const formattedInvestments = investments.map(investment => {
@@ -74,6 +79,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    try {
+      console.log('[INVESTORS/INVESTMENTS] Response summary', JSON.stringify({ count: formattedInvestments.length, totalAmount: formattedInvestments.reduce((s, i: any) => s + (i.investmentAmount || 0), 0) }))
+    } catch {}
     return NextResponse.json(formattedInvestments)
   } catch (error) {
     console.error('Error fetching investments:', error)

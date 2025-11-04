@@ -9,6 +9,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Robust role-aware logging: who is calling and with what headers/context
+    try {
+      const hdrAuth = request.headers.get('authorization') || 'none'
+      console.log('[INVESTORS/PROPERTIES] Request start', JSON.stringify({
+        role: user.role,
+        userId: user.id,
+        email: (user as any).email || null,
+        hasAuthHeader: !!hdrAuth,
+        path: '/api/investors/properties'
+      }))
+    } catch {}
+
     // Get investments based on user role
     let investments
     let entityInvestments
@@ -40,6 +52,14 @@ export async function GET(request: NextRequest) {
           entityInvestmentOwners: { include: { user: true, investorEntity: true } }
         }
       })
+      // Admin-side logging of counts and quick aggregates
+      try {
+        const totalInv = investments.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0)
+        console.log('[INVESTORS/PROPERTIES][ADMIN] Base investments', JSON.stringify({
+          count: investments.length,
+          sumInvestmentAmount: totalInv
+        }))
+      } catch {}
     } else {
       // Investors only see their own investments
       investments = await prisma.investment.findMany({
@@ -49,6 +69,13 @@ export async function GET(request: NextRequest) {
           distributions: true
         }
       })
+      try {
+        const totalInv = investments.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0)
+        console.log('[INVESTORS/PROPERTIES][INVESTOR] Direct investments', JSON.stringify({
+          count: investments.length,
+          sumInvestmentAmount: totalInv
+        }))
+      } catch {}
       // For investors, get entity investments where they are owners
       entityInvestments = await prisma.entityInvestment.findMany({
         include: { 
@@ -75,6 +102,19 @@ export async function GET(request: NextRequest) {
           }
         }
       })
+
+      try {
+        const ownersCount = entityInvestments.reduce((s: number, ei: any) => s + ((ei.entityInvestmentOwners?.length || ei.entity?.entityOwners?.length || 0)), 0)
+        const sumOwnerInv = entityInvestments.reduce((sum: number, ei: any) => {
+          const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) ? ei.entityInvestmentOwners : (ei.entity?.entityOwners || [])
+          return sum + owners.reduce((s: number, o: any) => s + (parseFloat(o.investmentAmount || 0)), 0)
+        }, 0)
+        console.log('[INVESTORS/PROPERTIES][INVESTOR] Entity investments', JSON.stringify({
+          count: entityInvestments.length,
+          ownersCount,
+          sumOwnersInvestmentAmount: sumOwnerInv
+        }))
+      } catch {}
 
       // Include additional properties explicitly granted via access table
       const explicitAccess = await (prisma as any).userPropertyAccess.findMany({ where: { userId: user.id } })
@@ -183,7 +223,7 @@ export async function GET(request: NextRequest) {
       const investorName = entityInvestment.entity?.name || 'Entity Investor'
       const investorEmail = entityInvestment.entity?.contactEmail || ''
 
-      return {
+      const result = {
         id: entityInvestment.id,
         propertyId: entityInvestment.propertyId,
         propertyName: entityInvestment.property.name,
@@ -247,6 +287,19 @@ export async function GET(request: NextRequest) {
           investmentAmount: owner.investmentAmount
         }))
       }
+
+      try {
+        // Log per-entity breakdown for visibility
+        console.log('[INVESTORS/PROPERTIES] Entity investment transformed', JSON.stringify({
+          role: user.role,
+          property: (result as any).propertyName,
+          entityName: (result as any).entityName,
+          finalInvestmentAmount,
+          owners: (result as any).entityOwners?.map((o: any) => ({ name: o.userName, amount: o.investmentAmount, pct: o.ownershipPercentage }))
+        }))
+      } catch {}
+
+      return result
     })
 
     // Group investments by property ID to prevent duplicate property cards
@@ -398,7 +451,7 @@ export async function GET(request: NextRequest) {
 
         const irrCalculated = calcIRR(yearCashFlows)
 
-        return {
+        const result = {
           ...inv,
           estimatedCurrentDebt: Math.round(estimatedCurrentDebt),
           estimatedMonthlyDebtService: Math.round(estimatedMonthlyDebtService),
@@ -407,10 +460,35 @@ export async function GET(request: NextRequest) {
           totalProjectCost: Math.round((inv.investmentAmount || 0) + totalOriginalDebt),
           proformaStartDate: proformaStartDate.toISOString() // Store the start date for proforma calculations
         }
+
+        try {
+          console.log('[INVESTORS/PROPERTIES] Debt estimate', JSON.stringify({
+            role: user.role,
+            property: inv.property?.name || inv.propertyName,
+            investmentAmount: inv.investmentAmount,
+            estimatedCurrentDebt: result.estimatedCurrentDebt,
+            estimatedMonthlyDebtService: result.estimatedMonthlyDebtService,
+            irr: result.irr
+          }))
+        } catch {}
+
+        return result
       } catch (_) {
         return { ...inv }
       }
     }))
+
+    try {
+      // Final response aggregates to compare admin vs investor easily
+      const totals = {
+        role: user.role,
+        propertiesCount: withDebtEstimates.length,
+        totalInvestmentAmount: withDebtEstimates.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0),
+        totalEstimatedDebt: withDebtEstimates.reduce((s: number, i: any) => s + (i.estimatedCurrentDebt || 0), 0),
+        sample: withDebtEstimates.slice(0, 3).map(i => ({ property: i.property?.name || i.propertyName, amount: i.investmentAmount }))
+      }
+      console.log('[INVESTORS/PROPERTIES] Response summary', JSON.stringify(totals))
+    } catch {}
 
     return NextResponse.json(withDebtEstimates)
   } catch (error) {

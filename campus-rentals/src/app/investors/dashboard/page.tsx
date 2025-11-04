@@ -206,6 +206,15 @@ export default function InvestorDashboard() {
       
       if (investmentsResponse.ok) {
         const investmentsData = await investmentsResponse.json()
+        try {
+          // High-signal client-side logs to compare with server logs
+          console.log('[DASHBOARD] Raw API investments', {
+            role: user.role,
+            count: investmentsData.length,
+            totalAmount: investmentsData.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0),
+            sample: investmentsData.slice(0, 3).map((i: any) => ({ property: i.propertyName, type: i.investmentType, amount: i.investmentAmount }))
+          })
+        } catch {}
         // For investors, if they're auto-filtered, we need to recalculate stats
         // But first, just calculate with all returned investments (API already filters for investors)
         // The useEffect will handle the person filter recalculation
