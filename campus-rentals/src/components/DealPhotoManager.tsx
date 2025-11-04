@@ -45,6 +45,39 @@ export default function DealPhotoManager({ investmentId, propertyId, onThumbnail
   const [uploadDescription, setUploadDescription] = useState('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  
+  // Get current user role
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userStr = sessionStorage.getItem('currentUser')
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr)
+          setUserRole(userData.role || null)
+        } catch (e) {
+          console.error('Error parsing user data:', e)
+        }
+      } else {
+        // Fallback: try to get from API
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('token')
+        if (token) {
+          fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.user) {
+                setUserRole(data.user.role || null)
+              }
+            })
+            .catch(() => {})
+        }
+      }
+    }
+  }, [])
+  
+  const isReadOnly = userRole === 'INVESTOR'
 
   // Get auth token
   const getAuthToken = () => {
@@ -289,13 +322,15 @@ export default function DealPhotoManager({ investmentId, propertyId, onThumbnail
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Deal Photos</h3>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Upload Photo
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            <PlusIcon className="h-5 w-5" />
+            Upload Photo
+          </button>
+        )}
       </div>
 
       {error && (
@@ -308,12 +343,14 @@ export default function DealPhotoManager({ investmentId, propertyId, onThumbnail
         <div className="text-center p-8 border-2 border-dashed border-gray-300 rounded-lg">
           <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No photos uploaded yet</p>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="mt-4 text-blue-600 hover:text-blue-700"
-          >
-            Upload your first photo
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="mt-4 text-blue-600 hover:text-blue-700"
+            >
+              Upload your first photo
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -338,31 +375,33 @@ export default function DealPhotoManager({ investmentId, propertyId, onThumbnail
                   className="w-full h-full object-cover"
                 />
                 
-                {/* Action buttons overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  <button
-                    onClick={() => handleSetThumbnail(photo.id)}
-                    className={`p-2 rounded ${
-                      photo.isThumbnail
-                        ? 'bg-yellow-500 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                    }`}
-                    title="Set as thumbnail"
-                  >
-                    {photo.isThumbnail ? (
-                      <StarIconSolid className="h-5 w-5" />
-                    ) : (
-                      <StarIcon className="h-5 w-5" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(photo.id)}
-                    className="p-2 rounded bg-red-500 text-white hover:bg-red-600"
-                    title="Delete photo"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
+                {/* Action buttons overlay - only show for admins/managers */}
+                {!isReadOnly && (
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => handleSetThumbnail(photo.id)}
+                      className={`p-2 rounded ${
+                        photo.isThumbnail
+                          ? 'bg-yellow-500 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                      title="Set as thumbnail"
+                    >
+                      {photo.isThumbnail ? (
+                        <StarIconSolid className="h-5 w-5" />
+                      ) : (
+                        <StarIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(photo.id)}
+                      className="p-2 rounded bg-red-500 text-white hover:bg-red-600"
+                      title="Delete photo"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Controls */}

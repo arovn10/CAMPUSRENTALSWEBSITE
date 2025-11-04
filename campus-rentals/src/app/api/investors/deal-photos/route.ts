@@ -174,9 +174,9 @@ export async function POST(request: NextRequest) {
 
     console.log('Deal photo upload attempt by:', user.email, 'Role:', user.role)
 
-    // Only authenticated users can upload photos
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
-      return NextResponse.json({ error: 'Unauthorized - Insufficient permissions' }, { status: 403 })
+    // Only admins and managers can upload photos - investors are view-only
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Unauthorized - Insufficient permissions. Investors have view-only access.' }, { status: 403 })
     }
 
     const formData = await request.formData()
