@@ -954,7 +954,28 @@ export default function InvestorDashboard() {
                     </div>
                         <div className="text-center">
                           <p className="text-slate-500 font-medium mb-1">Ownership</p>
-                          <p className="font-bold text-slate-900">{investment.ownershipPercentage}%</p>
+                          <p className="font-bold text-slate-900">
+                            {(() => {
+                              // For investors, show effective ownership percentage (entity ownership % * individual ownership %)
+                              const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
+                              if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
+                                const targetName = currentUser?.role === 'INVESTOR'
+                                  ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                                  : analyticsTarget.trim().toLowerCase()
+                                const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                                  (owner.userName || '').trim().toLowerCase() === targetName
+                                )
+                                if (matchingOwner && matchingOwner.ownershipPercentage) {
+                                  // Calculate effective ownership: (entity ownership % of property / 100) * (investor ownership % of entity / 100) * 100
+                                  const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
+                                  const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
+                                  const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
+                                  return `${effectiveOwnership.toFixed(1)}%`
+                                }
+                              }
+                              return `${investment.ownershipPercentage}%`
+                            })()}
+                          </p>
                   </div>
                         <div className="text-center">
                           <p className="text-slate-500 font-medium mb-1">IRR</p>
@@ -1219,8 +1240,12 @@ export default function InvestorDashboard() {
                               (owner.userName || '').trim().toLowerCase() === targetName
                             )
                             if (matchingOwner && matchingOwner.ownershipPercentage) {
-                              // Calculate effective ownership: entity ownership % * individual ownership %
-                              const effectiveOwnership = ((investment.ownershipPercentage || 0) / 100) * (matchingOwner.ownershipPercentage || 0)
+                              // Calculate effective ownership: (entity ownership % of property / 100) * (investor ownership % of entity / 100) * 100
+                              // Example: If entity owns 50% of property and investor owns 51% of entity:
+                              // Effective = (50/100) * (51/100) * 100 = 25.5%
+                              const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
+                              const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
+                              const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
                               return `${effectiveOwnership.toFixed(1)}%`
                             }
                           }
