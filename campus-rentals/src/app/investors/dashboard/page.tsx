@@ -972,7 +972,7 @@ export default function InvestorDashboard() {
                 </div>
 
             {/* Portfolio Summary */}
-              <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25">
+            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25">
                 <h2 className="text-2xl font-bold mb-8">Portfolio Summary</h2>
                 
                 <div className="space-y-6">
