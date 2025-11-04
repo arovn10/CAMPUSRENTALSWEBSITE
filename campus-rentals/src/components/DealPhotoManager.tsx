@@ -57,27 +57,36 @@ export default function DealPhotoManager({ investmentId, onThumbnailChange }: De
   const fetchPhotos = async () => {
     try {
       setLoading(true)
+      setError(null)
+      console.log('[DealPhotoManager] Fetching photos for investmentId:', investmentId)
+      
       const response = await fetch(`/api/investors/deal-photos?investmentId=${investmentId}`, {
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`
         }
       })
 
+      console.log('[DealPhotoManager] Response status:', response.status, response.statusText)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('[DealPhotoManager] Received photos:', data.photos?.length || 0, 'photos')
+        console.log('[DealPhotoManager] Photos data:', data)
+        
         setPhotos(data.photos || [])
         
         // Notify parent of thumbnail change
-        const thumbnail = data.photos.find((p: DealPhoto) => p.isThumbnail)
+        const thumbnail = data.photos?.find((p: DealPhoto) => p.isThumbnail)
         if (onThumbnailChange) {
           onThumbnailChange(thumbnail?.photoUrl || null)
         }
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('[DealPhotoManager] Error response:', errorData)
         setError(errorData.error || 'Failed to load photos')
       }
     } catch (err) {
-      console.error('Error fetching photos:', err)
+      console.error('[DealPhotoManager] Error fetching photos:', err)
       setError('Failed to load photos')
     } finally {
       setLoading(false)
