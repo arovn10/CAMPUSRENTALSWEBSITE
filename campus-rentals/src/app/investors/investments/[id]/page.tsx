@@ -2171,6 +2171,8 @@ export default function InvestmentDetailPage() {
                   if (investment.investmentType === 'ENTITY') {
                     // Entity investment - find this investor's individual amount
                     const investorName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                    const investorEmail = (currentUser.email || '').trim().toLowerCase()
+                    const investorId = currentUser.id || currentUser.userId || null
                     let individualAmount = 0
                     
                     // Find this investor's amount in entity owners
@@ -2180,16 +2182,25 @@ export default function InvestmentDetailPage() {
                         : (ei.entity?.entityOwners || [])
                       
                       const matchingOwner = owners.find((owner: any) => {
-                        const ownerName = (owner.userName || '').trim().toLowerCase()
-                        return ownerName === investorName
+                        const ownerName = ((owner.userName) 
+                          || ((owner.user?.firstName || '') + ' ' + (owner.user?.lastName || '')).trim()
+                        ).trim().toLowerCase()
+                        const ownerEmail = (owner.userEmail || owner.user?.email || '').trim().toLowerCase()
+                        const ownerId = owner.userId || owner.user?.id || null
+                        return (
+                          (ownerId && investorId && String(ownerId) === String(investorId)) ||
+                          (!!ownerEmail && !!investorEmail && ownerEmail === investorEmail) ||
+                          (!!ownerName && !!investorName && ownerName === investorName)
+                        )
                       })
                       
                       if (matchingOwner && matchingOwner.investmentAmount) {
-                        individualAmount += parseFloat(matchingOwner.investmentAmount || 0)
+                        individualAmount += parseFloat(String(matchingOwner.investmentAmount || 0))
                       }
                     }
                     
-                    var displayInvestmentAmount = individualAmount || investment.investmentAmount || 0
+                    // For entity investors, show only the investor's own amount (never the entity's total)
+                    var displayInvestmentAmount = individualAmount || 0
                   } else {
                     // Direct investment - show the investment amount directly
                     var displayInvestmentAmount = investment.investmentAmount || 0
