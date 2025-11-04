@@ -51,7 +51,51 @@ async function downloadImage(url: string): Promise<Buffer> {
 }
 
 /**
- * Fetch photos from old backend for a property
+ * Mapping of property names to old backend property IDs
+ * Multiple IDs can map to the same property (e.g., different listings)
+ */
+const PROPERTY_TO_OLD_BACKEND_IDS: { [key: string]: number[] } = {
+  '2422 Joseph St': [1],
+  '7700 Burthe St': [2, 11],
+  '7506 Zimple St': [3, 4],
+  '7500 Zimple St/1032 Cherokee St': [5, 8],
+  '7500 Zimple St': [5, 8], // Alternative name
+  '1032 Cherokee St': [5, 8], // Alternative name
+  '7315 Freret St': [6, 13],
+  '7313-15 Freret St': [6, 13], // Alternative name
+  '1414 Audubon St': [7, 9],
+  '7508 Zimple St': [12],
+  '7608 Zimple St': [], // Add if known
+}
+
+/**
+ * Get old backend property IDs for a property name
+ */
+function getOldBackendIdsForProperty(propertyName: string): number[] {
+  // Try exact match first
+  const exactMatch = PROPERTY_TO_OLD_BACKEND_IDS[propertyName]
+  if (exactMatch) return exactMatch
+
+  // Try case-insensitive match
+  const lowerName = propertyName.toLowerCase().trim()
+  for (const [key, ids] of Object.entries(PROPERTY_TO_OLD_BACKEND_IDS)) {
+    if (key.toLowerCase().trim() === lowerName) {
+      return ids
+    }
+  }
+
+  // Try partial match (contains)
+  for (const [key, ids] of Object.entries(PROPERTY_TO_OLD_BACKEND_IDS)) {
+    if (lowerName.includes(key.toLowerCase().trim()) || key.toLowerCase().trim().includes(lowerName)) {
+      return ids
+    }
+  }
+
+  return []
+}
+
+/**
+ * Fetch photos from old backend for a property ID
  */
 async function fetchPhotosFromOldBackend(propertyId: number): Promise<OldBackendPhoto[]> {
   try {
@@ -60,16 +104,42 @@ async function fetchPhotosFromOldBackend(propertyId: number): Promise<OldBackend
     })
     
     if (!response.ok) {
-      console.log(`  No photos found for property ${propertyId} (status: ${response.status})`)
       return []
     }
     
     const photos = await response.json()
     return Array.isArray(photos) ? photos : []
   } catch (error) {
-    console.error(`  Error fetching photos for property ${propertyId}:`, error)
     return []
   }
+}
+
+/**
+ * Fetch all photos from old backend for a property (checking all mapped IDs)
+ */
+async function fetchAllPhotosForProperty(propertyName: string): Promise<OldBackendPhoto[]> {
+  const oldBackendIds = getOldBackendIdsForProperty(propertyName)
+  
+  if (oldBackendIds.length === 0) {
+    return []
+  }
+
+  // Fetch photos from all mapped property IDs
+  const allPhotos: OldBackendPhoto[] = []
+  const seenUrls = new Set<string>()
+
+  for (const propertyId of oldBackendIds) {
+    const photos = await fetchPhotosFromOldBackend(propertyId)
+    for (const photo of photos) {
+      // Deduplicate by URL
+      if (!seenUrls.has(photo.photoLink)) {
+        seenUrls.add(photo.photoLink)
+        allPhotos.push(photo)
+      }
+    }
+  }
+
+  return allPhotos
 }
 
 /**
@@ -190,16 +260,10 @@ async function seedDealPhotos() {
         continue
       }
 
-      // Try to get property ID from propertyId field (numeric ID from old backend)
-      const oldBackendPropertyId = (investment.property as any).propertyId || null
-
-      if (!oldBackendPropertyId || typeof oldBackendPropertyId !== 'number') {
-        console.log(`Skipping investment ${investment.id} (${investment.property.name}) - no numeric propertyId to match with old backend`)
-        continue
-      }
+      const propertyName = investment.property.name
 
       console.log(`\nProcessing ${investment.type} investment: ${investment.id}`)
-      console.log(`  Property: ${investment.property.name} (Old ID: ${oldBackendPropertyId})`)
+      console.log(`  Property: ${propertyName}`)
 
       // Check if photos already exist for this investment
       const existingPhotos = await prisma.dealPhoto.findMany({
@@ -211,8 +275,18 @@ async function seedDealPhotos() {
         continue
       }
 
-      // Fetch photos from old backend
-      const oldPhotos = await fetchPhotosFromOldBackend(oldBackendPropertyId)
+      // Get old backend IDs for this property
+      const oldBackendIds = getOldBackendIdsForProperty(propertyName)
+      
+      if (oldBackendIds.length === 0) {
+        console.log(`  No mapping found for property name - skipping`)
+        continue
+      }
+
+      console.log(`  Checking old backend IDs: ${oldBackendIds.join(', ')}`)
+
+      // Fetch photos from all mapped old backend property IDs
+      const oldPhotos = await fetchAllPhotosForProperty(propertyName)
 
       if (oldPhotos.length === 0) {
         console.log(`  No photos found in old backend`)
