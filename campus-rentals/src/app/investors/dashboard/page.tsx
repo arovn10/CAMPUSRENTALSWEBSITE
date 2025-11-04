@@ -227,20 +227,55 @@ export default function InvestorDashboard() {
             if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
               // Find the owner that matches this investor (case-insensitive)
               const targetNameLower = investorName.toLowerCase()
-              const matchingOwner = inv.entityOwners.find((owner: any) => {
+              const investorId = user.id
+              
+              // First, try to find direct owner match
+              let matchingOwner = inv.entityOwners.find((owner: any) => {
+                const ownerId = owner.userId || null
                 const ownerName = (owner.userName || '').trim()
-                return ownerName.toLowerCase() === targetNameLower
+                return (
+                  (ownerId && investorId && String(ownerId) === String(investorId)) ||
+                  (ownerName.toLowerCase() === targetNameLower)
+                )
               })
+              
               if (matchingOwner && matchingOwner.investmentAmount) {
-                // Only update investmentAmount to individual amount, but keep all property values at full amount
-                // IMPORTANT: Preserve entityOwners array for person filter to work
+                // Direct owner match found
                 return {
                   ...inv,
                   investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0,
                   entityOwners: inv.entityOwners // Preserve for filtering
                 }
               }
-              // If no match found, return with 0 investment amount but preserve entityOwners
+              
+              // If no direct match, check if investor is nested in an entity owner's breakdown
+              // (e.g., Campus Rentals LLC inside Campus Rentals 2 LLC)
+              const entityOwnerWithBreakdown = inv.entityOwners.find((owner: any) => {
+                return !!owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0
+              })
+              
+              if (entityOwnerWithBreakdown && Array.isArray(entityOwnerWithBreakdown.breakdown)) {
+                // Search breakdown array for the investor
+                const breakdownMatch = entityOwnerWithBreakdown.breakdown.find((item: any) => {
+                  const itemId = item.id || null
+                  const itemLabel = (item.label || '').trim().toLowerCase()
+                  return (
+                    (itemId && investorId && String(itemId) === String(investorId)) ||
+                    (itemLabel === targetNameLower)
+                  )
+                })
+                
+                if (breakdownMatch && breakdownMatch.amount) {
+                  // Found investor in nested entity breakdown
+                  return {
+                    ...inv,
+                    investmentAmount: parseFloat(breakdownMatch.amount) || 0,
+                    entityOwners: inv.entityOwners // Preserve for filtering
+                  }
+                }
+              }
+              
+              // If no match found (direct or nested), return with 0 investment amount but preserve entityOwners
               return {
                 ...inv,
                 investmentAmount: 0,

@@ -41,4 +41,9 @@ next-env.d.ts
 
 # Cache directories
 /.cache/
-/public/cached-images/ 
+/public/cached-images/
+
+# AWS Access Keys (NEVER commit these!)
+*.csv
+*accessKeys*
+*access_key* 
