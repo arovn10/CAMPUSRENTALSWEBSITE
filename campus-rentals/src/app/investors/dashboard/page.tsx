@@ -973,51 +973,50 @@ export default function InvestorDashboard() {
 
             {/* Portfolio Summary */}
             <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25">
-                <h2 className="text-2xl font-bold mb-8">Portfolio Summary</h2>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2.5 bg-white/20 rounded-xl">
-                        <HomeIcon className="h-5 w-5" />
-                </div>
-                      <span className="font-medium">Properties</span>
-                </div>
-                    <span className="text-2xl font-bold">{stats.totalProperties}</span>
-              </div>
+              <h2 className="text-2xl font-bold mb-8">Portfolio Summary</h2>
               
-                  <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2.5 bg-white/20 rounded-xl">
-                        <ChartBarIcon className="h-5 w-5" />
-                </div>
-                      <span className="font-medium">Square Feet</span>
-                </div>
-                    <span className="text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
-              </div>
-              
-                  <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2.5 bg-white/20 rounded-xl">
-                        <UsersIcon className="h-5 w-5" />
-              </div>
-                      <span className="font-medium">Active Deals</span>
-                </div>
-                    <span className="text-2xl font-bold">{stats.activeInvestments}</span>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-white/20 rounded-xl">
+                      <HomeIcon className="h-5 w-5" />
+                    </div>
+                    <span className="font-medium">Properties</span>
+                  </div>
+                  <span className="text-2xl font-bold">{stats.totalProperties}</span>
                 </div>
                 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2.5 bg-white/20 rounded-xl">
-                        <BanknotesIcon className="h-5 w-5" />
+                <div className="flex items-center justify-between pb-4 border-b border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-white/20 rounded-xl">
+                      <ChartBarIcon className="h-5 w-5" />
+                    </div>
+                    <span className="font-medium">Square Feet</span>
+                  </div>
+                  <span className="text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
                 </div>
-                      <span className="font-medium">Total Return</span>
+                
+                <div className="flex items-center justify-between pb-4 border-b border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-white/20 rounded-xl">
+                      <UsersIcon className="h-5 w-5" />
+                    </div>
+                    <span className="font-medium">Active Deals</span>
+                  </div>
+                  <span className="text-2xl font-bold">{stats.activeInvestments}</span>
                 </div>
-                    <span className="text-2xl font-bold">{formatCurrency(stats.totalReturn)}</span>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-white/20 rounded-xl">
+                      <BanknotesIcon className="h-5 w-5" />
+                    </div>
+                    <span className="font-medium">Total Return</span>
+                  </div>
+                  <span className="text-2xl font-bold">{formatCurrency(stats.totalReturn)}</span>
+                </div>
               </div>
-                </div>
-                </div>
-              </div>
+            </div>
               
             {/* Recent Activity */}
             <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
