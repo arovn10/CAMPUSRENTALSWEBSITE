@@ -73,7 +73,12 @@ export async function GET(request: NextRequest) {
         const totalInv = investments.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0)
         console.log('[INVESTORS/PROPERTIES][INVESTOR] Direct investments', JSON.stringify({
           count: investments.length,
-          sumInvestmentAmount: totalInv
+          sumInvestmentAmount: totalInv,
+          details: investments.map((i: any) => ({
+            property: i.property?.name || 'Unknown',
+            investmentAmount: i.investmentAmount,
+            propertyId: i.propertyId
+          }))
         }))
       } catch {}
       // For investors, get entity investments where they are owners
@@ -203,15 +208,42 @@ export async function GET(request: NextRequest) {
         ? entityInvestment.entityInvestmentOwners 
         : (entityInvestment.entity?.entityOwners || [])
       
-      // If we have owners, always calculate from their amounts (even if sum is 0)
-      // Otherwise fall back to entityInvestment.investmentAmount
+      // For investors: show only their individual amount, not the entity total
+      // For admins: show the sum of all owners (entity total)
       let finalInvestmentAmount = entityInvestment.investmentAmount || 0
       if (owners.length > 0) {
-        const calculatedInvestmentAmount = owners.reduce((sum: number, owner: any) => {
-          const ownerAmount = parseFloat(owner.investmentAmount || 0)
-          return sum + ownerAmount
-        }, 0)
-        finalInvestmentAmount = calculatedInvestmentAmount
+        if (user.role === 'INVESTOR') {
+          // Find this investor's individual amount
+          const investorId = user.id
+          const investorEmail = (user as any).email || ''
+          const investorName = `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim().toLowerCase()
+          
+          const matchingOwner = owners.find((owner: any) => {
+            const ownerId = owner.userId || owner.user?.id || null
+            const ownerEmail = (owner.userEmail || owner.user?.email || '').trim().toLowerCase()
+            const ownerName = (owner.userName || '').trim().toLowerCase()
+            
+            return (
+              (ownerId && investorId && String(ownerId) === String(investorId)) ||
+              (!!ownerEmail && !!investorEmail && ownerEmail === investorEmail.trim().toLowerCase()) ||
+              (!!ownerName && !!investorName && ownerName === investorName)
+            )
+          })
+          
+          if (matchingOwner) {
+            finalInvestmentAmount = parseFloat(matchingOwner.investmentAmount || 0)
+          } else {
+            // No matching owner found - set to 0 for this investor
+            finalInvestmentAmount = 0
+          }
+        } else {
+          // Admin: sum all owners
+          const calculatedInvestmentAmount = owners.reduce((sum: number, owner: any) => {
+            const ownerAmount = parseFloat(owner.investmentAmount || 0)
+            return sum + ownerAmount
+          }, 0)
+          finalInvestmentAmount = calculatedInvestmentAmount
+        }
       }
 
       const totalDistributions = entityInvestment.entityDistributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
