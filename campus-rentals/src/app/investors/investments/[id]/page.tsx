@@ -2164,61 +2164,19 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Investment Overview</h2>
               {(() => {
-                // For investors, show their individual investment amount
-                // For entity investments, extract from entity owners
-                // For direct investments, show the investment amount directly
-                if (currentUser?.role === 'INVESTOR') {
-                  if (investment.investmentType === 'ENTITY') {
-                    // Entity investment - find this investor's individual amount
-                    const investorName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                    const investorEmail = (currentUser.email || '').trim().toLowerCase()
-                    const investorId = currentUser.id || currentUser.userId || null
-                    let individualAmount = 0
-                    
-                    // Find this investor's amount in entity owners
-                    for (const ei of propertyEntityInvestments) {
-                      const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
-                        ? ei.entityInvestmentOwners 
-                        : (ei.entity?.entityOwners || [])
-                      
-                      const matchingOwner = owners.find((owner: any) => {
-                        const ownerName = ((owner.userName) 
-                          || ((owner.user?.firstName || '') + ' ' + (owner.user?.lastName || '')).trim()
-                        ).trim().toLowerCase()
-                        const ownerEmail = (owner.userEmail || owner.user?.email || '').trim().toLowerCase()
-                        const ownerId = owner.userId || owner.user?.id || null
-                        return (
-                          (ownerId && investorId && String(ownerId) === String(investorId)) ||
-                          (!!ownerEmail && !!investorEmail && ownerEmail === investorEmail) ||
-                          (!!ownerName && !!investorName && ownerName === investorName)
-                        )
-                      })
-                      
-                      if (matchingOwner && matchingOwner.investmentAmount) {
-                        individualAmount += parseFloat(String(matchingOwner.investmentAmount || 0))
-                      }
-                    }
-                    
-                    // For entity investors, show only the investor's own amount (never the entity's total)
-                    var displayInvestmentAmount = individualAmount || 0
-                  } else {
-                    // Direct investment - show the investment amount directly
-                    var displayInvestmentAmount = investment.investmentAmount || 0
-                  }
-                } else {
-                  // For admins/managers, calculate total investment from individual investor amounts
-                  const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
-                    // Use per-deal owners if available, otherwise fall back to global entity owners
-                    const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
-                      ? ei.entityInvestmentOwners 
-                      : (ei.entity?.entityOwners || [])
-                    const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
-                      ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
-                    )
-                    return sum + ownersSum
-                  }, 0)
-                  var displayInvestmentAmount = totalFromOwners || investment.investmentAmount || 0
-                }
+                // Always show total investment amount (same as admin view) - investors see the same data
+                // Calculate total investment from individual investor amounts
+                const totalFromOwners = propertyEntityInvestments.reduce((sum, ei) => {
+                  // Use per-deal owners if available, otherwise fall back to global entity owners
+                  const owners = (ei.entityInvestmentOwners && ei.entityInvestmentOwners.length > 0) 
+                    ? ei.entityInvestmentOwners 
+                    : (ei.entity?.entityOwners || [])
+                  const ownersSum = owners.reduce((ownerSum: number, owner: any) => 
+                    ownerSum + (parseFloat(owner.investmentAmount || 0)), 0
+                  )
+                  return sum + ownersSum
+                }, 0)
+                var displayInvestmentAmount = totalFromOwners || investment.investmentAmount || 0
                 
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2420,15 +2378,13 @@ export default function InvestmentDetailPage() {
               </div>
             </div>
 
-            {/* Loans Management Section - Only visible to Admin and Manager */}
-            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-              <div className="mt-6">
-                <PropertyLoansManager 
-                  propertyId={investment.property.id} 
-                  authToken={getAuthToken()}
-                />
-              </div>
-            )}
+            {/* Loans Management Section - Visible to all, but edit controls only for Admin/Manager */}
+            <div className="mt-6">
+              <PropertyLoansManager 
+                propertyId={investment.property.id} 
+                authToken={getAuthToken()}
+              />
+            </div>
 
             {/* Investor Details and Entity Structure */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
@@ -3181,107 +3137,110 @@ export default function InvestmentDetailPage() {
               </div>
             )}
 
-            {/* Insurance Information - Only visible to ADMIN and MANAGER */}
-            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Insurance</h2>
+            {/* Insurance Information - Visible to all, but edit controls only for Admin/Manager */}
+            <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Insurance</h2>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowInsuranceModal(true)}
                     className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
-                </div>
-                <div className="space-y-3">
-                  {insuranceHistory.length > 0 ? (
-                    <div className="space-y-2">
-                      {insuranceHistory.slice(0, 3).map((insurance: any) => (
-                        <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium text-gray-900">{insurance.provider}</p>
-                              <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
-                              <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
-                            </div>
-                            <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
+                )}
+              </div>
+              <div className="space-y-3">
+                {insuranceHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {insuranceHistory.slice(0, 3).map((insurance: any) => (
+                      <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-gray-900">{insurance.provider}</p>
+                            <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
+                            <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
                           </div>
+                          <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
                         </div>
-                      ))}
-                      {insuranceHistory.length > 3 && (
-                        <p className="text-sm text-gray-500">+{insuranceHistory.length - 3} more records</p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">No insurance records</p>
-                  )}
+                      </div>
+                    ))}
+                    {insuranceHistory.length > 3 && (
+                      <p className="text-sm text-gray-500">+{insuranceHistory.length - 3} more records</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No insurance records</p>
+                )}
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowInsuranceModal(true)}
                     className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Insurance
                   </button>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Tax Information - Only visible to ADMIN and MANAGER */}
-            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Property Taxes</h2>
+            {/* Tax Information - Visible to all, but edit controls only for Admin/Manager */}
+            <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Property Taxes</h2>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowTaxModal(true)}
                     className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
-                </div>
-                <div className="space-y-3">
-                  {taxHistory.length > 0 ? (
-                    <div className="space-y-2">
-                      {taxHistory.slice(0, 3).map((tax: any) => (
-                        <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
-                              <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
-                            </div>
-                            <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
+                )}
+              </div>
+              <div className="space-y-3">
+                {taxHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {taxHistory.slice(0, 3).map((tax: any) => (
+                      <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
+                            <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
                           </div>
+                          <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
                         </div>
-                      ))}
-                      {taxHistory.length > 3 && (
-                        <p className="text-sm text-gray-500">+{taxHistory.length - 3} more records</p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">No tax records</p>
-                  )}
+                      </div>
+                    ))}
+                    {taxHistory.length > 3 && (
+                      <p className="text-sm text-gray-500">+{taxHistory.length - 3} more records</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No tax records</p>
+                )}
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowTaxModal(true)}
                     className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Tax Information
                   </button>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Waterfall Distributions - Only visible to ADMIN and MANAGER */}
-            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+            {/* Waterfall Distributions - Visible to all, but edit controls only for Admin/Manager */}
+            <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowCreateWaterfallModal(true)}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                    title="Create Waterfall Structure"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                  </button>
-                  {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setShowCreateWaterfallModal(true)}
+                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      title="Create Waterfall Structure"
+                    >
+                      <PlusIcon className="h-5 w-5" />
+                    </button>
                     <button
                       onClick={() => setShowWaterfallModal(true)}
                       className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
@@ -3289,8 +3248,8 @@ export default function InvestmentDetailPage() {
                     >
                       <BanknotesIcon className="h-5 w-5" />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-3">
                 {waterfallStructures.length > 0 ? (
@@ -3305,25 +3264,27 @@ export default function InvestmentDetailPage() {
                                 <p className="text-sm text-gray-600">{structure.description}</p>
                                 <p className="text-xs text-gray-500">{structure.waterfallTiers.length} tiers</p>
                               </div>
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleEditWaterfallStructure(structure)}
-                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                                  title="Edit Structure"
-                                >
-                                  <PencilIcon className="h-5 w-5" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    console.log('Delete button clicked for structure:', structure.id, structure.name)
-                                    handleDeleteWaterfallStructure(structure.id)
-                                  }}
-                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                  title="Delete Structure"
-                                >
-                                  <TrashIcon className="h-5 w-5" />
-                                </button>
-                              </div>
+                              {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleEditWaterfallStructure(structure)}
+                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                                    title="Edit Structure"
+                                  >
+                                    <PencilIcon className="h-5 w-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      console.log('Delete button clicked for structure:', structure.id, structure.name)
+                                      handleDeleteWaterfallStructure(structure.id)
+                                    }}
+                                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                                    title="Delete Structure"
+                                  >
+                                    <TrashIcon className="h-5 w-5" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                             {structure.waterfallDistributions && structure.waterfallDistributions.length > 0 && (
                               <div className="mt-2">
@@ -3331,22 +3292,24 @@ export default function InvestmentDetailPage() {
                                 {structure.waterfallDistributions.slice(0, 2).map((distribution: any) => (
                                   <div key={distribution.id} className="flex justify-between items-center text-xs text-gray-600 mb-1">
                                     <span>{formatCurrency(distribution.totalAmount)} - {distribution.distributionType}</span>
-                                    <div className="flex space-x-1">
-                                      <button
-                                        onClick={() => handleEditDistribution(distribution)}
-                                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
-                                        title="Edit Distribution"
-                                      >
-                                        <PencilIcon className="h-3 w-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteDistribution(distribution.id)}
-                                        className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
-                                        title="Delete Distribution"
-                                      >
-                                        <TrashIcon className="h-3 w-3" />
-                                      </button>
-                                    </div>
+                                    {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                                      <div className="flex space-x-1">
+                                        <button
+                                          onClick={() => handleEditDistribution(distribution)}
+                                          className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                                          title="Edit Distribution"
+                                        >
+                                          <PencilIcon className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteDistribution(distribution.id)}
+                                          className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                                          title="Delete Distribution"
+                                        >
+                                          <TrashIcon className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                                 {structure.waterfallDistributions.length > 2 && (

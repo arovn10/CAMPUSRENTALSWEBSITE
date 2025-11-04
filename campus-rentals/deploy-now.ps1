@@ -4,7 +4,7 @@
 $SERVER_IP = "23.21.76.187"
 $USERNAME = "bitnami"
 # Update this path to your SSH key location on Windows
-$SSH_KEY_PATH = "C:\Users\AlecRovner\Desktop\Campus Rentals\CAMPUSRENTALSWEBSITE\campus-rentals\LightsailDefaultKey-us-east-1 (3).pem"
+$SSH_KEY_PATH = "C:\Users\AlecRovner\OneDrive - STOA\Desktop\CAMPUSRENTALSWEBSITE-1\LightsailDefaultKey-us-east-1 (2).pem"
 
 Write-Host "🚀 Deploying Campus Rentals to Production..." -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green

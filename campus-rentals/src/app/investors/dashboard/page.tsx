@@ -167,6 +167,8 @@ export default function InvestorDashboard() {
   const [showCalcModal, setShowCalcModal] = useState(false)
   const [calcTitle, setCalcTitle] = useState('')
   const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
+  const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
+  const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -791,7 +793,19 @@ export default function InvestorDashboard() {
             {/* Premium Stats Grid */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
               {/* Total Invested */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-1">
+              <div
+                className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
+                onClick={() => {
+                  // Build per-deal breakdown for the investor using the processed investments
+                  const breakdown = investments
+                    .filter(inv => inv.fundingStatus === 'FUNDED')
+                    .map(inv => ({ property: inv.propertyName || inv.name || 'Deal', amount: inv.investmentAmount || 0 }))
+                    .filter(item => (item.amount || 0) > 0)
+                    .sort((a, b) => b.amount - a.amount)
+                  setInvestedBreakdown(breakdown)
+                  setShowInvestedBreakdown(true)
+                }}
+              >
                 <div className="flex items-center justify-between mb-6">
                   <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <CurrencyDollarIcon className="h-6 w-6 text-white" />
@@ -1852,6 +1866,34 @@ export default function InvestorDashboard() {
                   <span className="text-sm font-bold text-blue-600">{formatCurrency(calcLines.reduce((s,l)=> s + l.value, 0))}</span>
                 </li>
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+      {showInvestedBreakdown && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">Total Invested Breakdown</h3>
+              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 divide-y divide-slate-100">
+              {investedBreakdown.length > 0 ? (
+                investedBreakdown.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-3">
+                    <span className="text-slate-700 font-medium">{item.property}</span>
+                    <span className="text-slate-900 font-semibold">{formatCurrency(item.amount)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-500">No funded investments found.</p>
+              )}
+              <div className="flex items-center justify-between pt-4 mt-2">
+                <span className="text-slate-600 font-medium">Total</span>
+                <span className="text-slate-900 font-bold">{formatCurrency(investedBreakdown.reduce((s, i) => s + (i.amount || 0), 0))}</span>
+              </div>
             </div>
           </div>
         </div>
