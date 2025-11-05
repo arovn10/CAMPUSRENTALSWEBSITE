@@ -39,12 +39,23 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
     property.longitude <= 180
   );
 
+  // Properties that need geocoding (no coordinates)
+  const propertiesNeedingGeocoding = properties.filter(property => 
+    !property.latitude || 
+    !property.longitude ||
+    isNaN(property.latitude) || 
+    isNaN(property.longitude)
+  );
+
   console.log(`Displaying ${propertiesWithCoords.length} properties with coordinates out of ${properties.length} total properties`);
+  console.log(`Geocoding ${propertiesNeedingGeocoding.length} properties without coordinates`);
 
   // Client-side geocoding fallback using OpenStreetMap Nominatim
   useEffect(() => {
     if (!mounted) return;
-    if (propertiesWithCoords.length > 0) {
+    
+    // If we already have coordinates, skip geocoding
+    if (propertiesWithCoords.length === properties.length) {
       setGeocodedProps([]);
       return;
     }
@@ -55,14 +66,24 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
       const cacheKey = `geo:${address}`;
       try {
         const cached = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
-        if (cached) return JSON.parse(cached);
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        if (cached) {
+          const coords = JSON.parse(cached);
+          return coords;
+        }
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', New Orleans, LA')}&limit=1`;
+        const res = await fetch(url, { 
+          headers: { 
+            'Accept-Language': 'en',
+            'User-Agent': 'CampusRentals/1.0' // Required by Nominatim
+          } 
+        });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const { lat, lon } = data[0];
           const coords = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
-          sessionStorage.setItem(cacheKey, JSON.stringify(coords));
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(cacheKey, JSON.stringify(coords));
+          }
           return coords;
         }
       } catch (e) {
@@ -73,37 +94,46 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
 
     const run = async () => {
       const results: Property[] = [];
-      const toProcess = properties.slice(0, 20); // rate-limit
+      // Process all properties that need geocoding (with rate limiting)
+      const toProcess = propertiesNeedingGeocoding.slice(0, 50); // Increased limit
       for (const p of toProcess) {
         if (cancelled) break;
         const coords = await geocodeAddress(p.address);
         if (coords) {
           results.push({ ...p, latitude: coords.latitude, longitude: coords.longitude } as Property);
         }
-        // small delay to be polite
-        await new Promise(r => setTimeout(r, 150));
+        // Small delay to be polite to Nominatim API (1 request per second)
+        await new Promise(r => setTimeout(r, 1000));
       }
-      if (!cancelled) setGeocodedProps(results);
+      if (!cancelled) {
+        console.log(`Geocoded ${results.length} properties`);
+        setGeocodedProps(results);
+      }
     };
 
     run();
     return () => { cancelled = true; };
-  }, [mounted, properties, propertiesWithCoords.length]);
+  }, [mounted, properties, propertiesWithCoords.length, propertiesNeedingGeocoding.length]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!mounted || !mapRef.current || mapInstanceRef.current) return;
+    if (!mounted || !mapRef.current) return;
 
     const initializeMap = async () => {
       try {
         // Dynamically import Leaflet - this will only run in browser
         const L = await import('leaflet').then(m => m.default);
         
-        // Only proceed if map container exists and we haven't initialized
-        if (!mapRef.current || mapInstanceRef.current) return;
+        // Only proceed if map container exists
+        if (!mapRef.current) return;
+
+        // If map already exists, just update it
+        if (mapInstanceRef.current) {
+          return;
+        }
 
         // Configure Leaflet icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -125,44 +155,6 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
         // Prepare a layer group for markers
         markersLayerRef.current = L.layerGroup().addTo(map);
 
-        const list = propertiesWithCoords.length > 0 ? propertiesWithCoords : geocodedProps;
-
-        // Add markers for each property
-        list.forEach((property) => {
-          const customIcon = L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;"></div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 30]
-          });
-          
-          const marker = L.marker([property.latitude as number, property.longitude as number], {
-            icon: customIcon
-          }).addTo(markersLayerRef.current);
-          
-          const formatPrice = (price: number) => {
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }).format(price);
-          };
-          
-          const content = `
-            <div style="max-width: 200px">
-              <h3 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px">${property.name}</h3>
-              <p style="margin: 0 0 4px 0; font-size: 0.9em; color: #666">${property.address}</p>
-              <p style="margin: 0; font-size: 0.85em; color: #10b981; font-weight: 600">${formatPrice(property.price)}</p>
-            </div>
-          `;
-          
-          marker.bindPopup(content);
-          marker.on('click', () => {
-            window.location.href = `/properties/${property.property_id}`;
-          });
-        });
-
       } catch (err) {
         console.error('Failed to initialize map:', err);
         setError('Failed to load map');
@@ -179,7 +171,7 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
       }
       markersLayerRef.current = null;
     };
-  }, [mounted]);
+  }, [mounted, center.lat, center.lng, zoom]);
 
   // Update markers when data changes
   useEffect(() => {
@@ -187,7 +179,7 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
       if (!mounted || !mapInstanceRef.current || !markersLayerRef.current) return;
       const L = await import('leaflet').then(m => m.default);
       markersLayerRef.current.clearLayers();
-      const list = propertiesWithCoords.length > 0 ? propertiesWithCoords : geocodedProps;
+      const list = [...propertiesWithCoords, ...geocodedProps];
       list.forEach((property) => {
         const customIcon = L.divIcon({
           className: 'custom-marker',
@@ -234,7 +226,21 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
     );
   }
 
-  if (propertiesWithCoords.length === 0) {
+  // Combine properties with coordinates and geocoded properties
+  const allPropertiesWithCoords = [...propertiesWithCoords, ...geocodedProps];
+
+  if (allPropertiesWithCoords.length === 0 && properties.length > 0) {
+    return (
+      <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="mb-2">Geocoding addresses...</p>
+          <p className="text-sm text-gray-400">Please wait while we locate properties on the map</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (allPropertiesWithCoords.length === 0) {
     return (
       <div className="h-[400px] bg-gray-700 rounded-lg flex items-center justify-center">
         <div className="text-white text-center">
