@@ -425,6 +425,22 @@ export default function InvestorDashboard() {
               })
             }
           } else {
+            // If no direct owner match, check nested ownership via breakdown arrays (entity within entity)
+            const ownerWithBreakdown = (inv as any).entityOwners.find((owner: any) => owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0)
+            if (ownerWithBreakdown && Array.isArray(ownerWithBreakdown.breakdown)) {
+              const nested = ownerWithBreakdown.breakdown.find((item: any) => {
+                const itemLabel = (item.label || '').trim().toLowerCase()
+                return itemLabel === targetName
+              })
+              if (nested && (nested.amount || nested.investmentAmount)) {
+                personInvestments.push({
+                  ...inv,
+                  investmentAmount: parseFloat(nested.amount || nested.investmentAmount || 0)
+                })
+                return
+              }
+            }
+
             // Debug logging for unmatched entity investments
             if (inv.propertyName && inv.propertyName.includes('Joseph')) {
               console.log(`[Person Filter] Joseph St NOT matched for ${targetName}. Entity owners:`, (inv as any).entityOwners.map((o: any) => ({
