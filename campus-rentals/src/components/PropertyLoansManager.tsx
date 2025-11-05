@@ -231,13 +231,15 @@ export default function PropertyLoansManager({ propertyId, authToken, readOnly =
             Manage all loans associated with this property
           </p>
         </div>
-        <button
-          onClick={handleAddLoan}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Loan
-        </button>
+        {!readOnly && (
+          <button
+            onClick={handleAddLoan}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Add Loan
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -261,7 +263,9 @@ export default function PropertyLoansManager({ propertyId, authToken, readOnly =
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <BanknotesIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">No loans found</p>
-          <p className="text-sm text-gray-500 mt-1">Click "Add Loan" to get started</p>
+          {!readOnly && (
+            <p className="text-sm text-gray-500 mt-1">Click "Add Loan" to get started</p>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
