@@ -2052,7 +2052,11 @@ export default function InvestmentDetailPage() {
         <div className="text-center">
           <p className="text-gray-600">Investment not found</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              // Navigate back to dashboard, preserving the active tab
+              const savedTab = sessionStorage.getItem('investorDashboardActiveTab') || 'overview'
+              router.push(`/investors/dashboard`)
+            }}
             className="mt-4 text-blue-600 hover:text-blue-700"
           >
             Go back
@@ -2069,7 +2073,11 @@ export default function InvestmentDetailPage() {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => {
+                  // Navigate back to dashboard, preserving the active tab
+                  const savedTab = sessionStorage.getItem('investorDashboardActiveTab') || 'overview'
+                  router.push(`/investors/dashboard`)
+                }}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
@@ -2278,8 +2286,14 @@ export default function InvestmentDetailPage() {
                   propertyId={investment.property.id}
                   investmentId={investment.id} // Fallback for backward compatibility
                   onThumbnailChange={(photoUrl) => {
-                    // Update thumbnail if needed
+                    // Mark this property's thumbnail as needing refresh on dashboard
                     console.log('Thumbnail changed:', photoUrl)
+                    const thumbnailUpdates = JSON.parse(sessionStorage.getItem('thumbnailUpdates') || '{}')
+                    thumbnailUpdates[investment.property.id] = {
+                      updated: Date.now(),
+                      thumbnailUrl: photoUrl
+                    }
+                    sessionStorage.setItem('thumbnailUpdates', JSON.stringify(thumbnailUpdates))
                   }}
                 />
               </div>

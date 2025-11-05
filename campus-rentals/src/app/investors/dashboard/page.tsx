@@ -177,6 +177,12 @@ export default function InvestorDashboard() {
       const userData = JSON.parse(user)
       setCurrentUser(userData)
       
+      // Restore active tab from sessionStorage if available
+      const savedTab = sessionStorage.getItem('investorDashboardActiveTab')
+      if (savedTab && ['overview', 'deals', 'analytics'].includes(savedTab)) {
+        setActiveView(savedTab as 'overview' | 'deals' | 'analytics')
+      }
+      
       // For investors (non-admin), automatically filter by their name
       if (userData.role === 'INVESTOR') {
         const investorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
@@ -191,6 +197,73 @@ export default function InvestorDashboard() {
       router.push('/investors/login')
     }
   }, [router])
+
+  // Check for thumbnail updates when page loads or regains focus
+  useEffect(() => {
+    const checkAndRefreshThumbnails = async () => {
+      // Check sessionStorage for thumbnail updates
+      const thumbnailUpdates = JSON.parse(sessionStorage.getItem('thumbnailUpdates') || '{}')
+      const propertiesToRefresh: string[] = []
+      
+      // Find properties that have been updated
+      Object.keys(thumbnailUpdates).forEach(propertyId => {
+        const update = thumbnailUpdates[propertyId]
+        // Refresh if updated within the last 5 minutes
+        if (update && Date.now() - update.updated < 5 * 60 * 1000) {
+          propertiesToRefresh.push(propertyId)
+        }
+      })
+      
+      if (propertiesToRefresh.length > 0) {
+        // Refresh thumbnails for updated properties
+        const thumbnailPromises = propertiesToRefresh.map(async (propertyId) => {
+          try {
+            const response = await fetch(`/api/properties/thumbnail/${propertyId}`)
+            if (response.ok) {
+              const data = await response.json()
+              return { propertyId, thumbnail: data.thumbnail }
+            }
+          } catch (error) {
+            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
+          }
+          return { propertyId, thumbnail: null }
+        })
+        
+        const thumbnailResults = await Promise.all(thumbnailPromises)
+        const thumbnailMap: { [key: string]: string | null } = {}
+        thumbnailResults.forEach((result) => {
+          if (result.propertyId) {
+            thumbnailMap[result.propertyId] = result.thumbnail
+          }
+        })
+        setPropertyThumbnails(prev => ({ ...prev, ...thumbnailMap }))
+        
+        // Clear old updates (older than 5 minutes)
+        const cleanedUpdates: { [key: string]: any } = {}
+        Object.keys(thumbnailUpdates).forEach(propertyId => {
+          const update = thumbnailUpdates[propertyId]
+          if (update && Date.now() - update.updated < 5 * 60 * 1000) {
+            cleanedUpdates[propertyId] = update
+          }
+        })
+        sessionStorage.setItem('thumbnailUpdates', JSON.stringify(cleanedUpdates))
+      }
+    }
+
+    // Check on mount and when page regains focus
+    checkAndRefreshThumbnails()
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndRefreshThumbnails()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   const fetchDashboardData = async (user: User) => {
     try {
@@ -786,6 +859,8 @@ export default function InvestorDashboard() {
   }
 
   const handleViewInvestmentDetails = (investmentId: string) => {
+    // Store the current active tab before navigating
+    sessionStorage.setItem('investorDashboardActiveTab', activeView)
     router.push(`/investors/investments/${investmentId}`)
   }
 
