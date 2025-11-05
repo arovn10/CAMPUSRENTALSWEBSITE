@@ -19,7 +19,14 @@ const MAIN_SITE_ID_TO_NAME: Record<number, string> = {
 }
 
 async function run() {
-  const names = new Set(Object.values(MAIN_SITE_ID_TO_NAME))
+  // Collapse duplicates: choose the lowest main-site id for each name
+  const NAME_TO_LOWEST_ID = Object.entries(MAIN_SITE_ID_TO_NAME).reduce<Record<string, number>>((acc, [idStr, name]) => {
+    const id = Number(idStr)
+    acc[name] = acc[name] ? Math.min(acc[name], id) : id
+    return acc
+  }, {})
+
+  const names = new Set(Object.keys(NAME_TO_LOWEST_ID))
   const properties = await prisma.property.findMany({
     where: { name: { in: Array.from(names) } },
     select: { id: true, name: true, propertyId: true },
@@ -27,9 +34,8 @@ async function run() {
 
   const nameToId = new Map(properties.map(p => [p.name, p.id]))
 
-  const updates: Array<{ id: string, oldId: number | null, newId: number }> = []
-  for (const [mainIdStr, name] of Object.entries(MAIN_SITE_ID_TO_NAME)) {
-    const mainId = Number(mainIdStr)
+  const updates: Array<{ id: string, oldId: number | null, newId: number, name: string }> = []
+  for (const [name, mainId] of Object.entries(NAME_TO_LOWEST_ID)) {
     const id = nameToId.get(name)
     if (!id) {
       console.warn(`Property not found by name: ${name}`)
@@ -37,16 +43,30 @@ async function run() {
     }
     const current = properties.find(p => p.id === id)!
     if (current.propertyId !== mainId) {
-      updates.push({ id, oldId: current.propertyId as number | null, newId: mainId })
+      updates.push({ id, oldId: current.propertyId as number | null, newId: mainId, name })
     }
   }
 
   if (updates.length === 0) {
     console.log('No propertyId updates needed.')
   } else {
+    // First, free any conflicting propertyIds by setting them to null
+    const targetIds = new Set(updates.map(u => u.newId))
+    const conflicts = await prisma.property.findMany({
+      where: { propertyId: { in: Array.from(targetIds) } },
+      select: { id: true, name: true, propertyId: true },
+    })
+    for (const c of conflicts) {
+      const shouldOwn = updates.find(u => u.newId === c.propertyId && u.id === c.id)
+      if (!shouldOwn) {
+        console.log(`Clearing conflicting propertyId ${c.propertyId} from ${c.name} (${c.id})`)
+        await prisma.property.update({ where: { id: c.id }, data: { propertyId: null } })
+      }
+    }
+
     console.log('Applying propertyId updates:')
     for (const u of updates) {
-      console.log(` - ${u.id} (${properties.find(p => p.id === u.id)?.name}): ${u.oldId ?? 'null'} -> ${u.newId}`)
+      console.log(` - ${u.name}: ${u.oldId ?? 'null'} -> ${u.newId}`)
       await prisma.property.update({ where: { id: u.id }, data: { propertyId: u.newId } })
     }
   }
