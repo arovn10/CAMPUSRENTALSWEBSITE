@@ -3042,6 +3042,7 @@ export default function InvestmentDetailPage() {
                 >
                   <CalculatorIcon className="h-5 w-5" />
                 </button>
+                )}
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between">
