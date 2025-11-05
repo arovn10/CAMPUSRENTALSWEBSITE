@@ -39,6 +39,17 @@ model User {
   ssn               String?  // Encrypted
   emergencyContact  String?
   emergencyPhone    String?
+  // Tax and K1 fields
+  taxId             String?  // Individual Tax ID / SSN (encrypted)
+  entityName        String?  // Entity name if investing through entity
+  entityType        String?  // Type of entity (LLC, S-Corp, Partnership, etc.)
+  entityTaxId       String?  // Entity Tax ID / EIN (encrypted)
+  // Mailing address for K1s
+  mailingAddress    String?
+  mailingCity       String?
+  mailingState      String?
+  mailingZipCode    String?
+  mailingCountry    String?  @default("US")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

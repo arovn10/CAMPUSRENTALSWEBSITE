@@ -51,21 +51,17 @@ async function downloadImage(url: string): Promise<Buffer> {
 }
 
 /**
- * Mapping of property names to old backend property IDs
- * Multiple IDs can map to the same property (e.g., different listings)
+ * Mapping of property names to ALL old backend property IDs
+ * Based on user mapping: https://campusrentalsllc.com/properties/{id} -> Property Name
  */
 const PROPERTY_TO_OLD_BACKEND_IDS: { [key: string]: number[] } = {
-  '2422 Joseph St': [1],
-  '7700 Burthe St': [2, 11],
-  '7506 Zimple St': [3, 4],
-  '7500 Zimple St/1032 Cherokee St': [5, 8],
-  '7500 Zimple St': [5, 8], // Alternative name
-  '1032 Cherokee St': [5, 8], // Alternative name
-  '7315 Freret St': [6, 13],
-  '7313-15 Freret St': [6, 13], // Alternative name
-  '1414 Audubon St': [7, 9],
-  '7508 Zimple St': [12],
-  '7608 Zimple St': [], // Add if known
+  '2422 Joseph St': [1, 2], // IDs 1 and 2 both map to 2422 Joseph St
+  '7506 Zimple St': [3, 4], // IDs 3 and 4 both map to 7506 Zimple St
+  '7500 Zimple St/1032 Cherokee St': [5, 8], // IDs 5 and 8 both map to 7500 Zimple/1032 Cherokee
+  '7313-15 Freret St': [6, 13], // IDs 6 and 13 both map to 7313-15 Freret St
+  '1414 Audubon St': [7, 9], // IDs 7 and 9 both map to 1414 Audubon St
+  '7700 Burthe St': [10],
+  '7608 Zimple St': [12],
 }
 
 /**
@@ -295,27 +291,64 @@ async function seedDealPhotos() {
 
       if (existingPhotos.length > 0) {
         console.log(`  ℹ Already has ${existingPhotos.length} photos for this property - skipping`)
+        // Still ensure thumbnail is set correctly
+        const hasThumbnail = existingPhotos.some(p => p.isThumbnail)
+        if (!hasThumbnail && existingPhotos.length > 0) {
+          // Set first photo as thumbnail if none exists
+          await prisma.dealPhoto.update({
+            where: { id: existingPhotos[0].id },
+            data: { isThumbnail: true },
+          })
+          console.log(`  ✓ Set first photo as thumbnail`)
+        }
         skippedExisting++
         continue
       }
 
-      // Fetch photos directly from old backend using the propertyId
-      console.log(`  Fetching photos from old backend for propertyId: ${property.propertyId}`)
-      const oldPhotos = await fetchPhotosFromOldBackend(property.propertyId)
+      // Get ALL old backend property IDs for this property name
+      const allOldBackendIds = getOldBackendIdsForProperty(property.name)
+      
+      if (allOldBackendIds.length === 0) {
+        // Fallback to using the propertyId from database
+        allOldBackendIds.push(property.propertyId)
+      }
 
-      if (oldPhotos.length === 0) {
-        console.log(`  ⚠ No photos found in old backend for propertyId ${property.propertyId}`)
+      console.log(`  Fetching photos from old backend propertyIds: ${allOldBackendIds.join(', ')}`)
+      
+      // Fetch photos from ALL mapped property IDs and combine them
+      const allPhotos: OldBackendPhoto[] = []
+      const seenUrls = new Set<string>()
+      
+      for (const oldBackendId of allOldBackendIds) {
+        const photos = await fetchPhotosFromOldBackend(oldBackendId)
+        for (const photo of photos) {
+          // Deduplicate by URL to avoid uploading same photo twice
+          if (!seenUrls.has(photo.photoLink)) {
+            seenUrls.add(photo.photoLink)
+            allPhotos.push(photo)
+          }
+        }
+      }
+
+      if (allPhotos.length === 0) {
+        console.log(`  ⚠ No photos found in old backend for propertyIds ${allOldBackendIds.join(', ')}`)
         skippedNoPhotos++
         continue
       }
 
-      console.log(`  ✓ Found ${oldPhotos.length} photos in old backend`)
+      console.log(`  ✓ Found ${allPhotos.length} unique photos from ${allOldBackendIds.length} old backend propertyId(s)`)
+
+      // Unset any existing thumbnails for this property first
+      await prisma.dealPhoto.updateMany({
+        where: { propertyId: property.id },
+        data: { isThumbnail: false },
+      })
 
       // Process each photo
-      for (let i = 0; i < oldPhotos.length; i++) {
-        const oldPhoto = oldPhotos[i]
+      for (let i = 0; i < allPhotos.length; i++) {
+        const oldPhoto = allPhotos[i]
         try {
-          console.log(`  Downloading photo ${i + 1}/${oldPhotos.length}: ${oldPhoto.photoLink}`)
+          console.log(`  Downloading photo ${i + 1}/${allPhotos.length}: ${oldPhoto.photoLink}`)
 
           // Download the image
           const imageBuffer = await downloadImage(oldPhoto.photoLink)
@@ -351,7 +384,7 @@ async function seedDealPhotos() {
           })
 
           totalPhotosCreated++
-          console.log(`  ✓ Created deal photo: ${dealPhoto.id}`)
+          console.log(`  ✓ Created deal photo: ${dealPhoto.id}${i === 0 ? ' (thumbnail)' : ''}`)
         } catch (error) {
           totalErrors++
           console.error(`  ✗ Error processing photo ${i + 1}:`, error instanceof Error ? error.message : String(error))

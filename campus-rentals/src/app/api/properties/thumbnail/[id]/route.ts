@@ -36,15 +36,16 @@ export async function GET(
       return NextResponse.json({ thumbnail: null })
     }
 
-    // Get thumbnail photo for this property
+    // Get thumbnail photo for this property (prioritize isThumbnail=true, then by displayOrder)
     const thumbnail = await prisma.dealPhoto.findFirst({
       where: {
         propertyId: property.id,
         isThumbnail: true
       },
-      orderBy: {
-        displayOrder: 'asc'
-      },
+      orderBy: [
+        { displayOrder: 'asc' },
+        { createdAt: 'asc' }
+      ],
       select: {
         photoUrl: true
       }
