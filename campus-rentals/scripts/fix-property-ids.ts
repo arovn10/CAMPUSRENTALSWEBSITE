@@ -56,11 +56,13 @@ async function run() {
       where: { propertyId: { in: Array.from(targetIds) } },
       select: { id: true, name: true, propertyId: true },
     })
+    let tmpCounter = 100001
     for (const c of conflicts) {
       const shouldOwn = updates.find(u => u.newId === c.propertyId && u.id === c.id)
       if (!shouldOwn) {
-        console.log(`Clearing conflicting propertyId ${c.propertyId} from ${c.name} (${c.id})`)
-        await prisma.property.update({ where: { id: c.id }, data: { propertyId: null } })
+        const tmpId = tmpCounter++
+        console.log(`Temporarily moving propertyId ${c.propertyId} from ${c.name} (${c.id}) to ${tmpId}`)
+        await prisma.property.update({ where: { id: c.id }, data: { propertyId: tmpId } })
       }
     }
 
