@@ -2398,6 +2398,7 @@ export default function InvestmentDetailPage() {
               <PropertyLoansManager 
                 propertyId={investment.property.id} 
                 authToken={getAuthToken()}
+                readOnly={currentUser?.role === 'INVESTOR'}
               />
             </div>
 
@@ -3025,6 +3026,7 @@ export default function InvestmentDetailPage() {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">NOI Calculator</h2>
+                {currentUser?.role !== 'INVESTOR' && (
                 <button
                   onClick={() => {
                     setNoiData({
@@ -3092,6 +3094,7 @@ export default function InvestmentDetailPage() {
                 >
                   Update NOI Calculations
                 </button>
+                )}
               </div>
             </div>
             )}
@@ -3243,7 +3246,8 @@ export default function InvestmentDetailPage() {
               </div>
             </div>
 
-            {/* Waterfall Distributions - Visible to all, but edit controls only for Admin/Manager */}
+            {/* Waterfall Distributions - hide entire card for investors */}
+            {currentUser?.role !== 'INVESTOR' && (
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
@@ -3924,7 +3928,7 @@ export default function InvestmentDetailPage() {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            
+            )}
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Select from Existing Entities</h4>
@@ -5000,6 +5004,7 @@ export default function InvestmentDetailPage() {
                     type="number"
                     value={noiData.monthlyRent}
                     onChange={(e) => setNoiData({ ...noiData, monthlyRent: e.target.value })}
+                    readOnly={currentUser?.role === 'INVESTOR'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -5012,6 +5017,7 @@ export default function InvestmentDetailPage() {
                     type="number"
                     value={noiData.otherIncome}
                     onChange={(e) => setNoiData({ ...noiData, otherIncome: e.target.value })}
+                    readOnly={currentUser?.role === 'INVESTOR'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0"
                   />
@@ -5024,6 +5030,7 @@ export default function InvestmentDetailPage() {
                     type="number"
                     value={noiData.annualExpenses}
                     onChange={(e) => setNoiData({ ...noiData, annualExpenses: e.target.value })}
+                    readOnly={currentUser?.role === 'INVESTOR'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -5037,6 +5044,7 @@ export default function InvestmentDetailPage() {
                     step="0.01"
                     value={noiData.capRate}
                     onChange={(e) => setNoiData({ ...noiData, capRate: e.target.value })}
+                    readOnly={currentUser?.role === 'INVESTOR'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -5097,12 +5105,14 @@ export default function InvestmentDetailPage() {
                 >
                   Cancel
                 </button>
+                {currentUser?.role !== 'INVESTOR' && (
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
                 >
                   Update NOI Calculations
                 </button>
+                )}
               </div>
             </form>
           </div>

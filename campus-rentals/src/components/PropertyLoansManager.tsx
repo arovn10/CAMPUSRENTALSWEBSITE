@@ -31,9 +31,10 @@ interface Loan {
 interface PropertyLoansManagerProps {
   propertyId: string
   authToken: string
+  readOnly?: boolean
 }
 
-export default function PropertyLoansManager({ propertyId, authToken }: PropertyLoansManagerProps) {
+export default function PropertyLoansManager({ propertyId, authToken, readOnly = false }: PropertyLoansManagerProps) {
   const [loans, setLoans] = useState<Loan[]>([])
   const [totals, setTotals] = useState({
     totalCurrentDebt: 0,
@@ -88,6 +89,7 @@ export default function PropertyLoansManager({ propertyId, authToken }: Property
   }
 
   const handleAddLoan = () => {
+    if (readOnly) return
     setEditingLoan(null)
     setFormData({
       lenderName: '',
@@ -332,22 +334,24 @@ export default function PropertyLoansManager({ propertyId, authToken }: Property
                   )}
                 </div>
 
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleEditLoan(loan)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    title="Edit loan"
-                  >
-                    <PencilIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setDeletingLoan(loan)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Delete loan"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
+                {!readOnly && (
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => handleEditLoan(loan)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Edit loan"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingLoan(loan)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Delete loan"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

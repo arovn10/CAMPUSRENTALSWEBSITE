@@ -64,14 +64,13 @@ class InvestorS3Service {
       Bucket: INVESTOR_BUCKET_NAME,
       Key: key,
       Body: buffer,
-      ContentType: contentType,
-      ACL: 'public-read', // Investor photos are typically public for viewing
+      ContentType: contentType
     })
 
     await investorS3Client.send(command)
 
     // Return the public URL
-    const url = `https://${INVESTOR_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-2'}.amazonaws.com/${key}`
+    const url = `https://${INVESTOR_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
 
     return {
       url,
