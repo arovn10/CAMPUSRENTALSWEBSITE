@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: 'Campus Rentals LLC | Off-Campus Student Housing Near Tulane & FAU',
     template: '%s | Campus Rentals LLC',
   },
-  description: 'Find premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse affordable apartments, houses, and rentals perfect for college students. View photos, amenities, and pricing for the best off-campus housing options.',
+  description: 'Find premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse luxury apartments, houses, and rentals perfect for college students. View photos, amenities, and pricing for the best off-campus housing options.',
   keywords: [
     'Tulane off campus housing',
     'Tulane off campus apartments',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     'off campus living',
     'campus rentals',
     'student housing near campus',
-    'affordable student housing',
+    'luxury student housing',
     'student apartments',
     'college housing',
   ],
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     url: 'https://campusrentalsllc.com',
     siteName: 'Campus Rentals LLC',
     title: 'Campus Rentals LLC | Off-Campus Student Housing Near Tulane & FAU',
-    description: 'Find premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse affordable apartments, houses, and rentals perfect for college students.',
+    description: 'Find premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse luxury apartments, houses, and rentals perfect for college students.',
     images: [
       {
         url: '/og-image.jpg',
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Campus Rentals LLC | Off-Campus Student Housing Near Tulane & FAU',
-    description: 'Find premium off-campus student housing near Tulane University and FAU. Browse affordable student apartments and rentals.',
+    description: 'Find premium off-campus student housing near Tulane University and FAU. Browse luxury student apartments and rentals.',
     images: ['/og-image.jpg'],
   },
   robots: {

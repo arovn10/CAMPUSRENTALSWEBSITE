@@ -107,16 +107,10 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
-              href="/properties" 
+              href="/tulane-housing" 
               className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
             >
               View Properties
-            </Link>
-            <Link 
-              href="/tulane-housing" 
-              className="px-8 py-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
-            >
-              Tulane Off Campus Housing
             </Link>
             <Link 
               href="/contact" 

@@ -81,17 +81,17 @@ export default function AboutPage() {
               Off-Campus Student Housing Near Tulane University & FAU
             </h2>
             <p className="text-gray-300 mb-4 text-lg leading-relaxed">
-              Looking for <strong>off-campus housing near Tulane University</strong> in New Orleans or <strong>student apartments near Florida Atlantic University (FAU)</strong> in Boca Raton? Campus Rentals LLC offers premium, affordable off-campus student housing options perfect for college students seeking comfortable, convenient living spaces close to campus.
+              Looking for <strong>off-campus housing near Tulane University</strong> in New Orleans or <strong>student apartments near Florida Atlantic University (FAU)</strong> in Boca Raton? Campus Rentals LLC offers premium, luxury off-campus student housing options perfect for college students seeking comfortable, convenient living spaces close to campus.
             </p>
             <p className="text-gray-300 mb-4 text-lg leading-relaxed">
-              Our <strong>Tulane off-campus housing</strong> properties in New Orleans provide easy access to Tulane University, with modern amenities and prime locations in safe neighborhoods. For students attending <strong>FAU in Boca Raton</strong>, we offer <strong>off-campus apartments near FAU</strong> that combine affordability with quality living spaces.
+              Our <strong>Tulane off-campus housing</strong> properties in New Orleans provide easy access to Tulane University, with modern amenities and prime locations in safe neighborhoods. For students attending <strong>FAU in Boca Raton</strong>, we offer <strong>off-campus apartments near FAU</strong> that combine luxury living with premium quality.
             </p>
             <h3 className="text-2xl font-bold mt-8 mb-4 text-white">
               Why Choose Our Off-Campus Student Housing?
             </h3>
             <ul className="text-gray-300 mb-4 space-y-2 text-lg">
               <li>• <strong>Prime Locations:</strong> Walking distance to Tulane University and FAU campuses</li>
-              <li>• <strong>Affordable Pricing:</strong> Competitive rates for student budgets</li>
+              <li>• <strong>Luxury Living:</strong> Premium finishes and high-end furnishings</li>
               <li>• <strong>Modern Amenities:</strong> Fully furnished apartments with high-speed internet, utilities included</li>
               <li>• <strong>Safe Neighborhoods:</strong> Secure buildings in student-friendly areas</li>
               <li>• <strong>Flexible Leasing:</strong> Academic year and semester lease options available</li>

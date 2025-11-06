@@ -90,8 +90,16 @@ export default function PropertyDetailsPage() {
   useEffect(() => {
     if (photos.length > 1) {
       const interval = setInterval(() => {
-        setHeroPhotoIndex((prev) => (prev + 1) % photos.length);
-      }, 4000); // 4 seconds
+        setHeroPhotoIndex((prev) => {
+          const nextIndex = (prev + 1) % photos.length;
+          // Preload next photo for smoother transition
+          if (photos[nextIndex]) {
+            const img = new window.Image();
+            img.src = getOptimizedImageUrl(photos[nextIndex]);
+          }
+          return nextIndex;
+        });
+      }, 5000); // 5 seconds
       return () => clearInterval(interval);
     }
   }, [photos]);
@@ -180,19 +188,23 @@ export default function PropertyDetailsPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       {/* Hero Section */}
       <div className="relative h-[60vh]">
-        {photos.length > 0 && (
+        {photos.length > 0 ? (
           <div className="absolute inset-0">
-            {photos.map((photo, idx) => (
-              <Image
-                key={photo.photoId}
-                src={getOptimizedImageUrl(photo)}
-                alt={property.name}
-                fill
-                sizes="100vw"
-                className={`object-cover transition-opacity duration-1000 ${idx === heroPhotoIndex ? 'opacity-100 z-0' : 'opacity-0 z-0'}`}
-                priority={idx === 0}
-              />
-            ))}
+            {/* Only render the current photo to improve performance */}
+            <Image
+              key={photos[heroPhotoIndex]?.photoId || photos[0]?.photoId}
+              src={getOptimizedImageUrl(photos[heroPhotoIndex] || photos[0])}
+              alt={property.name}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+              quality={90}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent z-10" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gray-800">
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent z-10" />
           </div>
         )}
@@ -222,18 +234,26 @@ export default function PropertyDetailsPage() {
               <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
                 Photos
               </h2>
-              {photos.length > 0 && (
+              {photos.length > 0 ? (
                 <div className="relative flex flex-col items-center">
-                  <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden">
-                    <Image
-                      src={getOptimizedImageUrl(photos[selectedPhotoIndex] || photos[0])}
-                      alt={`${property.name} - Photo ${photos[selectedPhotoIndex]?.photoId || photos[0].photoId}`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover"
-                      priority={selectedPhotoIndex === 0}
-                      loading={selectedPhotoIndex === 0 ? 'eager' : 'lazy'}
-                    />
+                  <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden bg-gray-800">
+                    {photos[selectedPhotoIndex] ? (
+                      <Image
+                        key={photos[selectedPhotoIndex].photoId}
+                        src={getOptimizedImageUrl(photos[selectedPhotoIndex])}
+                        alt={`${property.name} - Photo ${selectedPhotoIndex + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        priority={selectedPhotoIndex === 0}
+                        loading={selectedPhotoIndex === 0 ? 'eager' : 'lazy'}
+                        quality={85}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        Loading photo...
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-center gap-4 mt-4">
                     <button
@@ -252,6 +272,10 @@ export default function PropertyDetailsPage() {
                       Next
                     </button>
                   </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <p>No photos available for this property.</p>
                 </div>
               )}
             </div>

@@ -169,7 +169,7 @@ export default function TulaneHousingPage() {
                 </li>
                 <li className="flex items-start">
                   <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
-                  <span><strong>Affordable Pricing:</strong> We offer competitive rates for <strong>off campus housing near Tulane</strong>, making it accessible for students on a budget.</span>
+                  <span><strong>Luxury Living:</strong> Our <strong>off campus housing near Tulane</strong> features premium finishes, modern amenities, and high-end furnishings for a luxury student living experience.</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />

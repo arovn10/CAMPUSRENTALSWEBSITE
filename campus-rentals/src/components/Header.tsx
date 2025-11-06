@@ -1,10 +1,33 @@
 "use client";
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [propertiesDropdownOpen, setPropertiesDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setPropertiesDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSchoolSelect = (route: string) => {
+    setPropertiesDropdownOpen(false);
+    router.push(route);
+  };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -20,10 +43,36 @@ export default function Header() {
             />
           </Link>
           {/* Desktop Nav */}
-          <nav className="hidden md:flex space-x-6">
+          <nav className="hidden md:flex space-x-6 items-center">
             <Link href="/" className="text-text hover:text-accent transition-colors">Home</Link>
-            <Link href="/properties" className="text-text hover:text-accent transition-colors">Properties</Link>
-            <Link href="/tulane-housing" className="text-text hover:text-accent transition-colors">Tulane Housing</Link>
+            {/* Properties Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setPropertiesDropdownOpen(!propertiesDropdownOpen)}
+                className="text-text hover:text-accent transition-colors flex items-center gap-1"
+              >
+                Properties
+                <svg className={`w-4 h-4 transition-transform ${propertiesDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {propertiesDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={() => handleSchoolSelect('/tulane-housing')}
+                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-100 transition-colors"
+                  >
+                    Tulane / Loyola Housing
+                  </button>
+                  <button
+                    onClick={() => handleSchoolSelect('/fau-housing')}
+                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-100 transition-colors"
+                  >
+                    FAU Housing
+                  </button>
+                </div>
+              )}
+            </div>
             <Link href="/about" className="text-text hover:text-accent transition-colors">About</Link>
             <Link href="/contact" className="text-text hover:text-accent transition-colors">Contact</Link>
             <Link href="/investors/login" className="text-text hover:text-accent transition-colors">Investors</Link>
@@ -65,8 +114,11 @@ export default function Header() {
       >
         <div className="flex flex-col p-8 space-y-6">
           <Link href="/" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-          <Link href="/properties" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Properties</Link>
-          <Link href="/tulane-housing" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Tulane Housing</Link>
+          <div className="flex flex-col space-y-2">
+            <span className="text-text text-lg font-medium">Properties</span>
+            <Link href="/tulane-housing" className="text-text text-base hover:text-accent transition-colors pl-4" onClick={() => setMobileMenuOpen(false)}>Tulane / Loyola Housing</Link>
+            <Link href="/fau-housing" className="text-text text-base hover:text-accent transition-colors pl-4" onClick={() => setMobileMenuOpen(false)}>FAU Housing</Link>
+          </div>
           <Link href="/about" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>About</Link>
           <Link href="/contact" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
           <Link href="/investors/login" className="text-text text-lg hover:text-accent transition-colors" onClick={() => setMobileMenuOpen(false)}>Investors</Link>

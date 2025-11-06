@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'About Campus Rentals | Off-Campus Student Housing Near Tulane & FAU',
-  description: 'Learn about Campus Rentals LLC - your trusted provider of premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Discover why students choose us for affordable, modern student apartments and rentals.',
+  description: 'Learn about Campus Rentals LLC - your trusted provider of premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Discover why students choose us for luxury, modern student apartments and rentals.',
   keywords: [
     'Tulane off campus housing',
     'Tulane off campus apartments',

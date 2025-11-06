@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     'student rentals near Tulane',
     'Tulane off campus housing search',
     'best off campus housing Tulane',
-    'affordable off campus housing Tulane',
+    'luxury off campus housing Tulane',
     'Tulane off campus housing uptown',
     'off campus housing for Tulane students',
     'Tulane off campus housing options',
