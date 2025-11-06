@@ -62,10 +62,19 @@ export default function PropertyDetailsPage() {
         if (cancelled) return;
         
         setProperty(data.property);
-        setPhotos(data.photos || []);
+        const loadedPhotos = data.photos || [];
+        setPhotos(loadedPhotos);
         setAmenities(data.amenities || null);
-        setSelectedPhoto(data.photos?.[0]?.photoLink || null);
+        setSelectedPhoto(loadedPhotos[0]?.photoLink || null);
         setError(null);
+        
+        // Preload all photos immediately for instant display
+        if (loadedPhotos.length > 0) {
+          loadedPhotos.forEach((photo: CachedPhoto) => {
+            const img = new window.Image();
+            img.src = getOptimizedImageUrl(photo);
+          });
+        }
       } catch (err) {
         if (!cancelled) {
           console.error('Error loading property details:', err);
@@ -200,6 +209,7 @@ export default function PropertyDetailsPage() {
               className="object-cover"
               priority
               quality={90}
+              unoptimized={false}
             />
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-transparent z-10" />
           </div>
@@ -245,9 +255,9 @@ export default function PropertyDetailsPage() {
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
-                        priority={selectedPhotoIndex === 0}
-                        loading={selectedPhotoIndex === 0 ? 'eager' : 'lazy'}
+                        priority
                         quality={85}
+                        unoptimized={false}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500">

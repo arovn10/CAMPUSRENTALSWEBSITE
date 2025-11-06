@@ -274,7 +274,7 @@ export default function TulaneHousingPage() {
                 <ul className="space-y-4">
                   <li className="flex items-start">
                     <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Close to Audubon Park, Freret Street, and Magazine Street - perfect for studying and socializing</span>
+                    <span className="text-gray-300">Close to Audubon, Freret, the Boot, and Maple St - perfect for studying and socializing</span>
                   </li>
                   <li className="flex items-start">
                     <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />

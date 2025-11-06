@@ -60,13 +60,13 @@ export default function Header() {
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                   <button
                     onClick={() => handleSchoolSelect('/tulane-housing')}
-                    className="w-full text-left px-4 py-2 text-text hover:text-accent hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-50 transition-colors"
                   >
                     Tulane / Loyola Housing
                   </button>
                   <button
                     onClick={() => handleSchoolSelect('/fau-housing')}
-                    className="w-full text-left px-4 py-2 text-text hover:text-accent hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-50 transition-colors"
                   >
                     FAU Housing
                   </button>
