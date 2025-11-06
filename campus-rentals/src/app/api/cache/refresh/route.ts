@@ -1,31 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  isCacheValid, 
-  loadDataFromCache, 
-  saveDataToCache, 
-  downloadAndCacheImage, 
-  getCachedImagePath, 
-  createCacheMetadata, 
-  cleanOldCache 
+  isCacheValid,
+  loadDataFromCache,
+  saveDataToCache,
+  createCacheMetadata,
+  cleanOldCache,
+  clearMemoryCache
 } from '@/utils/serverCache';
 import { 
   fetchProperties as originalFetchProperties,
   fetchPropertyPhotos as originalFetchPropertyPhotos,
   fetchPropertyAmenities as originalFetchPropertyAmenities,
-  s3ToCloudFrontUrl,
   Property,
   Photo,
   PropertyAmenities
 } from '@/utils/api';
-import { getPropertyPhoto } from '@/utils/propertyPhotos';
 import { getCoordinates } from '@/utils/coordinateCache';
+import { s3ToCloudFrontUrl } from '@/utils/api';
+import { downloadAndCacheImage } from '@/utils/serverCache';
 
-// Enhanced Photo interface with cached path
-interface CachedPhoto extends Photo {
-  cachedPath?: string;
-}
-
-// Fetch and cache all data (WITHOUT geocoding - handled in map component)
+// Fetch and cache all data (same as in properties route)
 async function fetchAndCacheAllData() {
   console.log('🔄 Comprehensive data refresh from API (regular cache refresh)...');
   console.log('📋 Refreshing ALL property data: bedrooms, bathrooms, price, descriptions, etc.');
@@ -91,16 +85,6 @@ async function fetchAndCacheAllData() {
     
     console.log(`🗺️ Geocoding completed: ${geocodedCount} geocoded, ${cachedCount} from cache, ${skippedCount} already had coordinates`);
     
-    // Log sample to verify all fields
-    const sampleProperty = properties[0];
-    console.log('🔍 Verifying data completeness:');
-    console.log(`   Sample: ${sampleProperty.name} - ${sampleProperty.bedrooms} bed, ${sampleProperty.bathrooms} bath, $${sampleProperty.price}`);
-    console.log(`   Description: ${sampleProperty.description ? sampleProperty.description.length + ' chars' : 'NO DESCRIPTION'}`);
-    console.log(`   Address: ${sampleProperty.address}`);
-    console.log(`✅ DESCRIPTIONS REFRESHED: All property descriptions updated from backend API`);
-    console.log(`✅ ADDRESSES AVAILABLE: All properties have addresses for map geocoding`);
-    console.log(`✅ COMPREHENSIVE REFRESH: bedrooms, bathrooms, prices, descriptions, square footage, addresses, etc.`);
-    
     // Fetch photos and amenities for ALL properties
     const photos: Record<number, Photo[]> = {};
     const amenities: Record<number, PropertyAmenities | null> = {};
@@ -148,7 +132,6 @@ async function fetchAndCacheAllData() {
     console.log(`   ✅ Properties: ${processedCount}/${properties.length}`);
     console.log(`   ✅ Photos: ${totalPhotos} total`);
     console.log(`   ✅ Amenities: ${totalAmenities} properties with amenities`);
-    console.log(`   ✅ Addresses: All properties have addresses for map geocoding`);
     
     // Build coordinates cache from properties
     const coordinates: Record<string, { latitude: number; longitude: number }> = {};
@@ -171,7 +154,7 @@ async function fetchAndCacheAllData() {
     };
     
     console.log('💾 Saving comprehensive data to cache...');
-    console.log(`   🏠 ${properties.length} properties with all fields (bedrooms, bathrooms, price, addresses, etc.)`);
+    console.log(`   🏠 ${properties.length} properties with all fields`);
     console.log(`   📸 ${Object.keys(photos).length} photo collections`);
     console.log(`   🏠 ${Object.keys(amenities).length} amenity datasets`);
     console.log(`   🗺️ ${Object.keys(coordinates).length} geocoded addresses`);
@@ -225,82 +208,86 @@ async function cacheImagesInBackground(photos: Record<number, Photo[]>) {
   console.log('Background image caching completed');
 }
 
-// Get cached or fresh data
-async function getCachedData() {
-  if (isCacheValid()) {
-    console.log('Using cached data');
-    const cachedData = loadDataFromCache();
-    if (cachedData) {
-      return cachedData;
-    }
-  }
-  
-  console.log('Cache invalid or missing, fetching fresh data');
-  return await fetchAndCacheAllData();
-}
-
-export async function GET(request: NextRequest) {
+// This endpoint is called by the scheduled job at midnight CST
+export async function POST(request: NextRequest) {
   try {
-    const data = await getCachedData();
+    // Verify this is an authorized request (from cron job or admin)
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET || 'campus-rentals-cache-refresh';
     
-    // Debug log to check if coordinates exist
-    console.log('Sample property from cache:', JSON.stringify(data.properties[0], null, 2));
-    
-    // Calculate ETag for cache validation
-    const etag = `"${data.metadata.timestamp}"`;
-    const ifNoneMatch = request.headers.get('if-none-match');
-    
-    // If client has cached version, return 304 Not Modified
-    if (ifNoneMatch === etag) {
-      return new NextResponse(null, { status: 304 });
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
+
+    console.log('🔄 Starting scheduled cache refresh at midnight CST...');
     
-    // Return properties with aggressive caching headers
-    return NextResponse.json(data.properties, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400', // Cache for 1 hour, serve stale for 24 hours
-        'ETag': etag,
-        'Content-Type': 'application/json',
-      },
+    // Clear memory cache to force fresh load
+    clearMemoryCache();
+    
+    // Force refresh by fetching and caching all data
+    const cacheData = await fetchAndCacheAllData();
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Cache refreshed successfully',
+      timestamp: new Date().toISOString(),
+      propertiesCount: cacheData.properties.length,
+      photosCount: Object.keys(cacheData.photos).length,
+      coordinatesCount: Object.keys(cacheData.coordinates || {}).length,
     });
   } catch (error) {
-    console.error('Error in properties API:', error);
-    // Fallback to original API
-    try {
-      const properties = await originalFetchProperties();
-      
-      // If external API fails, return test data with coordinates
-      if (!properties || properties.length === 0) {
-        console.log('External API failed, returning test data with coordinates...');
-        const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600', // Shorter cache for fallback
-          },
-        });
-      }
-      
-      return NextResponse.json(properties, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
-        },
-      });
-    } catch (fallbackError) {
-      console.error('Fallback API also failed, using test data:', fallbackError);
-      try {
-        const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
-          },
-        });
-      } catch (testDataError) {
-        console.error('Test data also failed:', testDataError);
-        return NextResponse.json(
-          { error: 'Failed to fetch properties' },
-          { status: 500 }
-        );
-      }
-    }
+    console.error('❌ Error in scheduled cache refresh:', error);
+    return NextResponse.json(
+      { 
+        error: 'Cache refresh failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
-} 
+}
+
+// Allow GET for manual refresh (with auth)
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET || 'campus-rentals-cache-refresh';
+    
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    console.log('🔄 Manual cache refresh triggered...');
+    
+    // Clear memory cache to force fresh load
+    clearMemoryCache();
+    
+    // Force refresh by fetching and caching all data
+    const cacheData = await fetchAndCacheAllData();
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Cache refreshed successfully',
+      timestamp: new Date().toISOString(),
+      propertiesCount: cacheData.properties.length,
+      photosCount: Object.keys(cacheData.photos).length,
+      coordinatesCount: Object.keys(cacheData.coordinates || {}).length,
+    });
+  } catch (error) {
+    console.error('❌ Error in manual cache refresh:', error);
+    return NextResponse.json(
+      { 
+        error: 'Cache refresh failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+

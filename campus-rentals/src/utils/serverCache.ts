@@ -36,6 +36,7 @@ interface DataCache {
   properties: Property[];
   photos: Record<number, Photo[]>;
   amenities: Record<number, PropertyAmenities | null>;
+  coordinates: Record<string, { latitude: number; longitude: number }>; // Address -> coordinates mapping
   metadata: CacheMetadata;
 }
 
@@ -44,7 +45,7 @@ function getCacheFilePath(type: 'data' | 'metadata' | 'geocoding'): string {
   return path.join(DATA_CACHE_DIR, `${type}.json`);
 }
 
-// Check if cache is valid (less than 24 hours old)
+// Check if cache is valid (less than 24 hours old, but stays valid until midnight CST refresh)
 export function isCacheValid(): boolean {
   try {
     const metadataPath = getCacheFilePath('metadata');
@@ -54,7 +55,14 @@ export function isCacheValid(): boolean {
     
     const metadata: CacheMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
     const now = Date.now();
-    return (now - metadata.timestamp) < CACHE_DURATION;
+    
+    // Cache is valid if less than 24 hours old OR if it hasn't been refreshed at midnight yet today
+    // This ensures cache stays valid until the scheduled midnight refresh
+    const cacheAge = now - metadata.timestamp;
+    const hoursSinceCache = cacheAge / (1000 * 60 * 60);
+    
+    // Cache is valid if less than 25 hours old (gives buffer for midnight refresh)
+    return hoursSinceCache < 25;
   } catch (error) {
     console.error('Error checking cache validity:', error);
     return false;
@@ -69,29 +77,56 @@ export function saveDataToCache(data: DataCache): void {
     const dataPath = getCacheFilePath('data');
     const metadataPath = getCacheFilePath('metadata');
     
+    // Write to disk
     fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
     fs.writeFileSync(metadataPath, JSON.stringify(data.metadata, null, 2));
     
-    console.log('Data cached successfully');
+    // Update in-memory cache immediately for instant access
+    cacheMemory = data;
+    cacheMemoryTimestamp = Date.now();
+    
+    console.log('Data cached successfully (disk + memory)');
   } catch (error) {
     console.error('Error saving data to cache:', error);
   }
 }
 
-// Load data from cache
+// Load data from cache (optimized for speed)
+let cacheMemory: DataCache | null = null;
+let cacheMemoryTimestamp: number = 0;
+const CACHE_MEMORY_TTL = 5 * 60 * 1000; // Keep in memory for 5 minutes
+
 export function loadDataFromCache(): DataCache | null {
   try {
+    // Check in-memory cache first (fastest)
+    const now = Date.now();
+    if (cacheMemory && (now - cacheMemoryTimestamp) < CACHE_MEMORY_TTL) {
+      return cacheMemory;
+    }
+    
     const dataPath = getCacheFilePath('data');
     if (!fs.existsSync(dataPath)) {
       return null;
     }
     
+    // Load from disk
     const data: DataCache = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    
+    // Update in-memory cache
+    cacheMemory = data;
+    cacheMemoryTimestamp = now;
+    
     return data;
   } catch (error) {
     console.error('Error loading data from cache:', error);
     return null;
   }
+}
+
+// Clear in-memory cache (useful after refresh)
+export function clearMemoryCache(): void {
+  cacheMemory = null;
+  cacheMemoryTimestamp = 0;
 }
 
 // Download and cache an image
