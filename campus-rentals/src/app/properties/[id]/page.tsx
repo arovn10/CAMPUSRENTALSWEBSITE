@@ -68,11 +68,24 @@ export default function PropertyDetailsPage() {
         setSelectedPhoto(loadedPhotos[0]?.photoLink || null);
         setError(null);
         
-        // Preload all photos immediately for instant display
+        // Preload all photos immediately for instant display and browser caching
         if (loadedPhotos.length > 0) {
-          loadedPhotos.forEach((photo: CachedPhoto) => {
+          loadedPhotos.forEach((photo: CachedPhoto, index: number) => {
+            const photoUrl = getOptimizedImageUrl(photo);
+            
+            // Method 1: Preload using Image object (browser cache)
             const img = new window.Image();
-            img.src = getOptimizedImageUrl(photo);
+            img.src = photoUrl;
+            
+            // Method 2: Add link preload tags for better Next.js integration
+            if (typeof document !== 'undefined') {
+              const link = document.createElement('link');
+              link.rel = 'preload';
+              link.as = 'image';
+              link.href = photoUrl;
+              link.crossOrigin = 'anonymous';
+              document.head.appendChild(link);
+            }
           });
         }
       } catch (err) {
@@ -118,6 +131,38 @@ export default function PropertyDetailsPage() {
       setContactFormData((prev) => ({ ...prev, subject: `${property.name} interest` }));
     }
   }, [property]);
+
+  // Preload all photos in document head for browser caching
+  useEffect(() => {
+    if (photos.length > 0 && typeof document !== 'undefined') {
+      photos.forEach((photo) => {
+        const photoUrl = getOptimizedImageUrl(photo);
+        // Check if link already exists
+        const existingLink = document.querySelector(`link[href="${photoUrl}"]`);
+        if (!existingLink) {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = photoUrl;
+          link.crossOrigin = 'anonymous';
+          document.head.appendChild(link);
+        }
+      });
+    }
+    
+    // Cleanup function to remove preload links when component unmounts
+    return () => {
+      if (typeof document !== 'undefined' && photos.length > 0) {
+        photos.forEach((photo) => {
+          const photoUrl = getOptimizedImageUrl(photo);
+          const link = document.querySelector(`link[href="${photoUrl}"]`);
+          if (link) {
+            link.remove();
+          }
+        });
+      }
+    };
+  }, [photos]);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
