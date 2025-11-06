@@ -7,14 +7,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all properties from database
   let properties: Array<{ propertyId: number | null }> = []
   try {
-    properties = await prisma.property.findMany({
-      where: {
-        propertyId: { not: { equals: null } }
-      },
+    const allProperties = await prisma.property.findMany({
       select: {
         propertyId: true
       }
     })
+    // Filter out properties with null propertyId
+    properties = allProperties.filter(p => p.propertyId !== null)
   } catch (error) {
     console.error('Error fetching properties for sitemap:', error)
   }
