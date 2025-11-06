@@ -243,12 +243,6 @@ export default function FAUHousingPage() {
             >
               Schedule a Tour
             </Link>
-            <Link 
-              href="/properties" 
-              className="px-8 py-4 bg-green-500 text-white rounded-xl hover:bg-green-400 transition-colors duration-300 text-lg font-medium"
-            >
-              View All Properties
-            </Link>
           </div>
         </div>
       </section>

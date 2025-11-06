@@ -192,10 +192,16 @@ export default function HomePage() {
           </p>
           <div className="flex justify-center gap-4">
             <Link 
-              href="/properties" 
+              href="/tulane-housing" 
               className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
             >
-              View All Properties
+              Tulane / Loyola Housing
+            </Link>
+            <Link 
+              href="/fau-housing" 
+              className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
+            >
+              FAU Housing
             </Link>
             <Link 
               href="/contact" 

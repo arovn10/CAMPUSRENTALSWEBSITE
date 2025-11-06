@@ -18,21 +18,22 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function TulaneHousingPage() {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [displayedCount, setDisplayedCount] = useState(6);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadProperties = async () => {
       try {
         setLoading(true);
-        const allProperties = await fetchProperties();
+        const fetchedProperties = await fetchProperties();
         // Filter for Tulane properties
-        const tulaneProperties = allProperties.filter(p => 
+        const tulaneProperties = fetchedProperties.filter(p => 
           p.school === 'Tulane University' || 
           p.school === 'Loyola University' ||
           (p.address && p.address.toLowerCase().includes('new orleans'))
         );
-        setProperties(tulaneProperties.slice(0, 6)); // Show top 6
+        setAllProperties(tulaneProperties);
       } catch (error) {
         console.error('Error loading properties:', error);
       } finally {
@@ -42,6 +43,13 @@ export default function TulaneHousingPage() {
 
     loadProperties();
   }, []);
+
+  const displayedProperties = allProperties.slice(0, displayedCount);
+  const hasMore = displayedCount < allProperties.length;
+
+  const handleShowMore = () => {
+    setDisplayedCount(prev => Math.min(prev + 6, allProperties.length));
+  };
 
   const features = [
     {
@@ -228,28 +236,29 @@ export default function TulaneHousingPage() {
                 <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-emerald-500 mx-auto"></div>
                 <p className="mt-4 text-gray-400">Loading Tulane off campus housing...</p>
               </div>
-            ) : properties.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {properties.map((property) => (
-                  <PropertyCard key={property.property_id} property={property} />
-                ))}
-              </div>
+            ) : displayedProperties.length > 0 ? (
+              <>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {displayedProperties.map((property) => (
+                    <PropertyCard key={property.property_id} property={property} />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="text-center mt-12">
+                    <button
+                      onClick={handleShowMore}
+                      className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
+                    >
+                      Show More ({allProperties.length - displayedCount} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <p className="text-lg">No properties available at this time.</p>
-                <Link href="/properties" className="text-emerald-400 hover:text-emerald-300 mt-4 inline-block">
-                  View All Properties
-                </Link>
               </div>
             )}
-            <div className="text-center mt-12">
-              <Link 
-                href="/properties" 
-                className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium inline-block"
-              >
-                View All Tulane Off Campus Housing
-              </Link>
-            </div>
           </div>
         </section>
 
@@ -343,12 +352,6 @@ export default function TulaneHousingPage() {
                 className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
               >
                 Schedule a Tour
-              </Link>
-              <Link 
-                href="/properties" 
-                className="px-8 py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-400 transition-colors duration-300 text-lg font-medium"
-              >
-                View All Properties
               </Link>
             </div>
           </div>
