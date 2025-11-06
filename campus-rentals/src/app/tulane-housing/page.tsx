@@ -26,7 +26,15 @@ export default function TulaneHousingPage() {
     const loadProperties = async () => {
       try {
         setLoading(true);
-        const fetchedProperties = await fetchProperties();
+        
+        // Add timeout to prevent hanging forever
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 second timeout
+        );
+        
+        const fetchPromise = fetchProperties();
+        const fetchedProperties = await Promise.race([fetchPromise, timeoutPromise]) as Property[];
+        
         // Filter for Tulane properties
         const tulaneProperties = fetchedProperties.filter(p => 
           p.school === 'Tulane University' || 
@@ -36,6 +44,8 @@ export default function TulaneHousingPage() {
         setAllProperties(tulaneProperties);
       } catch (error) {
         console.error('Error loading properties:', error);
+        // Set empty array on error so page still renders
+        setAllProperties([]);
       } finally {
         setLoading(false);
       }
@@ -235,6 +245,7 @@ export default function TulaneHousingPage() {
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-emerald-500 mx-auto"></div>
                 <p className="mt-4 text-gray-400">Loading Tulane off campus housing...</p>
+                <p className="mt-2 text-sm text-gray-500">This may take a moment on first load...</p>
               </div>
             ) : displayedProperties.length > 0 ? (
               <>
