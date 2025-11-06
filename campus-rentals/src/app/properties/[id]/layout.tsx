@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
-import { fetchProperties } from '@/utils/clientApi'
-import { fetchPropertyPhotos } from '@/utils/clientApi'
+import { loadDataFromCache, isCacheValid } from '@/utils/serverCache'
 import { getOptimizedImageUrl } from '@/utils/clientApi'
 
 type Props = {
@@ -71,9 +70,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       console.error('Error fetching from database:', error)
     }
 
-    // Fetch property data from old API (for fallback)
-    const properties = await fetchProperties()
-    const property = properties.find(p => p.property_id === propertyId)
+    // Fetch property data from server-side cache (more reliable)
+    let property = null
+    if (isCacheValid()) {
+      const cachedData = loadDataFromCache()
+      if (cachedData) {
+        property = cachedData.properties.find(p => p.property_id === propertyId)
+        
+        // Get photo from cache if not already found
+        if (!imageUrl && property && cachedData.photos[propertyId] && cachedData.photos[propertyId].length > 0) {
+          const firstPhoto = cachedData.photos[propertyId][0]
+          if (firstPhoto && firstPhoto.photoLink) {
+            imageUrl = getOptimizedImageUrl(firstPhoto as any)
+          }
+        }
+      }
+    }
     
     if (!property && !propertyFromDb) {
       return {
