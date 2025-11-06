@@ -106,20 +106,49 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const propertyUrl = `${siteUrl}/properties/${propertyId}`
     const description = propertyDescription || `${bedrooms} bed, ${bathrooms} bath property in ${propertyAddress} - $${price}/month`
 
+    // Determine location-based keywords
+    const isNewOrleans = propertyAddress?.toLowerCase().includes('new orleans') || 
+                         propertyAddress?.toLowerCase().includes('nola') ||
+                         propertyName?.toLowerCase().includes('new orleans')
+    const isBocaRaton = propertyAddress?.toLowerCase().includes('boca raton') ||
+                        propertyAddress?.toLowerCase().includes('boca') ||
+                        propertyName?.toLowerCase().includes('boca')
+    
+    const locationKeywords = isNewOrleans 
+      ? 'Tulane off-campus housing, student apartments near Tulane, Tulane student housing'
+      : isBocaRaton
+      ? 'FAU off-campus housing, student apartments near FAU, FAU student housing'
+      : 'off-campus student housing, student apartments'
+    
+    const seoDescription = `${bedrooms} bed, ${bathrooms} bath ${locationKeywords} in ${propertyAddress}. ${propertyDescription || 'Modern student housing with premium amenities.'} View photos, pricing, and amenities.`
+    
+    const seoTitle = `${propertyName} | ${locationKeywords} | Campus Rentals`
+
     const metadata: Metadata = {
-      title: `${propertyName} - Campus Rentals`,
-      description,
+      title: seoTitle,
+      description: seoDescription,
+      keywords: [
+        locationKeywords,
+        propertyAddress || '',
+        `${bedrooms} bedroom student apartment`,
+        `${bathrooms} bathroom student housing`,
+        'off-campus housing',
+        'student rentals',
+        'college housing',
+        isNewOrleans ? 'Tulane University housing' : '',
+        isBocaRaton ? 'Florida Atlantic University housing' : '',
+      ].filter(Boolean),
       openGraph: {
-        title: propertyName,
-        description,
+        title: seoTitle,
+        description: seoDescription,
         url: propertyUrl,
-        siteName: 'Campus Rentals',
+        siteName: 'Campus Rentals LLC',
         images: imageUrl ? [
           {
             url: imageUrl,
             width: 1200,
             height: 630,
-            alt: propertyName,
+            alt: `${propertyName} - ${locationKeywords}`,
           }
         ] : [],
         locale: 'en_US',
@@ -127,9 +156,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: propertyName,
-        description,
+        title: seoTitle,
+        description: seoDescription,
         images: imageUrl ? [imageUrl] : [],
+      },
+      alternates: {
+        canonical: propertyUrl,
       },
     }
 

@@ -72,7 +72,20 @@ export async function GET(
           cachedPath: undefined // Don't use cached paths that don't exist
         }));
         
-        return NextResponse.json(photosWithoutCache);
+        // Calculate ETag for cache validation
+        const etag = `"photos-${propertyId}-${photos.length}"`;
+        const ifNoneMatch = request.headers.get('if-none-match');
+        
+        if (ifNoneMatch === etag) {
+          return new NextResponse(null, { status: 304 });
+        }
+        
+        return NextResponse.json(photosWithoutCache, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+            'ETag': etag,
+          },
+        });
       }
     }
 
@@ -88,7 +101,11 @@ export async function GET(
           cachedPath: undefined // Don't use cached paths that don't exist
         }));
         
-        return NextResponse.json(photosWithoutCache);
+        return NextResponse.json(photosWithoutCache, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
+          },
+        });
     } catch (externalApiError) {
       console.log(`External API failed for property ${propertyId}, using local photo mapping...`);
       

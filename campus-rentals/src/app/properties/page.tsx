@@ -27,11 +27,16 @@ export default function PropertiesPage() {
   const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
+    let cancelled = false;
+    
     const loadProperties = async () => {
       try {
         setLoading(true);
         console.log('🔄 Loading properties...');
         const data = await fetchProperties();
+        
+        if (cancelled) return;
+        
         console.log('✅ Fetched properties:', data);
         console.log('📊 Properties count:', data.length);
         if (data.length > 0) {
@@ -39,13 +44,21 @@ export default function PropertiesPage() {
         }
         setProperties(data);
       } catch (error) {
-        console.error('❌ Error loading properties:', error);
+        if (!cancelled) {
+          console.error('❌ Error loading properties:', error);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadProperties();
+    
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSchoolChange = (school: string) => {

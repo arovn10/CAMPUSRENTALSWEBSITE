@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { 
   isCacheValid, 
   loadDataFromCache, 
@@ -211,15 +211,30 @@ async function getCachedData() {
   return await fetchAndCacheAllData();
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const data = await getCachedData();
     
     // Debug log to check if coordinates exist
     console.log('Sample property from cache:', JSON.stringify(data.properties[0], null, 2));
     
-    // Return properties without photos - photos should be fetched via /api/photos/{id}
-    return NextResponse.json(data.properties);
+    // Calculate ETag for cache validation
+    const etag = `"${data.metadata.timestamp}"`;
+    const ifNoneMatch = request.headers.get('if-none-match');
+    
+    // If client has cached version, return 304 Not Modified
+    if (ifNoneMatch === etag) {
+      return new NextResponse(null, { status: 304 });
+    }
+    
+    // Return properties with aggressive caching headers
+    return NextResponse.json(data.properties, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400', // Cache for 1 hour, serve stale for 24 hours
+        'ETag': etag,
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error in properties API:', error);
     // Fallback to original API
@@ -230,15 +245,27 @@ export async function GET() {
       if (!properties || properties.length === 0) {
         console.log('External API failed, returning test data with coordinates...');
         const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default);
+        return NextResponse.json(testData.default, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600', // Shorter cache for fallback
+          },
+        });
       }
       
-      return NextResponse.json(properties);
+      return NextResponse.json(properties, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+        },
+      });
     } catch (fallbackError) {
       console.error('Fallback API also failed, using test data:', fallbackError);
       try {
         const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default);
+        return NextResponse.json(testData.default, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+          },
+        });
       } catch (testDataError) {
         console.error('Test data also failed:', testDataError);
         return NextResponse.json(

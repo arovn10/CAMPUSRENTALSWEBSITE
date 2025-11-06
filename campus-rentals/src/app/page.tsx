@@ -100,10 +100,10 @@ export default function HomePage() {
         {/* Hero Text Content */}
         <div className="relative z-20 flex flex-col justify-center items-start py-20 px-4 md:px-0 max-w-4xl mx-auto w-full">
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Luxury Student Living
+            Premium Off-Campus Student Housing Near Tulane & FAU
           </h1>
           <p className="text-2xl text-gray-300 mb-8 max-w-2xl">
-            Experience premium off-campus housing designed for student success
+            Find the perfect off-campus apartments and student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse affordable, modern student rentals designed for college success.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
@@ -122,6 +122,37 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* SEO Content Section */}
+      <section className="py-16 bg-gray-800/30 backdrop-blur-sm">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="prose prose-invert prose-lg max-w-none">
+            <h2 className="text-3xl font-bold mb-6 text-white">
+              Off-Campus Student Housing Near Tulane University & FAU
+            </h2>
+            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
+              Looking for <strong>off-campus housing near Tulane University</strong> in New Orleans or <strong>student apartments near Florida Atlantic University (FAU)</strong> in Boca Raton? Campus Rentals LLC offers premium, affordable off-campus student housing options perfect for college students seeking comfortable, convenient living spaces close to campus.
+            </p>
+            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
+              Our <strong>Tulane off-campus housing</strong> properties in New Orleans provide easy access to Tulane University, with modern amenities and prime locations in safe neighborhoods. For students attending <strong>FAU in Boca Raton</strong>, we offer <strong>off-campus apartments near FAU</strong> that combine affordability with quality living spaces.
+            </p>
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-white">
+              Why Choose Our Off-Campus Student Housing?
+            </h3>
+            <ul className="text-gray-300 mb-4 space-y-2 text-lg">
+              <li>• <strong>Prime Locations:</strong> Walking distance to Tulane University and FAU campuses</li>
+              <li>• <strong>Affordable Pricing:</strong> Competitive rates for student budgets</li>
+              <li>• <strong>Modern Amenities:</strong> Fully furnished apartments with high-speed internet, utilities included</li>
+              <li>• <strong>Safe Neighborhoods:</strong> Secure buildings in student-friendly areas</li>
+              <li>• <strong>Flexible Leasing:</strong> Academic year and semester lease options available</li>
+              <li>• <strong>Easy Application:</strong> Simple online application process for students</li>
+            </ul>
+            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
+              Whether you're searching for <strong>Tulane student housing</strong>, <strong>FAU off-campus apartments</strong>, or <strong>college housing near campus</strong>, we have the perfect rental property for you. Browse our listings to find your ideal off-campus living space today!
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
@@ -135,8 +166,8 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Premium Locations</h3>
-              <p className="text-gray-400">Prime locations near top universities with easy access to campus and city amenities.</p>
+              <h3 className="text-xl font-bold mb-2">Premium Locations Near Campus</h3>
+              <p className="text-gray-400">Prime off-campus housing locations near Tulane University in New Orleans and FAU in Boca Raton with easy walking distance to campus, dining, and city amenities.</p>
             </div>
             <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
               <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
@@ -153,8 +184,8 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Modern Amenities</h3>
-              <p className="text-gray-400">State-of-the-art facilities and amenities designed for student comfort.</p>
+              <h3 className="text-xl font-bold mb-2">Modern Student Amenities</h3>
+              <p className="text-gray-400">State-of-the-art facilities including high-speed WiFi, fully furnished apartments, modern kitchens, and study spaces designed for college student success.</p>
             </div>
           </div>
         </div>
@@ -165,8 +196,11 @@ export default function HomePage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Featured Properties
+            Featured Off-Campus Student Housing Properties
           </h2>
+          <p className="text-center text-gray-300 mb-8 text-lg max-w-3xl mx-auto">
+            Browse our selection of premium student apartments and off-campus housing near Tulane University and FAU. Each property is carefully selected for location, quality, and student-friendly amenities.
+          </p>
           {loading ? (
             <div className="flex justify-center">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
