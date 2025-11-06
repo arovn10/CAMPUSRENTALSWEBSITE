@@ -42,42 +42,49 @@ export default function PropertyDetailsPage() {
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    
     const loadPropertyDetails = async () => {
       try {
         setLoading(true);
-        const properties = await fetchProperties();
-        const property = properties.find(p => p.property_id === propertyId);
         
-        if (!property) {
+        // Use optimized single-property API endpoint (from cache)
+        const response = await fetch(`/api/properties/${propertyId}`, {
+          cache: 'default', // Use browser cache
+        });
+        
+        if (!response.ok) {
           throw new Error('Property not found');
         }
-
-        const [propertyPhotos, propertyAmenities] = await Promise.all([
-          fetchPropertyPhotos(propertyId),
-          fetchPropertyAmenities(propertyId),
-        ]);
-
-        console.log('Fetched amenities response:', propertyAmenities);
-        if (!propertyAmenities) {
-          console.warn('No amenities data received for property:', propertyId);
-        }
-
-        setProperty(property);
-        setPhotos(propertyPhotos);
-        setAmenities(propertyAmenities);
-        setSelectedPhoto(propertyPhotos[0]?.photoLink || null);
+        
+        const data = await response.json();
+        
+        if (cancelled) return;
+        
+        setProperty(data.property);
+        setPhotos(data.photos || []);
+        setAmenities(data.amenities || null);
+        setSelectedPhoto(data.photos?.[0]?.photoLink || null);
         setError(null);
       } catch (err) {
-        console.error('Error loading property details:', err);
-        setError('Failed to load property details');
+        if (!cancelled) {
+          console.error('Error loading property details:', err);
+          setError('Failed to load property details');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     if (propertyId) {
       loadPropertyDetails();
     }
+    
+    return () => {
+      cancelled = true;
+    };
   }, [propertyId]);
 
   useEffect(() => {

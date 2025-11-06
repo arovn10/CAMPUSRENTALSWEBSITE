@@ -113,6 +113,12 @@ export default function HomePage() {
               View Properties
             </Link>
             <Link 
+              href="/tulane-housing" 
+              className="px-8 py-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
+            >
+              Tulane Off Campus Housing
+            </Link>
+            <Link 
               href="/contact" 
               className="px-8 py-4 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition-colors duration-300 text-lg font-medium"
             >

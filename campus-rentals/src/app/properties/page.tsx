@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Property } from '@/types';
 import { fetchProperties } from '@/utils/clientApi';
@@ -12,16 +13,25 @@ const PropertyMap = dynamic(() => import('@/components/PropertyMap'), {
 });
 
 const SCHOOL_COORDINATES = {
+  'All Schools': { lat: 29.9400, lng: -90.1200 },
   'Tulane University': { lat: 29.9400, lng: -90.1200 },
   'Loyola University': { lat: 29.9400, lng: -90.1200 },
   'Florida Atlantic University': { lat: 26.3700, lng: -80.1000 }
 };
 
+// Map school names to their dedicated page routes
+const SCHOOL_ROUTES: { [key: string]: string } = {
+  'Tulane University': '/tulane-housing',
+  'Loyola University': '/tulane-housing', // Share Tulane page since they're in same area
+  'Florida Atlantic University': '/fau-housing',
+};
+
 export default function PropertiesPage() {
+  const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSchool, setSelectedSchool] = useState('Tulane University');
-  const [mapCenter, setMapCenter] = useState(SCHOOL_COORDINATES['Tulane University']);
+  const [selectedSchool, setSelectedSchool] = useState('All Schools');
+  const [mapCenter, setMapCenter] = useState(SCHOOL_COORDINATES['All Schools']);
   const [sortBy, setSortBy] = useState<'bedrooms-asc' | 'bedrooms-desc' | 'price-asc' | 'price-desc' | 'date-asc'>('date-asc');
   const [selectedBedrooms, setSelectedBedrooms] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
@@ -62,8 +72,22 @@ export default function PropertiesPage() {
   }, []);
 
   const handleSchoolChange = (school: string) => {
-    setSelectedSchool(school);
-    setMapCenter(SCHOOL_COORDINATES[school as keyof typeof SCHOOL_COORDINATES]);
+    // If "All Schools" is selected, stay on this page and filter
+    if (school === 'All Schools') {
+      setSelectedSchool(school);
+      setMapCenter(SCHOOL_COORDINATES[school as keyof typeof SCHOOL_COORDINATES]);
+      return;
+    }
+    
+    // If a specific school is selected, navigate to that school's dedicated page
+    const schoolRoute = SCHOOL_ROUTES[school];
+    if (schoolRoute) {
+      router.push(schoolRoute);
+    } else {
+      // Fallback: update filter if no route exists
+      setSelectedSchool(school);
+      setMapCenter(SCHOOL_COORDINATES[school as keyof typeof SCHOOL_COORDINATES]);
+    }
   };
 
   // Get unique bedroom counts from properties
@@ -75,7 +99,7 @@ export default function PropertiesPage() {
   const sortedProperties = useMemo(() => {
     const filtered = properties.filter(property =>
       (selectedBedrooms === null || property.bedrooms === selectedBedrooms) &&
-      (selectedSchool === '' || property.school === selectedSchool)
+      (selectedSchool === 'All Schools' || selectedSchool === '' || property.school === selectedSchool)
     );
 
     return filtered.sort((a, b) => {
@@ -153,12 +177,16 @@ export default function PropertiesPage() {
                     onChange={(e) => handleSchoolChange(e.target.value)}
                     className="w-full px-3 sm:px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all duration-300 text-sm sm:text-base"
                   >
-                    {Object.keys(SCHOOL_COORDINATES).map((school) => (
-                      <option key={school} value={school}>
-                        {school}
-                      </option>
-                    ))}
+                    <option value="All Schools">All Schools</option>
+                    <option value="Tulane University">Tulane University</option>
+                    <option value="Loyola University">Loyola University</option>
+                    <option value="Florida Atlantic University">Florida Atlantic University</option>
                   </select>
+                  {selectedSchool !== 'All Schools' && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Selecting a school will take you to that school's property page
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-300 mb-2">
