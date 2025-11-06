@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     properties = await prisma.property.findMany({
       where: {
-        propertyId: { not: null }
+        propertyId: { not: { equals: null } }
       },
       select: {
         propertyId: true
