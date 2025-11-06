@@ -49,7 +49,7 @@ export default function Header() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setPropertiesDropdownOpen(!propertiesDropdownOpen)}
-                className="text-text hover:text-accent transition-colors flex items-center gap-1"
+                className="text-text hover:text-accent transition-colors flex items-center gap-1 bg-transparent border-none outline-none focus:outline-none"
               >
                 Properties
                 <svg className={`w-4 h-4 transition-transform ${propertiesDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,13 +60,13 @@ export default function Header() {
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                   <button
                     onClick={() => handleSchoolSelect('/tulane-housing')}
-                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-text hover:text-accent hover:bg-gray-50 transition-colors"
                   >
                     Tulane / Loyola Housing
                   </button>
                   <button
                     onClick={() => handleSchoolSelect('/fau-housing')}
-                    className="w-full text-left px-4 py-2 text-text hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-text hover:text-accent hover:bg-gray-50 transition-colors"
                   >
                     FAU Housing
                   </button>
