@@ -14,26 +14,43 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user has access to this property
+    // Check if property exists
     const property = await prisma.property.findUnique({
       where: { id: params.id },
-      include: {
-        investments: {
-          where: { userId: user.id },
-        },
-        entityInvestments: {
-          include: {
-            entityOwners: {
-              where: { userId: user.id },
-            },
-          },
-        },
-      },
     });
 
     if (!property) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
+
+    // Check if user has access to this property
+    const userInvestment = await prisma.investment.findFirst({
+      where: {
+        propertyId: params.id,
+        userId: user.id,
+      },
+    });
+
+    // Check for entity investments - check both global and per-deal owners
+    const userEntityInvestment = await prisma.entityInvestment.findFirst({
+      where: {
+        propertyId: params.id,
+        OR: [
+          {
+            entity: {
+              entityOwners: {
+                some: { userId: user.id },
+              },
+            },
+          },
+          {
+            entityInvestmentOwners: {
+              some: { userId: user.id },
+            },
+          },
+        ],
+      },
+    });
 
     // Check if user is a follower
     const userFollower = await prisma.dealFollower.findFirst({
@@ -50,8 +67,8 @@ export async function GET(
     const hasAccess =
       user.role === 'ADMIN' ||
       user.role === 'MANAGER' ||
-      property.investments.length > 0 ||
-      property.entityInvestments.some(ei => ei.entityOwners.length > 0) ||
+      !!userInvestment ||
+      !!userEntityInvestment ||
       !!userFollower;
 
     if (!hasAccess) {
