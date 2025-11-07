@@ -5,13 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    // Only admins can access user management
-    if (!hasPermission(user, 'ADMIN')) {
+    // Admins and managers can access user list (for adding followers)
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const users = await getAllUsers()
-    return NextResponse.json(users)
+    // Return in format expected by DealFollowersManager: { users: [...] }
+    return NextResponse.json({ users })
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
