@@ -2418,27 +2418,6 @@ export default function InvestmentDetailPage() {
               />
             </div>
 
-            {/* Deal Files Management Section */}
-            {investment && investment.property && (
-              <div className="mt-6">
-                <DealFileManager
-                  propertyId={investment.property.id}
-                  authToken={getAuthToken()}
-                  readOnly={currentUser?.role === 'INVESTOR'}
-                />
-              </div>
-            )}
-
-            {/* Deal Followers Section */}
-            {investment && investment.property && (
-              <div className="mt-6">
-                <DealFollowersManager
-                  propertyId={investment.property.id}
-                  authToken={getAuthToken()}
-                  readOnly={currentUser?.role === 'INVESTOR'}
-                />
-              </div>
-            )}
 
             {/* Investor Details and Entity Structure */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
@@ -2888,79 +2867,42 @@ export default function InvestmentDetailPage() {
             </div>
           </div>
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Documents */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Documents</h2>
-                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-                  <button
-                    onClick={() => setShowUploadModal(true)}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <DocumentIcon className="h-5 w-5 text-gray-400" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
-                        <p className="text-xs text-gray-600">{formatDate(doc.uploadedAt)} • {doc.documentType}</p>
-                        <p className="text-xs text-gray-500">{doc.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => window.open(`/api/documents/${doc.id}?user=${encodeURIComponent(currentUser.email)}`, '_blank')}
-                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                        title="View Document"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const link = document.createElement('a')
-                          link.href = `/api/documents/${doc.id}?user=${encodeURIComponent(currentUser.email)}`
-                          link.download = doc.fileName
-                          document.body.appendChild(link)
-                          link.click()
-                          document.body.removeChild(link)
-                        }}
-                        className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                        title="Download Document"
-                      >
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                      </button>
-                      {currentUser?.role === 'ADMIN' && (
-                        <>
-                          <button
-                            onClick={() => handleEditDocument(doc)}
-                            className="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
-                            title="Edit Document"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteDocument(doc.id)}
-                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                            title="Delete Document"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
+          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+            {/* Documents Section */}
+            {investment?.property ? (
+              <DealFileManager
+                propertyId={investment.property.id}
+                authToken={getAuthToken()}
+                readOnly={currentUser?.role === 'INVESTOR'}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                  <div className="space-y-3">
+                    <div className="h-20 bg-gray-100 rounded"></div>
                   </div>
-                ))}
-                {documents.length === 0 && (
-                  <p className="text-gray-600 text-sm">No documents uploaded yet</p>
-                )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Deal Followers Section */}
+            {investment?.property ? (
+              <DealFollowersManager
+                propertyId={investment.property.id}
+                authToken={getAuthToken()}
+                readOnly={currentUser?.role === 'INVESTOR'}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border p-6">
+                <div className="animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                  <div className="space-y-3">
+                    <div className="h-20 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            )}
 
 
 

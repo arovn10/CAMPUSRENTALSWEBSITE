@@ -65,6 +65,15 @@ export default function DealFollowersManager({
     accessLevel: 'VIEW_ONLY',
     notes: '',
   });
+  const [showCreateContact, setShowCreateContact] = useState(false);
+  const [newContactData, setNewContactData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    title: '',
+  });
 
   useEffect(() => {
     fetchFollowers();
@@ -125,6 +134,45 @@ export default function DealFollowersManager({
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleCreateContact = async () => {
+    if (!newContactData.firstName || !newContactData.lastName) {
+      alert('First name and last name are required');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(newContactData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        await fetchContacts();
+        setFormData({ ...formData, contactId: data.contact.id });
+        setShowCreateContact(false);
+        setNewContactData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          company: '',
+          title: '',
+        });
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to create contact');
+      }
+    } catch (error) {
+      console.error('Error creating contact:', error);
+      alert('Failed to create contact');
     }
   };
 
@@ -203,7 +251,7 @@ export default function DealFollowersManager({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
           <div className="space-y-3">
@@ -215,7 +263,7 @@ export default function DealFollowersManager({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-2xl shadow-sm border p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-900 flex items-center">
@@ -335,49 +383,190 @@ export default function DealFollowersManager({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Contact
-                  </label>
-                  <select
-                    value={formData.contactId}
-                    onChange={(e) => {
-                      setFormData({ ...formData, contactId: e.target.value, userId: '' });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Choose a contact...</option>
-                    {filteredContacts.map((contact) => (
-                      <option key={contact.id} value={contact.id}>
-                        {contact.firstName} {contact.lastName}
-                        {contact.company && ` - ${contact.company}`}
-                        {contact.email && ` (${contact.email})`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {!showCreateContact ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Contact
+                      </label>
+                      <select
+                        value={formData.contactId}
+                        onChange={(e) => {
+                          setFormData({ ...formData, contactId: e.target.value, userId: '' });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Choose a contact...</option>
+                        {filteredContacts.map((contact) => (
+                          <option key={contact.id} value={contact.id}>
+                            {contact.firstName} {contact.lastName}
+                            {contact.company && ` - ${contact.company}`}
+                            {contact.email && ` (${contact.email})`}
+                          </option>
+                        ))}
+                      </select>
+                      {filteredContacts.length === 0 && searchTerm && (
+                        <p className="text-xs text-gray-500 mt-1">No contacts found matching "{searchTerm}"</p>
+                      )}
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Or Select User
-                  </label>
-                  <select
-                    value={formData.userId}
-                    onChange={(e) => {
-                      setFormData({ ...formData, userId: e.target.value, contactId: '' });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Choose a user...</option>
-                    {filteredUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName} ({user.email})
-                      </option>
-                    ))}
-                  </select>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Or Select User
+                      </label>
+                      <select
+                        value={formData.userId}
+                        onChange={(e) => {
+                          setFormData({ ...formData, userId: e.target.value, contactId: '' });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Choose a user...</option>
+                        {filteredUsers.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.firstName} {user.lastName} ({user.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {(filteredContacts.length === 0 && searchTerm) && (
+                    <div className="border-t pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Pre-fill name from search term if it looks like a name
+                          const searchParts = searchTerm.trim().split(/\s+/);
+                          if (searchParts.length >= 2) {
+                            setNewContactData({
+                              ...newContactData,
+                              firstName: searchParts[0],
+                              lastName: searchParts.slice(1).join(' '),
+                            });
+                          } else if (searchParts.length === 1) {
+                            setNewContactData({
+                              ...newContactData,
+                              firstName: searchParts[0],
+                              lastName: '',
+                            });
+                          }
+                          setShowCreateContact(true);
+                        }}
+                        className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        <UserPlusIcon className="h-5 w-5 mr-2" />
+                        Create New Contact: {searchTerm}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="font-medium text-gray-900">Create New Contact</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={newContactData.firstName}
+                        onChange={(e) => setNewContactData({ ...newContactData, firstName: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={newContactData.lastName}
+                        onChange={(e) => setNewContactData({ ...newContactData, lastName: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={newContactData.email}
+                        onChange={(e) => setNewContactData({ ...newContactData, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={newContactData.phone}
+                        onChange={(e) => setNewContactData({ ...newContactData, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Company
+                      </label>
+                      <input
+                        type="text"
+                        value={newContactData.company}
+                        onChange={(e) => setNewContactData({ ...newContactData, company: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={newContactData.title}
+                        onChange={(e) => setNewContactData({ ...newContactData, title: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateContact(false);
+                        setNewContactData({
+                          firstName: '',
+                          lastName: '',
+                          email: '',
+                          phone: '',
+                          company: '',
+                          title: '',
+                        });
+                      }}
+                      className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateContact}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg"
+                    >
+                      Create Contact
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

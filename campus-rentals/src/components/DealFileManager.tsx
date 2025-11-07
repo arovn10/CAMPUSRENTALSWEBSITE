@@ -88,6 +88,8 @@ export default function DealFileManager({
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched folders:', data.folders);
+        console.log('Fetched files:', data.files);
         setFolders(data.folders || []);
         // Filter files by current folder
         if (currentFolderId) {
@@ -95,6 +97,9 @@ export default function DealFileManager({
         } else {
           setFiles((data.files || []).filter((f: DealFile) => !f.folderId));
         }
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to fetch files:', response.status, errorText);
       }
     } catch (error) {
       console.error('Error fetching files:', error);
@@ -151,13 +156,20 @@ export default function DealFileManager({
       });
 
       if (response.ok) {
+        const data = await response.json();
+        console.log('Created folder:', data.folder);
         await fetchFilesAndFolders();
         setShowFolderModal(false);
         setFolderName('');
         setFolderDescription('');
+      } else {
+        const error = await response.json();
+        console.error('Failed to create folder:', error);
+        alert(error.error || 'Failed to create folder');
       }
     } catch (error) {
       console.error('Error creating folder:', error);
+      alert('Failed to create folder. Please try again.');
     }
   };
 
@@ -243,7 +255,7 @@ export default function DealFileManager({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
           <div className="space-y-3">
@@ -255,12 +267,12 @@ export default function DealFileManager({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-2xl shadow-sm border p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-900 flex items-center">
             <DocumentIcon className="h-6 w-6 mr-2 text-blue-600" />
-            Deal Files
+            Documents
           </h3>
           <p className="text-sm text-gray-500 mt-1">
             Manage documents and files for this deal
