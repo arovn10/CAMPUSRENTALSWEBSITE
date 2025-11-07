@@ -27,15 +27,6 @@ export async function GET(
               where: { userId: user.id },
             },
           },
-        },
-        followers: {
-          where: {
-            OR: [
-              { userId: user.id },
-              { contact: { email: user.email } },
-            ],
-          },
-        },
       },
     });
 
@@ -43,13 +34,24 @@ export async function GET(
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
 
+    // Check if user is a follower
+    const userFollower = await prisma.dealFollower.findFirst({
+      where: {
+        propertyId: params.id,
+        OR: [
+          { userId: user.id },
+          { contact: { email: user.email } },
+        ],
+      },
+    });
+
     // Check access
     const hasAccess =
       user.role === 'ADMIN' ||
       user.role === 'MANAGER' ||
       property.investments.length > 0 ||
       property.entityInvestments.some(ei => ei.entityOwners.length > 0) ||
-      property.followers.length > 0;
+      !!userFollower;
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
