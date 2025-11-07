@@ -75,6 +75,11 @@ model User {
   fileUploads       FileUpload[]
   propertyLoans     PropertyLoan[]
   propertyAccess    UserPropertyAccess[]
+  contacts          Contact[]         // Contacts created by this user
+  dealFollowers     DealFollower[]    // Deals this user follows
+  addedDealFollowers DealFollower[]    @relation("DealFollowerAddedBy") // Deals this user granted access to
+  dealFolders       DealFolder[]      // Folders created by this user
+  dealFiles         DealFile[]        // Files uploaded by this user
 
   @@map("users")
 }
@@ -120,6 +125,9 @@ model Property {
   waterfallStructures WaterfallStructure[]
   loans           PropertyLoan[]
   userAccess      UserPropertyAccess[]
+  followers       DealFollower[]    // Followers who can view this deal
+  dealFiles       DealFile[]        // Files associated with this deal
+  dealFolders     DealFolder[]      // Folders for organizing deal files
 
   @@map("properties")
 }
@@ -160,10 +168,19 @@ model Investment {
   id                String           @id @default(cuid())
   userId            String
   propertyId        String
-  investmentAmount  Float
-  ownershipPercentage Float?
+  investmentAmount  Float?           // Optional for SPECTATOR type
+  ownershipPercentage Float?         // Optional for SPECTATOR type
+  investmentType    InvestmentType   @default(INVESTOR)
   status            InvestmentStatus @default(ACTIVE)
-  investmentDate    DateTime         @default(now())
+  investmentDate    DateTime?        // Optional for SPECTATOR type
+  preferredReturn   Float?
+  percentOfProceeds  Float?
+  preferredDistributionMethod String?
+  paymentMethod     String?
+  externalSystem1   String?
+  externalId        String?
+  investmentDescription String?
+  receivedDate      DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -617,6 +634,11 @@ enum InvestmentStatus {
   PENDING
 }
 
+enum InvestmentType {
+  INVESTOR
+  SPECTATOR
+}
+
 enum DistributionType {
   RENTAL_INCOME
   SALE_PROCEEDS
@@ -880,4 +902,106 @@ enum AuditAction {
   FILE_UPLOAD
   FILE_DOWNLOAD
   FILE_DELETE
+}
+
+// Contact directory for non-investor contacts (bankers, advisors, etc.)
+model Contact {
+  id                String   @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  company           String?
+  title             String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?  @default("US")
+  notes             String?
+  tags              String[]  // e.g., ["Banker", "Advisor", "Attorney"]
+  createdBy         String   // User who created this contact
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  creator           User            @relation(fields: [createdBy], references: [id])
+  dealFollowers     DealFollower[]  // Deals this contact follows
+
+  @@index([email])
+  @@index([createdBy])
+  @@map("contacts")
+}
+
+// Deal followers - non-investors who have access to view a deal
+model DealFollower {
+  id                String   @id @default(cuid())
+  propertyId        String   // The deal/property they follow
+  contactId         String?  // If following as a contact
+  userId            String?  // If following as a user (for existing users who aren't investors)
+  accessLevel       String   @default("VIEW_ONLY") // VIEW_ONLY, DOCUMENTS, etc.
+  notes             String?   // Why they have access
+  addedBy           String    // User who granted access
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  property          Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contact           Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedByUser       User      @relation("DealFollowerAddedBy", fields: [addedBy], references: [id])
+
+  @@unique([propertyId, contactId])
+  @@unique([propertyId, userId])
+  @@index([propertyId])
+  @@index([contactId])
+  @@index([userId])
+  @@map("deal_followers")
+}
+
+// Deal-specific file management with folder support
+model DealFolder {
+  id            String   @id @default(cuid())
+  propertyId    String   // The deal/property this folder belongs to
+  name          String
+  parentFolderId String?  // For nested folders
+  description   String?
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  parentFolder  DealFolder? @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  subFolders    DealFolder[] @relation("FolderHierarchy")
+  files         DealFile[]
+  creator       User      @relation(fields: [createdBy], references: [id])
+
+  @@index([propertyId])
+  @@index([parentFolderId])
+  @@map("deal_folders")
+}
+
+model DealFile {
+  id            String   @id @default(cuid())
+  propertyId    String   // The deal/property this file belongs to
+  folderId     String?  // Optional folder organization
+  fileName      String
+  originalName  String
+  filePath      String   // S3 URL or local path
+  fileSize      Int
+  mimeType      String
+  description   String?
+  uploadedBy    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  folder        DealFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader      User      @relation(fields: [uploadedBy], references: [id])
+
+  @@index([propertyId])
+  @@index([folderId])
+  @@map("deal_files")
 } 

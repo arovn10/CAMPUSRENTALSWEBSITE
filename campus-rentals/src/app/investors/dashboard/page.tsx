@@ -959,6 +959,15 @@ export default function InvestorDashboard() {
                 <UserIcon className="h-5 w-5" />
                 <span className="text-sm font-medium">Profile</span>
               </button>
+              {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                <button
+                  onClick={() => router.push('/investors/contacts')}
+                  className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <UsersIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Contacts</span>
+                </button>
+              )}
               {currentUser && (
                 <div className="text-sm text-slate-600 px-3">
                   {currentUser.firstName} {currentUser.lastName}

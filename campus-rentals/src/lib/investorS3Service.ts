@@ -24,6 +24,7 @@ export interface InvestorPhotoUploadOptions {
   contentType: string
   investmentId?: string
   dealId?: string
+  propertyId?: string
 }
 
 export interface InvestorPhotoResult {
@@ -37,7 +38,7 @@ class InvestorS3Service {
    * Generate a unique key for investor deal photos
    * Organized by investment ID (deal ID) in separate folders
    */
-  private generateKey(fileName: string, investmentId?: string, dealId?: string): string {
+  private generateKey(fileName: string, investmentId?: string, dealId?: string, propertyId?: string, type: 'photos' | 'files' = 'photos'): string {
     const timestamp = Date.now()
     const random = crypto.randomBytes(8).toString('hex')
     const ext = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : ''
@@ -46,19 +47,19 @@ class InvestorS3Service {
     // Clean base name (remove special chars)
     const cleanBaseName = baseName.replace(/[^a-zA-Z0-9]/g, '_')
     
-    // Build path: investor-deals/deals/{investmentId or dealId}/{timestamp}_{random}{ext}
+    // Build path: investor-deals/{type}/{propertyId or investmentId or dealId}/{timestamp}_{random}{ext}
     // Each deal gets its own folder for organization
-    const dealIdentifier = investmentId || dealId || 'general'
-    return `${INVESTOR_PREFIX}/deals/${dealIdentifier}/${cleanBaseName}_${timestamp}_${random}${ext}`
+    const dealIdentifier = propertyId || investmentId || dealId || 'general'
+    return `${INVESTOR_PREFIX}/${type}/${dealIdentifier}/${cleanBaseName}_${timestamp}_${random}${ext}`
   }
 
   /**
    * Upload a photo for investor dashboard (deal photos)
    */
   async uploadPhoto(options: InvestorPhotoUploadOptions): Promise<InvestorPhotoResult> {
-    const { fileName, buffer, contentType, investmentId, dealId } = options
+    const { fileName, buffer, contentType, investmentId, dealId, propertyId } = options
 
-    const key = this.generateKey(fileName, investmentId, dealId)
+    const key = this.generateKey(fileName, investmentId, dealId, propertyId, 'photos')
 
     const command = new PutObjectCommand({
       Bucket: INVESTOR_BUCKET_NAME,
@@ -130,6 +131,33 @@ class InvestorS3Service {
   }
 
   /**
+   * Upload a file (for deal file management)
+   */
+  async uploadFile(options: InvestorPhotoUploadOptions): Promise<InvestorPhotoResult> {
+    const { fileName, buffer, contentType, propertyId } = options
+
+    const key = this.generateKey(fileName, undefined, undefined, propertyId, 'files')
+
+    const command = new PutObjectCommand({
+      Bucket: INVESTOR_BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType
+    })
+
+    await investorS3Client.send(command)
+
+    // Return the public URL
+    const url = `https://${INVESTOR_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION || process.env.INVESTOR_AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
+
+    return {
+      url,
+      key,
+      fileName,
+    }
+  }
+
+  /**
    * Extract key from S3 URL
    */
   extractKeyFromUrl(url: string): string | null {
@@ -140,6 +168,15 @@ class InvestorS3Service {
     } catch {
       return null
     }
+  }
+
+  /**
+   * Get signed URL from file path (handles both full URLs and keys)
+   */
+  async getSignedUrlFromPath(filePath: string, expiresIn: number = 3600): Promise<string> {
+    // Extract key from URL if it's a full URL, otherwise use as-is
+    const key = this.extractKeyFromUrl(filePath) || filePath
+    return this.getSignedUrl(key, expiresIn)
   }
 }
 

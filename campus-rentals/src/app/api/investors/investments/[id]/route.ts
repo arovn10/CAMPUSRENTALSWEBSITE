@@ -48,20 +48,33 @@ export async function PUT(
       )
     }
     
+    const investmentType = body.investmentType || existingInvestment.investmentType || 'INVESTOR'
+    const isSpectator = investmentType === 'SPECTATOR'
+    
     // Update investment in database
     console.log('Updating investment with data:', {
-      investmentAmount: parseFloat(body.investmentAmount) || 0,
-      ownershipPercentage: parseFloat(body.ownershipPercentage) || 0,
+      investmentType,
+      investmentAmount: isSpectator ? null : (parseFloat(body.investmentAmount) || 0),
+      ownershipPercentage: isSpectator ? null : (parseFloat(body.ownershipPercentage) || 0),
       status: body.status || 'ACTIVE',
     })
     
     const investment = await prisma.investment.update({
       where: { id: params.id },
       data: {
-        investmentAmount: parseFloat(body.investmentAmount) || 0,
-        ownershipPercentage: parseFloat(body.ownershipPercentage) || 0,
-        investmentDate: body.investmentDate ? new Date(body.investmentDate) : undefined,
+        investmentType: investmentType,
+        investmentAmount: isSpectator ? null : (parseFloat(body.investmentAmount) || 0),
+        ownershipPercentage: isSpectator ? null : (parseFloat(body.ownershipPercentage) || 0),
+        investmentDate: isSpectator ? null : (body.investmentDate ? new Date(body.investmentDate) : undefined),
         status: body.status || 'ACTIVE',
+        preferredReturn: body.preferredReturn || null,
+        percentOfProceeds: body.percentOfProceeds || null,
+        preferredDistributionMethod: body.preferredDistributionMethod || null,
+        paymentMethod: body.paymentMethod || null,
+        externalSystem1: body.externalSystem1 || null,
+        externalId: body.externalId || null,
+        investmentDescription: body.investmentDescription || null,
+        receivedDate: body.receivedDate ? new Date(body.receivedDate) : null,
       }
     })
     

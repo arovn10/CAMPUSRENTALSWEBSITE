@@ -7,15 +7,45 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth(request)
     const body = await request.json()
     
+    const investmentType = body.investmentType || 'INVESTOR'
+    const isSpectator = investmentType === 'SPECTATOR'
+    
+    // Validate required fields based on investment type
+    if (!isSpectator) {
+      if (!body.investorId || !body.projectId) {
+        return NextResponse.json(
+          { error: 'Investor ID and Property ID are required for investor investments' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // For spectators, only investorId and projectId are required
+      if (!body.investorId || !body.projectId) {
+        return NextResponse.json(
+          { error: 'Investor ID and Property ID are required' },
+          { status: 400 }
+        )
+      }
+    }
+    
     // Create new investment in database
     const investment = await prisma.investment.create({
       data: {
         userId: body.investorId,
         propertyId: body.projectId,
-        investmentAmount: body.investmentAmount,
-        ownershipPercentage: body.ownershipPercentage,
+        investmentType: investmentType,
+        investmentAmount: isSpectator ? null : (body.investmentAmount || 0),
+        ownershipPercentage: isSpectator ? null : body.ownershipPercentage,
         status: body.status || 'ACTIVE',
-        investmentDate: new Date(body.startDate || new Date())
+        investmentDate: isSpectator ? null : (body.startDate ? new Date(body.startDate) : new Date()),
+        preferredReturn: body.preferredReturn || null,
+        percentOfProceeds: body.percentOfProceeds || null,
+        preferredDistributionMethod: body.preferredDistributionMethod || null,
+        paymentMethod: body.paymentMethod || null,
+        externalSystem1: body.externalSystem1 || null,
+        externalId: body.externalId || null,
+        investmentDescription: body.investmentDescription || null,
+        receivedDate: body.receivedDate ? new Date(body.receivedDate) : null,
       }
     })
     

@@ -22,6 +22,8 @@ import {
 } from '@heroicons/react/24/outline'
 import PropertyLoansManager from '@/components/PropertyLoansManager'
 import DealPhotoManager from '@/components/DealPhotoManager'
+import DealFileManager from '@/components/DealFileManager'
+import DealFollowersManager from '@/components/DealFollowersManager'
 
 interface Investment {
   id: string
@@ -2415,6 +2417,28 @@ export default function InvestmentDetailPage() {
                 readOnly={currentUser?.role === 'INVESTOR'}
               />
             </div>
+
+            {/* Deal Files Management Section */}
+            {investment && investment.property && (
+              <div className="mt-6">
+                <DealFileManager
+                  propertyId={investment.property.id}
+                  authToken={getAuthToken()}
+                  readOnly={currentUser?.role === 'INVESTOR'}
+                />
+              </div>
+            )}
+
+            {/* Deal Followers Section */}
+            {investment && investment.property && (
+              <div className="mt-6">
+                <DealFollowersManager
+                  propertyId={investment.property.id}
+                  authToken={getAuthToken()}
+                  readOnly={currentUser?.role === 'INVESTOR'}
+                />
+              </div>
+            )}
 
             {/* Investor Details and Entity Structure */}
             <div className="bg-white rounded-2xl shadow-sm border p-6">
