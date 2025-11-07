@@ -255,11 +255,13 @@ export default function DealFileManager({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
+      <div className="bg-white rounded-2xl shadow-sm border p-5">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-20 bg-gray-100 rounded"></div>
+          <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+          <div className="h-3 bg-gray-100 rounded w-48 mb-5"></div>
+          <div className="space-y-2">
+            <div className="h-16 bg-gray-100 rounded"></div>
+            <div className="h-16 bg-gray-100 rounded"></div>
           </div>
         </div>
       </div>
@@ -267,152 +269,151 @@ export default function DealFileManager({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-            <DocumentIcon className="h-6 w-6 mr-2 text-blue-600" />
+    <div className="bg-white rounded-2xl shadow-sm border p-5">
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <DocumentIcon className="h-5 w-5 mr-2 text-blue-600" />
             Documents
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage documents and files for this deal
-          </p>
+          {!readOnly && (
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setShowFolderModal(true)}
+                className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="New Folder"
+              >
+                <FolderIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Upload File"
+              >
+                <PlusIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
         </div>
-        {!readOnly && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFolderModal(true)}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center"
-            >
-              <FolderIcon className="h-5 w-5 mr-2" />
-              New Folder
-            </button>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-            >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Upload File
-            </button>
-          </div>
-        )}
+        <p className="text-xs text-gray-500">
+          Manage documents and files for this deal
+        </p>
       </div>
 
       {/* Breadcrumb */}
       {currentFolderId && (
-        <div className="mb-4 flex items-center gap-2 text-sm">
+        <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md">
           <button
             onClick={() => setCurrentFolderId(null)}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-600 hover:text-blue-800 font-medium"
           >
             Root
           </button>
           <span>/</span>
-          <span className="text-gray-600">
+          <span className="text-gray-700">
             {folders.find((f) => f.id === currentFolderId)?.name}
           </span>
         </div>
       )}
 
-      {/* Folders */}
-      {currentFolders.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Folders</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {currentFolders.map((folder) => (
-              <div
-                key={folder.id}
-                className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setCurrentFolderId(folder.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 flex-1">
-                    <FolderIcon className="h-8 w-8 text-yellow-500" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{folder.name}</p>
-                      {folder._count && (
-                        <p className="text-xs text-gray-500">
-                          {folder._count.files} files, {folder._count.subFolders} folders
-                        </p>
-                      )}
+      {/* Content Area - Scrollable */}
+      <div className="max-h-[400px] overflow-y-auto pr-1 -mr-1">
+        {/* Folders */}
+        {currentFolders.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Folders</h4>
+            <div className="space-y-1.5">
+              {currentFolders.map((folder) => (
+                <div
+                  key={folder.id}
+                  className="group border border-gray-200 rounded-lg p-2.5 hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all"
+                  onClick={() => setCurrentFolderId(folder.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FolderIcon className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{folder.name}</p>
+                        {folder._count && (
+                          <p className="text-xs text-gray-500">
+                            {folder._count.files} file{folder._count.files !== 1 ? 's' : ''}, {folder._count.subFolders} folder{folder._count.subFolders !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  {!readOnly && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFolder(folder.id);
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Files */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Files</h4>
-        {files.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-            <DocumentIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">No files yet</p>
-            {!readOnly && (
-              <p className="text-sm text-gray-500 mt-1">Click "Upload File" to get started</p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {files.map((file) => (
-              <div
-                key={file.id}
-                className="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <DocumentIcon className="h-8 w-8 text-blue-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{file.originalName}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                      <span>{formatFileSize(file.fileSize)}</span>
-                      {file.uploader && (
-                        <span>
-                          Uploaded by {file.uploader.firstName} {file.uploader.lastName}
-                        </span>
-                      )}
-                      <span>{new Date(file.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    {file.description && (
-                      <p className="text-sm text-gray-600 mt-1">{file.description}</p>
+                    {!readOnly && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFolder(folder.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-red-600 hover:bg-red-50 rounded transition-opacity"
+                        title="Delete folder"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleDownload(file)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                    title="Download"
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                  </button>
-                  {!readOnly && (
-                    <button
-                      onClick={() => handleDeleteFile(file.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded"
-                      title="Delete"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Files */}
+        <div>
+          <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Files</h4>
+          {files.length === 0 ? (
+            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+              <DocumentIcon className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 font-medium">No files yet</p>
+              {!readOnly && (
+                <p className="text-xs text-gray-400 mt-1">Click the upload button to get started</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="group border border-gray-200 rounded-lg p-2.5 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <DocumentIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{file.originalName}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                          <span>{formatFileSize(file.fileSize)}</span>
+                          <span>•</span>
+                          <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleDownload(file)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Download"
+                      >
+                        <ArrowDownTrayIcon className="h-4 w-4" />
+                      </button>
+                      {!readOnly && (
+                        <button
+                          onClick={() => handleDeleteFile(file.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          title="Delete"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Upload Modal */}

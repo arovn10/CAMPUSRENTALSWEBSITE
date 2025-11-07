@@ -251,11 +251,13 @@ export default function DealFollowersManager({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
+      <div className="bg-white rounded-2xl shadow-sm border p-5">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-20 bg-gray-100 rounded"></div>
+          <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+          <div className="h-3 bg-gray-100 rounded w-48 mb-5"></div>
+          <div className="space-y-2">
+            <div className="h-16 bg-gray-100 rounded"></div>
+            <div className="h-16 bg-gray-100 rounded"></div>
           </div>
         </div>
       </div>
@@ -263,97 +265,102 @@ export default function DealFollowersManager({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-            <UserPlusIcon className="h-6 w-6 mr-2 text-blue-600" />
+    <div className="bg-white rounded-2xl shadow-sm border p-5">
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <UserPlusIcon className="h-5 w-5 mr-2 text-blue-600" />
             Deal Followers
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Non-investors who have access to view this deal
-          </p>
-        </div>
-        {!readOnly && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-          >
-            <UserPlusIcon className="h-5 w-5 mr-2" />
-            Add Follower
-          </button>
-        )}
-      </div>
-
-      {followers.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-          <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No followers yet</p>
           {!readOnly && (
-            <p className="text-sm text-gray-500 mt-1">Click "Add Follower" to grant access</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Add Follower"
+            >
+              <UserPlusIcon className="h-5 w-5" />
+            </button>
           )}
         </div>
-      ) : (
-        <div className="space-y-4">
-          {followers.map((follower) => (
-            <div
-              key={follower.id}
-              className="border rounded-lg p-4 flex justify-between items-start"
-            >
-              <div className="flex-1">
-                {follower.contact ? (
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {follower.contact.firstName} {follower.contact.lastName}
-                    </h4>
-                    {follower.contact.title && (
-                      <p className="text-sm text-gray-600">{follower.contact.title}</p>
+        <p className="text-xs text-gray-500">
+          Non-investors who have access to view this deal
+        </p>
+      </div>
+
+      {/* Content Area - Scrollable */}
+      <div className="max-h-[300px] overflow-y-auto pr-1 -mr-1">
+        {followers.length === 0 ? (
+          <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+            <UserIcon className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500 font-medium">No followers yet</p>
+            {!readOnly && (
+              <p className="text-xs text-gray-400 mt-1">Click the add button to grant access</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {followers.map((follower) => (
+              <div
+                key={follower.id}
+                className="group border border-gray-200 rounded-lg p-3 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {follower.contact ? (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 truncate">
+                          {follower.contact.firstName} {follower.contact.lastName}
+                        </h4>
+                        {follower.contact.title && (
+                          <p className="text-xs text-gray-600 mt-0.5">{follower.contact.title}</p>
+                        )}
+                        {follower.contact.company && (
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                            <BuildingOfficeIcon className="h-3 w-3" />
+                            <span className="truncate">{follower.contact.company}</span>
+                          </p>
+                        )}
+                        {follower.contact.email && (
+                          <p className="text-xs text-gray-500 truncate mt-0.5">{follower.contact.email}</p>
+                        )}
+                      </div>
+                    ) : follower.user ? (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 truncate">
+                          {follower.user.firstName} {follower.user.lastName}
+                        </h4>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{follower.user.email}</p>
+                      </div>
+                    ) : null}
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                        {follower.accessLevel.replace('_', ' ')}
+                      </span>
+                    </div>
+                    {follower.notes && (
+                      <p className="text-xs text-gray-600 mt-2 line-clamp-2">{follower.notes}</p>
                     )}
-                    {follower.contact.company && (
-                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                        <BuildingOfficeIcon className="h-4 w-4" />
-                        {follower.contact.company}
+                    {follower.addedByUser && (
+                      <p className="text-xs text-gray-400 mt-1.5">
+                        Added by {follower.addedByUser.firstName} {follower.addedByUser.lastName}
                       </p>
                     )}
-                    {follower.contact.email && (
-                      <p className="text-sm text-gray-500">{follower.contact.email}</p>
-                    )}
                   </div>
-                ) : follower.user ? (
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {follower.user.firstName} {follower.user.lastName}
-                    </h4>
-                    <p className="text-sm text-gray-500">{follower.user.email}</p>
-                  </div>
-                ) : null}
-                <div className="mt-2">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                    {follower.accessLevel}
-                  </span>
+                  {!readOnly && (
+                    <button
+                      onClick={() => handleRemoveFollower(follower.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-red-600 hover:bg-red-50 rounded transition-opacity flex-shrink-0"
+                      title="Remove follower"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                {follower.notes && (
-                  <p className="text-sm text-gray-600 mt-2">Note: {follower.notes}</p>
-                )}
-                {follower.addedByUser && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Added by {follower.addedByUser.firstName} {follower.addedByUser.lastName}
-                  </p>
-                )}
               </div>
-              {!readOnly && (
-                <button
-                  onClick={() => handleRemoveFollower(follower.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors ml-4"
-                  title="Remove follower"
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Add Follower Modal */}
       {showAddModal && (
