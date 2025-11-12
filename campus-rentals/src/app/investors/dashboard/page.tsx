@@ -1344,7 +1344,6 @@ export default function InvestorDashboard() {
                 </table>
           </div>
         </div>
-          </>
         )}
 
         {activeView === 'deals' && (
