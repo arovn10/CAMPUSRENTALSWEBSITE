@@ -292,19 +292,41 @@ export default function PropertyDetailsPage() {
               {photos.length > 0 ? (
                 <div className="relative flex flex-col items-center">
                   <div className="relative w-full aspect-square max-w-lg rounded-lg overflow-hidden bg-gray-800">
-                    {photos[selectedPhotoIndex] ? (
-                      <Image
-                        key={photos[selectedPhotoIndex].photoId}
-                        src={getOptimizedImageUrl(photos[selectedPhotoIndex])}
-                        alt={`${property.name} - Photo ${selectedPhotoIndex + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover"
-                        priority
-                        quality={85}
-                        unoptimized={false}
-                      />
-                    ) : (
+                    {photos[selectedPhotoIndex] ? (() => {
+                      const currentPhoto = photos[selectedPhotoIndex];
+                      const photoUrl = getOptimizedImageUrl(currentPhoto);
+                      // Check if URL is from allowed domains
+                      const isAllowedDomain = 
+                        photoUrl.includes('d1m1syk7iv23tg.cloudfront.net') ||
+                        photoUrl.includes('abodebucket.s3.us-east-2.amazonaws.com') ||
+                        photoUrl.includes('campusrentalswebsitebucket.s3.us-east-1.amazonaws.com');
+                      
+                      return (
+                        <Image
+                          key={`photo-${selectedPhotoIndex}-${currentPhoto.photoId || currentPhoto.photoLink || Date.now()}`}
+                          src={photoUrl}
+                          alt={`${property.name} - Photo ${selectedPhotoIndex + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover"
+                          priority={selectedPhotoIndex === 0}
+                          quality={90}
+                          unoptimized={!isAllowedDomain}
+                          onError={(e) => {
+                            console.error('Image failed to load:', photoUrl, e);
+                            // Fallback to regular img tag if Next.js Image fails
+                            const target = e.target as HTMLImageElement;
+                            if (target && target.parentElement) {
+                              const img = document.createElement('img');
+                              img.src = photoUrl;
+                              img.alt = `${property.name} - Photo ${selectedPhotoIndex + 1}`;
+                              img.className = 'w-full h-full object-cover';
+                              target.parentElement.replaceChild(img, target);
+                            }
+                          }}
+                        />
+                      );
+                    })() : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500">
                         Loading photo...
                       </div>
@@ -312,7 +334,15 @@ export default function PropertyDetailsPage() {
                   </div>
                   <div className="flex justify-center gap-4 mt-4">
                     <button
-                      onClick={() => setSelectedPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1))}
+                      onClick={() => {
+                        const newIndex = selectedPhotoIndex === 0 ? photos.length - 1 : selectedPhotoIndex - 1;
+                        setSelectedPhotoIndex(newIndex);
+                        // Preload next/prev photo
+                        if (photos[newIndex]) {
+                          const img = new window.Image();
+                          img.src = getOptimizedImageUrl(photos[newIndex]);
+                        }
+                      }}
                       className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-accent/80 transition-colors"
                     >
                       Prev
@@ -321,7 +351,15 @@ export default function PropertyDetailsPage() {
                       {selectedPhotoIndex + 1} / {photos.length}
                     </span>
                     <button
-                      onClick={() => setSelectedPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1))}
+                      onClick={() => {
+                        const newIndex = selectedPhotoIndex === photos.length - 1 ? 0 : selectedPhotoIndex + 1;
+                        setSelectedPhotoIndex(newIndex);
+                        // Preload next/prev photo
+                        if (photos[newIndex]) {
+                          const img = new window.Image();
+                          img.src = getOptimizedImageUrl(photos[newIndex]);
+                        }
+                      }}
                       className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-accent/80 transition-colors"
                     >
                       Next
