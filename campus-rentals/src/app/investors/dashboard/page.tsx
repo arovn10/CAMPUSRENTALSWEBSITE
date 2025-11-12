@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import CRMDealPipeline from '@/components/CRMDealPipeline'
 import { 
   ChartBarIcon, 
   DocumentTextIcon, 
@@ -170,6 +171,15 @@ export default function InvestorDashboard() {
   const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
   const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
   const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
+
+  const getAuthToken = () => {
+    const user = sessionStorage.getItem('currentUser')
+    if (user) {
+      const userData = JSON.parse(user)
+      return sessionStorage.getItem('authToken') || userData.email || ''
+    }
+    return ''
+  }
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -2090,17 +2100,7 @@ export default function InvestorDashboard() {
 
       {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Deal Pipeline & CRM</h2>
-            <p className="text-sm sm:text-base text-slate-500">Manage your deal pipeline, tasks, and relationships</p>
-          </div>
-          
-          <div className="text-center py-12">
-            <BuildingOfficeIcon className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">CRM Coming Soon</h3>
-            <p className="text-slate-500">The comprehensive deal pipeline and CRM system is being built.</p>
-            <p className="text-sm text-slate-400 mt-2">This will include Kanban boards, deal management, task tracking, and relationship management.</p>
-          </div>
+          <CRMDealPipeline authToken={getAuthToken()} />
         </div>
       )}
 
