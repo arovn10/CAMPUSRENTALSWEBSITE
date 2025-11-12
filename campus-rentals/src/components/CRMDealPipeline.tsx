@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   PlusIcon,
   FunnelIcon,
@@ -22,6 +23,8 @@ import {
   TagIcon,
   DocumentIcon,
 } from '@heroicons/react/24/outline'
+import DealCreateModal from './DealCreateModal'
+import PipelineManager from './PipelineManager'
 import {
   CheckCircleIcon as CheckCircleIconSolid,
 } from '@heroicons/react/24/solid'
@@ -98,6 +101,7 @@ interface CRMDealPipelineProps {
 }
 
 export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<'kanban' | 'list' | 'table'>('kanban')
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null)
@@ -106,9 +110,15 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateDeal, setShowCreateDeal] = useState(false)
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
+  const [properties, setProperties] = useState<any[]>([])
+  const [contacts, setContacts] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
 
   useEffect(() => {
     fetchPipelines()
+    fetchProperties()
+    fetchContacts()
+    fetchUsers()
   }, [])
 
   useEffect(() => {
@@ -156,6 +166,64 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
       console.error('Error fetching deals:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchProperties = async () => {
+    try {
+      const response = await fetch('/api/investors/properties', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setProperties(data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error)
+    }
+  }
+
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch('/api/investors/contacts', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setContacts(data.contacts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/investors/users', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users || [])
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
+
+  const handleDealClick = (deal: Deal) => {
+    router.push(`/investors/crm/deals/${deal.id}`)
+  }
+
+  const handleDealCreated = () => {
+    if (selectedPipelineId) {
+      fetchDeals(selectedPipelineId)
     }
   }
 
@@ -235,26 +303,33 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
       </div>
 
       {/* Pipeline Selector */}
-      {pipelines.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {pipelines.map((pipeline) => (
-            <button
-              key={pipeline.id}
-              onClick={() => setSelectedPipelineId(pipeline.id)}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                selectedPipelineId === pipeline.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {pipeline.name}
-              {pipeline.isDefault && (
-                <span className="ml-2 text-xs opacity-75">(Default)</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        {pipelines.length > 0 ? (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 flex-1">
+            {pipelines.map((pipeline) => (
+              <button
+                key={pipeline.id}
+                onClick={() => setSelectedPipelineId(pipeline.id)}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                  selectedPipelineId === pipeline.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {pipeline.name}
+                {pipeline.isDefault && (
+                  <span className="ml-2 text-xs opacity-75">(Default)</span>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-slate-500">
+            No pipelines yet. Create one to get started.
+          </div>
+        )}
+        <PipelineManager authToken={authToken} onPipelineCreated={fetchPipelines} />
+      </div>
 
       {/* Search */}
       <div className="relative">
@@ -286,6 +361,40 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
               <div
                 key={stage.id}
                 className="flex-shrink-0 w-80 bg-slate-50 rounded-lg p-4"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.currentTarget.classList.add('bg-slate-100')
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.classList.remove('bg-slate-100')
+                }}
+                onDrop={async (e) => {
+                  e.preventDefault()
+                  e.currentTarget.classList.remove('bg-slate-100')
+                  const dealId = e.dataTransfer.getData('dealId')
+                  const currentStageId = e.dataTransfer.getData('currentStageId')
+                  
+                  if (dealId && currentStageId !== stage.id) {
+                    // Update deal stage
+                    try {
+                      const response = await fetch(`/api/investors/crm/deals/${dealId}/stage`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${authToken}`,
+                        },
+                        body: JSON.stringify({
+                          stageId: stage.id,
+                        }),
+                      })
+                      if (response.ok) {
+                        fetchDeals(selectedPipelineId!)
+                      }
+                    } catch (error) {
+                      console.error('Error updating deal stage:', error)
+                    }
+                  }
+                }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -300,7 +409,12 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
                   {dealsByStage[stage.id]?.map((deal) => (
                     <div
                       key={deal.id}
-                      onClick={() => setSelectedDeal(deal)}
+                      onClick={() => handleDealClick(deal)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('dealId', deal.id)
+                        e.dataTransfer.setData('currentStageId', deal.stageId || '')
+                      }}
+                      draggable
                       className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-slate-200"
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -366,7 +480,7 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
           {deals.map((deal) => (
             <div
               key={deal.id}
-              onClick={() => setSelectedDeal(deal)}
+              onClick={() => handleDealClick(deal)}
               className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-slate-200"
             >
               <div className="flex items-start justify-between">
@@ -429,7 +543,7 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
               {deals.map((deal) => (
                 <tr
                   key={deal.id}
-                  onClick={() => setSelectedDeal(deal)}
+                  onClick={() => handleDealClick(deal)}
                   className="hover:bg-slate-50 cursor-pointer"
                 >
                   <td className="px-4 py-3">
@@ -486,26 +600,18 @@ export default function CRMDealPipeline({ authToken }: CRMDealPipelineProps) {
         </div>
       )}
 
-      {/* Create Deal Modal - Placeholder */}
+      {/* Create Deal Modal */}
       {showCreateDeal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900">Create New Deal</h3>
-            </div>
-            <div className="p-6">
-              <p className="text-slate-500">Deal creation form coming soon...</p>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-2">
-              <button
-                onClick={() => setShowCreateDeal(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <DealCreateModal
+          isOpen={showCreateDeal}
+          onClose={() => setShowCreateDeal(false)}
+          authToken={authToken}
+          onSuccess={handleDealCreated}
+          pipelines={pipelines}
+          properties={properties}
+          contacts={contacts}
+          users={users}
+        />
       )}
     </div>
   )
