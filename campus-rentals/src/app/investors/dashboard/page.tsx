@@ -156,7 +156,7 @@ export default function InvestorDashboard() {
     totalProjectCost: 0
   })
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics' | 'crm'>('overview')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
@@ -179,8 +179,8 @@ export default function InvestorDashboard() {
       
       // Restore active tab from sessionStorage if available
       const savedTab = sessionStorage.getItem('investorDashboardActiveTab')
-      if (savedTab && ['overview', 'deals', 'analytics'].includes(savedTab)) {
-        setActiveView(savedTab as 'overview' | 'deals' | 'analytics')
+      if (savedTab && ['overview', 'deals', 'analytics', 'crm'].includes(savedTab)) {
+        setActiveView(savedTab as 'overview' | 'deals' | 'analytics' | 'crm')
       }
       
       // For investors (non-admin), automatically filter by their name
@@ -921,23 +921,34 @@ export default function InvestorDashboard() {
 
   
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
-      {/* Premium Navigation */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2">
-            <div className="flex space-x-1">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-20 md:pb-8">
+
+      {/* Premium Navigation - Desktop */}
+      <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-2 md:py-3">
+            {/* Mobile: Logo/Title */}
+            <div className="md:hidden flex items-center">
+              <h1 className="text-lg font-bold text-slate-900">Dashboard</h1>
+            </div>
+            
+            {/* Desktop: Tabs */}
+            <div className="hidden md:flex space-x-1">
               {[
                 { id: 'overview', label: 'Overview', icon: ChartBarIcon },
                 { id: 'deals', label: 'Deals', icon: HomeIcon },
-                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon }
+                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
+                ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
+                  ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
+                  : [])
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id as any)}
-                  className={`relative px-6 py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
+                  className={`relative px-4 lg:px-6 py-3 lg:py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
                     activeView === tab.id
                       ? 'text-blue-600 bg-blue-50 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -951,7 +962,9 @@ export default function InvestorDashboard() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center space-x-2">
+            
+            {/* Desktop: Actions */}
+            <div className="hidden md:flex items-center space-x-2">
               <button
                 onClick={() => router.push('/investors/profile')}
                 className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
@@ -969,7 +982,7 @@ export default function InvestorDashboard() {
                 </button>
               )}
               {currentUser && (
-                <div className="text-sm text-slate-600 px-3">
+                <div className="text-sm text-slate-600 px-3 hidden lg:block">
                   {currentUser.firstName} {currentUser.lastName}
                 </div>
               )}
@@ -978,22 +991,138 @@ export default function InvestorDashboard() {
                 className="px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span className="text-sm font-medium">Logout</span>
+                <span className="text-sm font-medium hidden xl:inline">Logout</span>
               </button>
             </div>
+
+            {/* Mobile: Menu Button */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              {showMobileMenu ? (
+                <XMarkIcon className="h-6 w-6" />
+              ) : (
+                <CogIcon className="h-6 w-6" />
+              )}
+            </button>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {showMobileMenu && (
+            <div className="md:hidden border-t border-slate-200/40 py-4 space-y-2 animate-in slide-in-from-top duration-200">
+              {/* Mobile Tabs */}
+              <div className="flex flex-col space-y-1">
+                {[
+                  { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+                  { id: 'deals', label: 'Deals', icon: HomeIcon },
+                  { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
+                  ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
+                    ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
+                    : [])
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveView(tab.id as any)
+                      setShowMobileMenu(false)
+                    }}
+                    className={`relative px-4 py-3 font-medium text-sm transition-all duration-300 rounded-xl text-left ${
+                      activeView === tab.id
+                        ? 'text-blue-600 bg-blue-50 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <tab.icon className="h-5 w-5 inline mr-3" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Mobile Actions */}
+              <div className="pt-4 border-t border-slate-200/40 space-y-1">
+                <button
+                  onClick={() => {
+                    router.push('/investors/profile')
+                    setShowMobileMenu(false)
+                  }}
+                  className="w-full px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <UserIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Profile</span>
+                </button>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                  <button
+                    onClick={() => {
+                      router.push('/investors/contacts')
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-3"
+                  >
+                    <UsersIcon className="h-5 w-5" />
+                    <span className="text-sm font-medium">Contacts</span>
+                  </button>
+                )}
+                {currentUser && (
+                  <div className="px-4 py-2 text-sm text-slate-600">
+                    {currentUser.firstName} {currentUser.lastName}
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    handleLogout()
+                    setShowMobileMenu(false)
+                  }}
+                  className="w-full px-4 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-3"
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/60 md:hidden z-50 safe-area-inset-bottom">
+        <div className="flex items-center justify-around py-2">
+          {[
+            { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+            { id: 'deals', label: 'Deals', icon: HomeIcon },
+            { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
+            ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
+              ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
+              : [])
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveView(tab.id as any)}
+              className={`flex flex-col items-center justify-center px-4 py-2 min-w-[60px] transition-all duration-200 ${
+                activeView === tab.id
+                  ? 'text-blue-600'
+                  : 'text-slate-500'
+              }`}
+            >
+              <tab.icon className={`h-6 w-6 mb-1 ${activeView === tab.id ? 'scale-110' : ''} transition-transform duration-200`} />
+              <span className="text-xs font-medium">{tab.label}</span>
+              {activeView === tab.id && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-full"></div>
+              )}
+            </button>
+          ))}
         </div>
       </div>
           
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {activeView === 'overview' && (
           <>
             {/* Premium Stats Grid */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {/* Total Invested */}
               <div
-                className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
+                className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-blue-500/10 transition-all duration-300 md:hover:-translate-y-1 cursor-pointer touch-manipulation"
                 onClick={() => {
                   // Build per-deal breakdown for the investor using the processed investments
                   const breakdown = investments
@@ -1005,118 +1134,118 @@ export default function InvestorDashboard() {
                   setShowInvestedBreakdown(true)
                 }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <CurrencyDollarIcon className="h-6 w-6 text-white" />
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
+                    <CurrencyDollarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
+                    <div className="flex items-center justify-end mt-1">
                       <ArrowTrendingUpIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-xs text-emerald-600 font-medium">Growing</span>
+                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Growing</span>
             </div>
           </div>
               </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalInvested)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.totalInvested)}</h3>
                 <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
           </div>
           
               {/* Current Value */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ChartBarIcon className="h-6 w-6 text-white" />
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-emerald-500/10 transition-all duration-300 md:hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
+                    <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
+                    <div className="flex items-center justify-end mt-1">
                       <SparklesIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-xs text-emerald-600 font-medium">Appreciating</span>
+                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Appreciating</span>
             </div>
           </div>
         </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.currentValue)}</h3>
                 <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
           </div>
 
               {/* Projected Value */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ChartBarIcon className="h-6 w-6 text-white" />
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-indigo-500/10 transition-all duration-300 md:hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
+                    <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Projected Value</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Projected Value</p>
+                    <div className="flex items-center justify-end mt-1">
                       <SparklesIcon className="h-3 w-3 text-indigo-500 mr-1" />
-                      <span className="text-xs text-indigo-600 font-medium">Includes pipeline</span>
+                      <span className="text-[10px] sm:text-xs text-indigo-600 font-medium">Includes pipeline</span>
                     </div>
                   </div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.projectedValue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.projectedValue)}</h3>
                 <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
               </div>
 
               {/* Total Distributions */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300" title="Portfolio Value = sum of estimated values of stabilized properties">
-                    <BanknotesIcon className="h-6 w-6 text-white" />
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-purple-500/10 transition-all duration-300 md:hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300" title="Portfolio Value = sum of estimated values of stabilized properties">
+                    <BanknotesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                           </div>
                           <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Distributions</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Distributions</p>
+                    <div className="flex items-center justify-end mt-1">
                       <StarIcon className="h-3 w-3 text-purple-500 mr-1" />
-                      <span className="text-xs text-purple-600 font-medium">Cash Flow</span>
+                      <span className="text-[10px] sm:text-xs text-purple-600 font-medium">Cash Flow</span>
                           </div>
                         </div>
                     </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalDistributions)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.totalDistributions)}</h3>
                 <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
                   </div>
 
               {/* Average IRR */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-orange-500/10 transition-all duration-300 md:hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
+                    <ArrowTrendingUpIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                       </div>
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
+                    <div className="flex items-center justify-end mt-1">
                       <ChartBarIcon className="h-3 w-3 text-orange-500 mr-1" />
-                      <span className="text-xs text-orange-600 font-medium">Performance</span>
+                      <span className="text-[10px] sm:text-xs text-orange-600 font-medium">Performance</span>
                       </div>
                       </div>
                     </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatPercentage(stats.averageIRR)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatPercentage(stats.averageIRR)}</h3>
                 <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
                   </div>
                 </div>
 
             {/* Portfolio Summary */}
-            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25">
-              <h2 className="text-2xl font-bold mb-8">Portfolio Summary</h2>
+            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/25">
+              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8">Portfolio Summary</h2>
               
-              <div className="space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <HomeIcon className="h-5 w-5" />
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/20">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-lg sm:rounded-xl">
+                      <HomeIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-medium">Properties</span>
+                    <span className="text-sm sm:text-base font-medium">Properties</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.totalProperties}</span>
+                  <span className="text-xl sm:text-2xl font-bold">{stats.totalProperties}</span>
                 </div>
                 
-                <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <ChartBarIcon className="h-5 w-5" />
+                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/20">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-lg sm:rounded-xl">
+                      <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-medium">Square Feet</span>
+                    <span className="text-sm sm:text-base font-medium">Square Feet</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
+                  <span className="text-xl sm:text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
                 </div>
                 
                 <div className="flex items-center justify-between pb-4 border-b border-white/20">
@@ -1154,16 +1283,17 @@ export default function InvestorDashboard() {
               </div>
               
               <div className="overflow-hidden rounded-2xl border border-slate-200/60">
-                <table className="min-w-full divide-y divide-slate-200/60">
-                  <thead className="bg-slate-50/80">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="min-w-full divide-y divide-slate-200/60">
+                    <thead className="bg-slate-50/80">
+                      <tr>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
                     {investments
                       .flatMap(inv => inv.distributions?.map(dist => ({ ...dist, propertyName: inv.propertyName })) || [])
@@ -1211,17 +1341,17 @@ export default function InvestorDashboard() {
         )}
 
         {activeView === 'deals' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
-                <p className="text-slate-500 font-medium">Complete investment portfolio</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">All Deals & Properties</h2>
+                <p className="text-sm sm:text-base text-slate-500 font-medium">Complete investment portfolio</p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center">
                 <select
                   value={dealFilter}
                   onChange={(e) => setDealFilter(e.target.value as any)}
-                  className="px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2.5 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm touch-manipulation"
                 >
                   <option value="ALL">All Status</option>
                   <option value="STABILIZED">Stabilized</option>
@@ -1232,13 +1362,13 @@ export default function InvestorDashboard() {
               </div>
               </div>
               
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {investments
                 .filter(inv => dealFilter === 'ALL' ? true : (inv.dealStatus === dealFilter))
                 .map((investment) => (
                 <div
                   key={investment.id}
-                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl overflow-hidden hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
+                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl sm:rounded-2xl overflow-hidden active:scale-98 md:hover:border-blue-300/60 md:hover:shadow-xl md:hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer md:hover:-translate-y-1 touch-manipulation"
                   onClick={() => handleViewInvestmentDetails(investment.id)}
                   onMouseEnter={() => setHoveredCard(investment.id)}
                   onMouseLeave={() => setHoveredCard(null)}
@@ -1248,39 +1378,39 @@ export default function InvestorDashboard() {
                     const propertyId = (investment as any).property?.id || investment.propertyId
                     const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
                     return thumbnail ? (
-                      <div className="relative h-48 w-full overflow-hidden">
+                      <div className="relative h-40 sm:h-48 w-full overflow-hidden">
                         <img
                           src={thumbnail}
                           alt={investment.propertyName || investment.propertyAddress}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover md:group-hover:scale-110 transition-transform duration-300"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
                     ) : (
-                      <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <HomeIcon className="h-12 w-12 text-blue-400" />
+                      <div className="h-40 sm:h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <HomeIcon className="h-10 w-10 sm:h-12 sm:w-12 text-blue-400" />
                       </div>
                     )
                   })()}
                   
-                  <div className="p-6">
-                    <div className="flex items-center justify-end mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-center justify-end mb-3 sm:mb-4">
+                      <div className="flex items-center flex-wrap gap-1.5 sm:gap-2">
+                        <span className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
                           {investment.dealStatus || 'STABILIZED'}
                         </span>
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                        <span className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
                           {investment.fundingStatus || 'FUNDED'}
                         </span>
                       </div>
                     </div>
                   
-                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3 md:group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
                     {investment.propertyName || investment.propertyAddress}
                   </h3>
-                  <p className="text-sm text-slate-500 mb-4 flex items-center">
-                    <MapPinIcon className="h-4 w-4 mr-2" />
-                    {investment.propertyAddress}
+                  <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4 flex items-center line-clamp-1">
+                    <MapPinIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                    <span className="truncate">{investment.propertyAddress}</span>
                   </p>
                   
                   {investment.bedrooms && (
@@ -1957,22 +2087,39 @@ export default function InvestorDashboard() {
           </div>
         </div>
       )}
+
+      {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Deal Pipeline & CRM</h2>
+            <p className="text-sm sm:text-base text-slate-500">Manage your deal pipeline, tasks, and relationships</p>
+          </div>
+          
+          <div className="text-center py-12">
+            <BuildingOfficeIcon className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">CRM Coming Soon</h3>
+            <p className="text-slate-500">The comprehensive deal pipeline and CRM system is being built.</p>
+            <p className="text-sm text-slate-400 mt-2">This will include Kanban boards, deal management, task tracking, and relationship management.</p>
+          </div>
+        </div>
+      )}
+
       {showProformaModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">5-Year Proforma</h3>
-                <p className="text-sm text-slate-500">{proformaTitle}</p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl border-0 sm:border border-slate-200 flex flex-col">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <div className="flex-1 min-w-0 pr-2">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 truncate">5-Year Proforma</h3>
+                <p className="text-xs sm:text-sm text-slate-500 truncate">{proformaTitle}</p>
               </div>
               <button
                 onClick={() => setShowProformaModal(false)}
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 overflow-x-auto">
+            <div className="p-4 sm:p-6 overflow-x-auto flex-1">
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
@@ -2018,15 +2165,15 @@ export default function InvestorDashboard() {
         </div>
       )}
       {showCalcModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900">{calcTitle}</h3>
-              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl border-0 sm:border border-slate-200 flex flex-col">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2 truncate">{calcTitle}</h3>
+              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               <ul className="space-y-3">
                 {calcLines.map((l, idx) => (
                   <li key={idx} className="flex items-center justify-between">
@@ -2044,15 +2191,15 @@ export default function InvestorDashboard() {
         </div>
       )}
       {showInvestedBreakdown && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900">Total Invested Breakdown</h3>
-              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-lg border-0 sm:border border-slate-200 flex flex-col">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2">Total Invested Breakdown</h3>
+              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 divide-y divide-slate-100">
+            <div className="p-4 sm:p-6 divide-y divide-slate-100 overflow-y-auto flex-1">
               {investedBreakdown.length > 0 ? (
                 investedBreakdown.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between py-3">
