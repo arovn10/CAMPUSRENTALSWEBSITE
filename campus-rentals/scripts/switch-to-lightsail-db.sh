@@ -29,20 +29,30 @@ echo ""
 # Lightsail databases use standard PostgreSQL connection strings
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${LIGHTSAIL_DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?schema=public&sslmode=require&connection_limit=20"
 
-# Test connection
+# Test connection and create database if it doesn't exist
 echo "🔌 Testing Lightsail database connection..."
 export PGPASSWORD="${DB_PASSWORD}"
-if psql -h "${LIGHTSAIL_DB_ENDPOINT}" -U "${DB_USER}" -d "${DB_NAME}" -p "${DB_PORT}" -c "SELECT version();" > /dev/null 2>&1; then
-    echo "✅ Database connection successful!"
+
+# First, try to connect to default postgres database to check if we can connect at all
+if psql -h "${LIGHTSAIL_DB_ENDPOINT}" -U "${DB_USER}" -d postgres -p "${DB_PORT}" -c "SELECT 1;" > /dev/null 2>&1; then
+    echo "✅ Database server connection successful!"
+    
+    # Check if database exists, create if it doesn't
+    if ! psql -h "${LIGHTSAIL_DB_ENDPOINT}" -U "${DB_USER}" -d "${DB_NAME}" -p "${DB_PORT}" -c "SELECT 1;" > /dev/null 2>&1; then
+        echo "📊 Database '${DB_NAME}' does not exist, creating it..."
+        psql -h "${LIGHTSAIL_DB_ENDPOINT}" -U "${DB_USER}" -d postgres -p "${DB_PORT}" -c "CREATE DATABASE ${DB_NAME};" 2>&1
+        echo "✅ Database '${DB_NAME}' created!"
+    else
+        echo "✅ Database '${DB_NAME}' exists!"
+    fi
 else
     echo "❌ Database connection failed!"
     echo ""
     echo "⚠️  Troubleshooting:"
     echo "   1. Check Lightsail database is running"
     echo "   2. Verify endpoint: ${LIGHTSAIL_DB_ENDPOINT}"
-    echo "   3. Check database name: ${DB_NAME}"
-    echo "   4. Verify credentials"
-    echo "   5. Check if database is publicly accessible (if needed)"
+    echo "   3. Verify credentials"
+    echo "   4. Check if database is publicly accessible (if needed)"
     echo ""
     echo "   Lightsail databases in the same region can connect without public access"
     echo "   If your app is on the same Lightsail account, connection should work"
@@ -53,8 +63,19 @@ unset PGPASSWORD
 # Update .env
 echo ""
 echo "📝 Updating .env file..."
-sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" .env
-sed -i.bak 's/^PRISMA_GENERATE_DATAPROXY=true/PRISMA_GENERATE_DATAPROXY=false/' .env
+
+# Escape special characters in password for sed
+ESCAPED_PASSWORD=$(echo "${DB_PASSWORD}" | sed 's/[[\.*^$()+?{|]/\\&/g')
+ESCAPED_DATABASE_URL=$(echo "${DATABASE_URL}" | sed 's/[[\.*^$()+?{|]/\\&/g')
+
+# Remove old DATABASE_URL line and add new one
+grep -v "^DATABASE_URL=" .env > .env.tmp || true
+echo "DATABASE_URL=\"${DATABASE_URL}\"" >> .env.tmp
+mv .env.tmp .env
+
+# Update PRISMA_GENERATE_DATAPROXY
+sed -i.bak 's/^PRISMA_GENERATE_DATAPROXY=true/PRISMA_GENERATE_DATAPROXY=false/' .env || echo "PRISMA_GENERATE_DATAPROXY=false" >> .env
+
 echo "✅ .env updated"
 echo ""
 
