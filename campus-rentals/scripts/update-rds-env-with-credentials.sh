@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to update .env file directly on the server
+# Script to update .env file directly on the server with pre-configured credentials
 # Run this ON THE SERVER after SSHing in
 
 set -e
@@ -9,13 +9,10 @@ RDS_ENDPOINT="ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1
 RDS_PORT="5432"
 DB_NAME="campus_rentals"
 DB_USER="dbmasteruser"
+DB_PASSWORD="~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v"
 
 echo "🔧 Updating RDS Connection"
 echo "=========================="
-echo ""
-
-# Prompt for password
-read -sp "Enter RDS PostgreSQL password: " DB_PASSWORD
 echo ""
 
 # Construct DATABASE_URL
@@ -28,7 +25,7 @@ cd /home/bitnami/CAMPUSRENTALSWEBSITE/campus-rentals
 echo ""
 echo "💾 Backing up current .env..."
 cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
-echo "✅ Backup created"
+echo "✅ Backup created: .env.backup.$(date +%Y%m%d_%H%M%S)"
 
 # Update DATABASE_URL
 echo ""
@@ -44,9 +41,27 @@ echo "✅ .env file updated successfully!"
 echo ""
 echo "🔗 RDS Endpoint: ${RDS_ENDPOINT}"
 echo "📊 Database: ${DB_NAME}"
+echo "👤 User: ${DB_USER}"
 echo ""
-echo "🔄 Running migrations..."
-npx prisma migrate deploy || npx prisma db push
+
+# Test connection first
+echo "🔌 Testing RDS connection..."
+export PGPASSWORD="${DB_PASSWORD}"
+if psql -h "${RDS_ENDPOINT}" -U "${DB_USER}" -d "${DB_NAME}" -p "${RDS_PORT}" -c "SELECT 1;" > /dev/null 2>&1; then
+    echo "✅ Connection successful!"
+else
+    echo "⚠️  Connection test failed, but continuing..."
+    echo "   (This might be normal if security groups aren't configured yet)"
+fi
+unset PGPASSWORD
+
+echo ""
+echo "🔄 Running Prisma migrations..."
+echo "   (This will create/update tables based on your schema)"
+npx prisma migrate deploy 2>&1 || {
+    echo "⚠️  migrate deploy failed, trying db push..."
+    npx prisma db push --accept-data-loss
+}
 
 echo ""
 echo "🔧 Generating Prisma Client..."
@@ -64,5 +79,11 @@ pm2 status
 
 echo ""
 echo "📋 View logs if needed:"
-echo "   pm2 logs campus-rentals"
+echo "   pm2 logs campus-rentals --lines 50"
+echo ""
+echo "⚠️  IMPORTANT NOTES:"
+echo "   1. If you're importing data separately, make sure it completes first"
+echo "   2. The schema will be created/updated by Prisma migrations"
+echo "   3. Your old Prisma Accelerate data needs to be exported/imported separately"
+echo "   4. Check the logs to ensure everything is working correctly"
 
