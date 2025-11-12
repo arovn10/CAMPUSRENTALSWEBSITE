@@ -171,6 +171,7 @@ export default function InvestorDashboard() {
   const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
   const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
   const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   const getAuthToken = () => {
     const user = sessionStorage.getItem('currentUser')
@@ -928,10 +929,6 @@ export default function InvestorDashboard() {
       </div>
     )
   }
-
-  
-
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-20 md:pb-8">
