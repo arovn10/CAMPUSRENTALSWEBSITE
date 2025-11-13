@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import CRMDealPipeline from '@/components/CRMDealPipeline'
-import { 
-  ChartBarIcon, 
-  DocumentTextIcon, 
-  CurrencyDollarIcon, 
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import CRMDealPipeline from "@/components/CRMDealPipeline";
+import {
+  ChartBarIcon,
+  DocumentTextIcon,
+  CurrencyDollarIcon,
   HomeIcon,
   BuildingOfficeIcon,
   BellIcon,
@@ -32,105 +32,105 @@ import {
   ExclamationTriangleIcon,
   ArrowUpRightIcon,
   SparklesIcon,
-  StarIcon
-} from '@heroicons/react/24/outline'
+  StarIcon,
+} from "@heroicons/react/24/outline";
 
 interface Investment {
-  id: string
-  name?: string
-  propertyName?: string
-  propertyAddress: string
-  propertyCity?: string
-  propertyState?: string
-  totalInvestment?: number
-  investorId?: string
-  investorEmail?: string
-  investmentAmount: number
-  ownershipPercentage: number
-  startDate?: string
-  expectedReturn?: number
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD'
-  distributions?: Distribution[]
-  currentValue?: number
-  totalReturn?: number
-  irr?: number
-  investmentType?: 'DIRECT' | 'ENTITY'
-  entityName?: string
-  entityType?: string
-  bedrooms?: number
-  bathrooms?: number
-  squareFeet?: number
-  acquisitionDate?: string
-  monthlyRent?: number
-  capRate?: number
-  dealStatus?: 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'
-  fundingStatus?: 'FUNDED' | 'FUNDING'
-  estimatedCurrentDebt?: number
-  estimatedMonthlyDebtService?: number
+  id: string;
+  name?: string;
+  propertyName?: string;
+  propertyAddress: string;
+  propertyCity?: string;
+  propertyState?: string;
+  totalInvestment?: number;
+  investorId?: string;
+  investorEmail?: string;
+  investmentAmount: number;
+  ownershipPercentage: number;
+  startDate?: string;
+  expectedReturn?: number;
+  status: "ACTIVE" | "PENDING" | "COMPLETED" | "SOLD";
+  distributions?: Distribution[];
+  currentValue?: number;
+  totalReturn?: number;
+  irr?: number;
+  investmentType?: "DIRECT" | "ENTITY";
+  entityName?: string;
+  entityType?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  squareFeet?: number;
+  acquisitionDate?: string;
+  monthlyRent?: number;
+  capRate?: number;
+  dealStatus?: "STABILIZED" | "UNDER_CONSTRUCTION" | "UNDER_CONTRACT" | "SOLD";
+  fundingStatus?: "FUNDED" | "FUNDING";
+  estimatedCurrentDebt?: number;
+  estimatedMonthlyDebtService?: number;
   // Optional nested property details for NOI calculations
   property?: {
-    monthlyRent?: number
-    otherIncome?: number
-    annualExpenses?: number
-    capRate?: number
-    totalCost?: number
-    acquisitionPrice?: number
-    constructionCost?: number
-  }
-  totalOriginalDebt?: number
-  totalProjectCost?: number
+    monthlyRent?: number;
+    otherIncome?: number;
+    annualExpenses?: number;
+    capRate?: number;
+    totalCost?: number;
+    acquisitionPrice?: number;
+    constructionCost?: number;
+  };
+  totalOriginalDebt?: number;
+  totalProjectCost?: number;
 }
 
 interface Distribution {
-  id: string
-  investmentId: string
-  amount: number
-  date: string
-  type: 'RENTAL' | 'SALE' | 'REFINANCE' | 'INSURANCE_SETTLEMENT' | 'OTHER'
+  id: string;
+  investmentId: string;
+  amount: number;
+  date: string;
+  type: "RENTAL" | "SALE" | "REFINANCE" | "INSURANCE_SETTLEMENT" | "OTHER";
 }
 
 interface User {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: 'ADMIN' | 'INVESTOR' | 'MANAGER'
-  company?: string
-  phone?: string
-  createdAt: string
-  lastLogin: string
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "ADMIN" | "INVESTOR" | "MANAGER";
+  company?: string;
+  phone?: string;
+  createdAt: string;
+  lastLogin: string;
 }
 
 interface DashboardStats {
-  totalInvested: number
-  currentValue: number
-  projectedValue: number
-  totalEquity?: number
-  totalEquityToday?: number
-  totalEquityProjected?: number
-  totalReturn: number
-  totalIrr: number
-  activeInvestments: number
-  totalDistributions: number
-  pendingDistributions: number
-  documentsCount: number
-  unreadNotifications: number
-  totalProperties: number
-  totalSquareFeet: number
-  averageIRR: number
-  monthlyRevenue: number
-  monthlyDebtServiceAndCondoFees: number
-  monthlyNOIBeforeDebt: number
-  monthlyNOIAfterDebt: number
-  yearlyNOIBeforeDebt: number
-  yearlyNOIAfterDebt: number
-  totalProjectCost: number
+  totalInvested: number;
+  currentValue: number;
+  projectedValue: number;
+  totalEquity?: number;
+  totalEquityToday?: number;
+  totalEquityProjected?: number;
+  totalReturn: number;
+  totalIrr: number;
+  activeInvestments: number;
+  totalDistributions: number;
+  pendingDistributions: number;
+  documentsCount: number;
+  unreadNotifications: number;
+  totalProperties: number;
+  totalSquareFeet: number;
+  averageIRR: number;
+  monthlyRevenue: number;
+  monthlyDebtServiceAndCondoFees: number;
+  monthlyNOIBeforeDebt: number;
+  monthlyNOIAfterDebt: number;
+  yearlyNOIBeforeDebt: number;
+  yearlyNOIAfterDebt: number;
+  totalProjectCost: number;
 }
 
 export default function InvestorDashboard() {
-  const router = useRouter()
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [investments, setInvestments] = useState<Investment[]>([])
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [investments, setInvestments] = useState<Investment[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalInvested: 0,
     currentValue: 0,
@@ -154,331 +154,450 @@ export default function InvestorDashboard() {
     monthlyNOIAfterDebt: 0,
     yearlyNOIBeforeDebt: 0,
     yearlyNOIAfterDebt: 0,
-    totalProjectCost: 0
-  })
-  const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics' | 'crm'>('overview')
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
-  const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
-  const [analyticsScope, setAnalyticsScope] = useState<'ALL' | 'PERSON' | 'ENTITY'>('ALL')
-  const [analyticsTarget, setAnalyticsTarget] = useState<string>('ALL')
-  const [showProformaModal, setShowProformaModal] = useState(false)
-  const [proformaRows, setProformaRows] = useState<any[]>([])
-  const [proformaTitle, setProformaTitle] = useState<string>('')
-  const [showCalcModal, setShowCalcModal] = useState(false)
-  const [calcTitle, setCalcTitle] = useState('')
-  const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
-  const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
-  const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
+    totalProjectCost: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<
+    "overview" | "deals" | "analytics" | "crm"
+  >("overview");
+  const [dealFilter, setDealFilter] = useState<
+    "ALL" | "STABILIZED" | "UNDER_CONSTRUCTION" | "UNDER_CONTRACT" | "SOLD"
+  >("ALL");
+  const filteredInvestments = useMemo(() => {
+    if (dealFilter === "ALL") {
+      return investments;
+    }
+    return investments.filter((inv) => inv.dealStatus === dealFilter);
+  }, [investments, dealFilter]);
+  const [analyticsScope, setAnalyticsScope] = useState<
+    "ALL" | "PERSON" | "ENTITY"
+  >("ALL");
+  const [analyticsTarget, setAnalyticsTarget] = useState<string>("ALL");
+  const [showProformaModal, setShowProformaModal] = useState(false);
+  const [proformaRows, setProformaRows] = useState<any[]>([]);
+  const [proformaTitle, setProformaTitle] = useState<string>("");
+  const [showCalcModal, setShowCalcModal] = useState(false);
+  const [calcTitle, setCalcTitle] = useState("");
+  const [calcLines, setCalcLines] = useState<
+    { label: string; value: number }[]
+  >([]);
+  const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false);
+  const [investedBreakdown, setInvestedBreakdown] = useState<
+    { property: string; amount: number }[]
+  >([]);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const getAuthToken = () => {
-    const user = sessionStorage.getItem('currentUser')
+    const user = sessionStorage.getItem("currentUser");
     if (user) {
-      const userData = JSON.parse(user)
-      return sessionStorage.getItem('authToken') || userData.email || ''
+      const userData = JSON.parse(user);
+      return sessionStorage.getItem("authToken") || userData.email || "";
     }
-    return ''
-  }
+    return "";
+  };
 
   useEffect(() => {
-    const user = sessionStorage.getItem('currentUser')
+    const user = sessionStorage.getItem("currentUser");
     if (user) {
-      const userData = JSON.parse(user)
-      setCurrentUser(userData)
-      
+      const userData = JSON.parse(user);
+      setCurrentUser(userData);
+
       // Restore active tab from sessionStorage if available
-      const savedTab = sessionStorage.getItem('investorDashboardActiveTab')
-      if (savedTab && ['overview', 'deals', 'analytics', 'crm'].includes(savedTab)) {
-        setActiveView(savedTab as 'overview' | 'deals' | 'analytics' | 'crm')
+      const savedTab = sessionStorage.getItem("investorDashboardActiveTab");
+      if (
+        savedTab &&
+        ["overview", "deals", "analytics", "crm"].includes(savedTab)
+      ) {
+        setActiveView(savedTab as "overview" | "deals" | "analytics" | "crm");
       }
-      
+
       // For investors (non-admin), automatically filter by their name
-      if (userData.role === 'INVESTOR') {
-        const investorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+      if (userData.role === "INVESTOR") {
+        const investorName =
+          `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
         if (investorName) {
-          setAnalyticsScope('PERSON')
-          setAnalyticsTarget(investorName)
+          setAnalyticsScope("PERSON");
+          setAnalyticsTarget(investorName);
         }
       }
-      
-      fetchDashboardData(userData)
+
+      fetchDashboardData(userData);
     } else {
-      router.push('/investors/login')
+      router.push("/investors/login");
     }
-  }, [router])
+  }, [router]);
 
   // Check for thumbnail updates when page loads or regains focus
   useEffect(() => {
     const checkAndRefreshThumbnails = async () => {
       // Check sessionStorage for thumbnail updates
-      const thumbnailUpdates = JSON.parse(sessionStorage.getItem('thumbnailUpdates') || '{}')
-      const propertiesToRefresh: string[] = []
-      
+      const thumbnailUpdates = JSON.parse(
+        sessionStorage.getItem("thumbnailUpdates") || "{}",
+      );
+      const propertiesToRefresh: string[] = [];
+
       // Find properties that have been updated
-      Object.keys(thumbnailUpdates).forEach(propertyId => {
-        const update = thumbnailUpdates[propertyId]
+      Object.keys(thumbnailUpdates).forEach((propertyId) => {
+        const update = thumbnailUpdates[propertyId];
         // Refresh if updated within the last 5 minutes
         if (update && Date.now() - update.updated < 5 * 60 * 1000) {
-          propertiesToRefresh.push(propertyId)
+          propertiesToRefresh.push(propertyId);
         }
-      })
-      
+      });
+
       if (propertiesToRefresh.length > 0) {
         // Refresh thumbnails for updated properties
-        const thumbnailPromises = propertiesToRefresh.map(async (propertyId) => {
-          try {
-            const response = await fetch(`/api/properties/thumbnail/${propertyId}`)
-            if (response.ok) {
-              const data = await response.json()
-              return { propertyId, thumbnail: data.thumbnail }
+        const thumbnailPromises = propertiesToRefresh.map(
+          async (propertyId) => {
+            try {
+              const response = await fetch(
+                `/api/properties/thumbnail/${propertyId}`,
+              );
+              if (response.ok) {
+                const data = await response.json();
+                return { propertyId, thumbnail: data.thumbnail };
+              }
+            } catch (error) {
+              console.error(
+                `Error fetching thumbnail for property ${propertyId}:`,
+                error,
+              );
             }
-          } catch (error) {
-            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
-          }
-          return { propertyId, thumbnail: null }
-        })
-        
-        const thumbnailResults = await Promise.all(thumbnailPromises)
-        const thumbnailMap: { [key: string]: string | null } = {}
+            return { propertyId, thumbnail: null };
+          },
+        );
+
+        const thumbnailResults = await Promise.all(thumbnailPromises);
+        const thumbnailMap: { [key: string]: string | null } = {};
         thumbnailResults.forEach((result) => {
           if (result.propertyId) {
-            thumbnailMap[result.propertyId] = result.thumbnail
+            thumbnailMap[result.propertyId] = result.thumbnail;
           }
-        })
-        setPropertyThumbnails(prev => ({ ...prev, ...thumbnailMap }))
-        
+        });
+        setPropertyThumbnails((prev) => ({ ...prev, ...thumbnailMap }));
+
         // Clear old updates (older than 5 minutes)
-        const cleanedUpdates: { [key: string]: any } = {}
-        Object.keys(thumbnailUpdates).forEach(propertyId => {
-          const update = thumbnailUpdates[propertyId]
+        const cleanedUpdates: { [key: string]: any } = {};
+        Object.keys(thumbnailUpdates).forEach((propertyId) => {
+          const update = thumbnailUpdates[propertyId];
           if (update && Date.now() - update.updated < 5 * 60 * 1000) {
-            cleanedUpdates[propertyId] = update
+            cleanedUpdates[propertyId] = update;
           }
-        })
-        sessionStorage.setItem('thumbnailUpdates', JSON.stringify(cleanedUpdates))
+        });
+        sessionStorage.setItem(
+          "thumbnailUpdates",
+          JSON.stringify(cleanedUpdates),
+        );
       }
-    }
+    };
 
     // Check on mount and when page regains focus
-    checkAndRefreshThumbnails()
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndRefreshThumbnails()
-      }
-    }
+    checkAndRefreshThumbnails();
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAndRefreshThumbnails();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const fetchDashboardData = async (user: User) => {
     try {
-      setLoading(true)
-      
-      const token = sessionStorage.getItem('authToken') || user.email
-      const investmentsResponse = await fetch('/api/investors/properties', {
-        method: 'GET',
+      setLoading(true);
+
+      const token = sessionStorage.getItem("authToken") || user.email;
+      const investmentsResponse = await fetch("/api/investors/properties", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (investmentsResponse.ok) {
-        const investmentsData = await investmentsResponse.json()
+        const investmentsData = await investmentsResponse.json();
         try {
           // High-signal client-side logs to compare with server logs
-          console.log('[DASHBOARD] Raw API investments', {
+          console.log("[DASHBOARD] Raw API investments", {
             role: user.role,
             count: investmentsData.length,
-            totalAmount: investmentsData.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0),
-            sample: investmentsData.slice(0, 3).map((i: any) => ({ property: i.propertyName, type: i.investmentType, amount: i.investmentAmount }))
-          })
+            totalAmount: investmentsData.reduce(
+              (s: number, i: any) => s + (i.investmentAmount || 0),
+              0,
+            ),
+            sample: investmentsData
+              .slice(0, 3)
+              .map((i: any) => ({
+                property: i.propertyName,
+                type: i.investmentType,
+                amount: i.investmentAmount,
+              })),
+          });
         } catch {}
         // For investors, if they're auto-filtered, we need to recalculate stats
         // But first, just calculate with all returned investments (API already filters for investors)
         // The useEffect will handle the person filter recalculation
-        if (user.role === 'INVESTOR') {
+        if (user.role === "INVESTOR") {
           // For investors, the API already filters to their investments
           // Extract individual amounts from entity owners (for overview stats calculation)
           // NOTE: We do NOT scale property values here - scaling only applies to Analytics table
-          const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+          const investorName =
+            `${user.firstName || ""} ${user.lastName || ""}`.trim();
           const investorInvestments = investmentsData.map((inv: any) => {
-            if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
+            if (
+              inv.investmentType === "ENTITY" &&
+              inv.entityOwners &&
+              Array.isArray(inv.entityOwners)
+            ) {
               // Find the owner that matches this investor (case-insensitive)
-              const targetNameLower = investorName.toLowerCase()
-              const investorId = user.id
-              
+              const targetNameLower = investorName.toLowerCase();
+              const investorId = user.id;
+
               // First, try to find direct owner match
               let matchingOwner = inv.entityOwners.find((owner: any) => {
-                const ownerId = owner.userId || null
-                const ownerName = (owner.userName || '').trim()
+                const ownerId = owner.userId || null;
+                const ownerName = (owner.userName || "").trim();
                 return (
-                  (ownerId && investorId && String(ownerId) === String(investorId)) ||
-                  (ownerName.toLowerCase() === targetNameLower)
-                )
-              })
-              
+                  (ownerId &&
+                    investorId &&
+                    String(ownerId) === String(investorId)) ||
+                  ownerName.toLowerCase() === targetNameLower
+                );
+              });
+
               if (matchingOwner && matchingOwner.investmentAmount) {
                 // Direct owner match found
                 return {
                   ...inv,
-                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0,
-                  entityOwners: inv.entityOwners // Preserve for filtering
-                }
+                  investmentAmount:
+                    parseFloat(matchingOwner.investmentAmount) || 0,
+                  entityOwners: inv.entityOwners, // Preserve for filtering
+                };
               }
-              
+
               // If no direct match, check if investor is nested in an entity owner's breakdown
               // (e.g., Campus Rentals LLC inside Campus Rentals 2 LLC)
-              const entityOwnerWithBreakdown = inv.entityOwners.find((owner: any) => {
-                return !!owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0
-              })
-              
-              if (entityOwnerWithBreakdown && Array.isArray(entityOwnerWithBreakdown.breakdown)) {
-                // Search breakdown array for the investor
-                const breakdownMatch = entityOwnerWithBreakdown.breakdown.find((item: any) => {
-                  const itemId = item.id || null
-                  const itemLabel = (item.label || '').trim().toLowerCase()
+              const entityOwnerWithBreakdown = inv.entityOwners.find(
+                (owner: any) => {
                   return (
-                    (itemId && investorId && String(itemId) === String(investorId)) ||
-                    (itemLabel === targetNameLower)
-                  )
-                })
-                
+                    !!owner.investorEntityId &&
+                    Array.isArray(owner.breakdown) &&
+                    owner.breakdown.length > 0
+                  );
+                },
+              );
+
+              if (
+                entityOwnerWithBreakdown &&
+                Array.isArray(entityOwnerWithBreakdown.breakdown)
+              ) {
+                // Search breakdown array for the investor
+                const breakdownMatch = entityOwnerWithBreakdown.breakdown.find(
+                  (item: any) => {
+                    const itemId = item.id || null;
+                    const itemLabel = (item.label || "").trim().toLowerCase();
+                    return (
+                      (itemId &&
+                        investorId &&
+                        String(itemId) === String(investorId)) ||
+                      itemLabel === targetNameLower
+                    );
+                  },
+                );
+
                 if (breakdownMatch && breakdownMatch.amount) {
                   // Found investor in nested entity breakdown
                   return {
                     ...inv,
                     investmentAmount: parseFloat(breakdownMatch.amount) || 0,
-                    entityOwners: inv.entityOwners // Preserve for filtering
-                  }
+                    entityOwners: inv.entityOwners, // Preserve for filtering
+                  };
                 }
               }
-              
+
               // If no match found (direct or nested), use API's calculated amount (API already handles nested entities correctly)
               // Only set to 0 if API also returned 0
               return {
                 ...inv,
                 investmentAmount: inv.investmentAmount || 0, // Preserve API's calculated amount
-                entityOwners: inv.entityOwners // Preserve for filtering
-              }
+                entityOwners: inv.entityOwners, // Preserve for filtering
+              };
             }
             // For direct investments, add investorName field for filtering
             return {
               ...inv,
-              investorName: inv.user ? `${inv.user.firstName || ''} ${inv.user.lastName || ''}`.trim() : investorName
-            }
-          })
-          
+              investorName: inv.user
+                ? `${inv.user.firstName || ""} ${inv.user.lastName || ""}`.trim()
+                : investorName,
+            };
+          });
+
           // CRITICAL: Set investments state with processed data that has entityOwners preserved
-          setInvestments(investorInvestments)
-          
+          setInvestments(investorInvestments);
+
           // Debug: Log raw API response to see what entityOwners data we're getting
-          const entityInvestmentsFromAPI = investmentsData.filter((inv: any) => inv.investmentType === 'ENTITY')
-          console.log('Investor stats calculation:', {
+          const entityInvestmentsFromAPI = investmentsData.filter(
+            (inv: any) => inv.investmentType === "ENTITY",
+          );
+          console.log("Investor stats calculation:", {
             investorName,
             totalInvestments: investmentsData.length,
             entityInvestmentsCount: entityInvestmentsFromAPI.length,
             processedInvestments: investorInvestments.length,
-            totalInvested: investorInvestments.reduce((sum: number, inv: any) => sum + (inv.investmentAmount || 0), 0),
-            rawAPISample: investmentsData[0] ? {
-              property: investmentsData[0].propertyName,
-              type: investmentsData[0].investmentType,
-              hasEntityOwners: !!(investmentsData[0] as any).entityOwners,
-              entityOwnersCount: (investmentsData[0] as any).entityOwners?.length || 0,
-              entityOwnerNames: (investmentsData[0] as any).entityOwners?.map((o: any) => o.userName) || []
-            } : null,
-            processedSample: investorInvestments[0] ? {
-              property: investorInvestments[0].propertyName,
-              amount: investorInvestments[0].investmentAmount,
-              type: investorInvestments[0].investmentType,
-              hasEntityOwners: !!(investorInvestments[0] as any).entityOwners,
-              entityOwnersCount: (investorInvestments[0] as any).entityOwners?.length || 0,
-              entityOwners: (investorInvestments[0] as any).entityOwners?.map((o: any) => ({
-                name: o.userName,
-                amount: o.investmentAmount
-              })) || [],
-              investorName: (investorInvestments[0] as any).investorName
-            } : null,
-            sampleEntityInvestment: investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') ? {
-              property: investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY')?.propertyName,
-              hasEntityOwners: !!(investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners,
-              entityOwnersCount: (investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners?.length || 0,
-              entityOwnerNames: (investorInvestments.find((inv: any) => inv.investmentType === 'ENTITY') as any)?.entityOwners?.map((o: any) => o.userName) || []
-            } : null
-          })
-          
-          calculateStats(investorInvestments)
+            totalInvested: investorInvestments.reduce(
+              (sum: number, inv: any) => sum + (inv.investmentAmount || 0),
+              0,
+            ),
+            rawAPISample: investmentsData[0]
+              ? {
+                  property: investmentsData[0].propertyName,
+                  type: investmentsData[0].investmentType,
+                  hasEntityOwners: !!(investmentsData[0] as any).entityOwners,
+                  entityOwnersCount:
+                    (investmentsData[0] as any).entityOwners?.length || 0,
+                  entityOwnerNames:
+                    (investmentsData[0] as any).entityOwners?.map(
+                      (o: any) => o.userName,
+                    ) || [],
+                }
+              : null,
+            processedSample: investorInvestments[0]
+              ? {
+                  property: investorInvestments[0].propertyName,
+                  amount: investorInvestments[0].investmentAmount,
+                  type: investorInvestments[0].investmentType,
+                  hasEntityOwners: !!(investorInvestments[0] as any)
+                    .entityOwners,
+                  entityOwnersCount:
+                    (investorInvestments[0] as any).entityOwners?.length || 0,
+                  entityOwners:
+                    (investorInvestments[0] as any).entityOwners?.map(
+                      (o: any) => ({
+                        name: o.userName,
+                        amount: o.investmentAmount,
+                      }),
+                    ) || [],
+                  investorName: (investorInvestments[0] as any).investorName,
+                }
+              : null,
+            sampleEntityInvestment: investorInvestments.find(
+              (inv: any) => inv.investmentType === "ENTITY",
+            )
+              ? {
+                  property: investorInvestments.find(
+                    (inv: any) => inv.investmentType === "ENTITY",
+                  )?.propertyName,
+                  hasEntityOwners: !!(
+                    investorInvestments.find(
+                      (inv: any) => inv.investmentType === "ENTITY",
+                    ) as any
+                  )?.entityOwners,
+                  entityOwnersCount:
+                    (
+                      investorInvestments.find(
+                        (inv: any) => inv.investmentType === "ENTITY",
+                      ) as any
+                    )?.entityOwners?.length || 0,
+                  entityOwnerNames:
+                    (
+                      investorInvestments.find(
+                        (inv: any) => inv.investmentType === "ENTITY",
+                      ) as any
+                    )?.entityOwners?.map((o: any) => o.userName) || [],
+                }
+              : null,
+          });
+
+          calculateStats(investorInvestments);
         } else {
-          setInvestments(investmentsData || [])
-          calculateStats(investmentsData || [])
+          setInvestments(investmentsData || []);
+          calculateStats(investmentsData || []);
         }
-        
+
         // Fetch thumbnails for all investments
-        const thumbnailPromises = (investmentsData || []).map(async (inv: any) => {
-          const propertyId = inv.property?.id || inv.propertyId
-          if (!propertyId) return null
-          
-          try {
-            const response = await fetch(`/api/properties/thumbnail/${propertyId}`, {
-              headers: {
-                'Authorization': `Bearer ${token || ''}`
+        const thumbnailPromises = (investmentsData || []).map(
+          async (inv: any) => {
+            const propertyId = inv.property?.id || inv.propertyId;
+            if (!propertyId) return null;
+
+            try {
+              const response = await fetch(
+                `/api/properties/thumbnail/${propertyId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token || ""}`,
+                  },
+                },
+              );
+              if (response.ok) {
+                const data = await response.json();
+                return { propertyId, thumbnail: data.thumbnail };
               }
-            })
-            if (response.ok) {
-              const data = await response.json()
-              return { propertyId, thumbnail: data.thumbnail }
+            } catch (error) {
+              console.error(
+                `Error fetching thumbnail for property ${propertyId}:`,
+                error,
+              );
             }
-          } catch (error) {
-            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
-          }
-          return { propertyId, thumbnail: null }
-        })
-        
-        const thumbnailResults = await Promise.all(thumbnailPromises)
-        const thumbnailMap: { [key: string]: string | null } = {}
+            return { propertyId, thumbnail: null };
+          },
+        );
+
+        const thumbnailResults = await Promise.all(thumbnailPromises);
+        const thumbnailMap: { [key: string]: string | null } = {};
         thumbnailResults.forEach((result) => {
           if (result) {
-            thumbnailMap[result.propertyId] = result.thumbnail
+            thumbnailMap[result.propertyId] = result.thumbnail;
           }
-        })
-        setPropertyThumbnails(thumbnailMap)
+        });
+        setPropertyThumbnails(thumbnailMap);
       }
     } catch (error) {
       // Silent error handling for smooth UX
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Recalculate stats when person filter changes
   useEffect(() => {
-    if (investments.length > 0 && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
+    if (
+      investments.length > 0 &&
+      analyticsScope === "PERSON" &&
+      analyticsTarget !== "ALL"
+    ) {
       // Filter investments to only this person's investments
       // NOTE: We do NOT scale property values here - scaling only applies to Analytics table display
-      const personInvestments: Investment[] = []
-      const targetName = analyticsTarget.trim().toLowerCase()
-      
-      investments.forEach(inv => {
-        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0) {
+      const personInvestments: Investment[] = [];
+      const targetName = analyticsTarget.trim().toLowerCase();
+
+      investments.forEach((inv) => {
+        if (
+          inv.investmentType === "ENTITY" &&
+          (inv as any).entityOwners &&
+          Array.isArray((inv as any).entityOwners) &&
+          (inv as any).entityOwners.length > 0
+        ) {
           // Check if this person is an owner in this entity investment (case-insensitive match)
           const matchingOwner = (inv as any).entityOwners.find((owner: any) => {
-            const ownerName = (owner.userName || '').trim().toLowerCase()
+            const ownerName = (owner.userName || "").trim().toLowerCase();
             // Also try matching by first and last name separately if userName is a full name
-            const ownerNameParts = ownerName.split(' ')
-            const targetNameParts = targetName.split(' ')
-            const exactMatch = ownerName === targetName
-            const namePartsMatch = ownerNameParts.length >= 2 && targetNameParts.length >= 2 && 
-                                  ownerNameParts[0] === targetNameParts[0] && 
-                                  ownerNameParts[1] === targetNameParts[1]
-            
+            const ownerNameParts = ownerName.split(" ");
+            const targetNameParts = targetName.split(" ");
+            const exactMatch = ownerName === targetName;
+            const namePartsMatch =
+              ownerNameParts.length >= 2 &&
+              targetNameParts.length >= 2 &&
+              ownerNameParts[0] === targetNameParts[0] &&
+              ownerNameParts[1] === targetNameParts[1];
+
             // Debug logging for Joseph St specifically
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
+            if (inv.propertyName && inv.propertyName.includes("Joseph")) {
               console.log(`[Person Filter] Checking Joseph St investment:`, {
                 property: inv.propertyName,
                 ownerName,
@@ -487,132 +606,179 @@ export default function InvestorDashboard() {
                 namePartsMatch,
                 ownerNameParts,
                 targetNameParts,
-                allOwners: (inv as any).entityOwners.map((o: any) => o.userName)
-              })
+                allOwners: (inv as any).entityOwners.map(
+                  (o: any) => o.userName,
+                ),
+              });
             }
-            
-            return exactMatch || namePartsMatch
-          })
-          
+
+            return exactMatch || namePartsMatch;
+          });
+
           if (matchingOwner) {
             // Only update investmentAmount to individual amount, keep property values at full amount
             personInvestments.push({
               ...inv,
-              investmentAmount: matchingOwner.investmentAmount || 0
-            })
-            
+              investmentAmount: matchingOwner.investmentAmount || 0,
+            });
+
             // Debug logging
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
-              console.log(`[Person Filter] Matched Joseph St for ${targetName}:`, {
-                individualInvestment: matchingOwner.investmentAmount,
-                totalInvestment: inv.investmentAmount
-              })
+            if (inv.propertyName && inv.propertyName.includes("Joseph")) {
+              console.log(
+                `[Person Filter] Matched Joseph St for ${targetName}:`,
+                {
+                  individualInvestment: matchingOwner.investmentAmount,
+                  totalInvestment: inv.investmentAmount,
+                },
+              );
             }
           } else {
             // If no direct owner match, check nested ownership via breakdown arrays (entity within entity)
-            const ownerWithBreakdown = (inv as any).entityOwners.find((owner: any) => owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0)
-            if (ownerWithBreakdown && Array.isArray(ownerWithBreakdown.breakdown)) {
+            const ownerWithBreakdown = (inv as any).entityOwners.find(
+              (owner: any) =>
+                owner.investorEntityId &&
+                Array.isArray(owner.breakdown) &&
+                owner.breakdown.length > 0,
+            );
+            if (
+              ownerWithBreakdown &&
+              Array.isArray(ownerWithBreakdown.breakdown)
+            ) {
               const nested = ownerWithBreakdown.breakdown.find((item: any) => {
-                const itemLabel = (item.label || '').trim().toLowerCase()
-                return itemLabel === targetName
-              })
+                const itemLabel = (item.label || "").trim().toLowerCase();
+                return itemLabel === targetName;
+              });
               if (nested && (nested.amount || nested.investmentAmount)) {
                 personInvestments.push({
                   ...inv,
-                  investmentAmount: parseFloat(nested.amount || nested.investmentAmount || 0)
-                })
-                return
+                  investmentAmount: parseFloat(
+                    nested.amount || nested.investmentAmount || 0,
+                  ),
+                });
+                return;
               }
             }
 
             // Debug logging for unmatched entity investments
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
-              console.log(`[Person Filter] Joseph St NOT matched for ${targetName}. Entity owners:`, (inv as any).entityOwners.map((o: any) => ({
-                userName: o.userName,
-                userNameLower: (o.userName || '').trim().toLowerCase()
-              })))
+            if (inv.propertyName && inv.propertyName.includes("Joseph")) {
+              console.log(
+                `[Person Filter] Joseph St NOT matched for ${targetName}. Entity owners:`,
+                (inv as any).entityOwners.map((o: any) => ({
+                  userName: o.userName,
+                  userNameLower: (o.userName || "").trim().toLowerCase(),
+                })),
+              );
             }
           }
-        } else if (inv.investmentType === 'DIRECT') {
+        } else if (inv.investmentType === "DIRECT") {
           // Direct investment - check if investor name matches (case-insensitive)
           // Try multiple name fields
           const invName = (
-            (inv as any).investorName || 
-            ((inv as any).user ? `${(inv as any).user.firstName || ''} ${(inv as any).user.lastName || ''}`.trim() : '') ||
-            ''
-          ).trim().toLowerCase()
+            (inv as any).investorName ||
+            ((inv as any).user
+              ? `${(inv as any).user.firstName || ""} ${(inv as any).user.lastName || ""}`.trim()
+              : "") ||
+            ""
+          )
+            .trim()
+            .toLowerCase();
           if (invName === targetName) {
-            personInvestments.push(inv)
+            personInvestments.push(inv);
           }
         }
-      })
-      
+      });
+
       // Enhanced debugging - check all entity investments
-      const entityInvestments = investments.filter((inv: any) => inv.investmentType === 'ENTITY')
-      const directInvestments = investments.filter((inv: any) => inv.investmentType === 'DIRECT')
-      
-      console.log('Person filter stats calculation:', {
+      const entityInvestments = investments.filter(
+        (inv: any) => inv.investmentType === "ENTITY",
+      );
+      const directInvestments = investments.filter(
+        (inv: any) => inv.investmentType === "DIRECT",
+      );
+
+      console.log("Person filter stats calculation:", {
         targetName,
         totalInvestments: investments.length,
         entityInvestmentsCount: entityInvestments.length,
         directInvestmentsCount: directInvestments.length,
         personInvestments: personInvestments.length,
-        entityInvestmentsWithOwners: entityInvestments.filter((inv: any) => (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0).length,
-        entityInvestmentsDetails: entityInvestments.slice(0, 3).map((inv: any) => ({
-          property: inv.propertyName,
-          hasEntityOwners: !!(inv as any).entityOwners,
-          entityOwnersCount: (inv as any).entityOwners?.length || 0,
-          entityOwnerNames: (inv as any).entityOwners?.map((o: any) => ({
-            userName: o.userName,
-            userNameLower: (o.userName || '').trim().toLowerCase(),
-            investmentAmount: o.investmentAmount
-          })) || [],
-          matchesTarget: (inv as any).entityOwners?.some((o: any) => 
-            (o.userName || '').trim().toLowerCase() === targetName
-          ) || false
-        })),
-        directInvestmentsDetails: directInvestments.slice(0, 3).map((inv: any) => ({
-          property: inv.propertyName,
-          investorName: (inv as any).investorName,
-          investorNameLower: ((inv as any).investorName || '').trim().toLowerCase(),
-          matchesTarget: ((inv as any).investorName || '').trim().toLowerCase() === targetName
-        }))
-      })
-      
+        entityInvestmentsWithOwners: entityInvestments.filter(
+          (inv: any) =>
+            (inv as any).entityOwners &&
+            Array.isArray((inv as any).entityOwners) &&
+            (inv as any).entityOwners.length > 0,
+        ).length,
+        entityInvestmentsDetails: entityInvestments
+          .slice(0, 3)
+          .map((inv: any) => ({
+            property: inv.propertyName,
+            hasEntityOwners: !!(inv as any).entityOwners,
+            entityOwnersCount: (inv as any).entityOwners?.length || 0,
+            entityOwnerNames:
+              (inv as any).entityOwners?.map((o: any) => ({
+                userName: o.userName,
+                userNameLower: (o.userName || "").trim().toLowerCase(),
+                investmentAmount: o.investmentAmount,
+              })) || [],
+            matchesTarget:
+              (inv as any).entityOwners?.some(
+                (o: any) =>
+                  (o.userName || "").trim().toLowerCase() === targetName,
+              ) || false,
+          })),
+        directInvestmentsDetails: directInvestments
+          .slice(0, 3)
+          .map((inv: any) => ({
+            property: inv.propertyName,
+            investorName: (inv as any).investorName,
+            investorNameLower: ((inv as any).investorName || "")
+              .trim()
+              .toLowerCase(),
+            matchesTarget:
+              ((inv as any).investorName || "").trim().toLowerCase() ===
+              targetName,
+          })),
+      });
+
       // Recalculate stats based on person's investments only
-      calculateStats(personInvestments)
-    } else if (investments.length > 0 && (analyticsScope === 'ALL' || analyticsTarget === 'ALL')) {
+      calculateStats(personInvestments);
+    } else if (
+      investments.length > 0 &&
+      (analyticsScope === "ALL" || analyticsTarget === "ALL")
+    ) {
       // Recalculate stats for all investments
-      calculateStats(investments)
+      calculateStats(investments);
     }
-  }, [analyticsScope, analyticsTarget, investments])
+  }, [analyticsScope, analyticsTarget, investments]);
 
   const estimateValueFromNOI = (inv: Investment) => {
-    const rent = inv.property?.monthlyRent || 0
-    const other = inv.property?.otherIncome || 0
-    const annualExp = inv.property?.annualExpenses || 0
-    const capRate = inv.property?.capRate || 0
-    const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
-    return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
-  }
+    const rent = inv.property?.monthlyRent || 0;
+    const other = inv.property?.otherIncome || 0;
+    const annualExp = inv.property?.annualExpenses || 0;
+    const capRate = inv.property?.capRate || 0;
+    const annualNOI = Math.max((rent + other) * 12 - annualExp, 0);
+    return capRate > 0 ? annualNOI / (capRate / 100) : inv.currentValue || 0;
+  };
 
   const openProforma = (inv: Investment) => {
-    const years = [0,1,2,3,4,5]
-    const rows: any[] = []
-    const cashflows: number[] = []
+    const years = [0, 1, 2, 3, 4, 5];
+    const rows: any[] = [];
+    const cashflows: number[] = [];
 
-    const loans: any[] = (inv as any).loans || []
-    const loanStates = loans.map(l => ({
+    const loans: any[] = (inv as any).loans || [];
+    const loanStates = loans.map((l) => ({
       balance: (l.currentBalance ?? l.originalAmount ?? 0) as number,
       rate: ((l.interestRate ?? 0) as number) / 100,
       monthlyPayment: (l.monthlyPayment ?? 0) as number,
-      type: (l.paymentType || 'AMORTIZING') as string,
-      amortYears: (l.amortizationYears || 30) as number
-    }))
-    const hasLoans = loanStates.length > 0
+      type: (l.paymentType || "AMORTIZING") as string,
+      amortYears: (l.amortizationYears || 30) as number,
+    }));
+    const hasLoans = loanStates.length > 0;
 
-    const annualRevenue = ((inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)) * 12
-    const annualExpenses = inv.property?.annualExpenses || 0
+    const annualRevenue =
+      ((inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)) *
+      12;
+    const annualExpenses = inv.property?.annualExpenses || 0;
 
     years.forEach((yr) => {
       if (yr === 0) {
@@ -628,65 +794,76 @@ export default function InvestorDashboard() {
           exitProceeds: 0,
           cashFlow: -(inv.investmentAmount || 0),
           dscr: null,
-          irrToDate: null
-        })
-        cashflows.push(-(inv.investmentAmount || 0))
-        return
+          irrToDate: null,
+        });
+        cashflows.push(-(inv.investmentAmount || 0));
+        return;
       }
 
-      let interestPaid = 0
-      let principalPaid = 0
+      let interestPaid = 0;
+      let principalPaid = 0;
       if (hasLoans) {
-        loanStates.forEach(ls => {
-          if (ls.balance <= 0) return
-          if (ls.type === 'IO') {
-            const annualInterest = ls.balance * ls.rate
-            interestPaid += annualInterest
+        loanStates.forEach((ls) => {
+          if (ls.balance <= 0) return;
+          if (ls.type === "IO") {
+            const annualInterest = ls.balance * ls.rate;
+            interestPaid += annualInterest;
           } else {
-            let monthlyPay = ls.monthlyPayment
+            let monthlyPay = ls.monthlyPayment;
             if (!monthlyPay || monthlyPay <= 0) {
-              const i = ls.rate / 12
-              const n = (ls.amortYears || 30) * 12
-              monthlyPay = i > 0 ? (ls.balance * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)) : (ls.balance / n)
+              const i = ls.rate / 12;
+              const n = (ls.amortYears || 30) * 12;
+              monthlyPay =
+                i > 0
+                  ? (ls.balance * (i * Math.pow(1 + i, n))) /
+                    (Math.pow(1 + i, n) - 1)
+                  : ls.balance / n;
             }
             for (let m = 0; m < 12; m++) {
-              const monthlyInterest = ls.balance * (ls.rate / 12)
-              const monthlyPrincipal = Math.max(monthlyPay - monthlyInterest, 0)
-              interestPaid += monthlyInterest
-              const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance)
-              principalPaid += appliedPrincipal
-              ls.balance = Math.max(ls.balance - appliedPrincipal, 0)
-              if (ls.balance <= 0) break
+              const monthlyInterest = ls.balance * (ls.rate / 12);
+              const monthlyPrincipal = Math.max(
+                monthlyPay - monthlyInterest,
+                0,
+              );
+              interestPaid += monthlyInterest;
+              const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance);
+              principalPaid += appliedPrincipal;
+              ls.balance = Math.max(ls.balance - appliedPrincipal, 0);
+              if (ls.balance <= 0) break;
             }
           }
-        })
+        });
       } else {
         // Fallback to estimated monthly debt service when loans are not available
-        const annualDebtSvc = (inv.estimatedMonthlyDebtService || 0) * 12
-        interestPaid = annualDebtSvc
-        principalPaid = 0
+        const annualDebtSvc = (inv.estimatedMonthlyDebtService || 0) * 12;
+        interestPaid = annualDebtSvc;
+        principalPaid = 0;
       }
 
-      const revenue = annualRevenue
-      const expenses = annualExpenses
-      const noi = Math.max(revenue - expenses, 0)
-      const debtService = interestPaid + principalPaid
+      const revenue = annualRevenue;
+      const expenses = annualExpenses;
+      const noi = Math.max(revenue - expenses, 0);
+      const debtService = interestPaid + principalPaid;
 
-      let exitSaleValue = 0
-      let debtPayoff = 0
+      let exitSaleValue = 0;
+      let debtPayoff = 0;
       if (yr === 5) {
-        exitSaleValue = estimateValueFromNOI(inv)
-        const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
-        debtPayoff = endingDebtVal
+        exitSaleValue = estimateValueFromNOI(inv);
+        const endingDebtVal = hasLoans
+          ? loanStates.reduce((s, l) => s + l.balance, 0)
+          : inv.estimatedCurrentDebt || 0;
+        debtPayoff = endingDebtVal;
       }
 
-      const cashFlow = (noi - debtService) + (exitSaleValue - debtPayoff)
-      cashflows.push(cashFlow)
+      const cashFlow = noi - debtService + (exitSaleValue - debtPayoff);
+      cashflows.push(cashFlow);
 
-      const dscr = debtService > 0 ? (noi / debtService) : null
-      const irrToDate = computeIRR(cashflows)
+      const dscr = debtService > 0 ? noi / debtService : null;
+      const irrToDate = computeIRR(cashflows);
 
-      const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
+      const endingDebtVal = hasLoans
+        ? loanStates.reduce((s, l) => s + l.balance, 0)
+        : inv.estimatedCurrentDebt || 0;
       rows.push({
         year: yr,
         revenue,
@@ -702,140 +879,183 @@ export default function InvestorDashboard() {
         cashFlow,
         dscr,
         irrToDate,
-      })
-    })
+      });
+    });
 
-    setProformaRows(rows)
-    setProformaTitle(inv.propertyName || inv.propertyAddress)
-    setShowProformaModal(true)
-  }
+    setProformaRows(rows);
+    setProformaTitle(inv.propertyName || inv.propertyAddress);
+    setShowProformaModal(true);
+  };
 
   // Internal IRR calculator (Newton-Raphson with guardrails)
   const computeIRR = (flows: number[]) => {
-    if (!flows || flows.length < 2) return null
+    if (!flows || flows.length < 2) return null;
     // Ensure at least one negative and one positive for convergence
-    const hasNeg = flows.some(f => f < 0)
-    const hasPos = flows.some(f => f > 0)
-    if (!hasNeg || !hasPos) return null
-    let rate = 0.1
+    const hasNeg = flows.some((f) => f < 0);
+    const hasPos = flows.some((f) => f > 0);
+    if (!hasNeg || !hasPos) return null;
+    let rate = 0.1;
     for (let iter = 0; iter < 50; iter++) {
-      let npv = 0
-      let dnpv = 0
+      let npv = 0;
+      let dnpv = 0;
       for (let t = 0; t < flows.length; t++) {
-        const denom = Math.pow(1 + rate, t)
-        npv += flows[t] / denom
+        const denom = Math.pow(1 + rate, t);
+        npv += flows[t] / denom;
         if (t > 0) {
-          dnpv -= (t * flows[t]) / (denom * (1 + rate))
+          dnpv -= (t * flows[t]) / (denom * (1 + rate));
         }
       }
-      if (Math.abs(npv) < 1e-6) return rate * 100
-      const step = dnpv !== 0 ? (npv / dnpv) : 0
-      rate -= step
-      if (!isFinite(rate)) return null
-      if (rate <= -0.99) rate = -0.99
+      if (Math.abs(npv) < 1e-6) return rate * 100;
+      const step = dnpv !== 0 ? npv / dnpv : 0;
+      rate -= step;
+      if (!isFinite(rate)) return null;
+      if (rate <= -0.99) rate = -0.99;
     }
-    return null
-  }
+    return null;
+  };
 
   const calculateStats = (investmentData: Investment[]) => {
     // Exclude UNDER_CONSTRUCTION for equity and project cost metrics
-    const notUnderConstruction = investmentData.filter(inv => inv.dealStatus !== 'UNDER_CONSTRUCTION')
-    const irrIncluded = notUnderConstruction
+    const notUnderConstruction = investmentData.filter(
+      (inv) => inv.dealStatus !== "UNDER_CONSTRUCTION",
+    );
+    const irrIncluded = notUnderConstruction;
 
     // Overview: Total Invested = sum of investments for FUNDED deals (any status)
     const totalInvestedOverview = investmentData
-      .filter(inv => inv.fundingStatus === 'FUNDED')
-      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
+      .filter((inv) => inv.fundingStatus === "FUNDED")
+      .reduce((sum, inv) => sum + inv.investmentAmount, 0);
     // Helpers to estimate value from NOI calculator
     const estimateValue = (inv: Investment) => {
-      const rent = inv.property?.monthlyRent || 0
-      const other = inv.property?.otherIncome || 0
-      const annualExp = inv.property?.annualExpenses || 0
-      const capRate = inv.property?.capRate || 0
-      const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
-      return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
-    }
+      const rent = inv.property?.monthlyRent || 0;
+      const other = inv.property?.otherIncome || 0;
+      const annualExp = inv.property?.annualExpenses || 0;
+      const capRate = inv.property?.capRate || 0;
+      const annualNOI = Math.max((rent + other) * 12 - annualExp, 0);
+      return capRate > 0 ? annualNOI / (capRate / 100) : inv.currentValue || 0;
+    };
     // Current value: sum of estimated values for active (stabilized) properties
     // When scaled for person, values are already scaled in the investment data
     const currentValue = investmentData
-      .filter(inv => inv.dealStatus === 'STABILIZED')
-      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
+      .filter((inv) => inv.dealStatus === "STABILIZED")
+      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0);
     // Projected value: sum for all not SOLD projects (includes under construction)
     // When scaled for person, values are already scaled in the investment data
     const projectedValue = investmentData
-      .filter(inv => inv.dealStatus !== 'SOLD')
-      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
+      .filter((inv) => inv.dealStatus !== "SOLD")
+      .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0);
     // Totals for FUNDED
     const totalFundedDebt = investmentData
-      .filter(inv => inv.fundingStatus === 'FUNDED')
-      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+      .filter((inv) => inv.fundingStatus === "FUNDED")
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0);
     const totalFundedAndStabilizedDebt = investmentData
-      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
-      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+      .filter(
+        (inv) =>
+          inv.fundingStatus === "FUNDED" && inv.dealStatus === "STABILIZED",
+      )
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0);
     const totalInvestedFundedAndStabilized = investmentData
-      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
-      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
+      .filter(
+        (inv) =>
+          inv.fundingStatus === "FUNDED" && inv.dealStatus === "STABILIZED",
+      )
+      .reduce((sum, inv) => sum + inv.investmentAmount, 0);
 
     // Equity (Today): currentValue (stabilized) - invested (FUNDED & STABILIZED) - current debt (FUNDED & STABILIZED)
-    const totalEquityToday = currentValue - totalInvestedFundedAndStabilized - totalFundedAndStabilizedDebt
+    const totalEquityToday =
+      currentValue -
+      totalInvestedFundedAndStabilized -
+      totalFundedAndStabilizedDebt;
     // Equity (Projected): projectedValue (all non-sold) - invested (FUNDED) - current debt (FUNDED)
-    const totalEquityProjected = projectedValue - totalInvestedOverview - totalFundedDebt
+    const totalEquityProjected =
+      projectedValue - totalInvestedOverview - totalFundedDebt;
     // Backward compatibility single totalEquity mirrors Today
-    const totalEquity = totalEquityToday
+    const totalEquity = totalEquityToday;
 
     // Total Returns to date = Total Equity Today − Total Invested (FUNDED & STABILIZED)
-    const totalReturn = totalEquityToday - totalInvestedFundedAndStabilized
-    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
-    const totalDistributions = investmentData.reduce((sum, inv) => 
-      sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
-    )
-    const averageIRR = irrIncluded.length > 0 
-      ? irrIncluded.reduce((sum, inv) => sum + (inv.irr || 0), 0) / irrIncluded.length 
-      : 0
-    const totalProperties = investmentData.length
-    const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
+    const totalReturn = totalEquityToday - totalInvestedFundedAndStabilized;
+    const activeInvestments = investmentData.filter(
+      (inv) => inv.status === "ACTIVE",
+    ).length;
+    const totalDistributions = investmentData.reduce(
+      (sum, inv) =>
+        sum +
+        (inv.distributions?.reduce(
+          (distSum, dist) => distSum + dist.amount,
+          0,
+        ) || 0),
+      0,
+    );
+    const averageIRR =
+      irrIncluded.length > 0
+        ? irrIncluded.reduce((sum, inv) => sum + (inv.irr || 0), 0) /
+          irrIncluded.length
+        : 0;
+    const totalProperties = investmentData.length;
+    const totalSquareFeet = investmentData.reduce(
+      (sum, inv) => sum + (inv.squareFeet || 0),
+      0,
+    );
 
     // Filter for stabilized, funded properties only (used for revenue/NOI calculations)
-    const stabilizedFunded = investmentData.filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
+    const stabilizedFunded = investmentData.filter(
+      (inv) =>
+        inv.dealStatus === "STABILIZED" && inv.fundingStatus === "FUNDED",
+    );
 
     // Monthly Revenue (from stabilized, funded properties only) - sum of rent + other income
-    const monthlyRevenue = stabilizedFunded.reduce((sum: number, inv: Investment) => {
-      const rent = inv.property?.monthlyRent || 0
-      const other = inv.property?.otherIncome || 0
-      return sum + (rent + other)
-    }, 0)
+    const monthlyRevenue = stabilizedFunded.reduce(
+      (sum: number, inv: Investment) => {
+        const rent = inv.property?.monthlyRent || 0;
+        const other = inv.property?.otherIncome || 0;
+        return sum + (rent + other);
+      },
+      0,
+    );
 
     // Monthly Debt Service and Condo Fees (from stabilized, funded properties only)
-    const monthlyDebtServiceAndCondoFees = stabilizedFunded.reduce((sum: number, inv: Investment) => {
-      const debtSvc = inv.estimatedMonthlyDebtService || 0
-      // TODO: Add condo fees if available in property data
-      return sum + debtSvc
-    }, 0)
+    const monthlyDebtServiceAndCondoFees = stabilizedFunded.reduce(
+      (sum: number, inv: Investment) => {
+        const debtSvc = inv.estimatedMonthlyDebtService || 0;
+        // TODO: Add condo fees if available in property data
+        return sum + debtSvc;
+      },
+      0,
+    );
 
     // NOI aggregates (from stabilized, funded properties only)
     // Monthly NOI Before Debt = Revenue (rent + other income) - Operating Expenses
-    const monthlyNOIBeforeDebt = stabilizedFunded.reduce((sum: number, inv: Investment) => {
-      const rent = inv.property?.monthlyRent || 0
-      const other = inv.property?.otherIncome || 0
-      const annualExp = inv.property?.annualExpenses || 0
-      const monthlyExp = annualExp / 12
-      return sum + Math.max((rent + other) - monthlyExp, 0)
-    }, 0)
+    const monthlyNOIBeforeDebt = stabilizedFunded.reduce(
+      (sum: number, inv: Investment) => {
+        const rent = inv.property?.monthlyRent || 0;
+        const other = inv.property?.otherIncome || 0;
+        const annualExp = inv.property?.annualExpenses || 0;
+        const monthlyExp = annualExp / 12;
+        return sum + Math.max(rent + other - monthlyExp, 0);
+      },
+      0,
+    );
 
     // Monthly NOI After Debt = Monthly NOI Before Debt - Monthly Debt Service
-    const monthlyNOIAfterDebt = monthlyNOIBeforeDebt - monthlyDebtServiceAndCondoFees
+    const monthlyNOIAfterDebt =
+      monthlyNOIBeforeDebt - monthlyDebtServiceAndCondoFees;
 
-    const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12
-    const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12
+    const yearlyNOIBeforeDebt = monthlyNOIBeforeDebt * 12;
+    const yearlyNOIAfterDebt = monthlyNOIAfterDebt * 12;
 
     // Total Original Debt (FUNDED + STABILIZED)
     const totalOriginalDebtFundedStabilized = investmentData
-      .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
-      .reduce((sum, inv) => sum + (inv.totalOriginalDebt || 0), 0)
+      .filter(
+        (inv) =>
+          inv.fundingStatus === "FUNDED" && inv.dealStatus === "STABILIZED",
+      )
+      .reduce((sum, inv) => sum + (inv.totalOriginalDebt || 0), 0);
 
     // Total Project Cost (current) = Total Original Debt (FUNDED+STABILIZED) + Total Equity Today
-    const totalProjectCost = totalOriginalDebtFundedStabilized + totalEquityToday
-    const portfolioYieldOnCost = totalProjectCost > 0 ? (yearlyNOIBeforeDebt / totalProjectCost) * 100 : 0
+    const totalProjectCost =
+      totalOriginalDebtFundedStabilized + totalEquityToday;
+    const portfolioYieldOnCost =
+      totalProjectCost > 0 ? (yearlyNOIBeforeDebt / totalProjectCost) * 100 : 0;
 
     setStats({
       totalInvested: totalInvestedOverview,
@@ -860,61 +1080,74 @@ export default function InvestorDashboard() {
       monthlyNOIAfterDebt,
       yearlyNOIBeforeDebt,
       yearlyNOIAfterDebt,
-      totalProjectCost
-    })
-  }
+      totalProjectCost,
+    });
+  };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('currentUser')
-    router.push('/investors/login')
-  }
+    sessionStorage.removeItem("currentUser");
+    router.push("/investors/login");
+  };
 
   const handleViewInvestmentDetails = (investmentId: string) => {
     // Store the current active tab before navigating
-    sessionStorage.setItem('investorDashboardActiveTab', activeView)
-    router.push(`/investors/investments/${investmentId}`)
-  }
+    sessionStorage.setItem("investorDashboardActiveTab", activeView);
+    router.push(`/investors/investments/${investmentId}`);
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const formatPercentage = (value: number) => {
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
-  }
+    return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'PENDING': return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'COMPLETED': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+      case "ACTIVE":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "PENDING":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "COMPLETED":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "SOLD":
+        return "bg-slate-50 text-slate-700 border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
-  }
+  };
 
   const getDealBadge = (dealStatus?: string) => {
     switch (dealStatus) {
-      case 'STABILIZED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'UNDER_CONSTRUCTION': return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'UNDER_CONTRACT': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+      case "STABILIZED":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "UNDER_CONSTRUCTION":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "UNDER_CONTRACT":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "SOLD":
+        return "bg-slate-50 text-slate-700 border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
-  }
+  };
 
   const getFundingBadge = (fundingStatus?: string) => {
     switch (fundingStatus) {
-      case 'FUNDED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'FUNDING': return 'bg-indigo-50 text-indigo-700 border-indigo-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
+      case "FUNDED":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "FUNDING":
+        return "bg-indigo-50 text-indigo-700 border-indigo-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -924,15 +1157,16 @@ export default function InvestorDashboard() {
             <div className="h-16 w-16 rounded-full border-4 border-blue-200"></div>
             <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
           </div>
-          <p className="mt-6 text-slate-600 font-medium">Loading your portfolio...</p>
+          <p className="mt-6 text-slate-600 font-medium">
+            Loading your portfolio...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-20 md:pb-8">
-
       {/* Premium Navigation - Desktop */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -941,24 +1175,25 @@ export default function InvestorDashboard() {
             <div className="md:hidden flex items-center">
               <h1 className="text-lg font-bold text-slate-900">Dashboard</h1>
             </div>
-            
+
             {/* Desktop: Tabs */}
             <div className="hidden md:flex space-x-1">
               {[
-                { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-                { id: 'deals', label: 'Deals', icon: HomeIcon },
-                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
-                ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
-                  ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
-                  : [])
+                { id: "overview", label: "Overview", icon: ChartBarIcon },
+                { id: "deals", label: "Deals", icon: HomeIcon },
+                { id: "analytics", label: "Analytics", icon: ChartPieIcon },
+                ...(currentUser?.role === "ADMIN" ||
+                currentUser?.role === "MANAGER"
+                  ? [{ id: "crm", label: "CRM", icon: BuildingOfficeIcon }]
+                  : []),
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id as any)}
                   className={`relative px-4 lg:px-6 py-3 lg:py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
                     activeView === tab.id
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? "text-blue-600 bg-blue-50 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <tab.icon className="h-5 w-5 inline mr-2" />
@@ -969,19 +1204,20 @@ export default function InvestorDashboard() {
                 </button>
               ))}
             </div>
-            
+
             {/* Desktop: Actions */}
             <div className="hidden md:flex items-center space-x-2">
               <button
-                onClick={() => router.push('/investors/profile')}
+                onClick={() => router.push("/investors/profile")}
                 className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <UserIcon className="h-5 w-5" />
                 <span className="text-sm font-medium">Profile</span>
               </button>
-              {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              {(currentUser?.role === "ADMIN" ||
+                currentUser?.role === "MANAGER") && (
                 <button
-                  onClick={() => router.push('/investors/contacts')}
+                  onClick={() => router.push("/investors/contacts")}
                   className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <UsersIcon className="h-5 w-5" />
@@ -998,7 +1234,9 @@ export default function InvestorDashboard() {
                 className="px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span className="text-sm font-medium hidden xl:inline">Logout</span>
+                <span className="text-sm font-medium hidden xl:inline">
+                  Logout
+                </span>
               </button>
             </div>
 
@@ -1021,23 +1259,24 @@ export default function InvestorDashboard() {
               {/* Mobile Tabs */}
               <div className="flex flex-col space-y-1">
                 {[
-                  { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-                  { id: 'deals', label: 'Deals', icon: HomeIcon },
-                  { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
-                  ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
-                    ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
-                    : [])
+                  { id: "overview", label: "Overview", icon: ChartBarIcon },
+                  { id: "deals", label: "Deals", icon: HomeIcon },
+                  { id: "analytics", label: "Analytics", icon: ChartPieIcon },
+                  ...(currentUser?.role === "ADMIN" ||
+                  currentUser?.role === "MANAGER"
+                    ? [{ id: "crm", label: "CRM", icon: BuildingOfficeIcon }]
+                    : []),
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => {
-                      setActiveView(tab.id as any)
-                      setShowMobileMenu(false)
+                      setActiveView(tab.id as any);
+                      setShowMobileMenu(false);
                     }}
                     className={`relative px-4 py-3 font-medium text-sm transition-all duration-300 rounded-xl text-left ${
                       activeView === tab.id
-                        ? 'text-blue-600 bg-blue-50 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        ? "text-blue-600 bg-blue-50 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                   >
                     <tab.icon className="h-5 w-5 inline mr-3" />
@@ -1045,24 +1284,25 @@ export default function InvestorDashboard() {
                   </button>
                 ))}
               </div>
-              
+
               {/* Mobile Actions */}
               <div className="pt-4 border-t border-slate-200/40 space-y-1">
                 <button
                   onClick={() => {
-                    router.push('/investors/profile')
-                    setShowMobileMenu(false)
+                    router.push("/investors/profile");
+                    setShowMobileMenu(false);
                   }}
                   className="w-full px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-3"
                 >
                   <UserIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">Profile</span>
                 </button>
-                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                {(currentUser?.role === "ADMIN" ||
+                  currentUser?.role === "MANAGER") && (
                   <button
                     onClick={() => {
-                      router.push('/investors/contacts')
-                      setShowMobileMenu(false)
+                      router.push("/investors/contacts");
+                      setShowMobileMenu(false);
                     }}
                     className="w-full px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-3"
                   >
@@ -1077,8 +1317,8 @@ export default function InvestorDashboard() {
                 )}
                 <button
                   onClick={() => {
-                    handleLogout()
-                    setShowMobileMenu(false)
+                    handleLogout();
+                    setShowMobileMenu(false);
                   }}
                   className="w-full px-4 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-3"
                 >
@@ -1095,23 +1335,23 @@ export default function InvestorDashboard() {
       <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/60 md:hidden z-50 safe-area-inset-bottom">
         <div className="flex items-center justify-around py-2">
           {[
-            { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-            { id: 'deals', label: 'Deals', icon: HomeIcon },
-            { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
-            ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
-              ? [{ id: 'crm', label: 'CRM', icon: BuildingOfficeIcon }] 
-              : [])
+            { id: "overview", label: "Overview", icon: ChartBarIcon },
+            { id: "deals", label: "Deals", icon: HomeIcon },
+            { id: "analytics", label: "Analytics", icon: ChartPieIcon },
+            ...(currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER"
+              ? [{ id: "crm", label: "CRM", icon: BuildingOfficeIcon }]
+              : []),
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveView(tab.id as any)}
               className={`flex flex-col items-center justify-center px-4 py-2 min-w-[60px] transition-all duration-200 ${
-                activeView === tab.id
-                  ? 'text-blue-600'
-                  : 'text-slate-500'
+                activeView === tab.id ? "text-blue-600" : "text-slate-500"
               }`}
             >
-              <tab.icon className={`h-6 w-6 mb-1 ${activeView === tab.id ? 'scale-110' : ''} transition-transform duration-200`} />
+              <tab.icon
+                className={`h-6 w-6 mb-1 ${activeView === tab.id ? "scale-110" : ""} transition-transform duration-200`}
+              />
               <span className="text-xs font-medium">{tab.label}</span>
               {activeView === tab.id && (
                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-full"></div>
@@ -1120,10 +1360,10 @@ export default function InvestorDashboard() {
           ))}
         </div>
       </div>
-          
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {activeView === 'overview' && (
+        {activeView === "overview" && (
           <>
             {/* Premium Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -1133,47 +1373,62 @@ export default function InvestorDashboard() {
                 onClick={() => {
                   // Build per-deal breakdown for the investor using the processed investments
                   const breakdown = investments
-                    .filter(inv => inv.fundingStatus === 'FUNDED')
-                    .map(inv => ({ property: inv.propertyName || inv.name || 'Deal', amount: inv.investmentAmount || 0 }))
-                    .filter(item => (item.amount || 0) > 0)
-                    .sort((a, b) => b.amount - a.amount)
-                  setInvestedBreakdown(breakdown)
-                  setShowInvestedBreakdown(true)
+                    .filter((inv) => inv.fundingStatus === "FUNDED")
+                    .map((inv) => ({
+                      property: inv.propertyName || inv.name || "Deal",
+                      amount: inv.investmentAmount || 0,
+                    }))
+                    .filter((item) => (item.amount || 0) > 0)
+                    .sort((a, b) => b.amount - a.amount);
+                  setInvestedBreakdown(breakdown);
+                  setShowInvestedBreakdown(true);
                 }}
               >
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="p-2.5 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
                     <CurrencyDollarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
+                  </div>
                   <div className="text-right">
-                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Total Invested
+                    </p>
                     <div className="flex items-center justify-end mt-1">
                       <ArrowTrendingUpIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Growing</span>
-            </div>
-          </div>
-              </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.totalInvested)}</h3>
+                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">
+                        Growing
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">
+                  {formatCurrency(stats.totalInvested)}
+                </h3>
                 <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
-          </div>
-          
+              </div>
+
               {/* Current Value */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-emerald-500/10 transition-all duration-300 md:hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="p-2.5 sm:p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
                     <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
+                  </div>
                   <div className="text-right">
-                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Current Value
+                    </p>
                     <div className="flex items-center justify-end mt-1">
                       <SparklesIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Appreciating</span>
-            </div>
-          </div>
-        </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.currentValue)}</h3>
+                      <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">
+                        Appreciating
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">
+                  {formatCurrency(stats.currentValue)}
+                </h3>
                 <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
-          </div>
+              </div>
 
               {/* Projected Value */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-indigo-500/10 transition-all duration-300 md:hover:-translate-y-1">
@@ -1182,79 +1437,110 @@ export default function InvestorDashboard() {
                     <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Projected Value</p>
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Projected Value
+                    </p>
                     <div className="flex items-center justify-end mt-1">
                       <SparklesIcon className="h-3 w-3 text-indigo-500 mr-1" />
-                      <span className="text-[10px] sm:text-xs text-indigo-600 font-medium">Includes pipeline</span>
+                      <span className="text-[10px] sm:text-xs text-indigo-600 font-medium">
+                        Includes pipeline
+                      </span>
                     </div>
                   </div>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.projectedValue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">
+                  {formatCurrency(stats.projectedValue)}
+                </h3>
                 <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
               </div>
 
               {/* Total Distributions */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-purple-500/10 transition-all duration-300 md:hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div className="p-2.5 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300" title="Portfolio Value = sum of estimated values of stabilized properties">
+                  <div
+                    className="p-2.5 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300"
+                    title="Portfolio Value = sum of estimated values of stabilized properties"
+                  >
                     <BanknotesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                          </div>
-                          <div className="text-right">
-                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Distributions</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Distributions
+                    </p>
                     <div className="flex items-center justify-end mt-1">
                       <StarIcon className="h-3 w-3 text-purple-500 mr-1" />
-                      <span className="text-[10px] sm:text-xs text-purple-600 font-medium">Cash Flow</span>
-                          </div>
-                        </div>
+                      <span className="text-[10px] sm:text-xs text-purple-600 font-medium">
+                        Cash Flow
+                      </span>
                     </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatCurrency(stats.totalDistributions)}</h3>
-                <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
                   </div>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">
+                  {formatCurrency(stats.totalDistributions)}
+                </h3>
+                <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
+              </div>
 
               {/* Average IRR */}
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/60 shadow-sm active:scale-95 md:hover:shadow-xl md:hover:shadow-orange-500/10 transition-all duration-300 md:hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="p-2.5 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl shadow-lg md:group-hover:scale-110 transition-transform duration-300">
                     <ArrowTrendingUpIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                      </div>
+                  </div>
                   <div className="text-right">
-                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
+                    <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Average IRR
+                    </p>
                     <div className="flex items-center justify-end mt-1">
                       <ChartBarIcon className="h-3 w-3 text-orange-500 mr-1" />
-                      <span className="text-[10px] sm:text-xs text-orange-600 font-medium">Performance</span>
-                      </div>
-                      </div>
+                      <span className="text-[10px] sm:text-xs text-orange-600 font-medium">
+                        Performance
+                      </span>
                     </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">{formatPercentage(stats.averageIRR)}</h3>
-                <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
                   </div>
                 </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 leading-tight">
+                  {formatPercentage(stats.averageIRR)}
+                </h3>
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
+              </div>
+            </div>
 
             {/* Portfolio Summary */}
             <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white shadow-2xl shadow-blue-500/25">
-              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8">Portfolio Summary</h2>
-              
+              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8">
+                Portfolio Summary
+              </h2>
+
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/20">
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="p-2 sm:p-2.5 bg-white/20 rounded-lg sm:rounded-xl">
                       <HomeIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="text-sm sm:text-base font-medium">Properties</span>
+                    <span className="text-sm sm:text-base font-medium">
+                      Properties
+                    </span>
                   </div>
-                  <span className="text-xl sm:text-2xl font-bold">{stats.totalProperties}</span>
+                  <span className="text-xl sm:text-2xl font-bold">
+                    {stats.totalProperties}
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/20">
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="p-2 sm:p-2.5 bg-white/20 rounded-lg sm:rounded-xl">
                       <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="text-sm sm:text-base font-medium">Square Feet</span>
+                    <span className="text-sm sm:text-base font-medium">
+                      Square Feet
+                    </span>
                   </div>
-                  <span className="text-xl sm:text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
+                  <span className="text-xl sm:text-2xl font-bold">
+                    {stats.totalSquareFeet.toLocaleString()}
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between pb-4 border-b border-white/20">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 bg-white/20 rounded-xl">
@@ -1262,9 +1548,11 @@ export default function InvestorDashboard() {
                     </div>
                     <span className="font-medium">Active Deals</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.activeInvestments}</span>
+                  <span className="text-2xl font-bold">
+                    {stats.activeInvestments}
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 bg-white/20 rounded-xl">
@@ -1272,378 +1560,503 @@ export default function InvestorDashboard() {
                     </div>
                     <span className="font-medium">Total Return</span>
                   </div>
-                  <span className="text-2xl font-bold">{formatCurrency(stats.totalReturn)}</span>
+                  <span className="text-2xl font-bold">
+                    {formatCurrency(stats.totalReturn)}
+                  </span>
                 </div>
               </div>
             </div>
-              
+
             {/* Recent Activity */}
             <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">Recent Distributions</h2>
-                  <p className="text-slate-500 font-medium">Latest cash flow activity</p>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                    Recent Distributions
+                  </h2>
+                  <p className="text-slate-500 font-medium">
+                    Latest cash flow activity
+                  </p>
                 </div>
                 <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl">
                   <BanknotesIcon className="h-6 w-6 text-white" />
                 </div>
               </div>
-              
+
               <div className="overflow-hidden rounded-2xl border border-slate-200/60">
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
                   <table className="min-w-full divide-y divide-slate-200/60">
                     <thead className="bg-slate-50/80">
                       <tr>
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Property
+                        </th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Status
+                        </th>
                       </tr>
                     </thead>
-                  <tbody className="bg-white/50 divide-y divide-slate-200/60">
-                    {investments
-                      .flatMap(inv => inv.distributions?.map(dist => ({ ...dist, propertyName: inv.propertyName })) || [])
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .slice(0, 10)
-                      .map((distribution, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                            {distribution.propertyName || 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                            {new Date(distribution.date).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                            <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
-                              {distribution.type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600">
-                            {formatCurrency(distribution.amount)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold flex items-center w-fit">
-                              <CheckCircleIcon className="h-3 w-3 mr-1" />
-                              Processed
-                            </span>
+                    <tbody className="bg-white/50 divide-y divide-slate-200/60">
+                      {investments
+                        .flatMap(
+                          (inv) =>
+                            inv.distributions?.map((dist) => ({
+                              ...dist,
+                              propertyName: inv.propertyName,
+                            })) || [],
+                        )
+                        .sort(
+                          (a, b) =>
+                            new Date(b.date).getTime() -
+                            new Date(a.date).getTime(),
+                        )
+                        .slice(0, 10)
+                        .map((distribution, idx) => (
+                          <tr
+                            key={idx}
+                            className="hover:bg-slate-50/80 transition-colors duration-200"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                              {distribution.propertyName || "N/A"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                              {new Date(distribution.date).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                              <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                                {distribution.type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600">
+                              {formatCurrency(distribution.amount)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold flex items-center w-fit">
+                                <CheckCircleIcon className="h-3 w-3 mr-1" />
+                                Processed
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      {investments.flatMap((inv) => inv.distributions || [])
+                        .length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-6 py-16 text-center text-slate-500"
+                          >
+                            <div className="p-4 bg-slate-100 rounded-2xl w-fit mx-auto mb-4">
+                              <BanknotesIcon className="h-12 w-12 text-slate-400" />
+                            </div>
+                            <p className="font-medium">No distributions yet</p>
                           </td>
                         </tr>
-                      ))}
-                    {investments.flatMap(inv => inv.distributions || []).length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-16 text-center text-slate-500">
-                          <div className="p-4 bg-slate-100 rounded-2xl w-fit mx-auto mb-4">
-                            <BanknotesIcon className="h-12 w-12 text-slate-400" />
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-                          <p className="font-medium">No distributions yet</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-          </div>
-        </div>
+            </div>
+          </>
         )}
 
-        {activeView === 'deals' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+        {activeView === "deals" && (
+          <section className="space-y-6">
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">All Deals & Properties</h2>
-                <p className="text-sm sm:text-base text-slate-500 font-medium">Complete investment portfolio</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Deals &amp; Properties
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Complete investment portfolio
+                </p>
               </div>
-              <div className="flex items-center">
-                <select
-                  value={dealFilter}
-                  onChange={(e) => setDealFilter(e.target.value as any)}
-                  className="w-full sm:w-auto px-4 py-3 sm:py-2.5 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm touch-manipulation"
+              <div className="flex items-center gap-3">
+                <label
+                  className="text-sm font-medium text-slate-600"
+                  htmlFor="deal-filter"
                 >
-                  <option value="ALL">All Status</option>
+                  Status
+                </label>
+                <select
+                  id="deal-filter"
+                  value={dealFilter}
+                  onChange={(e) =>
+                    setDealFilter(e.target.value as typeof dealFilter)
+                  }
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:w-48"
+                >
+                  <option value="ALL">All Statuses</option>
                   <option value="STABILIZED">Stabilized</option>
                   <option value="UNDER_CONSTRUCTION">Under Construction</option>
                   <option value="UNDER_CONTRACT">Under Contract</option>
                   <option value="SOLD">Sold</option>
                 </select>
               </div>
-              </div>
-              
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {investments
-                .filter(inv => dealFilter === 'ALL' ? true : (inv.dealStatus === dealFilter))
-                .map((investment) => (
-                <div
+            </header>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredInvestments.map((investment) => (
+                <article
                   key={investment.id}
-                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl sm:rounded-2xl overflow-hidden active:scale-98 md:hover:border-blue-300/60 md:hover:shadow-xl md:hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer md:hover:-translate-y-1 touch-manipulation"
-                  onClick={() => handleViewInvestmentDetails(investment.id)}
-                  onMouseEnter={() => setHoveredCard(investment.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:border-blue-300/60 hover:shadow-lg hover:shadow-blue-500/10"
                 >
-                  {/* Thumbnail Image */}
-                  {(() => {
-                    const propertyId = (investment as any).property?.id || investment.propertyId
-                    const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
-                    return thumbnail ? (
-                      <div className="relative h-40 sm:h-48 w-full overflow-hidden">
-                        <img
-                          src={thumbnail}
-                          alt={investment.propertyName || investment.propertyAddress}
-                          className="w-full h-full object-cover md:group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" />
-                      </div>
-                    ) : (
-                      <div className="h-40 sm:h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <HomeIcon className="h-10 w-10 sm:h-12 sm:w-12 text-blue-400" />
-                      </div>
-                    )
-                  })()}
-                  
-                  <div className="p-4 sm:p-6">
-                    <div className="flex items-center justify-end mb-3 sm:mb-4">
-                      <div className="flex items-center flex-wrap gap-1.5 sm:gap-2">
-                        <span className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
-                          {investment.dealStatus || 'STABILIZED'}
-                        </span>
-                        <span className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
-                          {investment.fundingStatus || 'FUNDED'}
-                        </span>
-                      </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {investment.propertyName ||
+                          investment.propertyAddress ||
+                          "Unnamed Deal"}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {investment.propertyAddress || "Address unavailable"}
+                      </p>
                     </div>
-                  
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3 md:group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
-                    {investment.propertyName || investment.propertyAddress}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4 flex items-center line-clamp-1">
-                    <MapPinIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                    <span className="truncate">{investment.propertyAddress}</span>
-                  </p>
-                  
-                  {investment.bedrooms && (
-                    <p className="text-sm text-slate-600 mb-4 font-medium">
-                      {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
-                    </p>
-                  )}
-                  
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Investment</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {(() => {
-                          // For investors or when filtering by person, show individual investment amount from entity owners
-                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
-                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
-                            const targetName = currentUser?.role === 'INVESTOR' 
-                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                              : analyticsTarget.trim().toLowerCase()
-                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
-                              (owner.userName || '').trim().toLowerCase() === targetName
-                            )
-                            if (matchingOwner && matchingOwner.investmentAmount) {
-                              return formatCurrency(matchingOwner.investmentAmount)
-                            }
-                          }
-                          return formatCurrency(investment.investmentAmount)
-                        })()}
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getDealBadge(investment.dealStatus)}`}
+                      >
+                        {investment.dealStatus || "STABILIZED"}
                       </span>
-              </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Ownership</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {(() => {
-                          // For investors or when filtering by person, show effective ownership percentage
-                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
-                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
-                            const targetName = currentUser?.role === 'INVESTOR'
-                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                              : analyticsTarget.trim().toLowerCase()
-                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
-                              (owner.userName || '').trim().toLowerCase() === targetName
-                            )
-                            if (matchingOwner && matchingOwner.ownershipPercentage) {
-                              // Calculate effective ownership: (entity ownership % of property / 100) * (investor ownership % of entity / 100) * 100
-                              // Example: If entity owns 50% of property and investor owns 51% of entity:
-                              // Effective = (50/100) * (51/100) * 100 = 25.5%
-                              const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
-                              const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
-                              const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
-                              return `${effectiveOwnership.toFixed(1)}%`
-                            }
-                          }
-                          return `${investment.ownershipPercentage}%`
-                        })()}
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getFundingBadge(investment.fundingStatus)}`}
+                      >
+                        {investment.fundingStatus || "FUNDED"}
                       </span>
-              </div>
-                  {typeof investment.estimatedCurrentDebt === 'number' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Est. Current Debt</span>
-                      <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
-          </div>
-                  )}
-                  {typeof investment.estimatedMonthlyDebtService === 'number' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Monthly Debt Service</span>
-                      <span className={`text-sm font-bold text-slate-900`}>{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
-        </div>
-      )}
-                    {investment.irr && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500 font-medium">IRR</span>
-                        <span className={`text-sm font-bold ${investment.irr > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {formatPercentage(investment.irr)}
-                        </span>
-            </div>
+                    </div>
+                  </div>
+
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-slate-600">
+                    <div className="flex flex-col">
+                      <dt className="font-medium text-slate-500">Investment</dt>
+                      <dd className="font-semibold text-slate-900">
+                        {formatCurrency(investment.investmentAmount)}
+                      </dd>
+                    </div>
+                    <div className="flex flex-col">
+                      <dt className="font-medium text-slate-500">Ownership</dt>
+                      <dd className="font-semibold text-slate-900">
+                        {typeof investment.ownershipPercentage === "number"
+                          ? `${investment.ownershipPercentage}%`
+                          : "—"}
+                      </dd>
+                    </div>
+                    <div className="flex flex-col">
+                      <dt className="font-medium text-slate-500">Est. Debt</dt>
+                      <dd className="font-semibold text-slate-900">
+                        {typeof investment.estimatedCurrentDebt === "number"
+                          ? formatCurrency(investment.estimatedCurrentDebt)
+                          : "—"}
+                      </dd>
+                    </div>
+                    <div className="flex flex-col">
+                      <dt className="font-medium text-slate-500">
+                        Monthly Debt
+                      </dt>
+                      <dd className="font-semibold text-slate-900">
+                        {typeof investment.estimatedMonthlyDebtService ===
+                        "number"
+                          ? formatCurrency(
+                              investment.estimatedMonthlyDebtService,
+                            )
+                          : "—"}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>
+                      {investment.startDate
+                        ? `Since ${new Date(investment.startDate).toLocaleDateString()}`
+                        : "Timeline pending"}
+                    </span>
+                    {typeof investment.irr === "number" && (
+                      <span
+                        className={`font-semibold ${investment.irr >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                      >
+                        IRR {formatPercentage(investment.irr)}
+                      </span>
                     )}
-              </div>
-              
-                  <div className="pt-4 border-t border-slate-200/60 flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-medium">
-                      {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
-                    </span>
-                    <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
-                      View Deal
-                      <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                    </span>
                   </div>
-                  </div>
-                </div>
+
+                  <button
+                    onClick={() => handleViewInvestmentDetails(investment.id)}
+                    className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                  >
+                    View details
+                  </button>
+                </article>
               ))}
-              </div>
-              
-            {investments.length === 0 && (
-              <div className="text-center py-20">
-                <div className="p-6 bg-slate-100 rounded-3xl w-fit mx-auto mb-6">
-                  <BuildingOfficeIcon className="h-20 w-20 text-slate-400" />
-              </div>
-                <p className="text-xl font-semibold text-slate-900 mb-2">No investments yet</p>
-                <p className="text-slate-500 font-medium">Start by creating your first deal or property</p>
+            </div>
+
+            {filteredInvestments.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-12 text-center text-slate-500">
+                No deals match the selected status.
               </div>
             )}
-        </div>
-      )}
+          </section>
+        )}
 
-        {activeView === 'analytics' && (
+        {activeView === "analytics" && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900 mb-8">Portfolio Performance</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-8">
+                  Portfolio Performance
+                </h2>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
-                    setCalcTitle('Total Equity Today (Estimated)')
-                    setCalcLines([
-                      { label: 'Current Value (Current Portfolio Value)', value: stats.currentValue },
-                      { label: '− Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
-                      { label: '− Current Debt (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
-                </div>
+                  <div
+                    className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer"
+                    onClick={() => {
+                      setCalcTitle("Total Equity Today (Estimated)");
+                      setCalcLines([
+                        {
+                          label: "Current Value (Current Portfolio Value)",
+                          value: stats.currentValue,
+                        },
+                        {
+                          label: "− Invested (FUNDED & STABILIZED)",
+                          value: -investments
+                            .filter(
+                              (i) =>
+                                i.fundingStatus === "FUNDED" &&
+                                i.dealStatus === "STABILIZED",
+                            )
+                            .reduce((s, i) => s + (i.investmentAmount || 0), 0),
+                        },
+                        {
+                          label: "− Current Debt (FUNDED & STABILIZED)",
+                          value: -investments
+                            .filter(
+                              (i) =>
+                                i.fundingStatus === "FUNDED" &&
+                                i.dealStatus === "STABILIZED",
+                            )
+                            .reduce(
+                              (s, i) => s + (i.estimatedCurrentDebt || 0),
+                              0,
+                            ),
+                        },
+                      ]);
+                      setShowCalcModal(true);
+                    }}
+                  >
+                    <div>
+                      <p
+                        className="text-sm text-slate-600 font-semibold mb-1"
+                        title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)"
+                      >
+                        Total Equity Today (Estimated)
+                      </p>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {formatCurrency((stats as any).totalEquityToday || 0)}
+                      </p>
+                    </div>
                     <ChartBarIcon className="h-16 w-16 text-blue-600" />
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer"
+                    onClick={() => {
+                      setCalcTitle("Total Projected Future Equity (Estimated)");
+                      setCalcLines([
+                        {
+                          label: "Projected Value (Includes pipeline)",
+                          value: stats.projectedValue,
+                        },
+                        {
+                          label: "− Invested (FUNDED)",
+                          value: -stats.totalInvested,
+                        },
+                        {
+                          label: "− Current Debt (FUNDED)",
+                          value: -investments
+                            .filter((i) => i.fundingStatus === "FUNDED")
+                            .reduce(
+                              (s, i) => s + (i.estimatedCurrentDebt || 0),
+                              0,
+                            ),
+                        },
+                      ]);
+                      setShowCalcModal(true);
+                    }}
+                  >
+                    <div>
+                      <p
+                        className="text-sm text-slate-600 font-semibold mb-1"
+                        title="Projected Value − Invested (FUNDED) − Debt (FUNDED)"
+                      >
+                        Total Projected Future Equity (Estimated)
+                      </p>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {formatCurrency(
+                          (stats as any).totalEquityProjected || 0,
+                        )}
+                      </p>
+                    </div>
+                    <ChartBarIcon className="h-16 w-16 text-indigo-600" />
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer"
+                    onClick={() => {
+                      setCalcTitle("Total Returns (Current)");
+                      setCalcLines([
+                        {
+                          label: "Total Equity Today (Estimated)",
+                          value: (stats as any).totalEquityToday || 0,
+                        },
+                        {
+                          label: "− Total Invested (FUNDED & STABILIZED)",
+                          value: -investments
+                            .filter(
+                              (i) =>
+                                i.fundingStatus === "FUNDED" &&
+                                i.dealStatus === "STABILIZED",
+                            )
+                            .reduce((s, i) => s + (i.investmentAmount || 0), 0),
+                        },
+                      ]);
+                      setShowCalcModal(true);
+                    }}
+                  >
+                    <div>
+                      <p className="text-sm text-slate-600 font-semibold mb-1">
+                        Total Returns
+                      </p>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {formatCurrency(stats.totalReturn)}
+                      </p>
+                    </div>
+                    <ArrowTrendingUpIcon className="h-16 w-16 text-emerald-600" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl">
+                    <div>
+                      <p className="text-sm text-slate-600 font-semibold mb-1">
+                        Cash Distributions
+                      </p>
+                      <p className="text-3xl font-bold text-slate-900">
+                        {formatCurrency(stats.totalDistributions)}
+                      </p>
+                    </div>
+                    <BanknotesIcon className="h-16 w-16 text-purple-600" />
+                  </div>
+                </div>
               </div>
 
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
-                    setCalcTitle('Total Projected Future Equity (Estimated)')
-                    setCalcLines([
-                      { label: 'Projected Value (Includes pipeline)', value: stats.projectedValue },
-                      { label: '− Invested (FUNDED)', value: -(stats.totalInvested) },
-                      { label: '− Current Debt (FUNDED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
-                </div>
-                    <ChartBarIcon className="h-16 w-16 text-indigo-600" />
-              </div>
-              
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer" onClick={() => {
-                    setCalcTitle('Total Returns (Current)')
-                    setCalcLines([
-                      { label: 'Total Equity Today (Estimated)', value: (stats as any).totalEquityToday || 0 },
-                      { label: '− Total Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1">Total Returns</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.totalReturn)}</p>
-                </div>
-                    <ArrowTrendingUpIcon className="h-16 w-16 text-emerald-600" />
-              </div>
-              
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl">
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1">Cash Distributions</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.totalDistributions)}</p>
-                </div>
-                    <BanknotesIcon className="h-16 w-16 text-purple-600" />
-                </div>
-              </div>
-              </div>
-              
               <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900 mb-8">Performance Metrics</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-8">
+                  Performance Metrics
+                </h2>
                 <div className="space-y-6">
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-blue-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-semibold text-slate-700" title="IRR excludes under construction">Average IRR</span>
-                      <span className="text-2xl font-bold text-blue-600">{formatPercentage(stats.averageIRR)}</span>
-              </div>
+                      <span
+                        className="text-sm font-semibold text-slate-700"
+                        title="IRR excludes under construction"
+                      >
+                        Average IRR
+                      </span>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {formatPercentage(stats.averageIRR)}
+                      </span>
+                    </div>
                     <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-1000" 
-                        style={{ width: `${Math.min(Math.abs(stats.averageIRR) * 10, 100)}%` }}
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${Math.min(Math.abs(stats.averageIRR) * 10, 100)}%`,
+                        }}
                       ></div>
-                      </div>
+                    </div>
                   </div>
-                  
+
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-emerald-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Total Properties</span>
-                      <span className="text-2xl font-bold text-emerald-600">{stats.totalProperties}</span>
-              </div>
-            </div>
-                  
+                      <span className="text-sm font-semibold text-slate-700">
+                        Total Properties
+                      </span>
+                      <span className="text-2xl font-bold text-emerald-600">
+                        {stats.totalProperties}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-purple-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Current Portfolio Value">Portfolio Size (Current)</span>
-                      <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalProjectCost)}</span>
-            </div>
-              </div>
-              
+                      <span
+                        className="text-sm font-semibold text-slate-700"
+                        title="Current Portfolio Value"
+                      >
+                        Portfolio Size (Current)
+                      </span>
+                      <span className="text-2xl font-bold text-purple-600">
+                        {formatCurrency(stats.totalProjectCost)}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-indigo-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Total Original Debt (FUNDED + STABILIZED) + Total Equity Today">Total Project Cost (Current)</span>
-                      <span className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalProjectCost)}</span>
-              </div>
-              </div>
-              
+                      <span
+                        className="text-sm font-semibold text-slate-700"
+                        title="Total Original Debt (FUNDED + STABILIZED) + Total Equity Today"
+                      >
+                        Total Project Cost (Current)
+                      </span>
+                      <span className="text-2xl font-bold text-indigo-600">
+                        {formatCurrency(stats.totalProjectCost)}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-rose-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Portfolio Yield on Cost</span>
-                      <span className={`text-2xl font-bold ${(stats.totalProjectCost > 0 && stats.yearlyNOIBeforeDebt / stats.totalProjectCost >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
-                        {formatPercentage(stats.totalProjectCost > 0 ? (stats.yearlyNOIBeforeDebt / stats.totalProjectCost) * 100 : 0)}
+                      <span className="text-sm font-semibold text-slate-700">
+                        Portfolio Yield on Cost
                       </span>
+                      <span
+                        className={`text-2xl font-bold ${stats.totalProjectCost > 0 && stats.yearlyNOIBeforeDebt / stats.totalProjectCost >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                      >
+                        {formatPercentage(
+                          stats.totalProjectCost > 0
+                            ? (stats.yearlyNOIBeforeDebt /
+                                stats.totalProjectCost) *
+                                100
+                            : 0,
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              </div>
-          </div>
-        </div>
             </div>
-            
+
             {/* IRR Analysis */}
             <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Deal IRR Analysis
+                </h2>
                 <div className="flex items-center gap-3">
-                  {currentUser?.role === 'ADMIN' ? (
+                  {currentUser?.role === "ADMIN" ? (
                     <>
                       <select
                         value={analyticsScope}
-                        onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
+                        onChange={(e) => {
+                          setAnalyticsScope(e.target.value as any);
+                          setAnalyticsTarget("ALL");
+                        }}
                         className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
                       >
                         <option value="ALL">All</option>
@@ -1652,40 +2065,59 @@ export default function InvestorDashboard() {
                       </select>
                       <select
                         value={analyticsTarget}
-                        onChange={(e)=>setAnalyticsTarget(e.target.value)}
-                        disabled={analyticsScope==='ALL'}
+                        onChange={(e) => setAnalyticsTarget(e.target.value)}
+                        disabled={analyticsScope === "ALL"}
                         className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
                       >
-                    <option value="ALL">All</option>
-                    {analyticsScope==='PERSON' && (() => {
-                      // Collect all individual people from direct investments and entity owners
-                      const allPeople = new Set<string>()
-                      investments.forEach(inv => {
-                        // Direct investments
-                        if ((inv as any).investorName) {
-                          allPeople.add((inv as any).investorName)
-                        }
-                        // Entity investments - get individual owners
-                        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners) {
-                          (inv as any).entityOwners.forEach((owner: any) => {
-                            if (owner.userName) {
-                              allPeople.add(owner.userName)
-                            }
-                          })
-                        }
-                      })
-                      return Array.from(allPeople).sort().map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))
-                    })()}
-                    {analyticsScope==='ENTITY' && Array.from(new Set(investments.map(inv => inv.entityName).filter(Boolean))).map(name=> (
-                      <option key={name as string} value={name as string}>{name as string}</option>
-                    ))}
-                  </select>
+                        <option value="ALL">All</option>
+                        {analyticsScope === "PERSON" &&
+                          (() => {
+                            // Collect all individual people from direct investments and entity owners
+                            const allPeople = new Set<string>();
+                            investments.forEach((inv) => {
+                              // Direct investments
+                              if ((inv as any).investorName) {
+                                allPeople.add((inv as any).investorName);
+                              }
+                              // Entity investments - get individual owners
+                              if (
+                                inv.investmentType === "ENTITY" &&
+                                (inv as any).entityOwners
+                              ) {
+                                (inv as any).entityOwners.forEach(
+                                  (owner: any) => {
+                                    if (owner.userName) {
+                                      allPeople.add(owner.userName);
+                                    }
+                                  },
+                                );
+                              }
+                            });
+                            return Array.from(allPeople)
+                              .sort()
+                              .map((name) => (
+                                <option key={name} value={name}>
+                                  {name}
+                                </option>
+                              ));
+                          })()}
+                        {analyticsScope === "ENTITY" &&
+                          Array.from(
+                            new Set(
+                              investments
+                                .map((inv) => inv.entityName)
+                                .filter(Boolean),
+                            ),
+                          ).map((name) => (
+                            <option key={name as string} value={name as string}>
+                              {name as string}
+                            </option>
+                          ))}
+                      </select>
                     </>
                   ) : (
                     <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 font-semibold">
-                      Viewing: {analyticsTarget || 'Your Investments'}
+                      Viewing: {analyticsTarget || "Your Investments"}
                     </div>
                   )}
                 </div>
@@ -1694,141 +2126,262 @@ export default function InvestorDashboard() {
                 <table className="min-w-full divide-y divide-slate-200/60">
                   <thead className="bg-slate-50/80">
                     <tr>
-                      {analyticsScope === 'PERSON' && (
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Person</th>
+                      {analyticsScope === "PERSON" && (
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Person
+                        </th>
                       )}
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Current Debt</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Start</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Complete</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Property
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Investment
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Est. Current Debt
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Monthly Debt Service
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        IRR
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Yield on Cost
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        DSCR
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Construction Start
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Construction Complete
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Proforma
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
                     {(() => {
                       // Transform investments for "By Person" view - expand entity investments into individual person rows
-                      let displayInvestments: any[] = []
-                      
-                      if (analyticsScope === 'PERSON') {
-                        investments
-                          .forEach(inv => {
-                            if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                              // Expand entity investment into individual person rows
-                              (inv as any).entityOwners.forEach((owner: any) => {
-                                // Check if this is a direct user owner
-                                if (owner.userName && owner.userId) {
-                                  // Apply person filter if specified
-                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) {
-                                    return
-                                  }
-                                  // Calculate effective ownership percentage for scaling
-                                  const entityOwnershipPct = inv.ownershipPercentage || 0
-                                  const individualOwnershipPct = owner.ownershipPercentage || 0
-                                  const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
-                                  
-                                  displayInvestments.push({
-                                    ...inv,
-                                    id: `${inv.id}_${owner.id}`,
-                                    personName: owner.userName,
-                                    investmentAmount: owner.investmentAmount || 0,
-                                    ownershipPercentage: owner.ownershipPercentage || 0,
-                                    // Scale property-level values by ownership for Analytics table
-                                    estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
-                                    estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
-                                    property: inv.property ? {
-                                      ...inv.property,
-                                      monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
-                                      otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
-                                      annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
-                                      totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
-                                      acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
-                                      constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
-                                    } : undefined
-                                  })
-                                } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
-                                  // This owner is an entity with a breakdown array - check nested investors
-                                  owner.breakdown.forEach((breakdownItem: any) => {
-                                    const breakdownLabel = (breakdownItem.label || '').trim()
+                      let displayInvestments: any[] = [];
+
+                      if (analyticsScope === "PERSON") {
+                        investments.forEach((inv) => {
+                          if (
+                            inv.investmentType === "ENTITY" &&
+                            (inv as any).entityOwners &&
+                            Array.isArray((inv as any).entityOwners)
+                          ) {
+                            // Expand entity investment into individual person rows
+                            (inv as any).entityOwners.forEach((owner: any) => {
+                              // Check if this is a direct user owner
+                              if (owner.userName && owner.userId) {
+                                // Apply person filter if specified
+                                if (
+                                  analyticsTarget !== "ALL" &&
+                                  owner.userName !== analyticsTarget
+                                ) {
+                                  return;
+                                }
+                                // Calculate effective ownership percentage for scaling
+                                const entityOwnershipPct =
+                                  inv.ownershipPercentage || 0;
+                                const individualOwnershipPct =
+                                  owner.ownershipPercentage || 0;
+                                const effectiveOwnershipPct =
+                                  (entityOwnershipPct / 100) *
+                                  (individualOwnershipPct / 100);
+
+                                displayInvestments.push({
+                                  ...inv,
+                                  id: `${inv.id}_${owner.id}`,
+                                  personName: owner.userName,
+                                  investmentAmount: owner.investmentAmount || 0,
+                                  ownershipPercentage:
+                                    owner.ownershipPercentage || 0,
+                                  // Scale property-level values by ownership for Analytics table
+                                  estimatedCurrentDebt:
+                                    (inv.estimatedCurrentDebt || 0) *
+                                    effectiveOwnershipPct,
+                                  estimatedMonthlyDebtService:
+                                    (inv.estimatedMonthlyDebtService || 0) *
+                                    effectiveOwnershipPct,
+                                  property: inv.property
+                                    ? {
+                                        ...inv.property,
+                                        monthlyRent:
+                                          (inv.property.monthlyRent || 0) *
+                                          effectiveOwnershipPct,
+                                        otherIncome:
+                                          (inv.property.otherIncome || 0) *
+                                          effectiveOwnershipPct,
+                                        annualExpenses:
+                                          (inv.property.annualExpenses || 0) *
+                                          effectiveOwnershipPct,
+                                        totalCost:
+                                          (inv.property.totalCost || 0) *
+                                          effectiveOwnershipPct,
+                                        acquisitionPrice:
+                                          (inv.property.acquisitionPrice || 0) *
+                                          effectiveOwnershipPct,
+                                        constructionCost:
+                                          (inv.property.constructionCost || 0) *
+                                          effectiveOwnershipPct,
+                                      }
+                                    : undefined,
+                                });
+                              } else if (
+                                owner.investorEntityId &&
+                                Array.isArray(owner.breakdown) &&
+                                owner.breakdown.length > 0
+                              ) {
+                                // This owner is an entity with a breakdown array - check nested investors
+                                owner.breakdown.forEach(
+                                  (breakdownItem: any) => {
+                                    const breakdownLabel = (
+                                      breakdownItem.label || ""
+                                    ).trim();
                                     // Apply person filter if specified (case-insensitive comparison)
-                                    if (analyticsTarget !== 'ALL' && breakdownLabel.toLowerCase() !== analyticsTarget.toLowerCase()) {
-                                      return
+                                    if (
+                                      analyticsTarget !== "ALL" &&
+                                      breakdownLabel.toLowerCase() !==
+                                        analyticsTarget.toLowerCase()
+                                    ) {
+                                      return;
                                     }
                                     // Calculate effective ownership: (entity % of property / 100) * (entity owner % / 100) * (breakdown item % / 100)
-                                    const entityOwnershipPct = inv.ownershipPercentage || 0
-                                    const entityOwnerPct = owner.ownershipPercentage || 0
+                                    const entityOwnershipPct =
+                                      inv.ownershipPercentage || 0;
+                                    const entityOwnerPct =
+                                      owner.ownershipPercentage || 0;
                                     // Note: breakdown items don't have ownership %, so we use the amount proportion
-                                    const breakdownTotal = owner.breakdown.reduce((sum: number, item: any) => sum + (parseFloat(item.amount || 0)), 0)
-                                    const breakdownItemPct = breakdownTotal > 0 ? (parseFloat(breakdownItem.amount || 0) / breakdownTotal) * 100 : 0
-                                    const effectiveOwnershipPct = (entityOwnershipPct / 100) * (entityOwnerPct / 100) * (breakdownItemPct / 100)
-                                    
+                                    const breakdownTotal =
+                                      owner.breakdown.reduce(
+                                        (sum: number, item: any) =>
+                                          sum + parseFloat(item.amount || 0),
+                                        0,
+                                      );
+                                    const breakdownItemPct =
+                                      breakdownTotal > 0
+                                        ? (parseFloat(
+                                            breakdownItem.amount || 0,
+                                          ) /
+                                            breakdownTotal) *
+                                          100
+                                        : 0;
+                                    const effectiveOwnershipPct =
+                                      (entityOwnershipPct / 100) *
+                                      (entityOwnerPct / 100) *
+                                      (breakdownItemPct / 100);
+
                                     displayInvestments.push({
                                       ...inv,
                                       id: `${inv.id}_${owner.id}_${breakdownItem.id || breakdownItem.label}`,
                                       personName: breakdownLabel,
-                                      investmentAmount: parseFloat(breakdownItem.amount || 0),
-                                      ownershipPercentage: effectiveOwnershipPct * 100,
+                                      investmentAmount: parseFloat(
+                                        breakdownItem.amount || 0,
+                                      ),
+                                      ownershipPercentage:
+                                        effectiveOwnershipPct * 100,
                                       // Scale property-level values by ownership for Analytics table
-                                      estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
-                                      estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
-                                      property: inv.property ? {
-                                        ...inv.property,
-                                        monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
-                                        otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
-                                        annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
-                                        totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
-                                        acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
-                                        constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
-                                      } : undefined
-                                    })
-                                  })
-                                }
-                              })
-                            } else {
-                              // Direct investment - apply person filter if specified
-                              if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) {
-                                return
+                                      estimatedCurrentDebt:
+                                        (inv.estimatedCurrentDebt || 0) *
+                                        effectiveOwnershipPct,
+                                      estimatedMonthlyDebtService:
+                                        (inv.estimatedMonthlyDebtService || 0) *
+                                        effectiveOwnershipPct,
+                                      property: inv.property
+                                        ? {
+                                            ...inv.property,
+                                            monthlyRent:
+                                              (inv.property.monthlyRent || 0) *
+                                              effectiveOwnershipPct,
+                                            otherIncome:
+                                              (inv.property.otherIncome || 0) *
+                                              effectiveOwnershipPct,
+                                            annualExpenses:
+                                              (inv.property.annualExpenses ||
+                                                0) * effectiveOwnershipPct,
+                                            totalCost:
+                                              (inv.property.totalCost || 0) *
+                                              effectiveOwnershipPct,
+                                            acquisitionPrice:
+                                              (inv.property.acquisitionPrice ||
+                                                0) * effectiveOwnershipPct,
+                                            constructionCost:
+                                              (inv.property.constructionCost ||
+                                                0) * effectiveOwnershipPct,
+                                          }
+                                        : undefined,
+                                    });
+                                  },
+                                );
                               }
-                              displayInvestments.push({
-                                ...inv,
-                                personName: (inv as any).investorName || 'Direct Investor'
-                              })
+                            });
+                          } else {
+                            // Direct investment - apply person filter if specified
+                            if (
+                              analyticsTarget !== "ALL" &&
+                              (inv as any).investorName !== analyticsTarget
+                            ) {
+                              return;
                             }
-                          })
+                            displayInvestments.push({
+                              ...inv,
+                              personName:
+                                (inv as any).investorName || "Direct Investor",
+                            });
+                          }
+                        });
                       } else {
                         // Non-person view - use existing filter logic
-                        displayInvestments = investments
-                          .filter(inv => {
-                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
-                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
-                            return true
-                          })
+                        displayInvestments = investments.filter((inv) => {
+                          if (
+                            analyticsScope === "ALL" ||
+                            analyticsTarget === "ALL"
+                          )
+                            return true;
+                          if (analyticsScope === "ENTITY")
+                            return inv.entityName === analyticsTarget;
+                          return true;
+                        });
                       }
-                      
-                      return displayInvestments
+
+                      return displayInvestments;
                     })().map((inv) => {
-                      const rent = inv.property?.monthlyRent || 0
-                      const other = inv.property?.otherIncome || 0
-                      const annualExp = inv.property?.annualExpenses || 0
-                      const monthlyExp = annualExp / 12
-                      const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                      const annualNOI = monthlyNOI * 12
-                      const totalProjectCost = (inv.property?.totalCost && inv.property?.totalCost! > 0)
-                        ? (inv.property?.totalCost as number)
-                        : ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0))
-                      const yieldOnCost = totalProjectCost > 0 ? (annualNOI / totalProjectCost) * 100 : null
-                      const annualDebtService = (inv.estimatedMonthlyDebtService || 0) * 12
-                      const dscr = annualDebtService > 0 ? (annualNOI / annualDebtService) : null
+                      const rent = inv.property?.monthlyRent || 0;
+                      const other = inv.property?.otherIncome || 0;
+                      const annualExp = inv.property?.annualExpenses || 0;
+                      const monthlyExp = annualExp / 12;
+                      const monthlyNOI = Math.max(rent + other - monthlyExp, 0);
+                      const annualNOI = monthlyNOI * 12;
+                      const totalProjectCost =
+                        inv.property?.totalCost && inv.property?.totalCost! > 0
+                          ? (inv.property?.totalCost as number)
+                          : (inv.property?.acquisitionPrice || 0) +
+                            (inv.property?.constructionCost || 0);
+                      const yieldOnCost =
+                        totalProjectCost > 0
+                          ? (annualNOI / totalProjectCost) * 100
+                          : null;
+                      const annualDebtService =
+                        (inv.estimatedMonthlyDebtService || 0) * 12;
+                      const dscr =
+                        annualDebtService > 0
+                          ? annualNOI / annualDebtService
+                          : null;
 
                       return (
-                        <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors duration-200">
-                          {analyticsScope === 'PERSON' && (
+                        <tr
+                          key={inv.id}
+                          className="hover:bg-slate-50/80 transition-colors duration-200"
+                        >
+                          {analyticsScope === "PERSON" && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                              {inv.personName || 'Unknown'}
+                              {inv.personName || "Unknown"}
                             </td>
                           )}
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
@@ -1838,25 +2391,43 @@ export default function InvestorDashboard() {
                             {formatCurrency(inv.investmentAmount)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">
-                            {typeof inv.estimatedCurrentDebt === 'number' ? formatCurrency(inv.estimatedCurrentDebt) : '—'}
+                            {typeof inv.estimatedCurrentDebt === "number"
+                              ? formatCurrency(inv.estimatedCurrentDebt)
+                              : "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">
-                            {typeof inv.estimatedMonthlyDebtService === 'number' ? formatCurrency(inv.estimatedMonthlyDebtService) : '—'}
+                            {typeof inv.estimatedMonthlyDebtService === "number"
+                              ? formatCurrency(inv.estimatedMonthlyDebtService)
+                              : "—"}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${((inv.irr || 0) >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
+                          <td
+                            className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${(inv.irr || 0) >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                          >
                             {formatPercentage(inv.irr || 0)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right">
-                            {yieldOnCost !== null ? formatPercentage(yieldOnCost) : '—'}
+                            {yieldOnCost !== null
+                              ? formatPercentage(yieldOnCost)
+                              : "—"}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
-                            {dscr !== null ? dscr.toFixed(2) : '—'}
+                          <td
+                            className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${dscr !== null && dscr < 1 ? "text-red-500" : "text-emerald-600"}`}
+                          >
+                            {dscr !== null ? dscr.toFixed(2) : "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                            {inv.property?.acquisitionDate ? new Date(inv.property.acquisitionDate).toLocaleDateString() : '—'}
+                            {inv.property?.acquisitionDate
+                              ? new Date(
+                                  inv.property.acquisitionDate,
+                                ).toLocaleDateString()
+                              : "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                            {inv.property?.constructionCompletionDate ? new Date(inv.property.constructionCompletionDate).toLocaleDateString() : '—'}
+                            {inv.property?.constructionCompletionDate
+                              ? new Date(
+                                  inv.property.constructionCompletionDate,
+                                ).toLocaleDateString()
+                              : "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                             <button
@@ -1867,109 +2438,171 @@ export default function InvestorDashboard() {
                             </button>
                           </td>
                         </tr>
-                      )
+                      );
                     })}
                     {(() => {
                       // Calculate summary stats for selected person
-                      if (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
+                      if (
+                        analyticsScope === "PERSON" &&
+                        analyticsTarget !== "ALL"
+                      ) {
                         const personInvestments = (() => {
-                          let result: any[] = []
-                          investments
-                            .forEach(inv => {
-                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                                (inv as any).entityOwners.forEach((owner: any) => {
+                          let result: any[] = [];
+                          investments.forEach((inv) => {
+                            if (
+                              inv.investmentType === "ENTITY" &&
+                              (inv as any).entityOwners &&
+                              Array.isArray((inv as any).entityOwners)
+                            ) {
+                              (inv as any).entityOwners.forEach(
+                                (owner: any) => {
                                   // Check if this is a direct user owner
-                                  if (owner.userName && owner.userId && owner.userName === analyticsTarget) {
+                                  if (
+                                    owner.userName &&
+                                    owner.userId &&
+                                    owner.userName === analyticsTarget
+                                  ) {
                                     result.push({
                                       ...inv,
                                       personName: owner.userName,
-                                      investmentAmount: owner.investmentAmount || 0,
-                                      ownershipPercentage: owner.ownershipPercentage || 0
-                                    })
-                                  } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
+                                      investmentAmount:
+                                        owner.investmentAmount || 0,
+                                      ownershipPercentage:
+                                        owner.ownershipPercentage || 0,
+                                    });
+                                  } else if (
+                                    owner.investorEntityId &&
+                                    Array.isArray(owner.breakdown) &&
+                                    owner.breakdown.length > 0
+                                  ) {
                                     // Check breakdown array for nested investors
-                                    owner.breakdown.forEach((breakdownItem: any) => {
-                                      const breakdownLabel = (breakdownItem.label || '').trim()
-                                      if (breakdownLabel.toLowerCase() === analyticsTarget.toLowerCase()) {
-                                        result.push({
-                                          ...inv,
-                                          personName: breakdownLabel,
-                                          investmentAmount: parseFloat(breakdownItem.amount || 0),
-                                          ownershipPercentage: 0 // Will be calculated in display logic
-                                        })
-                                      }
-                                    })
+                                    owner.breakdown.forEach(
+                                      (breakdownItem: any) => {
+                                        const breakdownLabel = (
+                                          breakdownItem.label || ""
+                                        ).trim();
+                                        if (
+                                          breakdownLabel.toLowerCase() ===
+                                          analyticsTarget.toLowerCase()
+                                        ) {
+                                          result.push({
+                                            ...inv,
+                                            personName: breakdownLabel,
+                                            investmentAmount: parseFloat(
+                                              breakdownItem.amount || 0,
+                                            ),
+                                            ownershipPercentage: 0, // Will be calculated in display logic
+                                          });
+                                        }
+                                      },
+                                    );
                                   }
-                                })
-                              } else {
-                                if ((inv as any).investorName === analyticsTarget) {
-                                  result.push({
-                                    ...inv,
-                                    personName: (inv as any).investorName || 'Direct Investor'
-                                  })
-                                }
+                                },
+                              );
+                            } else {
+                              if (
+                                (inv as any).investorName === analyticsTarget
+                              ) {
+                                result.push({
+                                  ...inv,
+                                  personName:
+                                    (inv as any).investorName ||
+                                    "Direct Investor",
+                                });
                               }
-                            })
-                          return result
-                        })()
+                            }
+                          });
+                          return result;
+                        })();
 
                         if (personInvestments.length > 0) {
-                          const totalInvested = personInvestments.reduce((sum, inv) => sum + (inv.investmentAmount || 0), 0)
-                          const totalDebt = personInvestments.reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
-                          const totalMonthlyDebtService = personInvestments.reduce((sum, inv) => sum + (inv.estimatedMonthlyDebtService || 0), 0)
-                          const avgIRR = personInvestments.length > 0 
-                            ? personInvestments.reduce((sum, inv) => sum + (inv.irr || 0), 0) / personInvestments.length 
-                            : 0
-                          const totalProperties = personInvestments.length
+                          const totalInvested = personInvestments.reduce(
+                            (sum, inv) => sum + (inv.investmentAmount || 0),
+                            0,
+                          );
+                          const totalDebt = personInvestments.reduce(
+                            (sum, inv) => sum + (inv.estimatedCurrentDebt || 0),
+                            0,
+                          );
+                          const totalMonthlyDebtService =
+                            personInvestments.reduce(
+                              (sum, inv) =>
+                                sum + (inv.estimatedMonthlyDebtService || 0),
+                              0,
+                            );
+                          const avgIRR =
+                            personInvestments.length > 0
+                              ? personInvestments.reduce(
+                                  (sum, inv) => sum + (inv.irr || 0),
+                                  0,
+                                ) / personInvestments.length
+                              : 0;
+                          const totalProperties = personInvestments.length;
 
                           // Calculate weighted average yield on cost
-                          let totalYield = 0
-                          let totalCost = 0
-                          personInvestments.forEach(inv => {
-                            const rent = inv.property?.monthlyRent || 0
-                            const other = inv.property?.otherIncome || 0
-                            const annualExp = inv.property?.annualExpenses || 0
-                            const monthlyExp = annualExp / 12
-                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                            const annualNOI = monthlyNOI * 12
-                            const projectCost = (inv.property?.totalCost && inv.property?.totalCost! > 0)
-                              ? (inv.property?.totalCost as number)
-                              : ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0))
+                          let totalYield = 0;
+                          let totalCost = 0;
+                          personInvestments.forEach((inv) => {
+                            const rent = inv.property?.monthlyRent || 0;
+                            const other = inv.property?.otherIncome || 0;
+                            const annualExp = inv.property?.annualExpenses || 0;
+                            const monthlyExp = annualExp / 12;
+                            const monthlyNOI = Math.max(
+                              rent + other - monthlyExp,
+                              0,
+                            );
+                            const annualNOI = monthlyNOI * 12;
+                            const projectCost =
+                              inv.property?.totalCost &&
+                              inv.property?.totalCost! > 0
+                                ? (inv.property?.totalCost as number)
+                                : (inv.property?.acquisitionPrice || 0) +
+                                  (inv.property?.constructionCost || 0);
                             if (projectCost > 0) {
-                              totalYield += (annualNOI / projectCost) * 100
-                              totalCost += projectCost
+                              totalYield += (annualNOI / projectCost) * 100;
+                              totalCost += projectCost;
                             }
-                          })
-                          const avgYieldOnCost = totalCost > 0 ? (totalYield / personInvestments.length) : 0
+                          });
+                          const avgYieldOnCost =
+                            totalCost > 0
+                              ? totalYield / personInvestments.length
+                              : 0;
 
                           // Calculate weighted average DSCR
-                          let totalDSCR = 0
-                          let dscrCount = 0
-                          personInvestments.forEach(inv => {
-                            const rent = inv.property?.monthlyRent || 0
-                            const other = inv.property?.otherIncome || 0
-                            const annualExp = inv.property?.annualExpenses || 0
-                            const monthlyExp = annualExp / 12
-                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                            const annualNOI = monthlyNOI * 12
-                            const annualDebtService = (inv.estimatedMonthlyDebtService || 0) * 12
+                          let totalDSCR = 0;
+                          let dscrCount = 0;
+                          personInvestments.forEach((inv) => {
+                            const rent = inv.property?.monthlyRent || 0;
+                            const other = inv.property?.otherIncome || 0;
+                            const annualExp = inv.property?.annualExpenses || 0;
+                            const monthlyExp = annualExp / 12;
+                            const monthlyNOI = Math.max(
+                              rent + other - monthlyExp,
+                              0,
+                            );
+                            const annualNOI = monthlyNOI * 12;
+                            const annualDebtService =
+                              (inv.estimatedMonthlyDebtService || 0) * 12;
                             if (annualDebtService > 0) {
-                              totalDSCR += annualNOI / annualDebtService
-                              dscrCount++
+                              totalDSCR += annualNOI / annualDebtService;
+                              dscrCount++;
                             }
-                          })
-                          const avgDSCR = dscrCount > 0 ? totalDSCR / dscrCount : 0
+                          });
+                          const avgDSCR =
+                            dscrCount > 0 ? totalDSCR / dscrCount : 0;
 
                           return (
                             <>
                               <tr className="bg-slate-100/50 border-t-2 border-slate-300">
-                                {analyticsScope === 'PERSON' && (
+                                {analyticsScope === "PERSON" && (
                                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
                                     TOTAL
                                   </td>
                                 )}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                                  {analyticsScope === 'PERSON' ? `${totalProperties} Properties` : 'TOTAL'}
+                                  {analyticsScope === "PERSON"
+                                    ? `${totalProperties} Properties`
+                                    : "TOTAL"}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
                                   {formatCurrency(totalInvested)}
@@ -1980,241 +2613,410 @@ export default function InvestorDashboard() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
                                   {formatCurrency(totalMonthlyDebtService)}
                                 </td>
-                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgIRR >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                <td
+                                  className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgIRR >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                                >
                                   {formatPercentage(avgIRR)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right">
-                                  {avgYieldOnCost > 0 ? formatPercentage(avgYieldOnCost) : '—'}
+                                  {avgYieldOnCost > 0
+                                    ? formatPercentage(avgYieldOnCost)
+                                    : "—"}
                                 </td>
-                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgDSCR >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                  {avgDSCR > 0 ? avgDSCR.toFixed(2) : '—'}
+                                <td
+                                  className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgDSCR >= 1 ? "text-emerald-600" : "text-red-500"}`}
+                                >
+                                  {avgDSCR > 0 ? avgDSCR.toFixed(2) : "—"}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                  <span className="text-xs text-slate-500">—</span>
+                                  <span className="text-xs text-slate-500">
+                                    —
+                                  </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                  <span className="text-xs text-slate-500">—</span>
+                                  <span className="text-xs text-slate-500">
+                                    —
+                                  </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                  <span className="text-xs text-slate-500">Summary</span>
+                                  <span className="text-xs text-slate-500">
+                                    Summary
+                                  </span>
                                 </td>
                               </tr>
                             </>
-                          )
+                          );
                         }
                       }
 
                       const displayInvestments = (() => {
-                        if (analyticsScope === 'PERSON') {
-                          let result: any[] = []
-                          investments
-                            .forEach(inv => {
-                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                                (inv as any).entityOwners.forEach((owner: any) => {
-                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) return
-                                  result.push(inv)
-                                })
-                              } else {
-                                if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) return
-                                result.push(inv)
-                              }
-                            })
-                          return result
+                        if (analyticsScope === "PERSON") {
+                          let result: any[] = [];
+                          investments.forEach((inv) => {
+                            if (
+                              inv.investmentType === "ENTITY" &&
+                              (inv as any).entityOwners &&
+                              Array.isArray((inv as any).entityOwners)
+                            ) {
+                              (inv as any).entityOwners.forEach(
+                                (owner: any) => {
+                                  if (
+                                    analyticsTarget !== "ALL" &&
+                                    owner.userName !== analyticsTarget
+                                  )
+                                    return;
+                                  result.push(inv);
+                                },
+                              );
+                            } else {
+                              if (
+                                analyticsTarget !== "ALL" &&
+                                (inv as any).investorName !== analyticsTarget
+                              )
+                                return;
+                              result.push(inv);
+                            }
+                          });
+                          return result;
                         } else {
-                          return investments.filter(inv => {
-                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
-                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
-                            return true
-                          })
+                          return investments.filter((inv) => {
+                            if (
+                              analyticsScope === "ALL" ||
+                              analyticsTarget === "ALL"
+                            )
+                              return true;
+                            if (analyticsScope === "ENTITY")
+                              return inv.entityName === analyticsTarget;
+                            return true;
+                          });
                         }
-                      })()
-                      return displayInvestments.length === 0 && (
-                        <tr>
-                          <td colSpan={analyticsScope === 'PERSON' ? 11 : 10} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
-                        </tr>
-                      )
+                      })();
+                      return (
+                        displayInvestments.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={analyticsScope === "PERSON" ? 11 : 10}
+                              className="px-6 py-12 text-center text-slate-500 text-sm"
+                            >
+                              No investments found
+                            </td>
+                          </tr>
+                        )
+                      );
                     })()}
                   </tbody>
                 </table>
-                </div>
               </div>
-              
+            </div>
+
             {/* NOI Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <div 
+              <div
                 className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm cursor-pointer hover:shadow-lg transition-shadow duration-200"
                 onClick={() => {
                   // Show revenue breakdown for stabilized, funded properties
                   const revenueBreakdown = investments
-                    .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
-                    .map(inv => ({
+                    .filter(
+                      (inv) =>
+                        inv.dealStatus === "STABILIZED" &&
+                        inv.fundingStatus === "FUNDED",
+                    )
+                    .map((inv) => ({
                       label: inv.propertyName || inv.propertyAddress,
-                      value: (inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)
+                      value:
+                        (inv.property?.monthlyRent || 0) +
+                        (inv.property?.otherIncome || 0),
                     }))
-                    .filter(item => item.value > 0)
-                  
-                  setCalcTitle('Monthly Revenue Breakdown (Stabilized & Funded Properties)')
-                  setCalcLines(revenueBreakdown)
-                  setShowCalcModal(true)
+                    .filter((item) => item.value > 0);
+
+                  setCalcTitle(
+                    "Monthly Revenue Breakdown (Stabilized & Funded Properties)",
+                  );
+                  setCalcLines(revenueBreakdown);
+                  setShowCalcModal(true);
                 }}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Revenue (Before Debt)</span>
-              </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyRevenue)}</h3>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Monthly Revenue (Before Debt)
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(stats.monthlyRevenue)}
+                </h3>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <CalculatorIcon className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service and Condo Fees</span>
-            </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyDebtServiceAndCondoFees)}</h3>
-          </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI</span>
-            </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyNOIAfterDebt)}</h3>
-          </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Yearly NOI (Before Debt)</span>
-        </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.yearlyNOIBeforeDebt)}</h3>
-            </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Yearly NOI (After Debt)</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Monthly Debt Service and Condo Fees
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(stats.monthlyDebtServiceAndCondoFees)}
+                </h3>
               </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.yearlyNOIAfterDebt)}</h3>
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Monthly NOI
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(stats.monthlyNOIAfterDebt)}
+                </h3>
               </div>
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Yearly NOI (Before Debt)
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(stats.yearlyNOIBeforeDebt)}
+                </h3>
+              </div>
+              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Yearly NOI (After Debt)
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(stats.yearlyNOIAfterDebt)}
+                </h3>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-          <CRMDealPipeline authToken={getAuthToken()} />
-        </div>
-      )}
-
-      {showProformaModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
-          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl border-0 sm:border border-slate-200 flex flex-col">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-              <div className="flex-1 min-w-0 pr-2">
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 truncate">5-Year Proforma</h3>
-                <p className="text-xs sm:text-sm text-slate-500 truncate">{proformaTitle}</p>
-              </div>
-              <button
-                onClick={() => setShowProformaModal(false)}
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
+        {activeView === "crm" &&
+          (currentUser?.role === "ADMIN" ||
+            currentUser?.role === "MANAGER") && (
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+              <CRMDealPipeline authToken={getAuthToken()} />
             </div>
-            <div className="p-4 sm:p-6 overflow-x-auto flex-1">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Year</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Revenue</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Expenses</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">NOI</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Interest</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Value</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Payoff (Y5)</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds (Net)</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-100">
-                  {proformaRows.map((r, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{r.year}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.revenue)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.expenses)}</td>
-                      <td className="px-4 py-3 text-sm text-right font-semibold text-slate-900">{formatCurrency(r.noi)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.interest)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.principal)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.debtService)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.endingDebt)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.exitSaleValue || 0)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-red-600 font-semibold">{formatCurrency(r.debtPayoff || 0)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">{formatCurrency(r.exitProceeds || 0)}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-bold ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
+          )}
+
+        {showProformaModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+            <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl border-0 sm:border border-slate-200 flex flex-col">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+                <div className="flex-1 min-w-0 pr-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 truncate">
+                    5-Year Proforma
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 truncate">
+                    {proformaTitle}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowProformaModal(false)}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-4 sm:p-6 overflow-x-auto flex-1">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                        Year
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Revenue
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Expenses
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        NOI
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Interest
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Principal
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Debt Service
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Ending Debt
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Exit Value
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Debt Payoff (Y5)
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Exit Proceeds (Net)
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        Cash Flow
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        DSCR
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                        IRR to Date
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-      {showCalcModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
-          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl border-0 sm:border border-slate-200 flex flex-col">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2 truncate">{calcTitle}</h3>
-              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-              <ul className="space-y-3">
-                {calcLines.map((l, idx) => (
-                  <li key={idx} className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">{l.label}</span>
-                    <span className={`text-sm font-semibold ${l.value < 0 ? 'text-red-600' : 'text-slate-900'}`}>{formatCurrency(l.value)}</span>
-                  </li>
-                ))}
-                <li className="flex items-center justify-between pt-3 border-t border-slate-200 mt-2">
-                  <span className="text-sm font-semibold text-slate-900">Result</span>
-                  <span className="text-sm font-bold text-blue-600">{formatCurrency(calcLines.reduce((s,l)=> s + l.value, 0))}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-      {showInvestedBreakdown && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
-          <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-lg border-0 sm:border border-slate-200 flex flex-col">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2">Total Invested Breakdown</h3>
-              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4 sm:p-6 divide-y divide-slate-100 overflow-y-auto flex-1">
-              {investedBreakdown.length > 0 ? (
-                investedBreakdown.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-3">
-                    <span className="text-slate-700 font-medium">{item.property}</span>
-                    <span className="text-slate-900 font-semibold">{formatCurrency(item.amount)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-slate-500">No funded investments found.</p>
-              )}
-              <div className="flex items-center justify-between pt-4 mt-2">
-                <span className="text-slate-600 font-medium">Total</span>
-                <span className="text-slate-900 font-bold">{formatCurrency(investedBreakdown.reduce((s, i) => s + (i.amount || 0), 0))}</span>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-100">
+                    {proformaRows.map((r, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">
+                          {r.year}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.revenue)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.expenses)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right font-semibold text-slate-900">
+                          {formatCurrency(r.noi)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.interest)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.principal)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.debtService)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.endingDebt)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">
+                          {formatCurrency(r.exitSaleValue || 0)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-red-600 font-semibold">
+                          {formatCurrency(r.debtPayoff || 0)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">
+                          {formatCurrency(r.exitProceeds || 0)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-sm text-right font-bold ${r.cashFlow >= 0 ? "text-emerald-600" : "text-red-500"}`}
+                        >
+                          {formatCurrency(r.cashFlow)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-sm text-right font-semibold ${r.dscr !== null && r.dscr < 1 ? "text-red-500" : "text-emerald-600"}`}
+                        >
+                          {r.dscr !== null ? r.dscr.toFixed(2) : "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-sm text-right font-semibold ${r.irrToDate !== null && r.irrToDate < 0 ? "text-red-500" : "text-emerald-600"}`}
+                        >
+                          {r.irrToDate !== null
+                            ? `${r.irrToDate.toFixed(1)}%`
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        {showCalcModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+            <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl border-0 sm:border border-slate-200 flex flex-col">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2 truncate">
+                  {calcTitle}
+                </h3>
+                <button
+                  onClick={() => setShowCalcModal(false)}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                <ul className="space-y-3">
+                  {calcLines.map((l, idx) => (
+                    <li key={idx} className="flex items-center justify-between">
+                      <span className="text-sm text-slate-600">{l.label}</span>
+                      <span
+                        className={`text-sm font-semibold ${l.value < 0 ? "text-red-600" : "text-slate-900"}`}
+                      >
+                        {formatCurrency(l.value)}
+                      </span>
+                    </li>
+                  ))}
+                  <li className="flex items-center justify-between pt-3 border-t border-slate-200 mt-2">
+                    <span className="text-sm font-semibold text-slate-900">
+                      Result
+                    </span>
+                    <span className="text-sm font-bold text-blue-600">
+                      {formatCurrency(
+                        calcLines.reduce((s, l) => s + l.value, 0),
+                      )}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        {showInvestedBreakdown && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-0 sm:py-10 px-0 sm:px-4">
+            <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-lg border-0 sm:border border-slate-200 flex flex-col">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex-1 pr-2">
+                  Total Invested Breakdown
+                </h3>
+                <button
+                  onClick={() => setShowInvestedBreakdown(false)}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0 touch-manipulation"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-4 sm:p-6 divide-y divide-slate-100 overflow-y-auto flex-1">
+                {investedBreakdown.length > 0 ? (
+                  investedBreakdown.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between py-3"
+                    >
+                      <span className="text-slate-700 font-medium">
+                        {item.property}
+                      </span>
+                      <span className="text-slate-900 font-semibold">
+                        {formatCurrency(item.amount)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500">No funded investments found.</p>
+                )}
+                <div className="flex items-center justify-between pt-4 mt-2">
+                  <span className="text-slate-600 font-medium">Total</span>
+                  <span className="text-slate-900 font-bold">
+                    {formatCurrency(
+                      investedBreakdown.reduce(
+                        (s, i) => s + (i.amount || 0),
+                        0,
+                      ),
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  )
-} 
+  );
+}
