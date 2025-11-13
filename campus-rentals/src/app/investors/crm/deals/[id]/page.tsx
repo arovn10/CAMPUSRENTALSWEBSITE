@@ -13,10 +13,12 @@ import {
   UserIcon,
   DocumentTextIcon,
   LinkIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline'
 import DealTaskModal from '@/components/DealTaskModal'
 import DealNoteModal from '@/components/DealNoteModal'
 import DealContactModal from '@/components/DealContactModal'
+import DealLocationMap from '@/components/DealLocationMap'
 
 interface Deal {
   id: string
@@ -122,6 +124,7 @@ export default function DealDetailPage() {
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
+  const [showLocationMap, setShowLocationMap] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
 
@@ -269,10 +272,18 @@ export default function DealDetailPage() {
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <h2 className="text-xl font-semibold text-slate-900 mb-4">Overview</h2>
               <div className="grid grid-cols-2 gap-4">
-                {deal.location && (
+                {(deal.location || deal.property?.address) && (
                   <div>
                     <p className="text-sm text-slate-500">Location</p>
-                    <p className="text-slate-900 font-medium">{deal.location}</p>
+                    <button
+                      onClick={() => setShowLocationMap(true)}
+                      className="flex items-center gap-2 text-slate-900 font-medium hover:text-blue-600 transition-colors group"
+                    >
+                      <MapPinIcon className="h-4 w-4 text-slate-400 group-hover:text-blue-600" />
+                      <span className="underline decoration-dotted">
+                        {deal.property?.address || deal.location}
+                      </span>
+                    </button>
                   </div>
                 )}
                 {deal.estimatedValue && (
@@ -533,6 +544,15 @@ export default function DealDetailPage() {
           onClose={() => setShowContactModal(false)}
           dealId={dealId}
           onSuccess={fetchDeal}
+        />
+      )}
+
+      {showLocationMap && (deal.location || deal.property?.address) && (
+        <DealLocationMap
+          isOpen={showLocationMap}
+          onClose={() => setShowLocationMap(false)}
+          address={deal.property?.address || deal.location || ''}
+          dealName={deal.name}
         />
       )}
     </div>
