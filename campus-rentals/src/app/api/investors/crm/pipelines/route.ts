@@ -7,6 +7,13 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     // Only admins and managers can access CRM
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
