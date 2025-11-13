@@ -80,6 +80,13 @@ model User {
   addedDealFollowers DealFollower[]    @relation("DealFollowerAddedBy") // Deals this user granted access to
   dealFolders       DealFolder[]      // Folders created by this user
   dealFiles         DealFile[]        // Files uploaded by this user
+  createdPipelines  DealPipeline[]    // Pipelines created by this user
+  assignedDeals     Deal[]            @relation("DealAssignee") // Deals assigned to this user
+  createdDeals      Deal[]            @relation("DealCreator") // Deals created by this user
+  assignedTasks     DealTask[]        @relation("TaskAssignee") // Tasks assigned to this user
+  createdTasks      DealTask[]        @relation("TaskCreator") // Tasks created by this user
+  activities        DealActivity[]    @relation("ActivityPerformer") // Activities performed by this user
+  dealNotes         DealNote[]        @relation("NoteCreator") // Notes created by this user
 
   @@map("users")
 }
@@ -128,6 +135,7 @@ model Property {
   followers       DealFollower[]    // Followers who can view this deal
   dealFiles       DealFile[]        // Files associated with this deal
   dealFolders     DealFolder[]      // Folders for organizing deal files
+  deals           Deal[]            // Deals linked to this property
 
   @@map("properties")
 }
@@ -739,6 +747,51 @@ enum PaymentType {
   AMORTIZING
 }
 
+// Deal Pipeline Enums
+enum DealType {
+  ACQUISITION
+  DEVELOPMENT
+  REFINANCE
+  DISPOSITION
+  PARTNERSHIP
+  OTHER
+}
+
+enum DealPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityType {
+  CREATED
+  UPDATED
+  STAGE_CHANGED
+  TASK_CREATED
+  TASK_COMPLETED
+  NOTE_ADDED
+  DOCUMENT_UPLOADED
+  CONTACT_ADDED
+  STATUS_CHANGED
+  CUSTOM
+}
+
 // Authentication and Security Models
 model PasswordResetToken {
   id        String   @id @default(cuid())
@@ -927,6 +980,8 @@ model Contact {
   // Relations
   creator           User            @relation(fields: [createdBy], references: [id])
   dealFollowers     DealFollower[]  // Deals this contact follows
+  sourcedDeals      Deal[]          @relation("DealSourceContact") // Deals this contact sourced
+  dealRelationships DealRelationship[] @relation("DealContactRelationship") // Relationships with deals
 
   @@index([email])
   @@index([createdBy])
@@ -1004,4 +1059,214 @@ model DealFile {
   @@index([propertyId])
   @@index([folderId])
   @@map("deal_files")
+}
+
+// Deal Pipeline Management (TermSheet-style)
+model DealPipeline {
+  id            String   @id @default(cuid())
+  name          String   // e.g., "Acquisition Pipeline", "Development Pipeline"
+  description   String?
+  stages        DealPipelineStage[]
+  deals         Deal[]   // Deals in this pipeline
+  isDefault     Boolean  @default(false)
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  creator       User     @relation(fields: [createdBy], references: [id])
+
+  @@map("deal_pipelines")
+}
+
+model DealPipelineStage {
+  id            String   @id @default(cuid())
+  pipelineId    String
+  name          String   // e.g., "Sourcing", "Under Contract", "Due Diligence", "Closing", "Active"
+  order         Int      // Order within pipeline
+  color         String?  // Hex color for UI
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  pipeline      DealPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deals         Deal[]   // Deals in this stage
+
+  @@unique([pipelineId, order])
+  @@index([pipelineId])
+  @@map("deal_pipeline_stages")
+}
+
+// Enhanced Deal model (extends Property concept)
+model Deal {
+  id                String   @id @default(cuid())
+  name              String   // Deal name
+  propertyId        String?  // Optional link to existing Property
+  pipelineId        String?  // Current pipeline
+  stageId           String?  // Current stage in pipeline
+  dealType          DealType @default(ACQUISITION)
+  status            DealStatus @default(UNDER_CONTRACT)
+  priority          DealPriority @default(MEDIUM)
+  
+  // Financials
+  askingPrice       Float?
+  offerPrice        Float?
+  purchasePrice     Float?
+  estimatedValue    Float?
+  capRate           Float?
+  noi               Float?
+  
+  // Dates
+  sourcedDate       DateTime?
+  underContractDate DateTime?
+  dueDiligenceEnd   DateTime?
+  closingDate       DateTime?
+  expectedClosing   DateTime?
+  
+  // Location
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?  @default("US")
+  
+  // Details
+  description       String?
+  notes             String?
+  tags              String[]  // Custom tags
+  
+  // Metadata
+  source            String?   // How deal was sourced
+  sourceContactId   String?   // Contact who sourced it
+  assignedTo        String?   // User assigned to manage this deal
+  
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  property          Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  pipeline          DealPipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  stage             DealPipelineStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  sourceContact     Contact? @relation("DealSourceContact", fields: [sourceContactId], references: [id], onDelete: SetNull)
+  assignee          User? @relation("DealAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator           User @relation("DealCreator", fields: [createdBy], references: [id])
+  tasks             DealTask[]
+  activities        DealActivity[]
+  dealNotes         DealNote[]
+  relationships     DealRelationship[]
+  dealTags         DealTag[]
+
+  @@index([pipelineId])
+  @@index([stageId])
+  @@index([propertyId])
+  @@index([assignedTo])
+  @@index([createdBy])
+  @@index([status])
+  @@map("deals")
+}
+
+// Task Management
+model DealTask {
+  id            String   @id @default(cuid())
+  dealId        String
+  title         String
+  description   String?
+  status        TaskStatus @default(PENDING)
+  priority      TaskPriority @default(MEDIUM)
+  dueDate       DateTime?
+  completedDate DateTime?
+  assignedTo    String?  // User assigned to task
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  assignee      User?    @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator       User     @relation("TaskCreator", fields: [createdBy], references: [id])
+
+  @@index([dealId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([dueDate])
+  @@map("deal_tasks")
+}
+
+// Activity Tracking
+model DealActivity {
+  id            String   @id @default(cuid())
+  dealId        String
+  activityType  ActivityType
+  title         String
+  description   String?
+  metadata      Json?    // Additional structured data
+  performedBy   String
+  createdAt     DateTime @default(now())
+
+  // Relations
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user          User     @relation("ActivityPerformer", fields: [performedBy], references: [id])
+
+  @@index([dealId])
+  @@index([performedBy])
+  @@index([activityType])
+  @@index([createdAt])
+  @@map("deal_activities")
+}
+
+// Notes on Deals
+model DealNote {
+  id            String   @id @default(cuid())
+  dealId        String
+  content       String
+  isPrivate     Boolean  @default(false) // Private notes only visible to creator
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  creator       User     @relation("NoteCreator", fields: [createdBy], references: [id])
+
+  @@index([dealId])
+  @@index([createdBy])
+  @@map("deal_notes")
+}
+
+// Deal-Contact Relationships (who is involved in the deal)
+model DealRelationship {
+  id            String   @id @default(cuid())
+  dealId        String
+  contactId     String
+  role          String   // e.g., "Broker", "Lender", "Attorney", "Inspector", "Contractor"
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact       Contact  @relation("DealContactRelationship", fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, contactId, role])
+  @@index([dealId])
+  @@index([contactId])
+  @@map("deal_relationships")
+}
+
+// Deal Tags (for filtering and organization)
+model DealTag {
+  id            String   @id @default(cuid())
+  dealId        String
+  tag           String
+  color         String?  // Optional color for UI
+  createdAt     DateTime @default(now())
+
+  // Relations
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, tag])
+  @@index([dealId])
+  @@index([tag])
+  @@map("deal_tags")
 } 
