@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-// GET /api/investors/crm/deals - Fetch all deals
+// GET /api/investors/crm/deals - Fetch all deals (shared data - investors see their deals, admins see all)
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
     
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
 
@@ -20,6 +20,50 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     const where: any = {};
+
+    // If user is investor, only show deals for properties they've invested in
+    if (user.role === 'INVESTOR') {
+      // Get property IDs where user has investments
+      const userInvestments = await prisma.investment.findMany({
+        where: { userId: user.id },
+        select: { propertyId: true },
+      });
+
+      // Get property IDs from entity investments where user is an owner
+      const entityInvestments = await prisma.entityInvestment.findMany({
+        include: {
+          entity: {
+            include: {
+              entityOwners: {
+                where: { userId: user.id },
+              },
+            },
+          },
+          entityInvestmentOwners: {
+            where: { userId: user.id },
+          },
+        },
+      });
+
+      const propertyIds = new Set<string>();
+      userInvestments.forEach((inv) => propertyIds.add(inv.propertyId));
+      entityInvestments.forEach((ei) => {
+        if (ei.entity.entityOwners.length > 0 || ei.entityInvestmentOwners.length > 0) {
+          propertyIds.add(ei.propertyId);
+        }
+      });
+
+      if (propertyIds.size === 0) {
+        return NextResponse.json([]);
+      }
+
+      where.propertyId = { in: Array.from(propertyIds) };
+    } else if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     if (pipelineId) {
       where.pipelineId = pipelineId;

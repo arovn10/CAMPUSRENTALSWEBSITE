@@ -38,6 +38,9 @@ export default function PipelinePage() {
           router.push('/investors/dashboard')
           return
         }
+        
+        // Auto-sync properties to deals
+        syncProperties(token)
       }
     } catch (error) {
       console.error('Error parsing user:', error)
@@ -46,6 +49,23 @@ export default function PipelinePage() {
       setLoading(false)
     }
   }, [router])
+
+  const syncProperties = async (token: string) => {
+    try {
+      const response = await fetch('/api/investors/crm/sync-properties', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Properties synced:', result.message)
+      }
+    } catch (error) {
+      console.error('Error syncing properties:', error)
+    }
+  }
 
   if (loading) {
     return (

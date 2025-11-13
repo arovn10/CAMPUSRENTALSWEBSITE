@@ -292,6 +292,13 @@ export default function EntityManagementPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
+          <button
+            onClick={() => router.push('/investors/dashboard')}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4 transition-colors"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+            Back to Dashboard
+          </button>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Entity Management</h1>
