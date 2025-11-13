@@ -11,126 +11,132 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  email             String   @unique
-  firstName         String
-  lastName          String
-  password          String   // Hashed password
-  role              UserRole @default(INVESTOR)
-  company           String?
-  phone             String?
-  isActive          Boolean  @default(true)
-  emailVerified     Boolean  @default(false)
-  emailVerifiedAt   DateTime?
-  lastLoginAt       DateTime?
-  loginAttempts     Int      @default(0)
-  lockedUntil       DateTime?
-  passwordResetToken String?
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  firstName            String
+  lastName             String
+  password             String // Hashed password
+  role                 UserRole  @default(INVESTOR)
+  company              String?
+  phone                String?
+  isActive             Boolean   @default(true)
+  emailVerified        Boolean   @default(false)
+  emailVerifiedAt      DateTime?
+  lastLoginAt          DateTime?
+  loginAttempts        Int       @default(0)
+  lockedUntil          DateTime?
+  passwordResetToken   String?
   passwordResetExpires DateTime?
-  twoFactorSecret   String?
-  twoFactorEnabled  Boolean  @default(false)
-  profileImage      String?
-  address           String?
-  city              String?
-  state             String?
-  zipCode           String?
-  country           String?
-  dateOfBirth       DateTime?
-  ssn               String?  // Encrypted
-  emergencyContact  String?
-  emergencyPhone    String?
+  twoFactorSecret      String?
+  twoFactorEnabled     Boolean   @default(false)
+  profileImage         String?
+  address              String?
+  city                 String?
+  state                String?
+  zipCode              String?
+  country              String?
+  dateOfBirth          DateTime?
+  ssn                  String? // Encrypted
+  emergencyContact     String?
+  emergencyPhone       String?
   // Tax and K1 fields
-  taxId             String?  // Individual Tax ID / SSN (encrypted)
-  entityName        String?  // Entity name if investing through entity
-  entityType        String?  // Type of entity (LLC, S-Corp, Partnership, etc.)
-  entityTaxId       String?  // Entity Tax ID / EIN (encrypted)
+  taxId                String? // Individual Tax ID / SSN (encrypted)
+  entityName           String? // Entity name if investing through entity
+  entityType           String? // Type of entity (LLC, S-Corp, Partnership, etc.)
+  entityTaxId          String? // Entity Tax ID / EIN (encrypted)
   // Mailing address for K1s
-  mailingAddress    String?
-  mailingCity       String?
-  mailingState      String?
-  mailingZipCode    String?
-  mailingCountry    String?  @default("US")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  mailingAddress       String?
+  mailingCity          String?
+  mailingState         String?
+  mailingZipCode       String?
+  mailingCountry       String?   @default("US")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   // Relations
-  investments        Investment[]
-  fundInvestments    FundInvestment[]
-  distributions      Distribution[]
-  documents         Document[]
-  notifications     Notification[]
-  fundContributions FundContribution[]
-  fundDistributions FundDistribution[]
-  entities          Entity[]
-  uploadedDealPhotos DealPhoto[]
-  entityOwners      EntityOwner[]
-  entityDistributions EntityDistribution[]
-  insurance         Insurance[]
-  propertyTaxes     PropertyTax[]
+  investments                Investment[]
+  fundInvestments            FundInvestment[]
+  distributions              Distribution[]
+  documents                  Document[]
+  notifications              Notification[]
+  fundContributions          FundContribution[]
+  fundDistributions          FundDistribution[]
+  entities                   Entity[]
+  uploadedDealPhotos         DealPhoto[]
+  entityOwners               EntityOwner[]
+  entityDistributions        EntityDistribution[]
+  insurance                  Insurance[]
+  propertyTaxes              PropertyTax[]
   waterfallTierDistributions WaterfallTierDistribution[]
-  entityInvestmentOwners EntityInvestmentOwner[]
-  passwordResetTokens PasswordResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  auditLogs         AuditLog[]
-  fileUploads       FileUpload[]
-  propertyLoans     PropertyLoan[]
-  propertyAccess    UserPropertyAccess[]
-  contacts          Contact[]         // Contacts created by this user
-  dealFollowers     DealFollower[]    // Deals this user follows
-  addedDealFollowers DealFollower[]    @relation("DealFollowerAddedBy") // Deals this user granted access to
-  dealFolders       DealFolder[]      // Folders created by this user
-  dealFiles         DealFile[]        // Files uploaded by this user
+  entityInvestmentOwners     EntityInvestmentOwner[]
+  passwordResetTokens        PasswordResetToken[]
+  emailVerificationTokens    EmailVerificationToken[]
+  auditLogs                  AuditLog[]
+  fileUploads                FileUpload[]
+  propertyLoans              PropertyLoan[]
+  propertyAccess             UserPropertyAccess[]
+  contacts                   Contact[] // Contacts created by this user
+  dealFollowers              DealFollower[] // Deals this user follows
+  addedDealFollowers         DealFollower[]              @relation("DealFollowerAddedBy") // Deals this user granted access to
+  dealFolders                DealFolder[] // Folders created by this user
+  dealFiles                  DealFile[] // Files uploaded by this user
+  assignedDeals              Deal[]                      @relation("DealAssignedTo") // Deals assigned to this user
+  dealTasks                  DealTask[]                  @relation("TaskAssignedTo") // Tasks assigned to this user
+  dealNotes                  DealNote[] // Notes created by this user
+  dealRelationships          DealRelationship[] // Relationships for deals
 
   @@map("users")
 }
 
 model Property {
-  id              String   @id @default(cuid())
-  propertyId      Int      @unique // External property ID
-  name            String
-  address         String
-  description     String?
-  bedrooms        Int
-  bathrooms       Int
-  price           Float
-  squareFeet      Int?
-  propertyType    PropertyType @default(SINGLE_FAMILY)
-  acquisitionDate DateTime?
+  id                         String        @id @default(cuid())
+  propertyId                 Int           @unique // External property ID
+  name                       String
+  address                    String
+  description                String?
+  bedrooms                   Int
+  bathrooms                  Int
+  price                      Float
+  squareFeet                 Int?
+  propertyType               PropertyType  @default(SINGLE_FAMILY)
+  acquisitionDate            DateTime?
   constructionCompletionDate DateTime?
-  stabilizationDate DateTime?
-  acquisitionPrice Float?
-  constructionCost Float?
-  totalCost        Float?
-  debtAmount       Float?
-  debtDetails      String?
-  currentValue    Float?
-  occupancyRate   Float?
-  monthlyRent     Float?
-  otherIncome     Float?
-  annualExpenses  Float?
-  capRate         Float?
-  dealStatus      DealStatus     @default(STABILIZED)
-  fundingStatus   FundingStatus  @default(FUNDED)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  stabilizationDate          DateTime?
+  acquisitionPrice           Float?
+  constructionCost           Float?
+  totalCost                  Float?
+  debtAmount                 Float?
+  debtDetails                String?
+  currentValue               Float?
+  occupancyRate              Float?
+  monthlyRent                Float?
+  otherIncome                Float?
+  annualExpenses             Float?
+  capRate                    Float?
+  dealStatus                 DealStatus    @default(STABILIZED)
+  fundingStatus              FundingStatus @default(FUNDED)
+  isActive                   Boolean       @default(true)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
 
   // Relations
-  investments     Investment[]
-  entityInvestments EntityInvestment[]
-  photos          PropertyPhoto[]
-  dealPhotos     DealPhoto[]
-  insurance       Insurance[]
-  propertyTaxes   PropertyTax[]
+  investments         Investment[]
+  entityInvestments   EntityInvestment[]
+  photos              PropertyPhoto[]
+  dealPhotos          DealPhoto[]
+  insurance           Insurance[]
+  propertyTaxes       PropertyTax[]
   waterfallStructures WaterfallStructure[]
-  loans           PropertyLoan[]
-  userAccess      UserPropertyAccess[]
-  followers       DealFollower[]    // Followers who can view this deal
-  dealFiles       DealFile[]        // Files associated with this deal
-  dealFolders     DealFolder[]      // Folders for organizing deal files
+  loans               PropertyLoan[]
+  userAccess          UserPropertyAccess[]
+  followers           DealFollower[] // Followers who can view this deal
+  dealFiles           DealFile[] // Files associated with this deal
+  dealFolders         DealFolder[] // Folders for organizing deal files
+  deals               Deal[] // CRM deals linked to this property
 
   @@map("properties")
 }
+
 model UserPropertyAccess {
   id         String   @id @default(cuid())
   userId     String
@@ -138,8 +144,8 @@ model UserPropertyAccess {
   createdAt  DateTime @default(now())
 
   // Relations
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, propertyId])
   @@map("user_property_access")
@@ -151,38 +157,38 @@ model Fund {
   description String?
   fundType    FundType @default(REAL_ESTATE)
   targetSize  Float?
-  currentSize Float   @default(0)
+  currentSize Float    @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  fundInvestments    FundInvestment[]
-  fundContributions  FundContribution[]
-  fundDistributions  FundDistribution[]
+  fundInvestments   FundInvestment[]
+  fundContributions FundContribution[]
+  fundDistributions FundDistribution[]
 
   @@map("funds")
 }
 
 model Investment {
-  id                String           @id @default(cuid())
-  userId            String
-  propertyId        String
-  investmentAmount  Float?           // Optional for SPECTATOR type
-  ownershipPercentage Float?         // Optional for SPECTATOR type
-  investmentType    InvestmentType   @default(INVESTOR)
-  status            InvestmentStatus @default(ACTIVE)
-  investmentDate    DateTime?        // Optional for SPECTATOR type
-  preferredReturn   Float?
-  percentOfProceeds  Float?
+  id                          String           @id @default(cuid())
+  userId                      String
+  propertyId                  String
+  investmentAmount            Float? // Optional for SPECTATOR type
+  ownershipPercentage         Float? // Optional for SPECTATOR type
+  investmentType              InvestmentType   @default(INVESTOR)
+  status                      InvestmentStatus @default(ACTIVE)
+  investmentDate              DateTime? // Optional for SPECTATOR type
+  preferredReturn             Float?
+  percentOfProceeds           Float?
   preferredDistributionMethod String?
-  paymentMethod     String?
-  externalSystem1   String?
-  externalId        String?
-  investmentDescription String?
-  receivedDate      DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  paymentMethod               String?
+  externalSystem1             String?
+  externalId                  String?
+  investmentDescription       String?
+  receivedDate                DateTime?
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
 
   // Relations
   user          User           @relation(fields: [userId], references: [id])
@@ -193,207 +199,207 @@ model Investment {
 }
 
 model FundInvestment {
-  id                String           @id @default(cuid())
-  userId            String
-  fundId            String
-  investmentAmount  Float
+  id                  String           @id @default(cuid())
+  userId              String
+  fundId              String
+  investmentAmount    Float
   ownershipPercentage Float?
-  status            InvestmentStatus @default(ACTIVE)
-  investmentDate    DateTime         @default(now())
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  status              InvestmentStatus @default(ACTIVE)
+  investmentDate      DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   // Relations
-  user              User             @relation(fields: [userId], references: [id])
-  fund              Fund             @relation(fields: [fundId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  fund Fund @relation(fields: [fundId], references: [id])
 
   @@map("fund_investments")
 }
 
 model Distribution {
-  id           String   @id @default(cuid())
-  investmentId String
-  userId       String
-  amount       Float
+  id               String           @id @default(cuid())
+  investmentId     String
+  userId           String
+  amount           Float
   distributionDate DateTime
   distributionType DistributionType @default(RENTAL_INCOME)
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  description      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   // Relations
-  investment   Investment @relation(fields: [investmentId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
+  investment Investment @relation(fields: [investmentId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
 
   @@map("distributions")
 }
 
 // Waterfall Distribution Models
 model WaterfallStructure {
-  id                    String   @id @default(cuid())
-  propertyId            String?
-  name                  String
-  description           String?
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id          String   @id @default(cuid())
+  propertyId  String?
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  property              Property? @relation(fields: [propertyId], references: [id])
-  waterfallTiers        WaterfallTier[]
+  property               Property?               @relation(fields: [propertyId], references: [id])
+  waterfallTiers         WaterfallTier[]
   waterfallDistributions WaterfallDistribution[]
 
   @@map("waterfall_structures")
 }
 
 model WaterfallTier {
-  id                    String   @id @default(cuid())
-  waterfallStructureId  String
-  tierNumber            Int
-  tierName              String
-  tierType              WaterfallTierType
-  priority              Int // Lower number = higher priority
-  returnRate            Float? // For preferred returns
-  catchUpPercentage     Float? // For catch-up tiers
-  promotePercentage     Float? // For promote tiers
-  isActive              Boolean @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String            @id @default(cuid())
+  waterfallStructureId String
+  tierNumber           Int
+  tierName             String
+  tierType             WaterfallTierType
+  priority             Int // Lower number = higher priority
+  returnRate           Float? // For preferred returns
+  catchUpPercentage    Float? // For catch-up tiers
+  promotePercentage    Float? // For promote tiers
+  isActive             Boolean           @default(true)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   // Relations
-  waterfallStructure    WaterfallStructure @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
-  tierDistributions     WaterfallTierDistribution[]
+  waterfallStructure WaterfallStructure          @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
+  tierDistributions  WaterfallTierDistribution[]
 
   @@map("waterfall_tiers")
 }
 
 model WaterfallTierDistribution {
-  id                    String   @id @default(cuid())
-  waterfallTierId       String
-  entityInvestmentId    String?
-  userId                String?
-  distributionAmount    Float
-  distributionDate      DateTime
-  distributionType      WaterfallDistributionType
-  description           String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                 String                    @id @default(cuid())
+  waterfallTierId    String
+  entityInvestmentId String?
+  userId             String?
+  distributionAmount Float
+  distributionDate   DateTime
+  distributionType   WaterfallDistributionType
+  description        String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
   // Relations
-  waterfallTier         WaterfallTier @relation(fields: [waterfallTierId], references: [id], onDelete: Cascade)
-  entityInvestment      EntityInvestment? @relation(fields: [entityInvestmentId], references: [id])
-  user                  User? @relation(fields: [userId], references: [id])
+  waterfallTier    WaterfallTier     @relation(fields: [waterfallTierId], references: [id], onDelete: Cascade)
+  entityInvestment EntityInvestment? @relation(fields: [entityInvestmentId], references: [id])
+  user             User?             @relation(fields: [userId], references: [id])
 
   @@map("waterfall_tier_distributions")
 }
 
 model WaterfallDistribution {
-  id                    String   @id @default(cuid())
-  waterfallStructureId  String
-  totalAmount           Float
-  distributionDate      DateTime
-  distributionType      WaterfallDistributionType
-  description           String?
-  isProcessed           Boolean  @default(false)
-  oldDebtAmount         Float?   // For refinancing distributions - stores old debt amount
-  oldDebtDetails        String?  // For refinancing distributions - stores old debt details
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String                    @id @default(cuid())
+  waterfallStructureId String
+  totalAmount          Float
+  distributionDate     DateTime
+  distributionType     WaterfallDistributionType
+  description          String?
+  isProcessed          Boolean                   @default(false)
+  oldDebtAmount        Float? // For refinancing distributions - stores old debt amount
+  oldDebtDetails       String? // For refinancing distributions - stores old debt details
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
 
   // Relations
-  waterfallStructure    WaterfallStructure @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
-  refinanceClosingFees  RefinanceClosingFee[]
+  waterfallStructure   WaterfallStructure    @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
+  refinanceClosingFees RefinanceClosingFee[]
 
   @@map("waterfall_distributions")
 }
 
 // Stores detailed closing fee line items for refinance distributions
 model RefinanceClosingFee {
-  id                       String   @id @default(cuid())
-  waterfallDistributionId  String
-  category                 String
-  amount                   Float
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  waterfallDistributionId String
+  category                String
+  amount                  Float
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   // Relations
-  waterfallDistribution    WaterfallDistribution @relation(fields: [waterfallDistributionId], references: [id], onDelete: Cascade)
+  waterfallDistribution WaterfallDistribution @relation(fields: [waterfallDistributionId], references: [id], onDelete: Cascade)
 
   @@map("refinance_closing_fees")
 }
 
 model FundContribution {
-  id           String   @id @default(cuid())
-  fundId       String
-  userId       String
-  amount       Float
+  id               String           @id @default(cuid())
+  fundId           String
+  userId           String
+  amount           Float
   contributionDate DateTime
   contributionType ContributionType @default(CAPITAL_CALL)
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  description      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   // Relations
-  fund         Fund     @relation(fields: [fundId], references: [id])
-  user         User     @relation(fields: [userId], references: [id])
+  fund Fund @relation(fields: [fundId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("fund_contributions")
 }
 
 model FundDistribution {
-  id           String   @id @default(cuid())
-  fundId       String
-  userId       String
-  amount       Float
+  id               String               @id @default(cuid())
+  fundId           String
+  userId           String
+  amount           Float
   distributionDate DateTime
   distributionType FundDistributionType @default(PROFIT_DISTRIBUTION)
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  description      String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   // Relations
-  fund         Fund     @relation(fields: [fundId], references: [id])
-  user         User     @relation(fields: [userId], references: [id])
+  fund Fund @relation(fields: [fundId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("fund_distributions")
 }
 
 model Document {
-  id           String       @id @default(cuid())
-  title        String
-  description  String?
-  fileName     String
-  filePath     String
-  fileSize     Int
-  mimeType     String
-  documentType DocumentType
-  entityType   EntityType
-  entityId     String
-  isPublic     Boolean      @default(false)
-  visibleToAdmin Boolean    @default(true)
-  visibleToManager Boolean  @default(true)
-  visibleToInvestor Boolean @default(true)
-  uploadedBy   String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  fileName          String
+  filePath          String
+  fileSize          Int
+  mimeType          String
+  documentType      DocumentType
+  entityType        EntityType
+  entityId          String
+  isPublic          Boolean      @default(false)
+  visibleToAdmin    Boolean      @default(true)
+  visibleToManager  Boolean      @default(true)
+  visibleToInvestor Boolean      @default(true)
+  uploadedBy        String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   // Relations
-  user         User         @relation(fields: [uploadedBy], references: [id])
+  user User @relation(fields: [uploadedBy], references: [id])
 
   @@map("documents")
 }
 
 model PropertyPhoto {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   propertyId String
   photoUrl   String
   photoType  PhotoType @default(EXTERIOR)
-  isPrimary  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isPrimary  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
-  property   Property @relation(fields: [propertyId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
 
   @@map("property_photos")
 }
@@ -409,7 +415,7 @@ model Notification {
   updatedAt DateTime         @updatedAt
 
   // Relations
-  user      User             @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
 }
@@ -428,95 +434,95 @@ model Entity {
   updatedAt     DateTime   @updatedAt
 
   // Relations
-  createdBy     String
-  user          User       @relation(fields: [createdBy], references: [id])
-  entityInvestments EntityInvestment[]
-  entityOwners  EntityOwner[]
+  createdBy                      String
+  user                           User                    @relation(fields: [createdBy], references: [id])
+  entityInvestments              EntityInvestment[]
+  entityOwners                   EntityOwner[]
   entityInvestmentOwnerInvestors EntityInvestmentOwner[] @relation("EntityToEntityInvestmentOwner")
-  investmentsAsEntityInvestor EntityOwner[] @relation("EntityToEntityInvestor")
+  investmentsAsEntityInvestor    EntityOwner[]           @relation("EntityToEntityInvestor")
 
   @@map("entities")
 }
 
 model EntityInvestment {
-  id                String           @id @default(cuid())
-  entityId          String
-  propertyId        String
-  investmentAmount  Float
+  id                  String           @id @default(cuid())
+  entityId            String
+  propertyId          String
+  investmentAmount    Float
   ownershipPercentage Float
-  status            InvestmentStatus @default(ACTIVE)
-  investmentDate    DateTime         @default(now())
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  status              InvestmentStatus @default(ACTIVE)
+  investmentDate      DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   // Relations
-  entity            Entity           @relation(fields: [entityId], references: [id])
-  property          Property         @relation(fields: [propertyId], references: [id])
-  entityDistributions EntityDistribution[]
+  entity                     Entity                      @relation(fields: [entityId], references: [id])
+  property                   Property                    @relation(fields: [propertyId], references: [id])
+  entityDistributions        EntityDistribution[]
   waterfallTierDistributions WaterfallTierDistribution[]
-  entityInvestmentOwners EntityInvestmentOwner[]
+  entityInvestmentOwners     EntityInvestmentOwner[]
 
   @@map("entity_investments")
 }
 
 model EntityOwner {
-  id                String   @id @default(cuid())
-  entityId          String
-  userId            String?
-  investorEntityId  String?
+  id                  String   @id @default(cuid())
+  entityId            String
+  userId              String?
+  investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount  Float
-  breakdown         Json?    // Breakdown of entity member investments for this specific deal
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  investmentAmount    Float
+  breakdown           Json? // Breakdown of entity member investments for this specific deal
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
-  entity            Entity   @relation(fields: [entityId], references: [id])
-  user              User?    @relation(fields: [userId], references: [id])
-  investorEntity    Entity?  @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
+  entity         Entity  @relation(fields: [entityId], references: [id])
+  user           User?   @relation(fields: [userId], references: [id])
+  investorEntity Entity? @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
 
   @@map("entity_owners")
 }
 
 // Per-property owners for an entity investment (does not change global entity membership)
 model EntityInvestmentOwner {
-  id                   String   @id @default(cuid())
-  entityInvestmentId   String
-  userId               String?
-  investorEntityId     String?
-  ownershipPercentage  Float
-  investmentAmount     Float
-  breakdown            Json?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  entityInvestmentId  String
+  userId              String?
+  investorEntityId    String?
+  ownershipPercentage Float
+  investmentAmount    Float
+  breakdown           Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
-  entityInvestment     EntityInvestment @relation(fields: [entityInvestmentId], references: [id], onDelete: Cascade)
-  user                 User?            @relation(fields: [userId], references: [id])
-  investorEntity       Entity?          @relation("EntityToEntityInvestmentOwner", fields: [investorEntityId], references: [id])
+  entityInvestment EntityInvestment @relation(fields: [entityInvestmentId], references: [id], onDelete: Cascade)
+  user             User?            @relation(fields: [userId], references: [id])
+  investorEntity   Entity?          @relation("EntityToEntityInvestmentOwner", fields: [investorEntityId], references: [id])
 
   @@map("entity_investment_owners")
 }
 
 model DealPhoto {
-  id            String   @id @default(cuid())
-  propertyId    String   // Property/deal ID - photos are linked to the property, not individual investments
-  photoUrl      String   // S3 URL
-  s3Key         String   // S3 object key for deletion
-  fileName      String
-  description   String?
-  displayOrder  Int      @default(0) // Order for display
-  isThumbnail   Boolean  @default(false) // Thumbnail photo for the deal
-  fileSize      Int?
-  mimeType      String?
-  uploadedBy    String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  propertyId   String // Property/deal ID - photos are linked to the property, not individual investments
+  photoUrl     String // S3 URL
+  s3Key        String // S3 object key for deletion
+  fileName     String
+  description  String?
+  displayOrder Int      @default(0) // Order for display
+  isThumbnail  Boolean  @default(false) // Thumbnail photo for the deal
+  fileSize     Int?
+  mimeType     String?
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  uploader      User     @relation(fields: [uploadedBy], references: [id])
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  uploader User     @relation(fields: [uploadedBy], references: [id])
 
   @@index([propertyId])
   @@index([propertyId, displayOrder])
@@ -524,39 +530,39 @@ model DealPhoto {
 }
 
 model EntityDistribution {
-  id           String   @id @default(cuid())
+  id                 String           @id @default(cuid())
   entityInvestmentId String
-  userId       String
-  amount       Float
-  distributionDate DateTime
-  distributionType DistributionType @default(RENTAL_INCOME)
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userId             String
+  amount             Float
+  distributionDate   DateTime
+  distributionType   DistributionType @default(RENTAL_INCOME)
+  description        String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   // Relations
   entityInvestment EntityInvestment @relation(fields: [entityInvestmentId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
 
   @@map("entity_distributions")
 }
 
 model Insurance {
-  id              String   @id @default(cuid())
-  propertyId      String
-  provider        String
-  policyNumber    String
-  annualPremium   Float
-  coverageAmount  Float
-  renewalDate     DateTime
-  notes           String?
-  createdBy       String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  propertyId     String
+  provider       String
+  policyNumber   String
+  annualPremium  Float
+  coverageAmount Float
+  renewalDate    DateTime
+  notes          String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@map("insurance")
 }
@@ -572,35 +578,35 @@ model PropertyTax {
   updatedAt         DateTime @updatedAt
 
   // Relations
-  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user              User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@map("property_taxes")
 }
 
 model PropertyLoan {
-  id                String   @id @default(cuid())
+  id                String      @id @default(cuid())
   propertyId        String
-  lenderName        String   // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
-  accountNumber     String?  // Account number or loan identifier
-  originalAmount    Float    // Original loan amount when first taken
-  currentBalance    Float    // Current outstanding balance
-  interestRate      Float?   // Annual interest rate (e.g., 5.5 for 5.5%)
+  lenderName        String // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
+  accountNumber     String? // Account number or loan identifier
+  originalAmount    Float // Original loan amount when first taken
+  currentBalance    Float // Current outstanding balance
+  interestRate      Float? // Annual interest rate (e.g., 5.5 for 5.5%)
   loanDate          DateTime? // Date loan was originated
   maturityDate      DateTime? // Loan maturity date
-  monthlyPayment    Float?   // Monthly payment amount
-  loanType          String?  // e.g., "Mortgage", "Construction Loan", "Line of Credit"
+  monthlyPayment    Float? // Monthly payment amount
+  loanType          String? // e.g., "Mortgage", "Construction Loan", "Line of Credit"
   paymentType       PaymentType @default(AMORTIZING) // Interest-Only vs Amortizing
-  amortizationYears Int?       // Amortization term in years when amortizing
-  isActive          Boolean  @default(true)
-  notes             String?  // Additional notes about the loan
+  amortizationYears Int? // Amortization term in years when amortizing
+  isActive          Boolean     @default(true)
+  notes             String? // Additional notes about the loan
   createdBy         String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   // Relations
-  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user              User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@map("property_loans")
 }
@@ -749,7 +755,7 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
 }
@@ -763,59 +769,59 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_verification_tokens")
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String
-  action      String
-  resource    String
-  resourceId  String?
-  details     Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
   // Relations
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
 }
 
 // File Management Models
 model FileUpload {
-  id            String   @id @default(cuid())
-  userId        String
-  fileName      String
-  originalName  String
-  filePath      String
-  fileSize      Int
-  mimeType      String
-  fileHash      String   @unique
-  category      FileCategory
-  isPublic      Boolean  @default(false)
-  metadata      Json?
-  uploadedAt    DateTime @default(now())
-  expiresAt     DateTime?
+  id           String       @id @default(cuid())
+  userId       String
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  fileHash     String       @unique
+  category     FileCategory
+  isPublic     Boolean      @default(false)
+  metadata     Json?
+  uploadedAt   DateTime     @default(now())
+  expiresAt    DateTime?
 
   // Relations
-  user          User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("file_uploads")
 }
 
 model FileShare {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   fileId      String
   sharedBy    String
   sharedWith  String?
-  shareToken  String   @unique
+  shareToken  String          @unique
   permissions FilePermissions
   expiresAt   DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
 
   @@map("file_shares")
 }
@@ -836,16 +842,16 @@ model EmailTemplate {
 }
 
 model EmailLog {
-  id          String   @id @default(cuid())
-  to          String
-  from        String
-  subject     String
-  templateId  String?
-  status      EmailStatus
-  sentAt      DateTime?
+  id           String      @id @default(cuid())
+  to           String
+  from         String
+  subject      String
+  templateId   String?
+  status       EmailStatus
+  sentAt       DateTime?
   errorMessage String?
-  metadata    Json?
-  createdAt   DateTime @default(now())
+  metadata     Json?
+  createdAt    DateTime    @default(now())
 
   @@map("email_logs")
 }
@@ -906,27 +912,28 @@ enum AuditAction {
 
 // Contact directory for non-investor contacts (bankers, advisors, etc.)
 model Contact {
-  id                String   @id @default(cuid())
-  firstName         String
-  lastName          String
-  email             String?
-  phone             String?
-  company           String?
-  title             String?
-  address           String?
-  city              String?
-  state             String?
-  zipCode           String?
-  country           String?  @default("US")
-  notes             String?
-  tags              String[]  // e.g., ["Banker", "Advisor", "Attorney"]
-  createdBy         String   // User who created this contact
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  company   String?
+  title     String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  country   String?  @default("US")
+  notes     String?
+  tags      String[] // e.g., ["Banker", "Advisor", "Attorney"]
+  createdBy String // User who created this contact
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  creator           User            @relation(fields: [createdBy], references: [id])
-  dealFollowers     DealFollower[]  // Deals this contact follows
+  creator           User               @relation(fields: [createdBy], references: [id])
+  dealFollowers     DealFollower[] // Deals this contact follows
+  dealRelationships DealRelationship[] // Relationships in deals
 
   @@index([email])
   @@index([createdBy])
@@ -935,21 +942,21 @@ model Contact {
 
 // Deal followers - non-investors who have access to view a deal
 model DealFollower {
-  id                String   @id @default(cuid())
-  propertyId        String   // The deal/property they follow
-  contactId         String?  // If following as a contact
-  userId            String?  // If following as a user (for existing users who aren't investors)
-  accessLevel       String   @default("VIEW_ONLY") // VIEW_ONLY, DOCUMENTS, etc.
-  notes             String?   // Why they have access
-  addedBy           String    // User who granted access
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  propertyId  String // The deal/property they follow
+  contactId   String? // If following as a contact
+  userId      String? // If following as a user (for existing users who aren't investors)
+  accessLevel String   @default("VIEW_ONLY") // VIEW_ONLY, DOCUMENTS, etc.
+  notes       String? // Why they have access
+  addedBy     String // User who granted access
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  property          Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  contact           Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addedByUser       User      @relation("DealFollowerAddedBy", fields: [addedBy], references: [id])
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedByUser User     @relation("DealFollowerAddedBy", fields: [addedBy], references: [id])
 
   @@unique([propertyId, contactId])
   @@unique([propertyId, userId])
@@ -961,21 +968,21 @@ model DealFollower {
 
 // Deal-specific file management with folder support
 model DealFolder {
-  id            String   @id @default(cuid())
-  propertyId    String   // The deal/property this folder belongs to
-  name          String
-  parentFolderId String?  // For nested folders
-  description   String?
-  createdBy     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  propertyId     String // The deal/property this folder belongs to
+  name           String
+  parentFolderId String? // For nested folders
+  description    String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  parentFolder  DealFolder? @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
-  subFolders    DealFolder[] @relation("FolderHierarchy")
-  files         DealFile[]
-  creator       User      @relation(fields: [createdBy], references: [id])
+  property     Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  parentFolder DealFolder?  @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  subFolders   DealFolder[] @relation("FolderHierarchy")
+  files        DealFile[]
+  creator      User         @relation(fields: [createdBy], references: [id])
 
   @@index([propertyId])
   @@index([parentFolderId])
@@ -983,25 +990,207 @@ model DealFolder {
 }
 
 model DealFile {
-  id            String   @id @default(cuid())
-  propertyId    String   // The deal/property this file belongs to
-  folderId     String?  // Optional folder organization
-  fileName      String
-  originalName  String
-  filePath      String   // S3 URL or local path
-  fileSize      Int
-  mimeType      String
-  description   String?
-  uploadedBy    String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  propertyId   String // The deal/property this file belongs to
+  folderId     String? // Optional folder organization
+  fileName     String
+  originalName String
+  filePath     String // S3 URL or local path
+  fileSize     Int
+  mimeType     String
+  description  String?
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  folder        DealFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  uploader      User      @relation(fields: [uploadedBy], references: [id])
+  property Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  folder   DealFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader User        @relation(fields: [uploadedBy], references: [id])
 
   @@index([propertyId])
   @@index([folderId])
   @@map("deal_files")
-} 
+}
+
+// CRM Deal Pipeline Models
+model DealPipeline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  stages DealPipelineStage[]
+  deals  Deal[]
+
+  @@map("deal_pipelines")
+}
+
+model DealPipelineStage {
+  id          String   @id @default(cuid())
+  pipelineId  String
+  name        String
+  description String?
+  order       Int // Order within pipeline
+  color       String? // Hex color for Kanban display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pipeline DealPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deals    Deal[]
+
+  @@index([pipelineId])
+  @@map("deal_pipeline_stages")
+}
+
+model Deal {
+  id                 String       @id @default(cuid())
+  name               String
+  dealType           DealType     @default(ACQUISITION)
+  status             String       @default("NEW") // Custom status string
+  priority           DealPriority @default(MEDIUM)
+  pipelineId         String?
+  stageId            String?
+  propertyId         String? // Link to existing property if applicable
+  description        String?
+  location           String?
+  estimatedValue     Float?
+  estimatedCloseDate DateTime?
+  actualCloseDate    DateTime?
+  source             String? // Where the deal came from
+  assignedToId       String? // User assigned to manage this deal
+  tags               String[] // Array of tag strings
+  metadata           Json? // Additional flexible data
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  // Relations
+  pipeline      DealPipeline?      @relation(fields: [pipelineId], references: [id])
+  stage         DealPipelineStage? @relation(fields: [stageId], references: [id])
+  property      Property?          @relation(fields: [propertyId], references: [id])
+  assignedTo    User?              @relation("DealAssignedTo", fields: [assignedToId], references: [id])
+  tasks         DealTask[]
+  notes         DealNote[]
+  relationships DealRelationship[]
+  dealTags      DealTag[]
+
+  @@index([pipelineId])
+  @@index([stageId])
+  @@index([propertyId])
+  @@index([assignedToId])
+  @@map("deals")
+}
+
+model DealTask {
+  id           String       @id @default(cuid())
+  dealId       String
+  title        String
+  description  String?
+  status       TaskStatus   @default(TODO)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  assignedToId String?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  deal       Deal  @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+
+  @@index([dealId])
+  @@index([assignedToId])
+  @@map("deal_tasks")
+}
+
+model DealNote {
+  id          String   @id @default(cuid())
+  dealId      String
+  content     String
+  isPrivate   Boolean  @default(false) // Private notes only visible to creator
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deal      Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([dealId])
+  @@index([createdById])
+  @@map("deal_notes")
+}
+
+model DealRelationship {
+  id        String   @id @default(cuid())
+  dealId    String
+  contactId String? // Link to Contact
+  userId    String? // Link to User
+  role      String // e.g., "Banker", "Attorney", "Broker", "Advisor"
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  deal    Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([contactId])
+  @@index([userId])
+  @@map("deal_relationships")
+}
+
+model DealTag {
+  id        String   @id @default(cuid())
+  dealId    String
+  tag       String
+  createdAt DateTime @default(now())
+
+  // Relations
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, tag])
+  @@index([dealId])
+  @@index([tag])
+  @@map("deal_tags")
+}
+
+// CRM Enums
+enum DealType {
+  ACQUISITION
+  DEVELOPMENT
+  REFINANCE
+  DISPOSITION
+  PARTNERSHIP
+  OTHER
+}
+
+enum DealPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
