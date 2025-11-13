@@ -92,8 +92,10 @@ export async function POST(request: NextRequest) {
 
     const importedDeals = [];
     const skippedDeals = [];
+    const errors = [];
 
     for (const property of properties) {
+      try {
       // Check if deal already exists for this property
       const existingDeal = await prisma.deal.findFirst({
         where: {
@@ -129,15 +131,18 @@ export async function POST(request: NextRequest) {
         ? property.address.split(',').slice(-2).join(',').trim() // Get city, state
         : null;
 
+      // Convert enum to string for status field
+      const statusString = property.dealStatus ? String(property.dealStatus) : 'STABILIZED';
+
       // Create deal
       const deal = await prisma.deal.create({
         data: {
           name: property.name,
           dealType: dealType as any,
-          status: property.dealStatus || 'STABILIZED',
+          status: statusString,
           priority: priority as any,
-          pipelineId: targetPipelineId,
-          stageId: targetStageId,
+          pipelineId: targetPipelineId || undefined,
+          stageId: targetStageId || undefined,
           propertyId: property.id,
           description: property.description || undefined,
           location: location || undefined,
@@ -145,7 +150,7 @@ export async function POST(request: NextRequest) {
           estimatedCloseDate: property.acquisitionDate || undefined,
           actualCloseDate: property.dealStatus === 'SOLD' ? property.acquisitionDate : undefined,
           source: 'Imported from Properties',
-          tags: property.dealStatus ? [property.dealStatus] : [],
+          tags: property.dealStatus ? [String(property.dealStatus)] : [],
         },
         include: {
           property: {
@@ -159,19 +164,29 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      importedDeals.push(deal);
+        importedDeals.push(deal);
+      } catch (error: any) {
+        console.error(`Error importing property ${property.id} (${property.name}):`, error);
+        errors.push({
+          propertyId: property.id,
+          propertyName: property.name,
+          error: error.message || 'Unknown error',
+        });
+      }
     }
 
     return NextResponse.json({
       success: true,
       imported: importedDeals.length,
       skipped: skippedDeals.length,
+      errors: errors.length,
       importedDeals: importedDeals.map((d) => ({
         id: d.id,
         name: d.name,
         propertyId: d.propertyId,
       })),
       skippedDeals,
+      errorDetails: errors,
     });
   } catch (error: any) {
     console.error('Error importing properties:', error);

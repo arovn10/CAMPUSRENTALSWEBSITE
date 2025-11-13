@@ -91,6 +91,8 @@ export default function CRMDealPipeline() {
   const [importResult, setImportResult] = useState<{
     imported: number
     skipped: number
+    errors?: number
+    errorDetails?: Array<{ propertyName: string; error: string }>
   } | null>(null)
 
   useEffect(() => {
@@ -232,7 +234,8 @@ export default function CRMDealPipeline() {
         setShowImportModal(true)
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to import properties')
+        console.error('Import error:', error)
+        alert(error.error || error.details || 'Failed to import properties')
       }
     } catch (error) {
       console.error('Error importing properties:', error)
@@ -593,6 +596,22 @@ export default function CRMDealPipeline() {
                   <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                     <span className="text-sm font-medium text-slate-700">Skipped (already exist)</span>
                     <span className="text-lg font-bold text-yellow-600">{importResult.skipped}</span>
+                  </div>
+                )}
+                {importResult.errors && importResult.errors > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <span className="text-sm font-medium text-slate-700">Errors</span>
+                    <span className="text-lg font-bold text-red-600">{importResult.errors}</span>
+                  </div>
+                )}
+                {importResult.errorDetails && importResult.errorDetails.length > 0 && (
+                  <div className="mt-4 p-3 bg-red-50 rounded-lg max-h-40 overflow-y-auto">
+                    <p className="text-xs font-semibold text-red-700 mb-2">Error Details:</p>
+                    {importResult.errorDetails.map((err, idx) => (
+                      <p key={idx} className="text-xs text-red-600">
+                        {err.propertyName}: {err.error}
+                      </p>
+                    ))}
                   </div>
                 )}
               </div>
