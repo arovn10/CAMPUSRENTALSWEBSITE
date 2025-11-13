@@ -31,8 +31,10 @@ import {
   ExclamationTriangleIcon,
   ArrowUpRightIcon,
   SparklesIcon,
-  StarIcon
+  StarIcon,
+  BriefcaseIcon
 } from '@heroicons/react/24/outline'
+import CRMDealPipeline from '@/components/CRMDealPipeline'
 
 interface Investment {
   id: string
@@ -156,7 +158,7 @@ export default function InvestorDashboard() {
     totalProjectCost: 0
   })
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics' | 'crm'>('overview')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
@@ -179,8 +181,8 @@ export default function InvestorDashboard() {
       
       // Restore active tab from sessionStorage if available
       const savedTab = sessionStorage.getItem('investorDashboardActiveTab')
-      if (savedTab && ['overview', 'deals', 'analytics'].includes(savedTab)) {
-        setActiveView(savedTab as 'overview' | 'deals' | 'analytics')
+      if (savedTab && ['overview', 'deals', 'analytics', 'crm'].includes(savedTab)) {
+        setActiveView(savedTab as 'overview' | 'deals' | 'analytics' | 'crm')
       }
       
       // For investors (non-admin), automatically filter by their name
@@ -932,11 +934,17 @@ export default function InvestorDashboard() {
               {[
                 { id: 'overview', label: 'Overview', icon: ChartBarIcon },
                 { id: 'deals', label: 'Deals', icon: HomeIcon },
-                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon }
+                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
+                ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
+                  ? [{ id: 'crm', label: 'CRM', icon: BriefcaseIcon }]
+                  : [])
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveView(tab.id as any)}
+                  onClick={() => {
+                    setActiveView(tab.id as any)
+                    sessionStorage.setItem('investorDashboardActiveTab', tab.id)
+                  }}
                   className={`relative px-6 py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
                     activeView === tab.id
                       ? 'text-blue-600 bg-blue-50 shadow-sm'
@@ -2015,6 +2023,11 @@ export default function InvestorDashboard() {
               </table>
             </div>
           </div>
+        </div>
+      )}
+      {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <CRMDealPipeline />
         </div>
       )}
       {showCalcModal && (
