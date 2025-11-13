@@ -84,6 +84,7 @@ model User {
   dealTasks                  DealTask[]                  @relation("TaskAssignedTo") // Tasks assigned to this user
   dealNotes                  DealNote[] // Notes created by this user
   dealRelationships          DealRelationship[] // Relationships for deals
+  dueDiligenceItems          DueDiligenceItem[]          @relation("DueDiligenceAssignedTo") // Due diligence items assigned to this user
 
   @@map("users")
 }
@@ -133,6 +134,7 @@ model Property {
   dealFiles           DealFile[] // Files associated with this deal
   dealFolders         DealFolder[] // Folders for organizing deal files
   deals               Deal[] // CRM deals linked to this property
+  vendorRelationships VendorRelationship[]
 
   @@map("properties")
 }
@@ -385,6 +387,7 @@ model Document {
 
   // Relations
   user User @relation(fields: [uploadedBy], references: [id])
+  vendorRelationships VendorRelationship[]
 
   @@map("documents")
 }
@@ -440,6 +443,7 @@ model Entity {
   entityOwners                   EntityOwner[]
   entityInvestmentOwnerInvestors EntityInvestmentOwner[] @relation("EntityToEntityInvestmentOwner")
   investmentsAsEntityInvestor    EntityOwner[]           @relation("EntityToEntityInvestor")
+  vendorRelationships            VendorRelationship[]
 
   @@map("entities")
 }
@@ -934,6 +938,7 @@ model Contact {
   creator           User               @relation(fields: [createdBy], references: [id])
   dealFollowers     DealFollower[] // Deals this contact follows
   dealRelationships DealRelationship[] // Relationships in deals
+  vendorRelationships VendorRelationship[]
 
   @@index([email])
   @@index([createdBy])
@@ -1067,23 +1072,41 @@ model Deal {
   assignedToId       String? // User assigned to manage this deal
   tags               String[] // Array of tag strings
   metadata           Json? // Additional flexible data
+  // TermSheet Pipeline Fields
+  section            String?      @default("ACQUISITION") // ACQUISITION, DEVELOPMENT, ASSET_MANAGEMENT
+  underwritingData   Json? // Underwriting calculations and data
+  dueDiligenceStatus String?      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  budgetedCost       Float?
+  actualCost         Float?
+  startDate          DateTime?
+  completionDate     DateTime?
+  occupancyRate      Float?
+  noi                Float?
+  capRate            Float?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
   // Relations
-  pipeline      DealPipeline?      @relation(fields: [pipelineId], references: [id])
-  stage         DealPipelineStage? @relation(fields: [stageId], references: [id])
-  property      Property?          @relation(fields: [propertyId], references: [id])
-  assignedTo    User?              @relation("DealAssignedTo", fields: [assignedToId], references: [id])
-  tasks         DealTask[]
-  notes         DealNote[]
-  relationships DealRelationship[]
-  dealTags      DealTag[]
+  pipeline            DealPipeline?      @relation(fields: [pipelineId], references: [id])
+  stage               DealPipelineStage? @relation(fields: [stageId], references: [id])
+  property            Property?          @relation(fields: [propertyId], references: [id])
+  assignedTo          User?              @relation("DealAssignedTo", fields: [assignedToId], references: [id])
+  tasks               DealTask[]
+  notes               DealNote[]
+  relationships       DealRelationship[]
+  dealTags            DealTag[]
+  developmentTimelines DevelopmentTimeline[]
+  budgetLineItems     BudgetLineItem[]
+  underwritingDataRecords UnderwritingData[]
+  dueDiligenceItems   DueDiligenceItem[]
+  assetMetrics        AssetMetric[]
+  vendorRelationships VendorRelationship[]
 
   @@index([pipelineId])
   @@index([stageId])
   @@index([propertyId])
   @@index([assignedToId])
+  @@index([section])
   @@map("deals")
 }
 
@@ -1193,4 +1216,138 @@ enum TaskPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+// TermSheet Pipeline Models
+model DevelopmentTimeline {
+  id           String   @id @default(cuid())
+  dealId       String
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  status       String   @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED, DELAYED
+  dependencies String[] // Array of timeline IDs this depends on
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("development_timelines")
+}
+
+model BudgetLineItem {
+  id             String   @id @default(cuid())
+  dealId         String
+  category       String   // e.g., "Construction", "Legal", "Marketing"
+  description    String
+  budgetedAmount Float
+  actualAmount   Float?
+  variance       Float?   // Calculated: actualAmount - budgetedAmount
+  status         String   @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("budget_line_items")
+}
+
+model UnderwritingData {
+  id                 String   @id @default(cuid())
+  dealId             String
+  propertyType       String?
+  purchasePrice      Float?
+  loanAmount         Float?
+  loanRate           Float?
+  loanTerm           Int?
+  downPayment        Float?
+  grossRent          Float?
+  vacancyRate        Float?
+  operatingExpenses  Float?
+  noi                Float?
+  capRate            Float?
+  irr                Float?
+  cashOnCash         Float?
+  debtServiceCoverage Float?
+  additionalData     Json?    // Flexible field for other metrics
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("underwriting_data")
+}
+
+model DueDiligenceItem {
+  id           String   @id @default(cuid())
+  dealId       String
+  category     String   // e.g., "Legal", "Financial", "Physical", "Environmental"
+  item         String   // Specific checklist item
+  status       String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, BLOCKED
+  assignedToId String?
+  dueDate      DateTime?
+  completedAt  DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  deal       Deal  @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("DueDiligenceAssignedTo", fields: [assignedToId], references: [id])
+
+  @@index([dealId])
+  @@index([assignedToId])
+  @@map("due_diligence_items")
+}
+
+model AssetMetric {
+  id              String   @id @default(cuid())
+  dealId          String
+  metricDate      DateTime
+  occupancyRate   Float?
+  revenue         Float?
+  expenses        Float?
+  noi             Float?
+  capRate         Float?
+  debtService     Float?
+  cashFlow        Float?
+  additionalMetrics Json?  // Flexible field for other operational metrics
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("asset_metrics")
+}
+
+model VendorRelationship {
+  id           String   @id @default(cuid())
+  dealId       String
+  contactId    String?  // Link to Contact if exists
+  vendorName   String
+  vendorType   String   // e.g., "Property Manager", "Contractor", "Lender", "Legal"
+  contactPerson String?
+  email        String?
+  phone        String?
+  services     String[] // Array of services provided
+  rating       Int?     // 1-5 rating
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  deal    Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id])
+
+  @@index([dealId])
+  @@index([contactId])
+  @@map("vendor_relationships")
 }
