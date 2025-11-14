@@ -1,9 +1,9 @@
 name: Auto Deploy Check
 
 on:
-  schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -37,7 +37,11 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [ "${{ steps.last_commit.outputs.exists }}" == "false" ]; then
+          # On push events, always deploy (skip SHA check)
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "Push event detected. Will deploy."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.last_commit.outputs.exists }}" == "false" ]; then
             echo "No previous deployment record found. Will deploy."
             echo "has_changes=true" >> $GITHUB_OUTPUT
           elif [ "${{ steps.current_commit.outputs.sha }}" != "${{ steps.last_commit.outputs.sha }}" ]; then
