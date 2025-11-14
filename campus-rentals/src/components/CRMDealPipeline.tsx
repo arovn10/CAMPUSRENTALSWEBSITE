@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Squares2X2Icon,
@@ -86,39 +86,7 @@ export default function CRMDealPipeline() {
   const [showCreateDeal, setShowCreateDeal] = useState(false)
   const [showPipelineManager, setShowPipelineManager] = useState(false)
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null)
-
-  useEffect(() => {
-    fetchPipelines()
-    // Auto-sync properties to deals on load
-    const syncPropertiesOnLoad = async () => {
-      try {
-        const token = getAuthToken()
-        const response = await fetch('/api/investors/crm/sync-properties', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (response.ok) {
-          const result = await response.json()
-          console.log('Properties auto-synced:', result.message)
-          // Refresh deals after sync
-          if (selectedPipelineId) {
-            fetchDeals()
-          }
-        }
-      } catch (error) {
-        console.error('Error auto-syncing properties:', error)
-      }
-    }
-    syncPropertiesOnLoad()
-  }, [])
-
-  useEffect(() => {
-    if (selectedPipelineId) {
-      fetchDeals()
-    }
-  }, [selectedPipelineId, searchTerm])
+  const hasSyncedRef = useRef(false)
 
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
@@ -127,7 +95,7 @@ export default function CRMDealPipeline() {
     return null
   }
 
-  const fetchPipelines = async () => {
+  const fetchPipelines = useCallback(async () => {
     try {
       const token = getAuthToken()
       const response = await fetch('/api/investors/crm/pipelines', {
@@ -139,18 +107,20 @@ export default function CRMDealPipeline() {
       if (response.ok) {
         const data = await response.json()
         setPipelines(data)
-        // Set default pipeline
-        const defaultPipeline = data.find((p: Pipeline) => p.isDefault) || data[0]
-        if (defaultPipeline) {
-          setSelectedPipelineId(defaultPipeline.id)
+        // Set default pipeline if none selected
+        if (!selectedPipelineId && data.length > 0) {
+          const defaultPipeline = data.find((p: Pipeline) => p.isDefault) || data[0]
+          if (defaultPipeline) {
+            setSelectedPipelineId(defaultPipeline.id)
+          }
         }
       }
     } catch (error) {
       console.error('Error fetching pipelines:', error)
     }
-  }
+  }, [selectedPipelineId])
 
-  const fetchDeals = async () => {
+  const fetchDeals = useCallback(async () => {
     setLoading(true)
     try {
       const token = getAuthToken()
@@ -172,13 +142,55 @@ export default function CRMDealPipeline() {
       if (response.ok) {
         const data = await response.json()
         setDeals(data)
+        console.log('Fetched deals:', data.length)
+      } else {
+        console.error('Failed to fetch deals:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedPipelineId, searchTerm])
+
+  useEffect(() => {
+    const initialize = async () => {
+      // First fetch pipelines
+      await fetchPipelines()
+      
+      // Then auto-sync properties to deals (only once)
+      if (!hasSyncedRef.current) {
+        try {
+          const token = getAuthToken()
+          const response = await fetch('/api/investors/crm/sync-properties', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+          if (response.ok) {
+            const result = await response.json()
+            console.log('Properties auto-synced:', result.message)
+            hasSyncedRef.current = true
+            // Wait a bit for sync to complete, then fetch deals
+            setTimeout(() => {
+              fetchDeals()
+            }, 1000)
+          }
+        } catch (error) {
+          console.error('Error auto-syncing properties:', error)
+        }
+      }
+    }
+    initialize()
+  }, [fetchPipelines, fetchDeals])
+
+  useEffect(() => {
+    // Fetch deals when pipeline is selected or search term changes
+    if (hasSyncedRef.current || selectedPipelineId) {
+      fetchDeals()
+    }
+  }, [selectedPipelineId, searchTerm, fetchDeals])
 
   const handleDealClick = (dealId: string) => {
     router.push(`/investors/crm/deals/${dealId}`)
