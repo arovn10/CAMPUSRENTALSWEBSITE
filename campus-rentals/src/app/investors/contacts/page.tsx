@@ -69,6 +69,7 @@ const ENTITY_TYPES = ['LLC', 'CORPORATION', 'PARTNERSHIP', 'TRUST', 'OPERATOR', 
 const DOCUMENT_TYPES = ['TAX_DOCUMENT', 'OFFERING_MEMORANDUM', 'OPERATING_AGREEMENT', 'FINANCIAL_STATEMENT', 'OTHER']
 
 export default function EntityManagementPage() {
+  const router = useRouter()
   const [entities, setEntities] = useState<Entity[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -295,7 +296,10 @@ export default function EntityManagementPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.push('/investors/dashboard')}
+            onClick={(e) => {
+              e.preventDefault()
+              window.location.href = '/investors/dashboard'
+            }}
             className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4 transition-colors"
           >
             <ArrowLeftIcon className="h-5 w-5" />

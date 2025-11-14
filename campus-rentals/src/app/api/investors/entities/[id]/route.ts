@@ -129,9 +129,21 @@ export async function DELETE(
       where: { entityId },
     })
 
+    // Check if entity has owners
+    const owners = await prisma.entityOwner.findMany({
+      where: { entityId },
+    })
+
     if (investments.length > 0) {
       return NextResponse.json(
         { error: 'Cannot delete entity with existing investments' },
+        { status: 400 }
+      )
+    }
+
+    if (owners.length > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete entity with existing owners' },
         { status: 400 }
       )
     }
