@@ -86,17 +86,32 @@ export default function CRMDealPipeline() {
   const [showCreateDeal, setShowCreateDeal] = useState(false)
   const [showPipelineManager, setShowPipelineManager] = useState(false)
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null)
-  const [showImportModal, setShowImportModal] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{
-    imported: number
-    skipped: number
-    errors?: number
-    errorDetails?: Array<{ propertyName: string; error: string }>
-  } | null>(null)
 
   useEffect(() => {
     fetchPipelines()
+    // Auto-sync properties to deals on load
+    const syncPropertiesOnLoad = async () => {
+      try {
+        const token = getAuthToken()
+        const response = await fetch('/api/investors/crm/sync-properties', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Properties auto-synced:', result.message)
+          // Refresh deals after sync
+          if (selectedPipelineId) {
+            fetchDeals()
+          }
+        }
+      } catch (error) {
+        console.error('Error auto-syncing properties:', error)
+      }
+    }
+    syncPropertiesOnLoad()
   }, [])
 
   useEffect(() => {
@@ -140,6 +155,7 @@ export default function CRMDealPipeline() {
     try {
       const token = getAuthToken()
       const params = new URLSearchParams()
+      // Only filter by pipeline if one is selected, otherwise show all deals
       if (selectedPipelineId) {
         params.append('pipelineId', selectedPipelineId)
       }
@@ -204,46 +220,6 @@ export default function CRMDealPipeline() {
   }
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId)
-
-  const handleImportProperties = async () => {
-    if (!confirm('This will import all properties from the Deals page as CRM deals. Continue?')) {
-      return
-    }
-
-    setImporting(true)
-    setImportResult(null)
-
-    try {
-      const token = getAuthToken()
-      const response = await fetch('/api/investors/crm/import-properties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          pipelineId: selectedPipelineId,
-          stageId: selectedPipeline?.stages[0]?.id,
-        }),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        setImportResult(result)
-        await fetchDeals()
-        setShowImportModal(true)
-      } else {
-        const error = await response.json()
-        console.error('Import error:', error)
-        alert(error.error || error.details || 'Failed to import properties')
-      }
-    } catch (error) {
-      console.error('Error importing properties:', error)
-      alert('Failed to import properties')
-    } finally {
-      setImporting(false)
-    }
-  }
 
   const renderKanbanView = () => {
     if (!selectedPipeline) return null
@@ -466,13 +442,6 @@ export default function CRMDealPipeline() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleImportProperties}
-            disabled={importing}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {importing ? 'Importing...' : 'Import Properties'}
-          </button>
-          <button
             onClick={() => setShowCreateDeal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -582,52 +551,6 @@ export default function CRMDealPipeline() {
         />
       )}
 
-      {showImportModal && importResult && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Import Complete</h3>
-              <div className="space-y-2 mb-6">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span className="text-sm font-medium text-slate-700">Imported</span>
-                  <span className="text-lg font-bold text-green-600">{importResult.imported}</span>
-                </div>
-                {importResult.skipped > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <span className="text-sm font-medium text-slate-700">Skipped (already exist)</span>
-                    <span className="text-lg font-bold text-yellow-600">{importResult.skipped}</span>
-                  </div>
-                )}
-                {importResult.errors && importResult.errors > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                    <span className="text-sm font-medium text-slate-700">Errors</span>
-                    <span className="text-lg font-bold text-red-600">{importResult.errors}</span>
-                  </div>
-                )}
-                {importResult.errorDetails && importResult.errorDetails.length > 0 && (
-                  <div className="mt-4 p-3 bg-red-50 rounded-lg max-h-40 overflow-y-auto">
-                    <p className="text-xs font-semibold text-red-700 mb-2">Error Details:</p>
-                    {importResult.errorDetails.map((err, idx) => (
-                      <p key={idx} className="text-xs text-red-600">
-                        {err.propertyName}: {err.error}
-                      </p>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  setShowImportModal(false)
-                  setImportResult(null)
-                }}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
