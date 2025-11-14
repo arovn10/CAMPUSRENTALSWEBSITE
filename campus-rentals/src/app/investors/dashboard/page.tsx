@@ -159,6 +159,7 @@ export default function InvestorDashboard() {
   })
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics' | 'crm'>('overview')
+  const [crmSubView, setCrmSubView] = useState<'pipeline' | 'contacts'>('pipeline')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
@@ -967,27 +968,6 @@ export default function InvestorDashboard() {
                 <UserIcon className="h-5 w-5" />
                 <span className="text-sm font-medium">Profile</span>
               </button>
-              {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-                <>
-                  <button
-                    onClick={() => {
-                      setActiveView('crm')
-                      sessionStorage.setItem('investorDashboardActiveTab', 'crm')
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-2"
-                  >
-                    <BriefcaseIcon className="h-5 w-5" />
-                    <span className="text-sm font-medium">Pipeline</span>
-                  </button>
-                  <button
-                    onClick={() => router.push('/investors/contacts')}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
-                  >
-                    <UsersIcon className="h-5 w-5" />
-                    <span className="text-sm font-medium">Contacts</span>
-                  </button>
-                </>
-              )}
               {currentUser && (
                 <div className="text-sm text-slate-600 px-3">
                   {currentUser.firstName} {currentUser.lastName}
@@ -2039,7 +2019,43 @@ export default function InvestorDashboard() {
       )}
       {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <CRMDealPipeline />
+          {/* CRM Sub-navigation */}
+          <div className="mb-6 border-b border-slate-200">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setCrmSubView('pipeline')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  crmSubView === 'pipeline'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <BriefcaseIcon className="h-5 w-5" />
+                  <span>Pipeline</span>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setCrmSubView('contacts')
+                  router.push('/investors/contacts')
+                }}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  crmSubView === 'contacts'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <UsersIcon className="h-5 w-5" />
+                  <span>Contacts</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+          
+          {/* CRM Content */}
+          {crmSubView === 'pipeline' && <CRMDealPipeline />}
         </div>
       )}
       {showCalcModal && (
