@@ -95,7 +95,7 @@ export default function CRMDealPipeline() {
     return null
   }
 
-  const fetchPipelines = useCallback(async () => {
+  const fetchPipelines = async () => {
     try {
       const token = getAuthToken()
       const response = await fetch('/api/investors/crm/pipelines', {
@@ -112,18 +112,30 @@ export default function CRMDealPipeline() {
           const defaultPipeline = data.find((p: Pipeline) => p.isDefault) || data[0]
           if (defaultPipeline) {
             setSelectedPipelineId(defaultPipeline.id)
+            // Fetch deals immediately after setting pipeline
+            setTimeout(() => {
+              fetchDeals()
+            }, 100)
           }
         }
+      } else {
+        console.error('Failed to fetch pipelines:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error fetching pipelines:', error)
     }
-  }, [selectedPipelineId])
+  }
 
-  const fetchDeals = useCallback(async () => {
+  const fetchDeals = async () => {
     setLoading(true)
     try {
       const token = getAuthToken()
+      if (!token) {
+        console.error('No auth token available')
+        setLoading(false)
+        return
+      }
+
       const params = new URLSearchParams()
       // Only filter by pipeline if one is selected, otherwise show all deals
       if (selectedPipelineId) {
@@ -133,7 +145,10 @@ export default function CRMDealPipeline() {
         params.append('search', searchTerm)
       }
 
-      const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
+      const url = `/api/investors/crm/deals?${params.toString()}`
+      console.log('Fetching deals from:', url)
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -141,17 +156,20 @@ export default function CRMDealPipeline() {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Fetched deals:', data.length, 'deals')
         setDeals(data)
-        console.log('Fetched deals:', data.length)
       } else {
-        console.error('Failed to fetch deals:', response.status, response.statusText)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to fetch deals:', response.status, response.statusText, errorData)
+        setDeals([])
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
+      setDeals([])
     } finally {
       setLoading(false)
     }
-  }, [selectedPipelineId, searchTerm])
+  }
 
   useEffect(() => {
     const initialize = async () => {
@@ -172,10 +190,8 @@ export default function CRMDealPipeline() {
             const result = await response.json()
             console.log('Properties auto-synced:', result.message)
             hasSyncedRef.current = true
-            // Wait a bit for sync to complete, then fetch deals
-            setTimeout(() => {
-              fetchDeals()
-            }, 1000)
+          } else {
+            console.error('Sync failed:', response.status, response.statusText)
           }
         } catch (error) {
           console.error('Error auto-syncing properties:', error)
@@ -183,14 +199,21 @@ export default function CRMDealPipeline() {
       }
     }
     initialize()
-  }, [fetchPipelines, fetchDeals])
+  }, [])
 
   useEffect(() => {
     // Fetch deals when pipeline is selected or search term changes
-    if (hasSyncedRef.current || selectedPipelineId) {
+    // Always fetch deals if we have a pipeline selected
+    if (selectedPipelineId) {
       fetchDeals()
+    } else if (pipelines.length > 0 && !selectedPipelineId) {
+      // If we have pipelines but no selection, select the default one
+      const defaultPipeline = pipelines.find((p: Pipeline) => p.isDefault) || pipelines[0]
+      if (defaultPipeline) {
+        setSelectedPipelineId(defaultPipeline.id)
+      }
     }
-  }, [selectedPipelineId, searchTerm, fetchDeals])
+  }, [selectedPipelineId, searchTerm, pipelines.length])
 
   const handleDealClick = (dealId: string) => {
     router.push(`/investors/crm/deals/${dealId}`)

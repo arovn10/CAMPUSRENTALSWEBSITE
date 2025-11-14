@@ -970,7 +970,10 @@ export default function InvestorDashboard() {
               {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                 <>
                   <button
-                    onClick={() => router.push('/investors/pipeline')}
+                    onClick={() => {
+                      setActiveView('crm')
+                      sessionStorage.setItem('investorDashboardActiveTab', 'crm')
+                    }}
                     className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-2"
                   >
                     <BriefcaseIcon className="h-5 w-5" />
