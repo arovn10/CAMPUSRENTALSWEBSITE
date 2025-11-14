@@ -1,0 +1,130 @@
+name: Auto Deploy Check
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history to compare commits
+      
+      - name: Get current commit SHA
+        id: current_commit
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Get last checked commit SHA
+        id: last_commit
+        run: |
+          if [ -f .github/last-deployed-sha ]; then
+            echo "sha=$(cat .github/last-deployed-sha)" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sha=" >> $GITHUB_OUTPUT
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ "${{ steps.last_commit.outputs.exists }}" == "false" ]; then
+            echo "No previous deployment record found. Will deploy."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.current_commit.outputs.sha }}" != "${{ steps.last_commit.outputs.sha }}" ]; then
+            echo "Changes detected! Current: ${{ steps.current_commit.outputs.sha }}"
+            echo "Previous: ${{ steps.last_commit.outputs.sha }}"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected. Current commit matches last deployed commit."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Deploy to server
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          echo "🚀 Changes detected! Starting deployment..."
+          
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          
+          # Deploy via SSH
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+            set -e
+            
+            echo "=========================================="
+            echo "🚀 Starting Deployment Process"
+            echo "=========================================="
+            
+            echo ""
+            echo "📁 Step 1: Navigating to project directory..."
+            cd /home/bitnami/CAMPUSRENTALSWEBSITE/campus-rentals
+            pwd
+            
+            echo ""
+            echo "🔄 Step 2: Pulling latest changes from Git..."
+            git fetch origin
+            git pull origin main
+            echo "✅ Git pull completed"
+            
+            echo ""
+            echo "🔧 Step 3: Installing/updating dependencies..."
+            npm install --legacy-peer-deps
+            echo "✅ Dependencies installed"
+            
+            echo ""
+            echo "🏗️  Step 4: Rebuilding the application..."
+            npm run build
+            echo "✅ Build completed"
+            
+            echo ""
+            echo "🔄 Step 5: Restarting the application..."
+            pm2 restart campus-rentals || pm2 start npm --name "campus-rentals" -- start
+            echo "✅ Application restarted"
+            
+            echo ""
+            echo "📊 Step 6: Checking application status..."
+            sleep 3
+            pm2 status
+            pm2 logs campus-rentals --lines 5 --nostream
+            
+            echo ""
+            echo "=========================================="
+            echo "✅ Deployment completed successfully!"
+            echo "=========================================="
+          ENDSSH
+      
+      - name: Update last deployed SHA
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          mkdir -p .github
+          echo "${{ steps.current_commit.outputs.sha }}" > .github/last-deployed-sha
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/last-deployed-sha
+          git commit -m "Update last deployed SHA [skip ci]" || exit 0
+          git push origin main || echo "Failed to push SHA update (non-critical)"
+      
+      - name: No changes detected
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "✅ No changes detected. Skipping deployment."
+          echo "Last deployed commit: ${{ steps.last_commit.outputs.sha }}"
+          echo "Current commit: ${{ steps.current_commit.outputs.sha }}"
+
