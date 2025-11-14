@@ -1,33 +1,19 @@
-import { MetadataRoute } from 'next'
+import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://campusrentalsllc.com'
-  
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/api/',
-          '/investors/',
-          '/admin/',
-          '/_next/',
-          '/private/',
-        ],
+        disallow: ['/api/', '/admin/', '/investors/'],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: [
-          '/api/',
-          '/investors/',
-          '/admin/',
-          '/private/',
-        ],
+        disallow: ['/api/', '/admin/', '/investors/'],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-  }
+    sitemap: 'https://campusrentalsllc.com/sitemap.xml',
+  };
 }
-
