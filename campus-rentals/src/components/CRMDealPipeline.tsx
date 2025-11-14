@@ -90,7 +90,7 @@ export default function CRMDealPipeline() {
 
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('token') || localStorage.getItem('token')
+      return sessionStorage.getItem('authToken') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('token')
     }
     return null
   }
