@@ -9,6 +9,9 @@ on:
 jobs:
   check-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
     
     steps:
       - name: Checkout code
@@ -109,6 +112,8 @@ jobs:
       
       - name: Update last deployed SHA
         if: steps.check_changes.outputs.has_changes == 'true'
+        permissions:
+          contents: write
         run: |
           mkdir -p .github
           echo "${{ steps.current_commit.outputs.sha }}" > .github/last-deployed-sha
