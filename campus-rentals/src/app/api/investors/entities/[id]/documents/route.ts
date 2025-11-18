@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { investorS3Service } from '@/lib/investorS3Service'
+
+// Increase max duration for file uploads
+export const maxDuration = 60
 
 export async function GET(
   request: NextRequest,
@@ -94,29 +98,41 @@ export async function POST(
       )
     }
 
-    // Save file to server
-    const { writeFile, mkdir } = await import('fs/promises')
-    const { join } = await import('path')
+    // Upload file to S3
+    let documentUrl: string | null = null
+    let documentFileName: string | null = null
+    let documentS3Key: string | null = null
 
-    const documentsDir = join(process.cwd(), 'public', 'documents', 'entities')
-    await mkdir(documentsDir, { recursive: true })
-
-    const timestamp = Date.now()
-    const uniqueFileName = `${timestamp}-${file.name}`
-    const filePath = join(documentsDir, uniqueFileName)
-
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+    try {
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      
+      const uploadResult = await investorS3Service.uploadFile({
+        fileName: file.name,
+        buffer,
+        contentType: file.type || 'application/pdf',
+        propertyId: `entity-${entityId}`, // Use entity ID as property identifier for S3 organization
+      })
+      
+      documentUrl = uploadResult.url
+      documentFileName = uploadResult.fileName
+      documentS3Key = uploadResult.key
+    } catch (uploadError) {
+      console.error('Error uploading entity document to S3:', uploadError)
+      return NextResponse.json(
+        { error: 'Failed to upload document', details: uploadError instanceof Error ? uploadError.message : 'Unknown error' },
+        { status: 500 }
+      )
+    }
 
     // Create document record
     const document = await prisma.document.create({
       data: {
         title,
         description: description || title,
-        fileName: uniqueFileName,
-        filePath: `/documents/entities/${uniqueFileName}`,
-        fileSize: buffer.length,
+        fileName: documentFileName,
+        filePath: documentUrl, // Store S3 URL
+        fileSize: file.size,
         mimeType: file.type || 'application/pdf',
         documentType: (documentType as any) || 'OTHER',
         entityType: 'USER', // Entities use USER type

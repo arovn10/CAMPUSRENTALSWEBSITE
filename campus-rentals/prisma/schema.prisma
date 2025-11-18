@@ -1064,7 +1064,7 @@ model Deal {
   stageId            String?
   propertyId         String? // Link to existing property if applicable
   description        String?
-  location           String?
+  // location field removed - not in database
   estimatedValue     Float?
   estimatedCloseDate DateTime?
   actualCloseDate    DateTime?
