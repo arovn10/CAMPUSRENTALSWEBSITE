@@ -92,8 +92,7 @@ export async function GET(request: NextRequest) {
           'pipelineId', p.id,
           'name', p.name,
           'description', p.description,
-          'isDefault', p."isDefault",
-          'isActive', p."isActive"
+          'isDefault', p."isDefault"
         ) as pipeline,
         jsonb_build_object(
           'id', s.id,
@@ -268,8 +267,7 @@ export async function POST(request: NextRequest) {
           'pipelineId', p.id,
           'name', p.name,
           'description', p.description,
-          'isDefault', p."isDefault",
-          'isActive', p."isActive"
+          'isDefault', p."isDefault"
         ) as pipeline,
         jsonb_build_object(
           'id', s.id,

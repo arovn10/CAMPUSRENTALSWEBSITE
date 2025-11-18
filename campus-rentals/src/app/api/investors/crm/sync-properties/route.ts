@@ -27,18 +27,21 @@ export async function POST(request: NextRequest) {
       stages: Array<{ id: string; order: number }>;
     }>(`
       SELECT 
-        p.*,
+        p.id,
+        p.name,
+        p.description,
+        p."isDefault",
         COALESCE(
           jsonb_agg(
-            jsonb_build_object('id', s.id, 'order', s.order)
-            ORDER BY s.order ASC
+            jsonb_build_object('id', s.id, 'order', s."order")
+            ORDER BY s."order" ASC
           ) FILTER (WHERE s."isActive" = true),
           '[]'::jsonb
         ) as stages
       FROM deal_pipelines p
       LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId" AND s."isActive" = true
-      WHERE p."isDefault" = true AND p."isActive" = true
-      GROUP BY p.id
+      WHERE p."isDefault" = true
+      GROUP BY p.id, p.name, p.description, p."isDefault"
       LIMIT 1
     `)
 

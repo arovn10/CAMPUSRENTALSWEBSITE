@@ -25,7 +25,13 @@ export async function GET(request: NextRequest) {
     // Fetch pipelines with stages
     const pipelinesQuery = `
       SELECT 
-        p.*,
+        p.id,
+        p.name,
+        p.description,
+        p."isDefault",
+        p."isActive",
+        p."createdAt",
+        p."updatedAt",
         COALESCE(
           jsonb_agg(
             jsonb_build_object(
@@ -33,13 +39,13 @@ export async function GET(request: NextRequest) {
               'stageId', s.id,
               'name', s.name,
               'description', s.description,
-              'order', s.order,
+              'order', s."order",
               'color', s.color,
               'isActive', s."isActive",
               'pipelineId', s."pipelineId",
               'createdAt', s."createdAt",
               'updatedAt', s."updatedAt"
-            ) ORDER BY s.order ASC
+            ) ORDER BY s."order" ASC
           ) FILTER (WHERE s."isActive" = true),
           '[]'::jsonb
         ) as stages,
@@ -47,7 +53,7 @@ export async function GET(request: NextRequest) {
       FROM deal_pipelines p
       LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId" AND s."isActive" = true
       WHERE p."isActive" = true
-      GROUP BY p.id
+      GROUP BY p.id, p.name, p.description, p."isDefault", p."isActive", p."createdAt", p."updatedAt"
       ORDER BY p."isDefault" DESC, p."createdAt" ASC
     `;
 

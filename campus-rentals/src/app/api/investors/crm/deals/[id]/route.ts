@@ -33,7 +33,6 @@ export async function GET(
           'name', p.name,
           'description', p.description,
           'isDefault', p."isDefault",
-          'isActive', p."isActive",
           'stages', COALESCE(
             (SELECT jsonb_agg(
               jsonb_build_object(
