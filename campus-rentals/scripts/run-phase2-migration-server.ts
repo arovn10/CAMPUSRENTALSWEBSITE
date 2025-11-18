@@ -18,31 +18,23 @@ async function runMigration() {
 
   // Use direct database connection with correct endpoint
   // Endpoint: ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com
-  // Password needs URL encoding for special characters
-  const password = '~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v'
-  const encodedPassword = encodeURIComponent(password)
-  
-  const databaseUrl = process.env.DATABASE_URL_DIRECT || 
-    `postgresql://dbmasteruser:${encodedPassword}@ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require`
+  // Use credentials directly in Client config (better for special characters)
+  const dbHost = 'ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com'
+  const dbUser = 'dbmasteruser'
+  const dbPassword = '~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v'
+  const dbName = 'campus_rentals'
+  const dbPort = 5432
   
   console.log('🔌 Using direct database connection')
   console.log('   (Bypassing Prisma Accelerate proxy)\n')
 
-  // Parse DATABASE_URL
-  let url: URL
-  try {
-    url = new URL(databaseUrl)
-  } catch (error) {
-    console.error('❌ Invalid DATABASE_URL format')
-    process.exit(1)
-  }
   const client = new Client({
-    host: url.hostname,
-    port: parseInt(url.port) || 5432,
-    database: url.pathname.slice(1),
-    user: url.username,
-    password: url.password,
-    ssl: url.searchParams.get('sslmode') === 'require' ? { rejectUnauthorized: false } : false,
+    host: dbHost,
+    port: dbPort,
+    database: dbName,
+    user: dbUser,
+    password: dbPassword, // Pass password directly - pg handles special chars better this way
+    ssl: { rejectUnauthorized: false }, // SSL required for Lightsail
     connectionTimeoutMillis: 30000,
   })
 
@@ -54,9 +46,9 @@ async function runMigration() {
 
     // Connect to database
     console.log('🔌 Connecting to database...')
-    console.log(`   Host: ${url.hostname}`)
-    console.log(`   Database: ${url.pathname.slice(1)}`)
-    console.log(`   User: ${url.username}\n`)
+    console.log(`   Host: ${dbHost}`)
+    console.log(`   Database: ${dbName}`)
+    console.log(`   User: ${dbUser}\n`)
     
     await client.connect()
     console.log('✅ Connected to database\n')
