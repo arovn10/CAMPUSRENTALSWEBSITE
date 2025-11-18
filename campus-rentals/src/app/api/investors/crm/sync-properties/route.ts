@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
       // Create default pipeline
       const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       await query(`
-        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, true, NOW(), NOW())
-      `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals'])
+        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, true, $4, NOW(), NOW())
+      `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', user.id])
 
       // Create default stages
       const stages = [
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
       for (const stage of stages) {
         const stageId = `stage_${Date.now()}_${stage.order}_${Math.random().toString(36).substr(2, 9)}`
         await query(`
-          INSERT INTO deal_pipeline_stages (id, "pipelineId", name, "order", color, "isActive", "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
+          INSERT INTO deal_pipeline_stages (id, "pipelineId", name, "order", color, "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
         `, [stageId, pipelineId, stage.name, stage.order, stage.color])
       }
 

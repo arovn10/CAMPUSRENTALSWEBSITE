@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
     // Create pipeline
     const pipelineQuery = `
-        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
       RETURNING *
     `;
 
@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       name,
       description || null,
       isDefault || false,
+      user.id,
     ]);
 
     // Create stages if provided
@@ -130,8 +131,8 @@ export async function POST(request: NextRequest) {
         
         const stageQuery = `
           INSERT INTO deal_pipeline_stages (
-            id, "pipelineId", name, description, "order", color, "isActive", "createdAt", "updatedAt"
-          ) VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+            id, "pipelineId", name, description, "order", color, "createdAt", "updatedAt"
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
           RETURNING *
         `;
 
