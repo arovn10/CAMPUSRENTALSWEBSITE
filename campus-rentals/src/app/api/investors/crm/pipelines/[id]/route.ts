@@ -32,8 +32,7 @@ export async function GET(
             jsonb_build_object(
               'id', s.id,
               'name', s.name,
-              'description', s.description,
-              'order', s.order,
+              'order', s."order",
               'color', s.color,
               'isActive', s."isActive",
               'pipelineId', s."pipelineId",
@@ -145,7 +144,7 @@ export async function PUT(
             jsonb_build_object(
               'id', s.id,
               'name', s.name,
-              'order', s.order,
+              'order', s."order",
               'color', s.color
             ) ORDER BY s.order ASC
           ),

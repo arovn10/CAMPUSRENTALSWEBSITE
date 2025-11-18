@@ -133,10 +133,7 @@ export default function CRMDealPipeline() {
       }
 
       const params = new URLSearchParams()
-      // Only filter by pipeline if one is selected, otherwise show all deals
-      if (selectedPipelineId) {
-        params.append('pipelineId', selectedPipelineId)
-      }
+      // Show all deals (same as deals tab) - pipeline selection is just for organizing the view
       if (searchTerm) {
         params.append('search', searchTerm)
       }
@@ -198,24 +195,10 @@ export default function CRMDealPipeline() {
   }, [])
 
   useEffect(() => {
-    // Fetch deals when pipeline is selected or search term changes
-    if (selectedPipelineId) {
-      fetchDeals()
-    } else if (pipelines.length > 0 && !selectedPipelineId) {
-      // If we have pipelines but no selection, select the default one
-      const defaultPipeline = pipelines.find((p: Pipeline) => p.isDefault) || pipelines[0]
-      if (defaultPipeline) {
-        setSelectedPipelineId(defaultPipeline.id)
-      } else {
-        // No default pipeline, but still fetch all deals
-        fetchDeals()
-      }
-    } else {
-      // If no pipelines exist yet or pipelines haven't loaded, still try to fetch deals
-      // This ensures deals load even if pipeline setup is incomplete
-      fetchDeals()
-    }
-  }, [selectedPipelineId, searchTerm, pipelines.length])
+    // Always fetch deals - show all deals by default (same as deals tab)
+    // Pipeline selection is just for organizing the view, not filtering
+    fetchDeals()
+  }, [selectedPipelineId, searchTerm])
 
   const handleDealClick = (dealId: string) => {
     router.push(`/investors/crm/deals/${dealId}`)

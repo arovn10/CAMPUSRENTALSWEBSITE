@@ -98,8 +98,7 @@ export async function GET(request: NextRequest) {
           'id', s.id,
           'stageId', s.id,
           'name', s.name,
-          'description', s.description,
-          'order', s.order,
+          'order', s."order",
           'color', s.color
         ) as stage,
         jsonb_build_object(
@@ -273,8 +272,7 @@ export async function POST(request: NextRequest) {
           'id', s.id,
           'stageId', s.id,
           'name', s.name,
-          'description', s.description,
-          'order', s.order,
+          'order', s."order",
           'color', s.color
         ) as stage,
         jsonb_build_object(
