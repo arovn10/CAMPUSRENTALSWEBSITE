@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
         // Create a default pipeline if none exists
         const newPipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         await query(`
-          INSERT INTO deal_pipelines (id, name, description, "isDefault", "isActive", "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, true, true, NOW(), NOW())
+          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, true, NOW(), NOW())
         `, [newPipelineId, 'Default Pipeline', 'Default pipeline for imported properties']);
 
         // Create default stages

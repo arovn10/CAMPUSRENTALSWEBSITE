@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
         p.name,
         p.description,
         p."isDefault",
-        p."isActive",
         p."createdAt",
         p."updatedAt",
         COALESCE(
@@ -50,8 +49,7 @@ export async function GET(request: NextRequest) {
         (SELECT COUNT(*) FROM deals WHERE "pipelineId" = p.id) as _count
       FROM deal_pipelines p
       LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
-      WHERE p."isActive" = true
-      GROUP BY p.id, p.name, p.description, p."isDefault", p."isActive", p."createdAt", p."updatedAt"
+      GROUP BY p.id, p.name, p.description, p."isDefault", p."createdAt", p."updatedAt"
       ORDER BY p."isDefault" DESC, p."createdAt" ASC
     `;
 
@@ -111,8 +109,8 @@ export async function POST(request: NextRequest) {
 
     // Create pipeline
     const pipelineQuery = `
-      INSERT INTO deal_pipelines (id, name, description, "isDefault", "isActive", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, NOW(), NOW())
       RETURNING *
     `;
 

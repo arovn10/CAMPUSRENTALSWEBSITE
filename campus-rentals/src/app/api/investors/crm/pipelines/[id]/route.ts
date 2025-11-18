@@ -187,8 +187,8 @@ export async function DELETE(
       );
     }
 
-    // Soft delete by setting isActive to false
-    await query('UPDATE deal_pipelines SET "isActive" = false, "updatedAt" = NOW() WHERE id = $1', [params.id]);
+        // Delete pipeline (no soft delete - column doesn't exist)
+        await query('DELETE FROM deal_pipelines WHERE id = $1', [params.id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
