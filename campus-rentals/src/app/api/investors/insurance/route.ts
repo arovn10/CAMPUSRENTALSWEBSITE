@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { investorS3Service } from '@/lib/investorS3Service'
 
+// Increase max duration for file uploads
+export const maxDuration = 60
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)

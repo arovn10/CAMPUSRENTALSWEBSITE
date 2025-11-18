@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           stageId: targetStageId || undefined,
           propertyId: property.id,
           description: property.description || undefined,
-          location: location || undefined,
+          // location field removed - not in database schema
           estimatedValue: property.currentValue || property.totalCost || undefined,
           estimatedCloseDate: property.acquisitionDate || undefined,
           actualCloseDate: property.dealStatus === 'SOLD' ? property.acquisitionDate : undefined,
