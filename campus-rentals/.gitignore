@@ -49,4 +49,7 @@ next-env.d.ts
 # AWS Access Keys (NEVER commit these!)
 *.csv
 *accessKeys*
-*access_key* 
+*access_key*
+
+# Migration tracking (safe to commit - just tracks which migrations ran)
+# .migrations-log.json 

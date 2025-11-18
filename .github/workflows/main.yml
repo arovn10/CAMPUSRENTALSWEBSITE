@@ -99,9 +99,10 @@ jobs:
             
             echo ""
             echo "🗄️  Step 5: Running database migrations..."
-            # Run insurance/tax documents migration (idempotent - safe to run multiple times)
-            npm run migrate:insurance-tax-docs:direct || echo "⚠️  Migration script not found or failed (non-critical if already run)"
-            echo "✅ Migrations completed"
+            # Automatically detect and run any new SQL migration files
+            # This checks scripts/*.sql files and runs any that haven't been executed yet
+            npm run migrate:pending || echo "⚠️  Migration check failed (non-critical if no new migrations)"
+            echo "✅ Migration check completed"
             
             echo ""
             echo "🔄 Step 6: Restarting the application..."

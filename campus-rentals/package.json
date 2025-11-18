@@ -13,7 +13,8 @@
     "migrate:phase2": "tsx scripts/run-phase2-migration.ts",
     "migrate:phase2:server": "tsx scripts/run-phase2-migration-server.ts",
     "migrate:insurance-tax-docs": "tsx scripts/run-insurance-tax-docs-migration.ts",
-    "migrate:insurance-tax-docs:direct": "tsx scripts/run-insurance-tax-docs-migration-direct.ts"
+    "migrate:insurance-tax-docs:direct": "tsx scripts/run-insurance-tax-docs-migration-direct.ts",
+    "migrate:pending": "tsx scripts/run-pending-migrations.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
