@@ -10,7 +10,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "seed:deal-photos": "tsx scripts/seed-deal-photos.ts",
     "cleanup:deal-photos": "tsx scripts/cleanup-deal-photos.ts",
-    "migrate:phase2": "tsx scripts/run-phase2-migration.ts"
+    "migrate:phase2": "tsx scripts/run-phase2-migration.ts",
+    "migrate:phase2:server": "tsx scripts/run-phase2-migration-server.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
