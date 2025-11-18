@@ -57,7 +57,21 @@ export async function POST(request: NextRequest) {
 
     // Read migration file
     const migrationFile = join(process.cwd(), 'scripts', 'phase2-termsheet-student-housing-migration.sql');
-    const migrationSQL = readFileSync(migrationFile, 'utf8');
+    
+    let migrationSQL: string;
+    try {
+      migrationSQL = readFileSync(migrationFile, 'utf8');
+    } catch (fileError: any) {
+      console.error('Error reading migration file:', fileError);
+      return NextResponse.json(
+        { 
+          error: 'Migration file not found',
+          details: `Could not read migration file at: ${migrationFile}`,
+          message: 'Please ensure the migration file exists in the scripts directory'
+        },
+        { status: 500 }
+      );
+    }
 
     // Parse DATABASE_URL
     const url = new URL(databaseUrl);
@@ -141,22 +155,43 @@ export async function POST(request: NextRequest) {
       results.message = 'Phase 2 migration completed successfully';
 
     } catch (error: any) {
+      console.error('Database migration error:', error);
       results.errors.push(error.message);
       results.message = 'Migration failed: ' + error.message;
-      throw error;
+      
+      // Don't throw - return the error in the response
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Migration failed',
+          details: error.message,
+          message: 'No data was modified - migration was rolled back',
+          executed: results.executed,
+          errors: results.errors
+        },
+        { status: 500 }
+      );
     } finally {
-      await client.end();
+      try {
+        await client.end();
+      } catch (closeError) {
+        console.error('Error closing database connection:', closeError);
+      }
     }
 
     return NextResponse.json(results, { status: 200 });
 
   } catch (error: any) {
     console.error('Phase 2 migration error:', error);
+    
+    // Ensure we always return JSON, even for unexpected errors
     return NextResponse.json(
       { 
+        success: false,
         error: 'Migration failed', 
-        details: error.message,
-        message: 'No data was modified - migration was rolled back'
+        details: error?.message || 'Unknown error',
+        message: 'No data was modified - migration was rolled back',
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
       },
       { status: 500 }
     );

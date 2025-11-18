@@ -106,6 +106,17 @@ export default function MigrationsPage() {
         },
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        // Response is not JSON, likely an HTML error page
+        const text = await response.text()
+        console.error('Non-JSON response:', text.substring(0, 200))
+        setError(`Server error (${response.status}): The server returned an unexpected response. Please check the server logs.`)
+        setRunning(false)
+        return
+      }
+
       const data = await response.json()
 
       if (response.ok) {
@@ -121,7 +132,12 @@ export default function MigrationsPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to run migration. Check your connection and try again.')
+      console.error('Migration error:', err)
+      if (err.message && err.message.includes('JSON')) {
+        setError('Server returned an invalid response. Please check the server logs or try again.')
+      } else {
+        setError(err.message || 'Failed to run migration. Check your connection and try again.')
+      }
     } finally {
       setRunning(false)
     }
