@@ -107,9 +107,25 @@ async function runMigrationAsync(jobId: string, databaseUrl: string) {
       user: url.username,
       password: url.password,
       ssl: url.searchParams.get('sslmode') === 'require' ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 30000, // 30 second connection timeout
+      query_timeout: 0, // No query timeout
     });
 
-    await client.connect();
+    // Connect with timeout handling
+    try {
+      await Promise.race([
+        client.connect(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database connection timeout after 30 seconds')), 30000)
+        )
+      ]);
+    } catch (connectError: any) {
+      job.status = 'failed';
+      job.error = `Database connection failed: ${connectError.message}`;
+      job.message = 'Failed to connect to database';
+      job.completedAt = new Date().toISOString();
+      return;
+    }
     job.message = 'Connected to database. Executing migration...';
     job.progress = 15;
 
@@ -228,7 +244,11 @@ async function runMigrationAsync(jobId: string, databaseUrl: string) {
       }
     };
 
-    await client.end();
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error(`[Migration ${jobId}] Error closing connection:`, closeError);
+    }
 
   } catch (error: any) {
     console.error(`[Migration ${jobId}] Error:`, error);
