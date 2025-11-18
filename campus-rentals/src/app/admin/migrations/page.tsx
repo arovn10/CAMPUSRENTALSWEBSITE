@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowPathIcon,
@@ -14,6 +14,40 @@ export default function MigrationsPage() {
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkAuth = () => {
+      try {
+        const userStr = sessionStorage.getItem('currentUser')
+        const token = sessionStorage.getItem('authToken') || 
+                     sessionStorage.getItem('token') || 
+                     localStorage.getItem('authToken') || 
+                     localStorage.getItem('token')
+        
+        if (userStr) {
+          const userData = JSON.parse(userStr)
+          setUser(userData)
+          
+          // Verify user is ADMIN
+          if (userData.role !== 'ADMIN') {
+            setError('Admin access required. You must be logged in as an ADMIN user.')
+          }
+        } else if (!token) {
+          setError('Please log in to access this page.')
+        }
+      } catch (err) {
+        console.error('Error checking auth:', err)
+        setError('Error checking authentication. Please log in again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    checkAuth()
+  }, [])
 
   const runPhase2Migration = async () => {
     setRunning(true)
@@ -22,13 +56,44 @@ export default function MigrationsPage() {
 
     try {
       // Get token using the same pattern as other admin pages
-      const token = sessionStorage.getItem('authToken') || 
-                   sessionStorage.getItem('token') || 
-                   localStorage.getItem('authToken') || 
-                   localStorage.getItem('token')
+      let token = sessionStorage.getItem('authToken') || 
+                  sessionStorage.getItem('token') || 
+                  localStorage.getItem('authToken') || 
+                  localStorage.getItem('token')
+      
+      // If no token found, try to get from currentUser
+      if (!token) {
+        const userStr = sessionStorage.getItem('currentUser')
+        if (userStr) {
+          // Try to refresh token by calling /api/auth/me
+          try {
+            const response = await fetch('/api/auth/me', {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            if (response.ok) {
+              const data = await response.json()
+              if (data.token) {
+                token = data.token
+                sessionStorage.setItem('authToken', token)
+              }
+            }
+          } catch (err) {
+            console.error('Error refreshing token:', err)
+          }
+        }
+      }
       
       if (!token) {
-        setError('No authentication token found. Please log in again.')
+        setError('No authentication token found. Please log in at /investors/login and try again.')
+        setRunning(false)
+        return
+      }
+      
+      // Verify user is ADMIN
+      if (user && user.role !== 'ADMIN') {
+        setError('Admin access required. You must be logged in as an ADMIN user.')
         setRunning(false)
         return
       }
@@ -62,11 +127,77 @@ export default function MigrationsPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <ArrowPathIcon className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start">
+                <XCircleIcon className="h-6 w-6 text-red-600 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-900 mb-2">Authentication Required</h3>
+                  <p className="text-sm text-red-800 mb-4">
+                    You must be logged in to access this page.
+                  </p>
+                  <button
+                    onClick={() => router.push('/investors/login')}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (user.role !== 'ADMIN') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mr-3 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-yellow-900 mb-2">Admin Access Required</h3>
+                  <p className="text-sm text-yellow-800">
+                    Your role is <strong>{user.role}</strong>. Only ADMIN users can run database migrations.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Database Migrations</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Database Migrations</h1>
+            <div className="text-sm text-gray-600">
+              Logged in as: <span className="font-semibold">{user.firstName} {user.lastName}</span> ({user.role})
+            </div>
+          </div>
           
           {/* Phase 2 Migration */}
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
