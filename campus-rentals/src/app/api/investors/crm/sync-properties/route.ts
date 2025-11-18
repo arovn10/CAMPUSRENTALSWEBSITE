@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
           jsonb_agg(
             jsonb_build_object('id', s.id, 'order', s."order")
             ORDER BY s."order" ASC
-          ) FILTER (WHERE s."isActive" = true),
+          ) FILTER (WHERE s.id IS NOT NULL),
           '[]'::jsonb
         ) as stages
       FROM deal_pipelines p
-      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId" AND s."isActive" = true
+      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
       WHERE p."isDefault" = true
       GROUP BY p.id, p.name, p.description, p."isDefault"
       LIMIT 1

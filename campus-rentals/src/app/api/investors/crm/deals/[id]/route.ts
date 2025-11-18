@@ -41,7 +41,7 @@ export async function GET(
                 'order', s.order,
                 'color', s.color
               ) ORDER BY s.order ASC
-            ) FROM deal_pipeline_stages s WHERE s."pipelineId" = p.id AND s."isActive" = true),
+            ) FROM deal_pipeline_stages s WHERE s."pipelineId" = p.id),
             '[]'::jsonb
           )
         ) as pipeline,

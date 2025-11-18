@@ -40,17 +40,16 @@ export async function GET(request: NextRequest) {
               'name', s.name,
               'order', s."order",
               'color', s.color,
-              'isActive', s."isActive",
               'pipelineId', s."pipelineId",
               'createdAt', s."createdAt",
               'updatedAt', s."updatedAt"
             ) ORDER BY s."order" ASC
-          ) FILTER (WHERE s."isActive" = true),
+          ) FILTER (WHERE s.id IS NOT NULL),
           '[]'::jsonb
         ) as stages,
         (SELECT COUNT(*) FROM deals WHERE "pipelineId" = p.id) as _count
       FROM deal_pipelines p
-      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId" AND s."isActive" = true
+      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
       WHERE p."isActive" = true
       GROUP BY p.id, p.name, p.description, p."isDefault", p."isActive", p."createdAt", p."updatedAt"
       ORDER BY p."isDefault" DESC, p."createdAt" ASC
