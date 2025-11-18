@@ -18,8 +18,12 @@ async function runMigration() {
 
   // Use direct database connection with correct endpoint
   // Endpoint: ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com
+  // Password needs URL encoding for special characters
+  const password = '~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v'
+  const encodedPassword = encodeURIComponent(password)
+  
   const databaseUrl = process.env.DATABASE_URL_DIRECT || 
-    'postgresql://dbmasteruser:~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v@ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require'
+    `postgresql://dbmasteruser:${encodedPassword}@ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require`
   
   console.log('🔌 Using direct database connection')
   console.log('   (Bypassing Prisma Accelerate proxy)\n')
