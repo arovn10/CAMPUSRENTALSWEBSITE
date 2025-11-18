@@ -9,30 +9,30 @@ import { Client } from 'pg';
  * Get database connection config from environment variables
  */
 function getDbConfig() {
-  // Get database credentials from environment variables
-  const dbHost = process.env.DB_HOST;
-  const dbUser = process.env.DB_USER;
-  const dbPassword = process.env.DB_PASSWORD;
-  const dbName = process.env.DB_NAME || 'campus_rentals';
-  const dbPort = parseInt(process.env.DB_PORT || '5432');
+  // Priority 1: Individual DB_* environment variables
+  let host = process.env.DB_HOST || process.env.DATABASE_URL_DIRECT_HOST;
+  let user = process.env.DB_USER || process.env.DATABASE_URL_DIRECT_USER;
+  let password = process.env.DB_PASSWORD || process.env.DATABASE_URL_DIRECT_PASSWORD;
+  let database = process.env.DB_NAME || process.env.DATABASE_URL_DIRECT_DB || 'campus_rentals';
+  let port = parseInt(process.env.DB_PORT || process.env.DATABASE_URL_DIRECT_PORT || '5432');
 
-  // Try to parse from DATABASE_URL if individual vars not set
-  let host = dbHost;
-  let user = dbUser;
-  let password = dbPassword;
-  let database = dbName;
-  let port = dbPort;
-
-  if (!host || !user || !password) {
+  // Priority 2: Parse DATABASE_URL if it's a direct connection (not Prisma Accelerate)
+  if ((!host || !user || !password) && process.env.DATABASE_URL) {
     const databaseUrl = process.env.DATABASE_URL;
-    if (databaseUrl && !databaseUrl.includes('prisma+postgres://')) {
+    
+    // Skip Prisma Accelerate URLs - they can't be used for direct connections
+    if (!databaseUrl.includes('prisma+postgres://') && !databaseUrl.includes('accelerate.prisma-data.net')) {
       try {
         const url = new URL(databaseUrl);
-        host = url.hostname;
-        user = url.username;
-        password = url.password;
-        database = url.pathname.slice(1) || 'campus_rentals';
-        port = parseInt(url.port) || 5432;
+        if (!host) host = url.hostname;
+        if (!user) user = url.username;
+        if (!password) password = url.password;
+        if (!database || database === 'campus_rentals') {
+          database = url.pathname.slice(1) || 'campus_rentals';
+        }
+        if (!port || port === 5432) {
+          port = parseInt(url.port) || 5432;
+        }
       } catch (error) {
         console.error('Failed to parse DATABASE_URL:', error);
       }
@@ -40,7 +40,11 @@ function getDbConfig() {
   }
 
   if (!host || !user || !password) {
-    throw new Error('Database credentials not found. Set DB_HOST, DB_USER, DB_PASSWORD or DATABASE_URL');
+    const errorMsg = 'Database credentials not found. ' +
+      'Set DB_HOST, DB_USER, DB_PASSWORD (or DATABASE_URL_DIRECT_*) environment variables. ' +
+      'Note: DATABASE_URL pointing to Prisma Accelerate cannot be used for direct connections.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   return { host, port, database, user, password };
