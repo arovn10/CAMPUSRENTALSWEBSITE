@@ -29,7 +29,11 @@ function saveMigrationLog(log: MigrationLog) {
 function getSQLMigrationFiles(): string[] {
   const files = readdirSync(MIGRATIONS_DIR)
   return files
-    .filter(file => file.endsWith('.sql') && file.startsWith('add-') || file.includes('migration'))
+    .filter(file => {
+      if (!file.endsWith('.sql')) return false
+      // Include files that start with 'add-' or contain 'migration' or 'phase'
+      return file.startsWith('add-') || file.includes('migration') || file.includes('phase')
+    })
     .sort() // Run in alphabetical order
 }
 
