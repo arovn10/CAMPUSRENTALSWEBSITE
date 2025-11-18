@@ -122,7 +122,7 @@ export default function CRMDealPipeline() {
     }
   }
 
-  const fetchDeals = async () => {
+  const fetchDeals = useCallback(async () => {
     setLoading(true)
     try {
       const token = getAuthToken()
@@ -132,13 +132,8 @@ export default function CRMDealPipeline() {
         return
       }
 
-      const params = new URLSearchParams()
-      // Show all deals (same as deals tab) - pipeline selection is just for organizing the view
-      if (searchTerm) {
-        params.append('search', searchTerm)
-      }
-
-      const url = `/api/investors/crm/deals?${params.toString()}`
+      // Fetch deals from /api/investors/crm/deals
+      const url = `/api/investors/crm/deals${selectedPipelineId ? `?pipelineId=${selectedPipelineId}` : ''}`
       console.log('Fetching deals from:', url)
 
       const response = await fetch(url, {
@@ -148,9 +143,23 @@ export default function CRMDealPipeline() {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        console.log('Fetched deals:', data.length, 'deals')
-        setDeals(data)
+        const deals = await response.json()
+        console.log('Fetched deals:', deals.length, 'deals')
+        
+        // Filter by search term if provided
+        let filteredDeals = deals
+        if (searchTerm) {
+          const searchLower = searchTerm.toLowerCase()
+          filteredDeals = deals.filter((deal: Deal) =>
+            deal.name?.toLowerCase().includes(searchLower) ||
+            deal.property?.name?.toLowerCase().includes(searchLower) ||
+            deal.property?.address?.toLowerCase().includes(searchLower) ||
+            deal.description?.toLowerCase().includes(searchLower)
+          )
+        }
+
+        console.log('Filtered deals:', filteredDeals.length, 'deals')
+        setDeals(filteredDeals)
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         console.error('Failed to fetch deals:', response.status, response.statusText, errorData)
@@ -162,18 +171,18 @@ export default function CRMDealPipeline() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedPipelineId, searchTerm])
 
   useEffect(() => {
     const initialize = async () => {
       // First fetch pipelines
       await fetchPipelines()
       
-      // Then auto-sync properties to deals (only once)
+      // Then auto-sync investments to deals (only once)
       if (!hasSyncedRef.current) {
         try {
           const token = getAuthToken()
-          const response = await fetch('/api/investors/crm/sync-properties', {
+          const response = await fetch('/api/investors/crm/sync-investments', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -181,24 +190,26 @@ export default function CRMDealPipeline() {
           })
           if (response.ok) {
             const result = await response.json()
-            console.log('Properties auto-synced:', result.message)
+            console.log('Investments auto-synced to deals:', result.message)
             hasSyncedRef.current = true
           } else {
             console.error('Sync failed:', response.status, response.statusText)
           }
         } catch (error) {
-          console.error('Error auto-syncing properties:', error)
+          console.error('Error auto-syncing investments:', error)
         }
       }
     }
     initialize()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    // Always fetch deals - show all deals by default (same as deals tab)
-    // Pipeline selection is just for organizing the view, not filtering
-    fetchDeals()
-  }, [selectedPipelineId, searchTerm])
+    // Fetch deals when pipelines are loaded, pipeline selection changes, or search term changes
+    if (pipelines.length > 0) {
+      fetchDeals()
+    }
+  }, [pipelines.length, selectedPipelineId, searchTerm, fetchDeals])
 
   const handleDealClick = (dealId: string) => {
     router.push(`/investors/crm/deals/${dealId}`)

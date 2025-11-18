@@ -944,8 +944,12 @@ export default function InvestorDashboard() {
                 <button
                   key={tab.id}
                   onClick={() => {
-                    setActiveView(tab.id as any)
-                    sessionStorage.setItem('investorDashboardActiveTab', tab.id)
+                    if (tab.id === 'crm') {
+                      router.push('/investors/pipeline-tracker')
+                    } else {
+                      setActiveView(tab.id as any)
+                      sessionStorage.setItem('investorDashboardActiveTab', tab.id)
+                    }
                   }}
                   className={`relative px-6 py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
                     activeView === tab.id
