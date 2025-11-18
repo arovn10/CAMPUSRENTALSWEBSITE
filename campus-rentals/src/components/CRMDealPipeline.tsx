@@ -199,7 +199,6 @@ export default function CRMDealPipeline() {
 
   useEffect(() => {
     // Fetch deals when pipeline is selected or search term changes
-    // Always fetch deals if we have a pipeline selected
     if (selectedPipelineId) {
       fetchDeals()
     } else if (pipelines.length > 0 && !selectedPipelineId) {
@@ -207,7 +206,14 @@ export default function CRMDealPipeline() {
       const defaultPipeline = pipelines.find((p: Pipeline) => p.isDefault) || pipelines[0]
       if (defaultPipeline) {
         setSelectedPipelineId(defaultPipeline.id)
+      } else {
+        // No default pipeline, but still fetch all deals
+        fetchDeals()
       }
+    } else {
+      // If no pipelines exist yet or pipelines haven't loaded, still try to fetch deals
+      // This ensures deals load even if pipeline setup is incomplete
+      fetchDeals()
     }
   }, [selectedPipelineId, searchTerm, pipelines.length])
 

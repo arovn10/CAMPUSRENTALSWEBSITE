@@ -1555,8 +1555,8 @@ export default function InvestorDashboard() {
                   )}
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-200/60">
-                <table className="min-w-full divide-y divide-slate-200/60">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/60">
+                <table className="min-w-full divide-y divide-slate-200/60" style={{ minWidth: '1200px' }}>
                   <thead className="bg-slate-50/80">
                     <tr>
                       {analyticsScope === 'PERSON' && (
@@ -1690,7 +1690,11 @@ export default function InvestorDashboard() {
                       const dscr = annualDebtService > 0 ? (annualNOI / annualDebtService) : null
 
                       return (
-                        <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors duration-200">
+                        <tr 
+                          key={inv.id} 
+                          className="hover:bg-slate-50/80 transition-colors duration-200 cursor-pointer"
+                          onClick={() => openProforma(inv)}
+                        >
                           {analyticsScope === 'PERSON' && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
                               {inv.personName || 'Unknown'}
@@ -1725,7 +1729,10 @@ export default function InvestorDashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                             <button
-                              onClick={() => openProforma(inv)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openProforma(inv)
+                              }}
                               className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs font-semibold"
                             >
                               View 5Y Proforma
@@ -1939,7 +1946,7 @@ export default function InvestorDashboard() {
           </div>
               <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI (After Debt)</span>
             </div>
                 <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyNOIAfterDebt)}</h3>
           </div>
@@ -1974,7 +1981,7 @@ export default function InvestorDashboard() {
               </button>
             </div>
             <div className="p-6 overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full divide-y divide-slate-200" style={{ minWidth: '1400px' }}>
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Year</th>
