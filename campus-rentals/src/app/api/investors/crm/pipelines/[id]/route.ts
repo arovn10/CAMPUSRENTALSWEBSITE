@@ -93,7 +93,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, description, isDefault, isActive } = body;
+    const { name, description, isDefault } = body;
 
     // If setting as default, unset other defaults
     if (isDefault) {
@@ -119,10 +119,6 @@ export async function PUT(
     if (isDefault !== undefined) {
       updates.push(`"isDefault" = $${paramIndex++}`);
       values.push(isDefault);
-    }
-    if (isActive !== undefined) {
-      updates.push(`"isActive" = $${paramIndex++}`);
-      values.push(isActive);
     }
 
     if (updates.length > 0) {
