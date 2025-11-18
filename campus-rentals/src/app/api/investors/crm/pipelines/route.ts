@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
           ) FILTER (WHERE s."isActive" = true),
           '[]'::jsonb
         ) as stages,
-        (SELECT COUNT(*) FROM "Deal" WHERE "pipelineId" = p.id) as _count
-      FROM "DealPipeline" p
-      LEFT JOIN "DealStage" s ON p.id = s."pipelineId" AND s."isActive" = true
+        (SELECT COUNT(*) FROM deals WHERE "pipelineId" = p.id) as _count
+      FROM deal_pipelines p
+      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId" AND s."isActive" = true
       WHERE p."isActive" = true
       GROUP BY p.id
       ORDER BY p."isDefault" DESC, p."createdAt" ASC
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     // If this is set as default, unset other defaults
     if (isDefault) {
       await query(
-        'UPDATE "DealPipeline" SET "isDefault" = false WHERE "isDefault" = true'
+        'UPDATE deal_pipelines SET "isDefault" = false WHERE "isDefault" = true'
       );
     }
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Create pipeline
     const pipelineQuery = `
-      INSERT INTO "DealPipeline" (id, name, description, "isDefault", "isActive", "createdAt", "updatedAt")
+      INSERT INTO deal_pipelines (id, name, description, "isDefault", "isActive", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, true, NOW(), NOW())
       RETURNING *
     `;
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         const stageId = `stage_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
         
         const stageQuery = `
-          INSERT INTO "DealStage" (
+          INSERT INTO deal_pipeline_stages (
             id, "pipelineId", name, description, "order", color, "isActive", "createdAt", "updatedAt"
           ) VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
           RETURNING *

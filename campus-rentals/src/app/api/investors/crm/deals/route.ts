@@ -27,17 +27,17 @@ export async function GET(request: NextRequest) {
     if (user.role === 'INVESTOR') {
       // Get property IDs where user has investments
       const userInvestments = await query<{ propertyId: string }>(
-        'SELECT "propertyId" FROM "Investment" WHERE "userId" = $1',
+        'SELECT "propertyId" FROM investments WHERE "userId" = $1',
         [user.id]
       );
 
       // Get property IDs from entity investments where user is an owner
       const entityInvestments = await query<{ propertyId: string }>(
         `SELECT DISTINCT ei."propertyId"
-         FROM "EntityInvestment" ei
-         LEFT JOIN "Entity" e ON ei."entityId" = e.id
-         LEFT JOIN "EntityOwner" eo ON e.id = eo."entityId"
-         LEFT JOIN "EntityInvestmentOwner" eio ON ei.id = eio."entityInvestmentId"
+         FROM entity_investments ei
+         LEFT JOIN entities e ON ei."entityId" = e.id
+         LEFT JOIN entity_owners eo ON e.id = eo."entityId"
+         LEFT JOIN entity_investment_owners eio ON ei.id = eio."entityInvestmentId"
          WHERE (eo."userId" = $1 OR eio."userId" = $1)`,
         [user.id]
       );
@@ -120,24 +120,24 @@ export async function GET(request: NextRequest) {
           'notes', COALESCE(note_count.count, 0),
           'relationships', COALESCE(rel_count.count, 0)
         ) as _count
-      FROM "Deal" d
-      LEFT JOIN "DealPipeline" p ON d."pipelineId" = p.id
-      LEFT JOIN "DealStage" s ON d."stageId" = s.id
-      LEFT JOIN "Property" prop ON d."propertyId" = prop.id
-      LEFT JOIN "User" u ON d."assignedToId" = u.id
+      FROM deals d
+      LEFT JOIN deal_pipelines p ON d."pipelineId" = p.id
+      LEFT JOIN deal_pipeline_stages s ON d."stageId" = s.id
+      LEFT JOIN properties prop ON d."propertyId" = prop.id
+      LEFT JOIN users u ON d."assignedToId" = u.id
       LEFT JOIN (
         SELECT "dealId", COUNT(*) as count
-        FROM "DealTask"
+        FROM deal_tasks
         GROUP BY "dealId"
       ) task_count ON d.id = task_count."dealId"
       LEFT JOIN (
         SELECT "dealId", COUNT(*) as count
-        FROM "DealNote"
+        FROM deal_notes
         GROUP BY "dealId"
       ) note_count ON d.id = note_count."dealId"
       LEFT JOIN (
         SELECT "dealId", COUNT(*) as count
-        FROM "DealRelationship"
+        FROM deal_relationships
         GROUP BY "dealId"
       ) rel_count ON d.id = rel_count."dealId"
       ${whereClause}
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
 
     // Insert deal
     const insertQuery = `
-      INSERT INTO "Deal" (
+      INSERT INTO deals (
         id, name, "dealType", status, priority, "pipelineId", "stageId",
         "propertyId", description, "estimatedValue", "estimatedCloseDate",
         "actualCloseDate", source, "assignedToId", tags, metadata, "createdAt", "updatedAt"
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
       for (const tag of tags) {
         try {
           await query(
-            'INSERT INTO "DealTag" (id, "dealId", tag, "createdAt") VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING',
+            'INSERT INTO deal_tags (id, "dealId", tag, "createdAt") VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING',
             [`tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dealId, tag]
           );
         } catch (error) {
@@ -291,11 +291,11 @@ export async function POST(request: NextRequest) {
           'lastName', u."lastName",
           'email', u.email
         ) as assignedTo
-      FROM "Deal" d
-      LEFT JOIN "DealPipeline" p ON d."pipelineId" = p.id
-      LEFT JOIN "DealStage" s ON d."stageId" = s.id
-      LEFT JOIN "Property" prop ON d."propertyId" = prop.id
-      LEFT JOIN "User" u ON d."assignedToId" = u.id
+      FROM deals d
+      LEFT JOIN deal_pipelines p ON d."pipelineId" = p.id
+      LEFT JOIN deal_pipeline_stages s ON d."stageId" = s.id
+      LEFT JOIN properties prop ON d."propertyId" = prop.id
+      LEFT JOIN users u ON d."assignedToId" = u.id
       WHERE d.id = $1
     `;
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // GET /api/investors/crm/tasks - Fetch all tasks
@@ -26,42 +26,51 @@ export async function GET(request: NextRequest) {
     const assignedToId = searchParams.get('assignedToId');
     const status = searchParams.get('status');
 
-    const where: any = {};
+    let whereConditions: string[] = [];
+    let queryParams: any[] = [];
+    let paramIndex = 1;
 
     if (dealId) {
-      where.dealId = dealId;
+      whereConditions.push(`dt."dealId" = $${paramIndex}`);
+      queryParams.push(dealId);
+      paramIndex++;
     }
 
     if (assignedToId) {
-      where.assignedToId = assignedToId;
+      whereConditions.push(`dt."assignedToId" = $${paramIndex}`);
+      queryParams.push(assignedToId);
+      paramIndex++;
     }
 
     if (status) {
-      where.status = status;
+      whereConditions.push(`dt.status = $${paramIndex}`);
+      queryParams.push(status);
+      paramIndex++;
     }
 
-    const tasks = await prisma.dealTask.findMany({
-      where,
-      include: {
-        deal: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
+    const tasks = await query(`
+      SELECT 
+        dt.*,
+        jsonb_build_object(
+          'id', d.id,
+          'name', d.name
+        ) as deal,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as "assignedTo"
+      FROM "DealTask" dt
+      LEFT JOIN "Deal" d ON dt."dealId" = d.id
+      LEFT JOIN "User" u ON dt."assignedToId" = u.id
+      ${whereClause}
+      ORDER BY dt."createdAt" DESC
+    `, queryParams);
 
     return NextResponse.json(tasks);
   } catch (error: any) {
@@ -110,33 +119,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const task = await prisma.dealTask.create({
-      data: {
-        dealId,
-        title,
-        description,
-        status: status || 'TODO',
-        priority: priority || 'MEDIUM',
-        dueDate: dueDate ? new Date(dueDate) : null,
-        assignedToId,
-      },
-      include: {
-        deal: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    await query(`
+      INSERT INTO deal_tasks (
+        id, "dealId", title, description, status, priority, "dueDate", "assignedToId", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+    `, [
+      taskId,
+      dealId,
+      title,
+      description || null,
+      status || 'TODO',
+      priority || 'MEDIUM',
+      dueDate ? new Date(dueDate) : null,
+      assignedToId || null,
+    ]);
+
+    // Fetch the created task with relations
+    const task = await queryOne(`
+      SELECT 
+        dt.*,
+        jsonb_build_object(
+          'id', d.id,
+          'name', d.name
+        ) as deal,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as "assignedTo"
+      FROM deal_tasks dt
+      LEFT JOIN deals d ON dt."dealId" = d.id
+      LEFT JOIN users u ON dt."assignedToId" = u.id
+      WHERE dt.id = $1
+    `, [taskId]);
 
     return NextResponse.json(task, { status: 201 });
   } catch (error: any) {
@@ -147,4 +165,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
