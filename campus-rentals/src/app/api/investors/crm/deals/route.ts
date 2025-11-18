@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // GET /api/investors/crm/deals - Fetch all deals (shared data - investors see their deals, admins see all)
@@ -19,45 +19,41 @@ export async function GET(request: NextRequest) {
     const stageId = searchParams.get('stageId');
     const search = searchParams.get('search');
 
-    const where: any = {};
+    let whereConditions: string[] = [];
+    let queryParams: any[] = [];
+    let paramIndex = 1;
 
     // If user is investor, only show deals for properties they've invested in
     if (user.role === 'INVESTOR') {
       // Get property IDs where user has investments
-      const userInvestments = await prisma.investment.findMany({
-        where: { userId: user.id },
-        select: { propertyId: true },
-      });
+      const userInvestments = await query<{ propertyId: string }>(
+        'SELECT "propertyId" FROM "Investment" WHERE "userId" = $1',
+        [user.id]
+      );
 
       // Get property IDs from entity investments where user is an owner
-      const entityInvestments = await prisma.entityInvestment.findMany({
-        include: {
-          entity: {
-            include: {
-              entityOwners: {
-                where: { userId: user.id },
-              },
-            },
-          },
-          entityInvestmentOwners: {
-            where: { userId: user.id },
-          },
-        },
-      });
+      const entityInvestments = await query<{ propertyId: string }>(
+        `SELECT DISTINCT ei."propertyId"
+         FROM "EntityInvestment" ei
+         LEFT JOIN "Entity" e ON ei."entityId" = e.id
+         LEFT JOIN "EntityOwner" eo ON e.id = eo."entityId"
+         LEFT JOIN "EntityInvestmentOwner" eio ON ei.id = eio."entityInvestmentId"
+         WHERE (eo."userId" = $1 OR eio."userId" = $1)`,
+        [user.id]
+      );
 
       const propertyIds = new Set<string>();
       userInvestments.forEach((inv) => propertyIds.add(inv.propertyId));
-      entityInvestments.forEach((ei) => {
-        if (ei.entity.entityOwners.length > 0 || ei.entityInvestmentOwners.length > 0) {
-          propertyIds.add(ei.propertyId);
-        }
-      });
+      entityInvestments.forEach((ei) => propertyIds.add(ei.propertyId));
 
       if (propertyIds.size === 0) {
         return NextResponse.json([]);
       }
 
-      where.propertyId = { in: Array.from(propertyIds) };
+      const placeholders = Array.from(propertyIds).map((_, i) => `$${paramIndex + i}`).join(', ');
+      whereConditions.push(`d."propertyId" IN (${placeholders})`);
+      queryParams.push(...Array.from(propertyIds));
+      paramIndex += propertyIds.size;
     } else if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -66,56 +62,101 @@ export async function GET(request: NextRequest) {
     }
 
     if (pipelineId) {
-      where.pipelineId = pipelineId;
+      whereConditions.push(`d."pipelineId" = $${paramIndex}`);
+      queryParams.push(pipelineId);
+      paramIndex++;
     }
 
     if (stageId) {
-      where.stageId = stageId;
+      whereConditions.push(`d."stageId" = $${paramIndex}`);
+      queryParams.push(stageId);
+      paramIndex++;
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        // Note: location field removed - use property.address instead if needed
-      ];
+      whereConditions.push(`(d.name ILIKE $${paramIndex} OR d.description ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
     }
 
-    const deals = await prisma.deal.findMany({
-      where,
-      include: {
-        pipeline: true,
-        stage: true,
-        property: {
-          select: {
-            id: true,
-            propertyId: true,
-            name: true,
-            address: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        _count: {
-          select: {
-            tasks: true,
-            notes: true,
-            relationships: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
 
-    return NextResponse.json(deals);
+    // Main query with joins
+    const dealsQuery = `
+      SELECT 
+        d.*,
+        jsonb_build_object(
+          'id', p.id,
+          'pipelineId', p.id,
+          'name', p.name,
+          'description', p.description,
+          'isDefault', p."isDefault",
+          'isActive', p."isActive"
+        ) as pipeline,
+        jsonb_build_object(
+          'id', s.id,
+          'stageId', s.id,
+          'name', s.name,
+          'description', s.description,
+          'order', s.order,
+          'color', s.color
+        ) as stage,
+        jsonb_build_object(
+          'id', prop.id,
+          'propertyId', prop."propertyId",
+          'name', prop.name,
+          'address', prop.address
+        ) as property,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as assignedTo,
+        jsonb_build_object(
+          'tasks', COALESCE(task_count.count, 0),
+          'notes', COALESCE(note_count.count, 0),
+          'relationships', COALESCE(rel_count.count, 0)
+        ) as _count
+      FROM "Deal" d
+      LEFT JOIN "DealPipeline" p ON d."pipelineId" = p.id
+      LEFT JOIN "DealStage" s ON d."stageId" = s.id
+      LEFT JOIN "Property" prop ON d."propertyId" = prop.id
+      LEFT JOIN "User" u ON d."assignedToId" = u.id
+      LEFT JOIN (
+        SELECT "dealId", COUNT(*) as count
+        FROM "DealTask"
+        GROUP BY "dealId"
+      ) task_count ON d.id = task_count."dealId"
+      LEFT JOIN (
+        SELECT "dealId", COUNT(*) as count
+        FROM "DealNote"
+        GROUP BY "dealId"
+      ) note_count ON d.id = note_count."dealId"
+      LEFT JOIN (
+        SELECT "dealId", COUNT(*) as count
+        FROM "DealRelationship"
+        GROUP BY "dealId"
+      ) rel_count ON d.id = rel_count."dealId"
+      ${whereClause}
+      ORDER BY d."createdAt" DESC
+    `;
+
+    const deals = await query(dealsQuery, queryParams);
+
+    // Transform the results to match expected format
+    const transformedDeals = deals.map((deal: any) => ({
+      ...deal,
+      pipeline: deal.pipeline || null,
+      stage: deal.stage || null,
+      property: deal.property || null,
+      assignedTo: deal.assignedTo || null,
+      _count: deal._count || { tasks: 0, notes: 0, relationships: 0 },
+    }));
+
+    return NextResponse.json(transformedDeals);
   } catch (error: any) {
     console.error('Error fetching deals:', error);
     return NextResponse.json(
@@ -154,7 +195,6 @@ export async function POST(request: NextRequest) {
       stageId,
       propertyId,
       description,
-      // location field removed - not in database schema
       estimatedValue,
       estimatedCloseDate,
       actualCloseDate,
@@ -171,59 +211,97 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const deal = await prisma.deal.create({
-      data: {
-        name,
-        dealType: dealType || 'ACQUISITION',
-        status: status || 'NEW',
-        priority: priority || 'MEDIUM',
-        pipelineId,
-        stageId,
-        propertyId,
-        description,
-        // location field removed - not in database schema
-        estimatedValue,
-        estimatedCloseDate: estimatedCloseDate ? new Date(estimatedCloseDate) : null,
-        actualCloseDate: actualCloseDate ? new Date(actualCloseDate) : null,
-        source,
-        assignedToId,
-        tags: tags || [],
-        metadata: metadata || {},
-      } as any, // Use 'as any' to allow fields that may not exist in Prisma schema
-      include: {
-        pipeline: true,
-        stage: true,
-        property: {
-          select: {
-            id: true,
-            propertyId: true,
-            name: true,
-            address: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    // Generate ID
+    const dealId = `deal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Insert deal
+    const insertQuery = `
+      INSERT INTO "Deal" (
+        id, name, "dealType", status, priority, "pipelineId", "stageId",
+        "propertyId", description, "estimatedValue", "estimatedCloseDate",
+        "actualCloseDate", source, "assignedToId", tags, metadata, "createdAt", "updatedAt"
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
+      ) RETURNING *
+    `;
+
+    const deal = await queryOne(insertQuery, [
+      dealId,
+      name,
+      dealType || 'ACQUISITION',
+      status || 'NEW',
+      priority || 'MEDIUM',
+      pipelineId || null,
+      stageId || null,
+      propertyId || null,
+      description || null,
+      estimatedValue || null,
+      estimatedCloseDate ? new Date(estimatedCloseDate) : null,
+      actualCloseDate ? new Date(actualCloseDate) : null,
+      source || null,
+      assignedToId || null,
+      tags ? JSON.stringify(tags) : JSON.stringify([]),
+      metadata ? JSON.stringify(metadata) : JSON.stringify({}),
+    ]);
 
     // Create deal tags if provided
-    if (tags && tags.length > 0) {
-      await prisma.dealTag.createMany({
-        data: tags.map((tag: string) => ({
-          dealId: deal.id,
-          tag,
-        })),
-        skipDuplicates: true,
-      });
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      for (const tag of tags) {
+        try {
+          await query(
+            'INSERT INTO "DealTag" (id, "dealId", tag, "createdAt") VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING',
+            [`tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, dealId, tag]
+          );
+        } catch (error) {
+          // Ignore duplicate tag errors
+          console.warn('Failed to create deal tag:', error);
+        }
+      }
     }
 
-    return NextResponse.json(deal, { status: 201 });
+    // Fetch the complete deal with relations
+    const fullDealQuery = `
+      SELECT 
+        d.*,
+        jsonb_build_object(
+          'id', p.id,
+          'pipelineId', p.id,
+          'name', p.name,
+          'description', p.description,
+          'isDefault', p."isDefault",
+          'isActive', p."isActive"
+        ) as pipeline,
+        jsonb_build_object(
+          'id', s.id,
+          'stageId', s.id,
+          'name', s.name,
+          'description', s.description,
+          'order', s.order,
+          'color', s.color
+        ) as stage,
+        jsonb_build_object(
+          'id', prop.id,
+          'propertyId', prop."propertyId",
+          'name', prop.name,
+          'address', prop.address
+        ) as property,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as assignedTo
+      FROM "Deal" d
+      LEFT JOIN "DealPipeline" p ON d."pipelineId" = p.id
+      LEFT JOIN "DealStage" s ON d."stageId" = s.id
+      LEFT JOIN "Property" prop ON d."propertyId" = prop.id
+      LEFT JOIN "User" u ON d."assignedToId" = u.id
+      WHERE d.id = $1
+    `;
+
+    const fullDeal = await queryOne(fullDealQuery, [dealId]);
+
+    return NextResponse.json(fullDeal, { status: 201 });
   } catch (error: any) {
     console.error('Error creating deal:', error);
     return NextResponse.json(
@@ -232,4 +310,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

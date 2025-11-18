@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // GET /api/investors/crm/pipelines - Fetch all pipelines
@@ -22,32 +22,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const pipelines = await prisma.dealPipeline.findMany({
-      where: {
-        isActive: true,
-      },
-      include: {
-        stages: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
-        _count: {
-          select: {
-            deals: true,
-          },
-        },
-      },
-      orderBy: [
-        { isDefault: 'desc' },
-        { createdAt: 'asc' },
-      ],
-    });
+    // Fetch pipelines with stages
+    const pipelinesQuery = `
+      SELECT 
+        p.*,
+        COALESCE(
+          jsonb_agg(
+            jsonb_build_object(
+              'id', s.id,
+              'stageId', s.id,
+              'name', s.name,
+              'description', s.description,
+              'order', s.order,
+              'color', s.color,
+              'isActive', s."isActive",
+              'pipelineId', s."pipelineId",
+              'createdAt', s."createdAt",
+              'updatedAt', s."updatedAt"
+            ) ORDER BY s.order ASC
+          ) FILTER (WHERE s."isActive" = true),
+          '[]'::jsonb
+        ) as stages,
+        (SELECT COUNT(*) FROM "Deal" WHERE "pipelineId" = p.id) as _count
+      FROM "DealPipeline" p
+      LEFT JOIN "DealStage" s ON p.id = s."pipelineId" AND s."isActive" = true
+      WHERE p."isActive" = true
+      GROUP BY p.id
+      ORDER BY p."isDefault" DESC, p."createdAt" ASC
+    `;
 
-    return NextResponse.json(pipelines);
+    const pipelines = await query(pipelinesQuery);
+
+    // Transform to match expected format
+    const transformedPipelines = pipelines.map((pipeline: any) => ({
+      ...pipeline,
+      stages: pipeline.stages || [],
+      _count: {
+        deals: parseInt(pipeline._count) || 0,
+      },
+    }));
+
+    return NextResponse.json(transformedPipelines);
   } catch (error: any) {
     console.error('Error fetching pipelines:', error);
     return NextResponse.json(
@@ -82,41 +97,60 @@ export async function POST(request: NextRequest) {
 
     // If this is set as default, unset other defaults
     if (isDefault) {
-      await prisma.dealPipeline.updateMany({
-        where: {
-          isDefault: true,
-        },
-        data: {
-          isDefault: false,
-        },
-      });
+      await query(
+        'UPDATE "DealPipeline" SET "isDefault" = false WHERE "isDefault" = true'
+      );
     }
 
-    // Create pipeline with stages
-    const pipeline = await prisma.dealPipeline.create({
-      data: {
-        name,
-        description,
-        isDefault: isDefault || false,
-        stages: {
-          create: stages?.map((stage: any, index: number) => ({
-            name: stage.name,
-            description: stage.description,
-            order: stage.order ?? index,
-            color: stage.color,
-          })) || [],
-        },
-      },
-      include: {
-        stages: {
-          orderBy: {
-            order: 'asc',
-          },
-        },
-      },
-    });
+    // Generate pipeline ID
+    const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    return NextResponse.json(pipeline, { status: 201 });
+    // Create pipeline
+    const pipelineQuery = `
+      INSERT INTO "DealPipeline" (id, name, description, "isDefault", "isActive", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+      RETURNING *
+    `;
+
+    const pipeline = await queryOne(pipelineQuery, [
+      pipelineId,
+      name,
+      description || null,
+      isDefault || false,
+    ]);
+
+    // Create stages if provided
+    const createdStages = [];
+    if (stages && Array.isArray(stages)) {
+      for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        const stageId = `stage_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const stageQuery = `
+          INSERT INTO "DealStage" (
+            id, "pipelineId", name, description, "order", color, "isActive", "createdAt", "updatedAt"
+          ) VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+          RETURNING *
+        `;
+
+        const createdStage = await queryOne(stageQuery, [
+          stageId,
+          pipelineId,
+          stage.name,
+          stage.description || null,
+          stage.order ?? i,
+          stage.color || null,
+        ]);
+
+        createdStages.push(createdStage);
+      }
+    }
+
+    // Return pipeline with stages
+    return NextResponse.json({
+      ...pipeline,
+      stages: createdStages.sort((a, b) => (a.order || 0) - (b.order || 0)),
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating pipeline:', error);
     return NextResponse.json(
@@ -125,4 +159,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
