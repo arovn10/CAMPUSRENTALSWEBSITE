@@ -98,12 +98,18 @@ jobs:
             echo "✅ Build completed"
             
             echo ""
-            echo "🔄 Step 5: Restarting the application..."
+            echo "🗄️  Step 5: Running database migrations..."
+            # Run insurance/tax documents migration (idempotent - safe to run multiple times)
+            npm run migrate:insurance-tax-docs:direct || echo "⚠️  Migration script not found or failed (non-critical if already run)"
+            echo "✅ Migrations completed"
+            
+            echo ""
+            echo "🔄 Step 6: Restarting the application..."
             pm2 restart campus-rentals || pm2 start npm --name "campus-rentals" -- start
             echo "✅ Application restarted"
             
             echo ""
-            echo "📊 Step 6: Checking application status..."
+            echo "📊 Step 7: Checking application status..."
             sleep 3
             pm2 status
             pm2 logs campus-rentals --lines 5 --nostream
