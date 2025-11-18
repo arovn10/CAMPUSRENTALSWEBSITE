@@ -16,12 +16,35 @@ async function runMigration() {
   console.log('🚀 Starting Phase 2 Migration - TermSheet Student Housing')
   console.log('==========================================================\n')
 
-  // Use direct database connection (bypass Prisma Accelerate)
-  // Construct from known credentials
-  const databaseUrl = 'postgresql://dbmasteruser:~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v@ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require'
+  // Try to extract real database endpoint from Prisma Accelerate URL
+  // Or use direct connection - but we need to find the actual endpoint
+  // Since DNS isn't resolving, let's try using Prisma's connection through the app
   
-  console.log('🔌 Using direct database connection')
-  console.log('   (Bypassing Prisma Accelerate proxy)\n')
+  console.log('⚠️  DNS resolution issue detected')
+  console.log('   Trying alternative connection methods...\n')
+  
+  // Try to get the actual database endpoint
+  // Check if there's a DATABASE_URL_DIRECT or similar
+  let databaseUrl = process.env.DATABASE_URL_DIRECT
+  
+  if (!databaseUrl) {
+    // Try to construct - but we need the actual working endpoint
+    // Since the hostname doesn't resolve, we might need the IP or different format
+    console.log('❌ Cannot resolve database hostname')
+    console.log('')
+    console.log('Please check your AWS Lightsail console for the correct database endpoint.')
+    console.log('The endpoint might be:')
+    console.log('  - A different hostname format')
+    console.log('  - A private IP address (if in same VPC)')
+    console.log('  - A different region/format')
+    console.log('')
+    console.log('Alternatively, you can set DATABASE_URL_DIRECT environment variable:')
+    console.log('  export DATABASE_URL_DIRECT="postgresql://dbmasteruser:PASSWORD@ENDPOINT:5432/campus_rentals?sslmode=require"')
+    console.log('')
+    process.exit(1)
+  }
+  
+  console.log('🔌 Using DATABASE_URL_DIRECT\n')
 
   // Parse DATABASE_URL
   let url: URL
