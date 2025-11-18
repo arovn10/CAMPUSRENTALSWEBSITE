@@ -53,6 +53,14 @@ export default function MigrationsPage() {
   const [progress, setProgress] = useState(0)
   const [statusMessage, setStatusMessage] = useState('')
 
+  // Insurance/Tax Docs Migration state
+  const [docsJobId, setDocsJobId] = useState<string | null>(null)
+  const [docsProgress, setDocsProgress] = useState(0)
+  const [docsStatusMessage, setDocsStatusMessage] = useState('')
+  const [docsRunning, setDocsRunning] = useState(false)
+  const [docsResult, setDocsResult] = useState<any>(null)
+  const [docsError, setDocsError] = useState<string | null>(null)
+
   useEffect(() => {
     // Poll for status if job is running
     if (jobId && running) {
@@ -94,6 +102,48 @@ export default function MigrationsPage() {
       return () => clearInterval(interval)
     }
   }, [jobId, running])
+
+  // Poll for insurance/tax docs migration status
+  useEffect(() => {
+    if (docsJobId && docsRunning) {
+      const interval = setInterval(async () => {
+        try {
+          const token = sessionStorage.getItem('authToken') || 
+                       sessionStorage.getItem('token') || 
+                       localStorage.getItem('authToken') || 
+                       localStorage.getItem('token')
+          
+          if (!token) return
+
+          const response = await fetch(`/api/admin/migrate/insurance-tax-docs/status?jobId=${docsJobId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (response.ok) {
+            const job = await response.json()
+            setDocsProgress(job.progress || 0)
+            setDocsStatusMessage(job.message || '')
+
+            if (job.status === 'completed') {
+              setDocsRunning(false)
+              setDocsResult(job.results)
+              clearInterval(interval)
+            } else if (job.status === 'failed') {
+              setDocsRunning(false)
+              setDocsError(job.error || 'Migration failed')
+              clearInterval(interval)
+            }
+          }
+        } catch (err) {
+          console.error('Error checking docs migration status:', err)
+        }
+      }, 2000)
+
+      return () => clearInterval(interval)
+    }
+  }, [docsJobId, docsRunning])
 
   const runPhase2Migration = async () => {
     setRunning(true)
@@ -360,6 +410,96 @@ export default function MigrationsPage() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-red-900 mb-2">Migration Failed</h3>
                     <p className="text-sm text-red-800">{error}</p>
+                    <p className="text-xs text-red-600 mt-2">
+                      No data was modified - migration was rolled back
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Insurance/Tax Documents Migration */}
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Insurance & Tax Documents</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Adds document upload fields to insurance and property tax tables
+                </p>
+              </div>
+              <button
+                onClick={runInsuranceTaxDocsMigration}
+                disabled={docsRunning}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  docsRunning
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {docsRunning ? (
+                  <span className="flex items-center">
+                    <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
+                    Running... {docsProgress > 0 && `${docsProgress}%`}
+                  </span>
+                ) : (
+                  'Run Migration'
+                )}
+              </button>
+            </div>
+
+            {/* Migration Details */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-gray-900 mb-2">What this migration does:</h3>
+              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                <li>Adds documentUrl, documentFileName, and documentS3Key columns to insurance table</li>
+                <li>Adds documentUrl, documentFileName, and documentS3Key columns to property_taxes table</li>
+                <li>Creates indexes for better query performance</li>
+              </ul>
+              <p className="text-sm text-green-700 font-medium mt-3">
+                ✓ Safe to run multiple times (idempotent) - NO DATA WILL BE DELETED
+              </p>
+            </div>
+
+            {/* Progress */}
+            {docsRunning && (docsProgress > 0 || docsStatusMessage) && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-900">{docsStatusMessage}</span>
+                  <span className="text-sm text-blue-700">{docsProgress}%</span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${docsProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Results */}
+            {docsResult && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <CheckCircleIcon className="h-6 w-6 text-green-600 mr-3 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-green-900 mb-2">Migration Successful!</h3>
+                    <div className="text-sm text-green-800 space-y-1">
+                      <p>✓ {docsResult.insuranceColumns} columns added to insurance table</p>
+                      <p>✓ {docsResult.taxColumns} columns added to property_taxes table</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {docsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <XCircleIcon className="h-6 w-6 text-red-600 mr-3 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-900 mb-2">Migration Failed</h3>
+                    <p className="text-sm text-red-800">{docsError}</p>
                     <p className="text-xs text-red-600 mt-2">
                       No data was modified - migration was rolled back
                     </p>
