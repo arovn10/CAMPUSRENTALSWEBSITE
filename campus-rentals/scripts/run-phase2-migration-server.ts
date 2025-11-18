@@ -9,10 +9,6 @@
 import { Client } from 'pg'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import * as dotenv from 'dotenv'
-
-// Load environment variables
-dotenv.config({ path: join(process.cwd(), '.env') })
 
 const MIGRATION_FILE = join(__dirname, 'phase2-termsheet-student-housing-migration.sql')
 
@@ -20,23 +16,12 @@ async function runMigration() {
   console.log('🚀 Starting Phase 2 Migration - TermSheet Student Housing')
   console.log('==========================================================\n')
 
-  // Try to get direct database URL, fallback to constructing from known credentials
-  let databaseUrl = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL
+  // Use direct database connection (bypass Prisma Accelerate)
+  // Construct from known credentials
+  const databaseUrl = 'postgresql://dbmasteruser:~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v@ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require'
   
-  // If DATABASE_URL is Prisma Accelerate, construct direct connection
-  if (databaseUrl && databaseUrl.includes('prisma-data.net')) {
-    console.log('⚠️  DATABASE_URL uses Prisma Accelerate proxy')
-    console.log('   Constructing direct database connection...\n')
-    
-    // Construct direct connection from known credentials
-    databaseUrl = 'postgresql://dbmasteruser:~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v@ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com:5432/campus_rentals?sslmode=require'
-  }
-  
-  if (!databaseUrl) {
-    console.error('❌ DATABASE_URL not found')
-    console.error('   Please set DATABASE_URL_DIRECT or ensure DATABASE_URL is set')
-    process.exit(1)
-  }
+  console.log('🔌 Using direct database connection')
+  console.log('   (Bypassing Prisma Accelerate proxy)\n')
 
   // Parse DATABASE_URL
   let url: URL
