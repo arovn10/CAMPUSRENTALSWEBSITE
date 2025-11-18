@@ -7,13 +7,19 @@ echo "🚀 Phase 2 Migration - Direct Database Connection"
 echo "=================================================="
 echo ""
 
-# Construct direct database URL from credentials
-# Using the credentials you provided:
-DB_HOST="ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com"
-DB_USER="dbmasteruser"
-DB_PASS="~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v"
-DB_NAME="campus_rentals"
-DB_PORT="5432"
+# Get database credentials from environment variables (NEVER hardcode!)
+DB_HOST="${DB_HOST:-${DATABASE_URL_DIRECT_HOST}}"
+DB_USER="${DB_USER:-${DATABASE_URL_DIRECT_USER}}"
+DB_PASS="${DB_PASSWORD:-${DATABASE_URL_DIRECT_PASSWORD}}"
+DB_NAME="${DB_NAME:-${DATABASE_URL_DIRECT_DB:-campus_rentals}}"
+DB_PORT="${DB_PORT:-${DATABASE_URL_DIRECT_PORT:-5432}}"
+
+if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
+    echo "❌ Database credentials not found in environment variables"
+    echo "   Please set DB_HOST, DB_USER, DB_PASSWORD (or DATABASE_URL_DIRECT_*)"
+    echo "   These should be in your .env file (not committed to git)"
+    exit 1
+fi
 
 # Try to get actual hostname/IP if DNS doesn't resolve
 # First, let's try with the hostname

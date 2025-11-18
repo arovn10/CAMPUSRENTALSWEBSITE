@@ -26,14 +26,25 @@ fi
 # Check if DATABASE_URL is set
 if [ -z "$DATABASE_URL" ]; then
     echo "⚠️  DATABASE_URL not set in environment"
-    echo "   Using direct connection parameters..."
+    echo "   Checking for direct connection credentials..."
+    
+    # Get credentials from environment
+    DB_HOST="${DB_HOST:-${DATABASE_URL_DIRECT_HOST}}"
+    DB_USER="${DB_USER:-${DATABASE_URL_DIRECT_USER}}"
+    DB_PASS="${DB_PASSWORD:-${DATABASE_URL_DIRECT_PASSWORD}}"
+    DB_NAME="${DB_NAME:-${DATABASE_URL_DIRECT_DB:-campus_rentals}}"
+    DB_PORT="${DB_PORT:-${DATABASE_URL_DIRECT_PORT:-5432}}"
+    
+    if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
+        echo "❌ Database credentials not found"
+        echo "   Please set DATABASE_URL or DB_HOST/DB_USER/DB_PASSWORD in .env"
+        exit 1
+    fi
     
     # Run with direct connection
-    PGPASSWORD='~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v' psql \
-        -h ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com \
-        -U dbmasteruser \
-        -d campus_rentals \
-        -f scripts/phase2-termsheet-student-housing-migration.sql
+    export PGPASSWORD="$DB_PASS"
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f scripts/phase2-termsheet-student-housing-migration.sql
+    unset PGPASSWORD
 else
     # Run with DATABASE_URL
     echo "✅ Using DATABASE_URL from environment"
@@ -46,12 +57,14 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "📝 Verifying migration..."
     
-    # Quick verification
-    PGPASSWORD='~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v' psql \
-        -h ls-96cf74c298a48ae39bf159a9fe40a2605d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com \
-        -U dbmasteruser \
-        -d campus_rentals \
-        -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('universities', 'document_templates', 'excel_models', 'deal_custom_fields', 'deal_views', 'task_templates');"
+    # Quick verification (use same connection method as migration)
+    if [ -z "$DATABASE_URL" ]; then
+        export PGPASSWORD="$DB_PASS"
+        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('universities', 'document_templates', 'excel_models', 'deal_custom_fields', 'deal_views', 'task_templates');"
+        unset PGPASSWORD
+    else
+        psql "$DATABASE_URL" -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('universities', 'document_templates', 'excel_models', 'deal_custom_fields', 'deal_views', 'task_templates');"
+    fi
     
     echo ""
     echo "✅ Done! Check the output above for verification."

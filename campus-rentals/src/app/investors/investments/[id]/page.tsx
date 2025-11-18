@@ -206,11 +206,13 @@ export default function InvestmentDetailPage() {
     renewalDate: '',
     notes: ''
   })
+  const [insuranceDocument, setInsuranceDocument] = useState<File | null>(null)
   const [taxData, setTaxData] = useState({
     annualPropertyTax: '',
     taxYear: new Date().getFullYear().toString(),
     notes: ''
   })
+  const [taxDocument, setTaxDocument] = useState<File | null>(null)
   const [insuranceHistory, setInsuranceHistory] = useState<any[]>([])
   const [taxHistory, setTaxHistory] = useState<any[]>([])
   const [waterfallStructures, setWaterfallStructures] = useState<any[]>([])
@@ -1233,16 +1235,25 @@ export default function InvestmentDetailPage() {
     e.preventDefault()
     
     try {
+      const formData = new FormData()
+      formData.append('propertyId', investment?.property?.id || '')
+      formData.append('provider', insuranceData.provider)
+      formData.append('policyNumber', insuranceData.policyNumber)
+      formData.append('annualPremium', insuranceData.annualPremium)
+      formData.append('coverageAmount', insuranceData.coverageAmount)
+      formData.append('renewalDate', insuranceData.renewalDate)
+      formData.append('notes', insuranceData.notes || '')
+      
+      if (insuranceDocument) {
+        formData.append('document', insuranceDocument)
+      }
+
       const response = await fetch('/api/investors/insurance', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAuthToken()}`
         },
-        body: JSON.stringify({
-          propertyId: investment?.property?.id,
-          ...insuranceData
-        })
+        body: formData
       })
 
       if (response.ok) {
@@ -1255,10 +1266,12 @@ export default function InvestmentDetailPage() {
           renewalDate: '',
           notes: ''
         })
+        setInsuranceDocument(null)
         await fetchInsuranceHistory()
         alert('Insurance information added successfully!')
       } else {
-        alert('Failed to add insurance information')
+        const error = await response.json()
+        alert(error.error || 'Failed to add insurance information')
       }
     } catch (error) {
       console.error('Error adding insurance:', error)
@@ -1270,16 +1283,22 @@ export default function InvestmentDetailPage() {
     e.preventDefault()
     
     try {
+      const formData = new FormData()
+      formData.append('propertyId', investment?.property?.id || '')
+      formData.append('taxYear', taxData.taxYear)
+      formData.append('annualPropertyTax', taxData.annualPropertyTax)
+      formData.append('notes', taxData.notes || '')
+      
+      if (taxDocument) {
+        formData.append('document', taxDocument)
+      }
+
       const response = await fetch('/api/investors/taxes', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAuthToken()}`
         },
-        body: JSON.stringify({
-          propertyId: investment?.property?.id,
-          ...taxData
-        })
+        body: formData
       })
 
       if (response.ok) {
@@ -1289,10 +1308,12 @@ export default function InvestmentDetailPage() {
           taxYear: new Date().getFullYear().toString(),
           notes: ''
         })
+        setTaxDocument(null)
         await fetchTaxHistory()
         alert('Tax information added successfully!')
       } else {
-        alert('Failed to add tax information')
+        const error = await response.json()
+        alert(error.error || 'Failed to add tax information')
       }
     } catch (error) {
       console.error('Error adding tax:', error)
@@ -3155,10 +3176,23 @@ export default function InvestmentDetailPage() {
                     {insuranceHistory.slice(0, 3).map((insurance: any) => (
                       <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-gray-900">{insurance.provider}</p>
                             <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
                             <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
+                            {insurance.documentUrl && (
+                              <a
+                                href={insurance.documentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-flex items-center gap-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                {insurance.documentFileName || 'View Document'}
+                              </a>
+                            )}
                           </div>
                           <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
                         </div>
@@ -3201,9 +3235,22 @@ export default function InvestmentDetailPage() {
                     {taxHistory.slice(0, 3).map((tax: any) => (
                       <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
                             <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
+                            {tax.documentUrl && (
+                              <a
+                                href={tax.documentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-flex items-center gap-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                {tax.documentFileName || 'View Document'}
+                              </a>
+                            )}
                           </div>
                           <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
                         </div>
@@ -5185,6 +5232,20 @@ export default function InvestmentDetailPage() {
                   rows={3}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Document (Policy, Certificate, etc.)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => setInsuranceDocument(e.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {insuranceDocument && (
+                  <p className="text-sm text-gray-600 mt-1">Selected: {insuranceDocument.name}</p>
+                )}
+              </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
@@ -5253,6 +5314,20 @@ export default function InvestmentDetailPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={3}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Document (Tax Bill, Assessment, etc.)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => setTaxDocument(e.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {taxDocument && (
+                  <p className="text-sm text-gray-600 mt-1">Selected: {taxDocument.name}</p>
+                )}
               </div>
               <div className="flex space-x-3 pt-4">
                 <button

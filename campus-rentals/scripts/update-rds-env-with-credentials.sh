@@ -8,8 +8,15 @@ set -e
 RDS_ENDPOINT="ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com"
 RDS_PORT="5432"
 DB_NAME="campus_rentals"
-DB_USER="dbmasteruser"
-DB_PASSWORD="~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v"
+# Get credentials from environment variables (NEVER hardcode!)
+DB_USER="${DB_USER:-${DATABASE_URL_DIRECT_USER:-dbmasteruser}}"
+DB_PASSWORD="${DB_PASSWORD:-${DATABASE_URL_DIRECT_PASSWORD}}"
+
+if [ -z "$DB_PASSWORD" ]; then
+    echo "❌ Database password not found in environment variables"
+    echo "   Please set DB_PASSWORD or DATABASE_URL_DIRECT_PASSWORD in .env"
+    exit 1
+fi
 
 echo "🔧 Updating RDS Connection"
 echo "=========================="

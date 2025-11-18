@@ -16,14 +16,20 @@ async function runMigration() {
   console.log('🚀 Starting Phase 2 Migration - TermSheet Student Housing')
   console.log('==========================================================\n')
 
-  // Use direct database connection with correct endpoint
-  // Endpoint: ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com
-  // Use credentials directly in Client config (better for special characters)
-  const dbHost = 'ls-96cf74c298a48ae39bf159a9fe40a260e5d03047.czdn1nw8kizq.us-east-1.rds.amazonaws.com'
-  const dbUser = 'dbmasteruser'
-  const dbPassword = '~D=Otib<.[+WsS=O9(OMM^9V{NX~49%v'
-  const dbName = 'campus_rentals'
-  const dbPort = 5432
+  // Use direct database connection
+  // Get credentials from environment variables (never hardcode!)
+  const dbHost = process.env.DB_HOST || process.env.DATABASE_URL_DIRECT_HOST
+  const dbUser = process.env.DB_USER || process.env.DATABASE_URL_DIRECT_USER
+  const dbPassword = process.env.DB_PASSWORD || process.env.DATABASE_URL_DIRECT_PASSWORD
+  const dbName = process.env.DB_NAME || process.env.DATABASE_URL_DIRECT_DB || 'campus_rentals'
+  const dbPort = parseInt(process.env.DB_PORT || process.env.DATABASE_URL_DIRECT_PORT || '5432')
+  
+  if (!dbHost || !dbUser || !dbPassword) {
+    console.error('❌ Database credentials not found in environment variables')
+    console.error('   Please set DB_HOST, DB_USER, DB_PASSWORD (or DATABASE_URL_DIRECT_*)')
+    console.error('   These should be in your .env file (not committed to git)')
+    process.exit(1)
+  }
   
   console.log('🔌 Using direct database connection')
   console.log('   (Bypassing Prisma Accelerate proxy)\n')
