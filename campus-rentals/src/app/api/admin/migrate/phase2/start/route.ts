@@ -3,9 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Client } from 'pg';
-
-// In-memory job storage (in production, use Redis or database)
-const migrationJobs = new Map<string, any>();
+import { migrationJobs, MigrationJob } from '@/lib/migration-jobs';
 
 /**
  * POST /api/admin/migrate/phase2/start
@@ -44,7 +42,7 @@ export async function POST(request: NextRequest) {
     const jobId = `migration-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // Initialize job status
-    migrationJobs.set(jobId, {
+    const job: MigrationJob = {
       id: jobId,
       status: 'starting',
       progress: 0,
@@ -53,7 +51,8 @@ export async function POST(request: NextRequest) {
       completedAt: null,
       results: null,
       error: null
-    });
+    };
+    migrationJobs.set(jobId, job);
 
     // Start migration in background (don't await)
     runMigrationAsync(jobId, databaseUrl).catch(error => {

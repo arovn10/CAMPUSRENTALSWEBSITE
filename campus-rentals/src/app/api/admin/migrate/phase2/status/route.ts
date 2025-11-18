@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { migrationJobs } from '../start/route';
+import { migrationJobs } from '@/lib/migration-jobs';
 
 /**
  * GET /api/admin/migrate/phase2/status?jobId=xxx
