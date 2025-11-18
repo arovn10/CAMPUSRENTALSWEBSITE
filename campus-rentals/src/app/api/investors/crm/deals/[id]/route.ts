@@ -330,7 +330,7 @@ export async function PUT(
         COALESCE(
           (SELECT jsonb_agg(
             jsonb_build_object('id', dt.id, 'tag', dt.tag)
-          ) FROM "DealTag" dt WHERE dt."dealId" = d.id),
+          ) FROM deal_tags dt WHERE dt."dealId" = d.id),
           '[]'::jsonb
         ) as "dealTags"
       FROM deals d

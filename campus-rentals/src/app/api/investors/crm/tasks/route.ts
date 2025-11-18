@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
           'lastName', u."lastName",
           'email', u.email
         ) as "assignedTo"
-      FROM "DealTask" dt
-      LEFT JOIN "Deal" d ON dt."dealId" = d.id
-      LEFT JOIN "User" u ON dt."assignedToId" = u.id
+      FROM deal_tasks dt
+      LEFT JOIN deals d ON dt."dealId" = d.id
+      LEFT JOIN users u ON dt."assignedToId" = u.id
       ${whereClause}
       ORDER BY dt."createdAt" DESC
     `, queryParams);
