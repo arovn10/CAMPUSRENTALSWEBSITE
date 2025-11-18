@@ -182,6 +182,7 @@ export default function CRMDealPipeline() {
       if (!hasSyncedRef.current) {
         try {
           const token = getAuthToken()
+          console.log('🔄 Syncing investments to deals...')
           const response = await fetch('/api/investors/crm/sync-investments', {
             method: 'POST',
             headers: {
@@ -190,13 +191,31 @@ export default function CRMDealPipeline() {
           })
           if (response.ok) {
             const result = await response.json()
-            console.log('Investments auto-synced to deals:', result.message)
+            console.log('✅ Investments auto-synced to deals:', result.message)
             hasSyncedRef.current = true
+            // Fetch deals after sync completes
+            if (pipelines.length > 0) {
+              await fetchDeals()
+            }
           } else {
-            console.error('Sync failed:', response.status, response.statusText)
+            const errorData = await response.json().catch(() => ({}))
+            console.error('❌ Sync failed:', response.status, response.statusText, errorData)
+            // Still try to fetch deals even if sync fails
+            if (pipelines.length > 0) {
+              await fetchDeals()
+            }
           }
         } catch (error) {
-          console.error('Error auto-syncing investments:', error)
+          console.error('❌ Error auto-syncing investments:', error)
+          // Still try to fetch deals even if sync fails
+          if (pipelines.length > 0) {
+            await fetchDeals()
+          }
+        }
+      } else {
+        // Already synced, just fetch deals
+        if (pipelines.length > 0) {
+          await fetchDeals()
         }
       }
     }
@@ -205,11 +224,11 @@ export default function CRMDealPipeline() {
   }, [])
 
   useEffect(() => {
-    // Fetch deals when pipelines are loaded, pipeline selection changes, or search term changes
-    if (pipelines.length > 0) {
+    // Fetch deals when pipeline selection changes or search term changes (but not on initial load - handled in initialize)
+    if (pipelines.length > 0 && hasSyncedRef.current) {
       fetchDeals()
     }
-  }, [pipelines.length, selectedPipelineId, searchTerm, fetchDeals])
+  }, [selectedPipelineId, searchTerm, fetchDeals])
 
   const handleDealClick = (dealId: string) => {
     router.push(`/investors/crm/deals/${dealId}`)
@@ -464,12 +483,36 @@ export default function CRMDealPipeline() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold text-slate-900">Deal Pipeline</h2>
-          <p className="text-sm text-slate-600 mt-1">Manage your deals and track their progress</p>
+        <div className="flex items-center gap-4 flex-1">
+          {/* Pipeline Selector */}
+          {pipelines.length > 0 && (
+            <select
+              value={selectedPipelineId}
+              onChange={(e) => setSelectedPipelineId(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {pipelines.map((pipeline) => (
+                <option key={pipeline.id} value={pipeline.id}>
+                  {pipeline.name}
+                </option>
+              ))}
+            </select>
+          )}
+          
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search deals..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -488,73 +531,63 @@ export default function CRMDealPipeline() {
         </div>
       </div>
 
-      {/* Pipeline Selector */}
-      <div className="flex items-center gap-4">
-        <select
-          value={selectedPipelineId}
-          onChange={(e) => setSelectedPipelineId(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          {pipelines.map((pipeline) => (
-            <option key={pipeline.id} value={pipeline.id}>
-              {pipeline.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Search */}
-        <div className="flex-1 max-w-md relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search deals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
+      )}
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-          <button
-            onClick={() => setViewMode('kanban')}
-            className={`p-2 rounded transition-colors ${
-              viewMode === 'kanban'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Squares2X2Icon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded transition-colors ${
-              viewMode === 'list'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ListBulletIcon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={`p-2 rounded transition-colors ${
-              viewMode === 'table'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <TableCellsIcon className="h-5 w-5" />
-          </button>
+      {/* Empty State */}
+      {!loading && deals.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+          <p className="text-gray-500">No deals found. Create a new deal or sync investments to get started.</p>
         </div>
-      </div>
+      )}
+
+      {/* View Mode Toggle */}
+      {!loading && deals.length > 0 && (
+        <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-2 rounded transition-colors ${
+                viewMode === 'kanban'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Kanban View"
+            >
+              <Squares2X2Icon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="List View"
+            >
+              <ListBulletIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Table View"
+            >
+              <TableCellsIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
+      {!loading && deals.length > 0 && (
         <div>
           {viewMode === 'kanban' && renderKanbanView()}
           {viewMode === 'list' && renderListView()}
