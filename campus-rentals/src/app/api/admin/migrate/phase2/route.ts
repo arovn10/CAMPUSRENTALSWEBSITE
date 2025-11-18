@@ -11,6 +11,8 @@ import { Client } from 'pg';
  * NO DATA WILL BE DELETED - migration is idempotent
  */
 export async function POST(request: NextRequest) {
+  // Log that the route was hit (for debugging)
+  console.log('[Phase2 Migration] Route called');
   try {
     // Check authentication and admin role
     const authHeader = request.headers.get('authorization');
