@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch all investments with their properties
+    // Using COALESCE to handle potentially missing columns gracefully
     const investments = await query<{
       id: string;
       userId: string;
@@ -114,9 +115,9 @@ export async function POST(request: NextRequest) {
         p.name as "propertyName",
         p.address as "propertyAddress",
         p.description as "propertyDescription",
-        p."dealStatus" as "propertyDealStatus",
-        p."fundingStatus" as "propertyFundingStatus",
-        p."currentValue"
+        COALESCE(p."dealStatus"::text, 'STABILIZED') as "propertyDealStatus",
+        COALESCE(p."fundingStatus"::text, 'FUNDED') as "propertyFundingStatus",
+        COALESCE(p."currentValue", p."totalCost", i."investmentAmount") as "currentValue"
       FROM investments i
       INNER JOIN properties p ON i."propertyId" = p.id
       WHERE p."isActive" = true

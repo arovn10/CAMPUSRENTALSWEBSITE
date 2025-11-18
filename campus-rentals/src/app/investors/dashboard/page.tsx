@@ -945,6 +945,7 @@ export default function InvestorDashboard() {
                   key={tab.id}
                   onClick={() => {
                     if (tab.id === 'crm') {
+                      console.log('Navigating to Pipeline Tracker...')
                       router.push('/investors/pipeline-tracker')
                     } else {
                       setActiveView(tab.id as any)
