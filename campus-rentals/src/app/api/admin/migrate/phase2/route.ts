@@ -10,6 +10,9 @@ import { Client } from 'pg';
  * Requires ADMIN role
  * NO DATA WILL BE DELETED - migration is idempotent
  */
+// Configure route to allow longer execution time
+export const maxDuration = 300; // 5 minutes (Next.js default is 10s, can be up to 300s on Vercel Pro)
+
 export async function POST(request: NextRequest) {
   // Log that the route was hit (for debugging)
   console.log('[Phase2 Migration] Route called');
@@ -95,20 +98,81 @@ export async function POST(request: NextRequest) {
     };
 
     try {
-      // Connect
-      await client.connect();
+      // Connect with timeout
+      console.log('[Phase2 Migration] Connecting to database...');
+      await Promise.race([
+        client.connect(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database connection timeout after 30 seconds')), 30000)
+        )
+      ]);
+      console.log('[Phase2 Migration] Connected to database');
 
-      // Execute migration
-      try {
-        await client.query(migrationSQL);
-        results.executed.push('Migration SQL executed');
-      } catch (error: any) {
-        if (error.message.includes('already exists') || error.message.includes('duplicate')) {
-          results.executed.push('Migration executed (some objects already existed - this is OK)');
-        } else {
-          throw error;
+      // Execute migration in chunks to avoid timeout
+      console.log('[Phase2 Migration] Executing migration SQL...');
+      
+      // Split SQL into statements (by semicolon, but preserve DO blocks)
+      const statements: string[] = [];
+      let currentStatement = '';
+      let inDoBlock = false;
+      let doBlockDepth = 0;
+      
+      const lines = migrationSQL.split('\n');
+      for (const line of lines) {
+        currentStatement += line + '\n';
+        
+        // Track DO block depth
+        if (line.trim().startsWith('DO $$')) {
+          inDoBlock = true;
+          doBlockDepth++;
+        }
+        if (line.trim().endsWith('END $$;')) {
+          doBlockDepth--;
+          if (doBlockDepth === 0) {
+            inDoBlock = false;
+            statements.push(currentStatement.trim());
+            currentStatement = '';
+          }
+        } else if (!inDoBlock && line.trim().endsWith(';') && currentStatement.trim()) {
+          statements.push(currentStatement.trim());
+          currentStatement = '';
         }
       }
+      
+      if (currentStatement.trim()) {
+        statements.push(currentStatement.trim());
+      }
+      
+      console.log(`[Phase2 Migration] Split into ${statements.length} statements`);
+      
+      // Execute statements one by one
+      let executedCount = 0;
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i];
+        if (!statement || statement.trim().length === 0 || statement.trim().startsWith('--')) {
+          continue;
+        }
+        
+        try {
+          console.log(`[Phase2 Migration] Executing statement ${i + 1}/${statements.length}...`);
+          await client.query(statement);
+          executedCount++;
+        } catch (error: any) {
+          // Ignore "already exists" errors (idempotent migration)
+          if (error.message.includes('already exists') || 
+              error.message.includes('duplicate') ||
+              error.message.includes('IF NOT EXISTS')) {
+            console.log(`[Phase2 Migration] Statement ${i + 1} skipped (already exists)`);
+            executedCount++;
+          } else {
+            console.error(`[Phase2 Migration] Error in statement ${i + 1}:`, error.message);
+            throw error;
+          }
+        }
+      }
+      
+      results.executed.push(`Migration SQL executed: ${executedCount} statements processed`);
+      console.log(`[Phase2 Migration] Migration completed: ${executedCount} statements executed`);
 
       // Verify migration
       const newColumns = await client.query(`
