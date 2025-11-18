@@ -49,10 +49,58 @@ export default function MigrationsPage() {
     checkAuth()
   }, [])
 
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [progress, setProgress] = useState(0)
+  const [statusMessage, setStatusMessage] = useState('')
+
+  useEffect(() => {
+    // Poll for status if job is running
+    if (jobId && running) {
+      const interval = setInterval(async () => {
+        try {
+          const token = sessionStorage.getItem('authToken') || 
+                       sessionStorage.getItem('token') || 
+                       localStorage.getItem('authToken') || 
+                       localStorage.getItem('token')
+          
+          if (!token) return
+
+          const response = await fetch(`/api/admin/migrate/phase2/status?jobId=${jobId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (response.ok) {
+            const job = await response.json()
+            setProgress(job.progress || 0)
+            setStatusMessage(job.message || '')
+
+            if (job.status === 'completed') {
+              setRunning(false)
+              setResult(job.results)
+              clearInterval(interval)
+            } else if (job.status === 'failed') {
+              setRunning(false)
+              setError(job.error || 'Migration failed')
+              clearInterval(interval)
+            }
+          }
+        } catch (err) {
+          console.error('Error checking status:', err)
+        }
+      }, 2000) // Poll every 2 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [jobId, running])
+
   const runPhase2Migration = async () => {
     setRunning(true)
     setResult(null)
     setError(null)
+    setProgress(0)
+    setStatusMessage('Starting migration...')
 
     try {
       // Get token using the same pattern as other admin pages
@@ -98,7 +146,8 @@ export default function MigrationsPage() {
         return
       }
       
-      const response = await fetch('/api/admin/migrate/phase2', {
+      // Start migration (returns immediately with job ID)
+      const response = await fetch('/api/admin/migrate/phase2/start', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -109,36 +158,32 @@ export default function MigrationsPage() {
       // Check if response is JSON
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
-        // Response is not JSON, likely an HTML error page
         const text = await response.text()
         console.error('Non-JSON response:', text.substring(0, 200))
-        setError(`Server error (${response.status}): The server returned an unexpected response. Please check the server logs.`)
+        setError(`Server error (${response.status}): The server returned an unexpected response.`)
         setRunning(false)
         return
       }
 
       const data = await response.json()
 
-      if (response.ok) {
-        setResult(data)
+      if (response.ok && data.jobId) {
+        setJobId(data.jobId)
+        setStatusMessage('Migration started. Monitoring progress...')
+        // Status polling will be handled by useEffect
       } else {
-        // More detailed error message
         if (response.status === 401) {
           setError('Authentication failed. Please log out and log back in.')
         } else if (response.status === 403) {
           setError('Admin access required. You must be logged in as an ADMIN user.')
         } else {
-          setError(data.error || data.message || data.details || 'Migration failed')
+          setError(data.error || data.message || data.details || 'Failed to start migration')
         }
+        setRunning(false)
       }
     } catch (err: any) {
       console.error('Migration error:', err)
-      if (err.message && err.message.includes('JSON')) {
-        setError('Server returned an invalid response. Please check the server logs or try again.')
-      } else {
-        setError(err.message || 'Failed to run migration. Check your connection and try again.')
-      }
-    } finally {
+      setError(err.message || 'Failed to start migration. Check your connection and try again.')
       setRunning(false)
     }
   }
@@ -236,7 +281,7 @@ export default function MigrationsPage() {
                 {running ? (
                   <span className="flex items-center">
                     <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
-                    Running...
+                    Running... {progress > 0 && `${progress}%`}
                   </span>
                 ) : (
                   'Run Migration'
@@ -259,6 +304,22 @@ export default function MigrationsPage() {
                 ✓ Safe to run multiple times (idempotent) - NO DATA WILL BE DELETED
               </p>
             </div>
+
+            {/* Progress */}
+            {running && (progress > 0 || statusMessage) && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-900">{statusMessage}</span>
+                  <span className="text-sm text-blue-700">{progress}%</span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Results */}
             {result && (
