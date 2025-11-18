@@ -39,31 +39,7 @@ export async function GET(request: NextRequest) {
       paramIndex++
     }
 
-    const contacts = await query<{
-      id: string
-      firstName: string
-      lastName: string
-      email: string | null
-      phone: string | null
-      company: string | null
-      title: string | null
-      address: string | null
-      city: string | null
-      state: string | null
-      zipCode: string | null
-      country: string
-      notes: string | null
-      tags: string[]
-      createdBy: string
-      createdAt: Date
-      updatedAt: Date
-      creator: {
-        id: string
-        firstName: string
-        lastName: string
-        email: string
-      }
-    }>(`
+    const contacts = await query(`
       SELECT 
         c.id,
         c."firstName",
@@ -78,7 +54,7 @@ export async function GET(request: NextRequest) {
         c."zipCode",
         c.country,
         c.notes,
-        c.tags,
+        COALESCE(c.tags, '[]'::jsonb) as tags,
         c."createdBy",
         c."createdAt",
         c."updatedAt",

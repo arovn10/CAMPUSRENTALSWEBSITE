@@ -305,7 +305,7 @@ export default function CRMContacts() {
             setEditingEntity(null)
             setShowCreateModal(true)
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
         >
           <PlusIcon className="h-5 w-5" />
           Add Entity
@@ -315,7 +315,7 @@ export default function CRMContacts() {
       {/* Entities Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -331,14 +331,14 @@ export default function CRMContacts() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleViewDocuments(entity)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors"
                     title="View Documents"
                   >
                     <DocumentTextIcon className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleEdit(entity)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2 text-accent hover:bg-accent/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <PencilIcon className="h-5 w-5" />
@@ -363,7 +363,7 @@ export default function CRMContacts() {
                 {entity.contactEmail && (
                   <div className="flex items-center gap-2">
                     <EnvelopeIcon className="h-4 w-4" />
-                    <a href={`mailto:${entity.contactEmail}`} className="text-blue-600 hover:underline">
+                    <a href={`mailto:${entity.contactEmail}`} className="text-accent hover:text-primary hover:underline transition-colors">
                       {entity.contactEmail}
                     </a>
                   </div>
@@ -371,7 +371,7 @@ export default function CRMContacts() {
                 {entity.contactPhone && (
                   <div className="flex items-center gap-2">
                     <PhoneIcon className="h-4 w-4" />
-                    <a href={`tel:${entity.contactPhone}`} className="text-blue-600 hover:underline">
+                    <a href={`tel:${entity.contactPhone}`} className="text-accent hover:text-primary hover:underline transition-colors">
                       {entity.contactPhone}
                     </a>
                   </div>
@@ -504,7 +504,7 @@ export default function CRMContacts() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg"
                 >
                   {editingEntity ? 'Update' : 'Create'}
                 </button>
@@ -542,7 +542,7 @@ export default function CRMContacts() {
                     type="text"
                     name="title"
                     required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   />
                 </div>
                 <div>
@@ -550,14 +550,14 @@ export default function CRMContacts() {
                   <textarea
                     name="description"
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Document Type</label>
                   <select
                     name="documentType"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   >
                     {DOCUMENT_TYPES.map((type) => (
                       <option key={type} value={type}>{type.replace('_', ' ')}</option>
@@ -570,7 +570,7 @@ export default function CRMContacts() {
                     type="file"
                     name="file"
                     required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   />
                 </div>
                 <button
