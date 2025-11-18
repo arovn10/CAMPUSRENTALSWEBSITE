@@ -116,7 +116,7 @@ export default function PipelineTrackerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     )
   }
@@ -132,75 +132,75 @@ export default function PipelineTrackerDashboard() {
       {/* KPIs Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         {/* Total Invested */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-1">
+        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-500 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <CurrencyDollarIcon className="h-6 w-6 text-white" />
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
               <div className="flex items-center mt-1">
-                <ArrowTrendingUpIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                <span className="text-xs text-emerald-600 font-medium">Growing</span>
+                <ArrowTrendingUpIcon className="h-3 w-3 text-accent mr-1" />
+                <span className="text-xs text-accent font-medium">Growing</span>
               </div>
             </div>
           </div>
           <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalInvested)}</h3>
-          <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
+          <div className="h-1 bg-gradient-to-r from-accent to-primary rounded-full"></div>
         </div>
 
         {/* Current Value */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-1">
+        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-gradient-to-br from-primary to-secondary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <ChartBarIcon className="h-6 w-6 text-white" />
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
               <div className="flex items-center mt-1">
-                <SparklesIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                <span className="text-xs text-emerald-600 font-medium">Appreciating</span>
+                <SparklesIcon className="h-3 w-3 text-primary mr-1" />
+                <span className="text-xs text-primary font-medium">Appreciating</span>
               </div>
             </div>
           </div>
           <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
-          <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
+          <div className="h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
         </div>
 
         {/* Active Deals */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 hover:-translate-y-1">
+        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-secondary/10 transition-all duration-500 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-gradient-to-br from-secondary to-primary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <BuildingOfficeIcon className="h-6 w-6 text-white" />
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Deals</p>
               <div className="flex items-center mt-1">
-                <SparklesIcon className="h-3 w-3 text-indigo-500 mr-1" />
-                <span className="text-xs text-indigo-600 font-medium">In Pipeline</span>
+                <SparklesIcon className="h-3 w-3 text-secondary mr-1" />
+                <span className="text-xs text-secondary font-medium">In Pipeline</span>
               </div>
             </div>
           </div>
           <h3 className="text-3xl font-bold text-slate-900 mb-2">{stats.activeDeals}</h3>
-          <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
+          <div className="h-1 bg-gradient-to-r from-secondary to-primary rounded-full"></div>
         </div>
 
         {/* Average IRR */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500 hover:-translate-y-1">
+        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-500 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-gradient-to-br from-accent via-primary to-secondary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
             </div>
             <div className="text-right">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
               <div className="flex items-center mt-1">
-                <ChartBarIcon className="h-3 w-3 text-orange-500 mr-1" />
-                <span className="text-xs text-orange-600 font-medium">Performance</span>
+                <ChartBarIcon className="h-3 w-3 text-accent mr-1" />
+                <span className="text-xs text-accent font-medium">Performance</span>
               </div>
             </div>
           </div>
           <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatPercentage(stats.averageIRR)}</h3>
-          <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
+          <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary rounded-full"></div>
         </div>
       </div>
 
@@ -208,7 +208,7 @@ export default function PipelineTrackerDashboard() {
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setShowPipeline(!showPipeline)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg"
         >
           {showPipeline ? 'Hide' : 'Show'} Deal Pipeline
         </button>

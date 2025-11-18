@@ -46,12 +46,38 @@ export async function POST(request: NextRequest) {
     `)
 
     if (!defaultPipeline) {
+      // Get a valid admin user ID for createdBy (in case user.id doesn't match database format)
+      const adminUser = await queryOne<{ id: string }>(
+        'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+        ['ADMIN', 'MANAGER']
+      )
+      
+      const createdById = adminUser?.id || user.id
+      
+      // Check if createdBy column exists, if not, don't include it
+      const columnExists = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 
+          FROM information_schema.columns 
+          WHERE table_name = 'deal_pipelines' 
+          AND column_name = 'createdBy'
+        ) as exists
+      `)
+      
       // Create default pipeline
       const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      await query(`
-        INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, true, $4, NOW(), NOW())
-      `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', user.id])
+      
+      if (columnExists?.exists) {
+        await query(`
+          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, true, $4, NOW(), NOW())
+        `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', createdById])
+      } else {
+        await query(`
+          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, true, NOW(), NOW())
+        `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals'])
+      }
 
       // Create default stages
       const stages = [
