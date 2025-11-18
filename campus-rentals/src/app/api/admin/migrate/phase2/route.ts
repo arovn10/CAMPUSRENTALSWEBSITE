@@ -13,18 +13,36 @@ import { Client } from 'pg';
 export async function POST(request: NextRequest) {
   try {
     // Check authentication and admin role
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { 
+          error: 'Authentication required',
+          details: 'No Authorization header found. Please ensure you are logged in.'
+        },
+        { status: 401 }
+      );
+    }
+
     const user = await requireAuth(request);
     
     if (!user) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { 
+          error: 'Authentication failed',
+          details: 'Invalid or expired token. Please log out and log back in.'
+        },
         { status: 401 }
       );
     }
 
     if (user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Admin access required' },
+        { 
+          error: 'Admin access required',
+          details: `Your role is ${user.role}. Only ADMIN users can run migrations.`
+        },
         { status: 403 }
       );
     }

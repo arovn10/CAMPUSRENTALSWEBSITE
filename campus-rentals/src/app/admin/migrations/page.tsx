@@ -21,7 +21,17 @@ export default function MigrationsPage() {
     setError(null)
 
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+      // Get token using the same pattern as other admin pages
+      const token = sessionStorage.getItem('authToken') || 
+                   sessionStorage.getItem('token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('token')
+      
+      if (!token) {
+        setError('No authentication token found. Please log in again.')
+        setRunning(false)
+        return
+      }
       
       const response = await fetch('/api/admin/migrate/phase2', {
         method: 'POST',
@@ -36,10 +46,17 @@ export default function MigrationsPage() {
       if (response.ok) {
         setResult(data)
       } else {
-        setError(data.error || data.message || 'Migration failed')
+        // More detailed error message
+        if (response.status === 401) {
+          setError('Authentication failed. Please log out and log back in.')
+        } else if (response.status === 403) {
+          setError('Admin access required. You must be logged in as an ADMIN user.')
+        } else {
+          setError(data.error || data.message || data.details || 'Migration failed')
+        }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to run migration')
+      setError(err.message || 'Failed to run migration. Check your connection and try again.')
     } finally {
       setRunning(false)
     }
