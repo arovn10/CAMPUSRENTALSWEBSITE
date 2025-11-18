@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // PUT /api/investors/crm/relationships/[id] - Update a relationship
@@ -27,30 +27,50 @@ export async function PUT(
     const body = await request.json();
     const { role, notes } = body;
 
-    const relationship = await prisma.dealRelationship.update({
-      where: { id: params.id },
-      data: {
-        ...(role !== undefined && { role }),
-        ...(notes !== undefined && { notes }),
-      },
-      include: {
-        deal: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        contact: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (role !== undefined) {
+      updates.push(`role = $${paramIndex++}`);
+      values.push(role);
+    }
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramIndex++}`);
+      values.push(notes);
+    }
+
+    if (updates.length > 0) {
+      updates.push(`"updatedAt" = NOW()`);
+      values.push(params.id);
+
+      await query(`
+        UPDATE deal_relationships SET ${updates.join(', ')} WHERE id = $${paramIndex}
+      `, values);
+    }
+
+    // Fetch updated relationship
+    const relationship = await queryOne(`
+      SELECT 
+        dr.*,
+        jsonb_build_object(
+          'id', d.id,
+          'name', d.name
+        ) as deal,
+        c.* as contact,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as "user"
+      FROM deal_relationships dr
+      LEFT JOIN deals d ON dr."dealId" = d.id
+      LEFT JOIN contacts c ON dr."contactId" = c.id
+      LEFT JOIN users u ON dr."userId" = u.id
+      WHERE dr.id = $1
+    `, [params.id]);
 
     return NextResponse.json(relationship);
   } catch (error: any) {
@@ -84,9 +104,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.dealRelationship.delete({
-      where: { id: params.id },
-    });
+    await query('DELETE FROM deal_relationships WHERE id = $1', [params.id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -97,4 +115,3 @@ export async function DELETE(
     );
   }
 }
-

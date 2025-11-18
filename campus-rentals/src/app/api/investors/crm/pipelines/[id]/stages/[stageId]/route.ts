@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // PUT /api/investors/crm/pipelines/[id]/stages/[stageId] - Update a stage
@@ -27,16 +27,44 @@ export async function PUT(
     const body = await request.json();
     const { name, description, order, color, isActive } = body;
 
-    const stage = await prisma.dealPipelineStage.update({
-      where: { id: params.stageId },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-        ...(order !== undefined && { order }),
-        ...(color !== undefined && { color }),
-        ...(isActive !== undefined && { isActive }),
-      },
-    });
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description);
+    }
+    if (order !== undefined) {
+      updates.push(`"order" = $${paramIndex++}`);
+      values.push(order);
+    }
+    if (color !== undefined) {
+      updates.push(`color = $${paramIndex++}`);
+      values.push(color);
+    }
+    if (isActive !== undefined) {
+      updates.push(`"isActive" = $${paramIndex++}`);
+      values.push(isActive);
+    }
+
+    if (updates.length > 0) {
+      updates.push(`"updatedAt" = NOW()`);
+      values.push(params.stageId);
+
+      await query(`
+        UPDATE deal_pipeline_stages SET ${updates.join(', ')} WHERE id = $${paramIndex}
+      `, values);
+    }
+
+    const stage = await queryOne(`
+      SELECT * FROM deal_pipeline_stages WHERE id = $1
+    `, [params.stageId]);
 
     return NextResponse.json(stage);
   } catch (error: any) {
@@ -71,12 +99,7 @@ export async function DELETE(
     }
 
     // Soft delete by setting isActive to false
-    await prisma.dealPipelineStage.update({
-      where: { id: params.stageId },
-      data: {
-        isActive: false,
-      },
-    });
+    await query('UPDATE deal_pipeline_stages SET "isActive" = false, "updatedAt" = NOW() WHERE id = $1', [params.stageId]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -87,4 +110,3 @@ export async function DELETE(
     );
   }
 }
-

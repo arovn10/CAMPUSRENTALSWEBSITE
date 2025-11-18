@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // PUT /api/investors/crm/deals/[id]/stage - Update deal stage
@@ -36,13 +36,11 @@ export async function PUT(
 
     // Verify stage exists and belongs to pipeline if pipelineId is provided
     if (pipelineId) {
-      const stage = await prisma.dealPipelineStage.findFirst({
-        where: {
-          id: stageId,
-          pipelineId: pipelineId,
-          isActive: true,
-        },
-      });
+      const stage = await queryOne(`
+        SELECT id FROM deal_pipeline_stages
+        WHERE id = $1 AND "pipelineId" = $2 AND "isActive" = true
+        LIMIT 1
+      `, [stageId, pipelineId]);
 
       if (!stage) {
         return NextResponse.json(
@@ -52,17 +50,45 @@ export async function PUT(
       }
     }
 
-    const deal = await prisma.deal.update({
-      where: { id: params.id },
-      data: {
-        stageId,
-        ...(pipelineId && { pipelineId }),
-      },
-      include: {
-        stage: true,
-        pipeline: true,
-      },
-    });
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    updates.push(`"stageId" = $${paramIndex++}`);
+    values.push(stageId);
+
+    if (pipelineId) {
+      updates.push(`"pipelineId" = $${paramIndex++}`);
+      values.push(pipelineId);
+    }
+
+    updates.push(`"updatedAt" = NOW()`);
+    values.push(params.id);
+
+    await query(`
+      UPDATE deals SET ${updates.join(', ')} WHERE id = $${paramIndex}
+    `, values);
+
+    // Fetch updated deal
+    const deal = await queryOne(`
+      SELECT 
+        d.*,
+        jsonb_build_object(
+          'id', s.id,
+          'name', s.name,
+          'order', s.order,
+          'color', s.color
+        ) as stage,
+        jsonb_build_object(
+          'id', p.id,
+          'name', p.name
+        ) as pipeline
+      FROM deals d
+      LEFT JOIN deal_pipeline_stages s ON d."stageId" = s.id
+      LEFT JOIN deal_pipelines p ON d."pipelineId" = p.id
+      WHERE d.id = $1
+    `, [params.id]);
 
     return NextResponse.json(deal);
   } catch (error: any) {
@@ -73,4 +99,3 @@ export async function PUT(
     );
   }
 }
-

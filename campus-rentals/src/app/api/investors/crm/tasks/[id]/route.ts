@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // PUT /api/investors/crm/tasks/[id] - Update a task
@@ -35,46 +35,76 @@ export async function PUT(
       completedAt,
     } = body;
 
-    const task = await prisma.dealTask.update({
-      where: { id: params.id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(description !== undefined && { description }),
-        ...(status !== undefined && { status }),
-        ...(priority !== undefined && { priority }),
-        ...(dueDate !== undefined && {
-          dueDate: dueDate ? new Date(dueDate) : null,
-        }),
-        ...(assignedToId !== undefined && { assignedToId }),
-        ...(completedAt !== undefined && {
-          completedAt: completedAt ? new Date(completedAt) : null,
-        }),
-        // Auto-set completedAt if status is COMPLETED
-        ...(status === 'COMPLETED' && !completedAt && {
-          completedAt: new Date(),
-        }),
-        // Clear completedAt if status is not COMPLETED
-        ...(status !== 'COMPLETED' && status !== undefined && {
-          completedAt: null,
-        }),
-      },
-      include: {
-        deal: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    // Build update query dynamically
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (title !== undefined) {
+      updates.push(`title = $${paramIndex++}`);
+      values.push(title);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description);
+    }
+    if (status !== undefined) {
+      updates.push(`status = $${paramIndex++}`);
+      values.push(status);
+      // Auto-set completedAt if status is COMPLETED
+      if (status === 'COMPLETED' && completedAt === undefined) {
+        updates.push(`"completedAt" = $${paramIndex++}`);
+        values.push(new Date());
+      } else if (status !== 'COMPLETED') {
+        updates.push(`"completedAt" = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+    if (priority !== undefined) {
+      updates.push(`priority = $${paramIndex++}`);
+      values.push(priority);
+    }
+    if (dueDate !== undefined) {
+      updates.push(`"dueDate" = $${paramIndex++}`);
+      values.push(dueDate ? new Date(dueDate) : null);
+    }
+    if (assignedToId !== undefined) {
+      updates.push(`"assignedToId" = $${paramIndex++}`);
+      values.push(assignedToId);
+    }
+    if (completedAt !== undefined) {
+      updates.push(`"completedAt" = $${paramIndex++}`);
+      values.push(completedAt ? new Date(completedAt) : null);
+    }
+
+    if (updates.length > 0) {
+      updates.push(`"updatedAt" = NOW()`);
+      values.push(params.id);
+
+      await query(`
+        UPDATE deal_tasks SET ${updates.join(', ')} WHERE id = $${paramIndex}
+      `, values);
+    }
+
+    // Fetch updated task
+    const task = await queryOne(`
+      SELECT 
+        dt.*,
+        jsonb_build_object(
+          'id', d.id,
+          'name', d.name
+        ) as deal,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as "assignedTo"
+      FROM deal_tasks dt
+      LEFT JOIN deals d ON dt."dealId" = d.id
+      LEFT JOIN users u ON dt."assignedToId" = u.id
+      WHERE dt.id = $1
+    `, [params.id]);
 
     return NextResponse.json(task);
   } catch (error: any) {
@@ -108,9 +138,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.dealTask.delete({
-      where: { id: params.id },
-    });
+    await query('DELETE FROM deal_tasks WHERE id = $1', [params.id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -121,4 +149,3 @@ export async function DELETE(
     );
   }
 }
-

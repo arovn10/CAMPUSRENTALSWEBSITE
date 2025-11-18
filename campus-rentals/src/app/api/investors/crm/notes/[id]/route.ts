@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
 // PUT /api/investors/crm/notes/[id] - Update a note
@@ -28,9 +28,10 @@ export async function PUT(
     const { content, isPrivate } = body;
 
     // Check if user owns the note (for private notes)
-    const existingNote = await prisma.dealNote.findUnique({
-      where: { id: params.id },
-    });
+    const existingNote = await queryOne<{ isPrivate: boolean; createdById: string }>(
+      'SELECT "isPrivate", "createdById" FROM deal_notes WHERE id = $1',
+      [params.id]
+    );
 
     if (!existingNote) {
       return NextResponse.json(
@@ -47,29 +48,48 @@ export async function PUT(
       );
     }
 
-    const note = await prisma.dealNote.update({
-      where: { id: params.id },
-      data: {
-        ...(content !== undefined && { content }),
-        ...(isPrivate !== undefined && { isPrivate }),
-      },
-      include: {
-        deal: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (content !== undefined) {
+      updates.push(`content = $${paramIndex++}`);
+      values.push(content);
+    }
+    if (isPrivate !== undefined) {
+      updates.push(`"isPrivate" = $${paramIndex++}`);
+      values.push(isPrivate);
+    }
+
+    if (updates.length > 0) {
+      updates.push(`"updatedAt" = NOW()`);
+      values.push(params.id);
+
+      await query(`
+        UPDATE deal_notes SET ${updates.join(', ')} WHERE id = $${paramIndex}
+      `, values);
+    }
+
+    // Fetch updated note
+    const note = await queryOne(`
+      SELECT 
+        dn.*,
+        jsonb_build_object(
+          'id', d.id,
+          'name', d.name
+        ) as deal,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as "createdBy"
+      FROM deal_notes dn
+      LEFT JOIN deals d ON dn."dealId" = d.id
+      LEFT JOIN users u ON dn."createdById" = u.id
+      WHERE dn.id = $1
+    `, [params.id]);
 
     return NextResponse.json(note);
   } catch (error: any) {
@@ -104,9 +124,10 @@ export async function DELETE(
     }
 
     // Check if user owns the note (for private notes)
-    const existingNote = await prisma.dealNote.findUnique({
-      where: { id: params.id },
-    });
+    const existingNote = await queryOne<{ isPrivate: boolean; createdById: string }>(
+      'SELECT "isPrivate", "createdById" FROM deal_notes WHERE id = $1',
+      [params.id]
+    );
 
     if (!existingNote) {
       return NextResponse.json(
@@ -123,9 +144,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.dealNote.delete({
-      where: { id: params.id },
-    });
+    await query('DELETE FROM deal_notes WHERE id = $1', [params.id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -136,4 +155,3 @@ export async function DELETE(
     );
   }
 }
-
