@@ -35,6 +35,7 @@ import {
   BriefcaseIcon
 } from '@heroicons/react/24/outline'
 import CRMDealPipeline from '@/components/CRMDealPipeline'
+import CRMContacts from '@/components/CRMContacts'
 
 interface Investment {
   id: string
@@ -2036,10 +2037,7 @@ export default function InvestorDashboard() {
                 </div>
               </button>
               <button
-                onClick={() => {
-                  setCrmSubView('contacts')
-                  router.push('/investors/contacts')
-                }}
+                onClick={() => setCrmSubView('contacts')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   crmSubView === 'contacts'
                     ? 'border-blue-600 text-blue-600'
@@ -2056,6 +2054,7 @@ export default function InvestorDashboard() {
           
           {/* CRM Content */}
           {crmSubView === 'pipeline' && <CRMDealPipeline />}
+          {crmSubView === 'contacts' && <CRMContacts />}
         </div>
       )}
       {showCalcModal && (

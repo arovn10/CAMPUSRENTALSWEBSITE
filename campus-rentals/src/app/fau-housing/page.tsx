@@ -1,19 +1,69 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Property } from '@/types';
+import { fetchProperties } from '@/utils/clientApi';
+import PropertyCard from '@/components/PropertyCard';
 import { 
   MapPinIcon, 
-  ClockIcon, 
   WifiIcon, 
   TruckIcon, 
   ShieldCheckIcon,
   AcademicCapIcon,
   HomeIcon,
-  StarIcon
+  StarIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 export default function FAUHousingPage() {
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [displayedCount, setDisplayedCount] = useState(6);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        setLoading(true);
+        
+        // Add timeout to prevent hanging forever
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 second timeout
+        );
+        
+        const fetchPromise = fetchProperties();
+        const fetchedProperties = await Promise.race([fetchPromise, timeoutPromise]) as Property[];
+        
+        // Filter for FAU properties
+        const fauProperties = fetchedProperties.filter(p => 
+          p.school === 'Florida Atlantic University' || 
+          p.school === 'FAU' ||
+          (p.address && (
+            p.address.toLowerCase().includes('boca raton') ||
+            p.address.toLowerCase().includes('boca') ||
+            p.address.toLowerCase().includes('fau')
+          ))
+        );
+        setAllProperties(fauProperties);
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        // Set empty array on error so page still renders
+        setAllProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
+  const displayedProperties = allProperties.slice(0, displayedCount);
+  const hasMore = displayedCount < allProperties.length;
+
+  const handleShowMore = () => {
+    setDisplayedCount(prev => Math.min(prev + 6, allProperties.length));
+  };
+
   const features = [
     {
       icon: <MapPinIcon className="w-8 h-8" />,
@@ -44,33 +94,6 @@ export default function FAUHousingPage() {
       icon: <HomeIcon className="w-8 h-8" />,
       title: "Furnished Units",
       description: "Fully furnished apartments ready for immediate move-in"
-    }
-  ];
-
-  const properties = [
-    {
-      name: "FAU Student Village",
-      price: "$1,200/month",
-      bedrooms: "2-4 Bedrooms",
-      distance: "0.3 miles from FAU",
-      image: "/placeholder.png",
-      features: ["Pool", "Gym", "Study Rooms", "Parking"]
-    },
-    {
-      name: "Campus View Apartments",
-      price: "$1,100/month", 
-      bedrooms: "1-3 Bedrooms",
-      distance: "0.5 miles from FAU",
-      image: "/placeholder.png",
-      features: ["Balcony", "Laundry", "Pet Friendly", "High-Speed WiFi"]
-    },
-    {
-      name: "University Heights",
-      price: "$1,300/month",
-      bedrooms: "2-4 Bedrooms", 
-      distance: "0.2 miles from FAU",
-      image: "/placeholder.png",
-      features: ["Pool", "Tennis Court", "Study Lounge", "24/7 Security"]
     }
   ];
 
@@ -131,50 +154,42 @@ export default function FAUHousingPage() {
       {/* Properties Section */}
       <section id="properties" className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">
+          <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">
             Properties Near FAU
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {properties.map((property, index) => (
-              <div key={index} className="bg-gray-900/50 rounded-xl overflow-hidden backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
-                <div className="h-48 bg-gray-700 flex items-center justify-center">
-                  <img 
-                    src={property.image} 
-                    alt={property.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.png';
-                    }}
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-yellow-400">{property.name}</h3>
-                  <div className="flex items-center mb-2">
-                    <MapPinIcon className="w-4 h-4 text-green-400 mr-2" />
-                    <span className="text-sm text-gray-300">{property.distance}</span>
-                  </div>
-                  <div className="flex items-center mb-4">
-                    <HomeIcon className="w-4 h-4 text-blue-400 mr-2" />
-                    <span className="text-sm text-gray-300">{property.bedrooms}</span>
-                  </div>
-                  <div className="text-2xl font-bold text-green-400 mb-4">{property.price}</div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {property.features.map((feature, featureIndex) => (
-                      <span key={featureIndex} className="px-3 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded-full">
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                  <Link 
-                    href="/contact" 
-                    className="w-full bg-yellow-500 text-black py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors duration-300 text-center block font-medium"
-                  >
-                    Schedule Tour
-                  </Link>
-                </div>
+          <p className="text-center text-gray-300 mb-12 text-lg">
+            Browse our selection of premium off-campus housing near Florida Atlantic University
+          </p>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-yellow-500 mx-auto"></div>
+              <p className="mt-4 text-gray-400">Loading FAU properties...</p>
+              <p className="mt-2 text-sm text-gray-500">This may take a moment on first load...</p>
+            </div>
+          ) : displayedProperties.length > 0 ? (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {displayedProperties.map((property) => (
+                  <PropertyCard key={property.property_id} property={property} />
+                ))}
               </div>
-            ))}
-          </div>
+              {hasMore && (
+                <div className="text-center mt-12">
+                  <button
+                    onClick={handleShowMore}
+                    className="px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+                  >
+                    Show More ({allProperties.length - displayedCount} remaining)
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-lg">No FAU properties available at this time.</p>
+              <p className="text-sm mt-2">Please check back later or contact us for more information.</p>
+            </div>
+          )}
         </div>
       </section>
 

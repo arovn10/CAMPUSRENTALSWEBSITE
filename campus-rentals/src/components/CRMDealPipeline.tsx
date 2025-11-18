@@ -95,6 +95,33 @@ export default function CRMDealPipeline() {
     return null
   }
 
+  const fetchPipelines = async () => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch('/api/investors/crm/pipelines', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPipelines(data)
+        // Set default pipeline if none selected
+        if (!selectedPipelineId && data.length > 0) {
+          const defaultPipeline = data.find((p: Pipeline) => p.isDefault) || data[0]
+          if (defaultPipeline) {
+            setSelectedPipelineId(defaultPipeline.id)
+          }
+        }
+      } else {
+        console.error('Failed to fetch pipelines:', response.status, response.statusText)
+      }
+    } catch (error) {
+      console.error('Error fetching pipelines:', error)
+    }
+  }
+
   const fetchDeals = async () => {
     setLoading(true)
     try {
