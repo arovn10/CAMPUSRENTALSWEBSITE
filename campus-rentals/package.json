@@ -9,7 +9,8 @@
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",
     "seed:deal-photos": "tsx scripts/seed-deal-photos.ts",
-    "cleanup:deal-photos": "tsx scripts/cleanup-deal-photos.ts"
+    "cleanup:deal-photos": "tsx scripts/cleanup-deal-photos.ts",
+    "migrate:phase2": "tsx scripts/run-phase2-migration.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -22,6 +23,7 @@
     "@prisma/extension-accelerate": "^0.6.0",
     "@react-google-maps/api": "^2.20.6",
     "@types/leaflet": "^1.9.21",
+    "@types/pg": "^8.15.6",
     "bcryptjs": "^2.4.3",
     "critters": "^0.0.23",
     "jsonwebtoken": "^9.0.2",
@@ -29,6 +31,7 @@
     "mapbox-gl": "^2.15.0",
     "next": "^14.1.0",
     "node-fetch": "^2.7.0",
+    "pg": "^8.16.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "^5.0.0",
