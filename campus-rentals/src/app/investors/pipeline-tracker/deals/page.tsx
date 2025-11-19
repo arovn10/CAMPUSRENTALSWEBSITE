@@ -10,8 +10,11 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  CogIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline'
 import DealCreateModal from '@/components/DealCreateModal'
+import PipelineManager from '@/components/PipelineManager'
 
 interface Deal {
   id: string
@@ -54,7 +57,32 @@ export default function PipelineTrackerDeals() {
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateDeal, setShowCreateDeal] = useState(false)
+  const [showPipelineManager, setShowPipelineManager] = useState(false)
   const [selectedPipeline, setSelectedPipeline] = useState<string>('all')
+  const [allPipelines, setAllPipelines] = useState<Array<{ id: string; name: string }>>([])
+  const [syncing, setSyncing] = useState(false)
+
+  const fetchPipelines = async () => {
+    try {
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+      const response = await fetch('/api/investors/crm/pipelines', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAllPipelines(data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching pipelines:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchPipelines()
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -197,9 +225,104 @@ export default function PipelineTrackerDeals() {
     fetchData()
   }
 
-  // Get unique pipelines from deals
-  const pipelines = Array.from(new Set(deals.map(d => d.pipeline?.id).filter(Boolean)))
-  const pipelineMap = new Map(deals.map(d => [d.pipeline?.id, d.pipeline]).filter(([id]) => id))
+  const handleSyncInvestments = async () => {
+    try {
+      setSyncing(true)
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+      const response = await fetch('/api/investors/crm/sync-investments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        // Refresh deals and pipelines after sync
+        await fetchPipelines()
+        const params = new URLSearchParams()
+        if (selectedPipeline !== 'all') {
+          params.append('pipelineId', selectedPipeline)
+        }
+        const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (dealsResponse.ok) {
+          const data = await dealsResponse.json()
+          setDeals(data || [])
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to sync investments:', errorData)
+        alert(`Failed to sync investments: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error syncing investments:', error)
+      alert('Error syncing investments. Please try again.')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const handleAssignToPipeline = async (dealId: string, pipelineId: string, stageId?: string) => {
+    try {
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+      
+      // If no stageId provided, get the first stage of the pipeline
+      let targetStageId = stageId
+      if (!targetStageId && pipelineId) {
+        const pipelineResponse = await fetch(`/api/investors/crm/pipelines/${pipelineId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (pipelineResponse.ok) {
+          const pipelineData = await pipelineResponse.json()
+          if (pipelineData.stages && pipelineData.stages.length > 0) {
+            // Get the first stage (lowest order)
+            targetStageId = pipelineData.stages[0].id
+          }
+        }
+      }
+
+      const response = await fetch(`/api/investors/crm/deals/${dealId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pipelineId,
+          stageId: targetStageId,
+        }),
+      })
+
+      if (response.ok) {
+        // Refresh deals
+        const params = new URLSearchParams()
+        if (selectedPipeline !== 'all') {
+          params.append('pipelineId', selectedPipeline)
+        }
+        const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (dealsResponse.ok) {
+          const data = await dealsResponse.json()
+          setDeals(data || [])
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to assign deal to pipeline:', errorData)
+        alert(`Failed to assign deal: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error assigning deal to pipeline:', error)
+      alert('Error assigning deal. Please try again.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -208,13 +331,30 @@ export default function PipelineTrackerDeals() {
           <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
           <p className="mt-2 text-gray-600">Manage and track all your deals</p>
         </div>
-        <button
-          onClick={() => setShowCreateDeal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <PlusIcon className="h-5 w-5" />
-          New Deal
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncInvestments}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Investments'}
+          </button>
+          <button
+            onClick={() => setShowPipelineManager(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <CogIcon className="h-5 w-5" />
+            Manage Pipelines
+          </button>
+          <button
+            onClick={() => setShowCreateDeal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <PlusIcon className="h-5 w-5" />
+            New Deal
+          </button>
+        </div>
       </div>
 
       {/* Pipeline Filter and Search Bar */}
@@ -230,8 +370,8 @@ export default function PipelineTrackerDeals() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Pipelines</option>
-            {Array.from(pipelineMap.entries()).map(([id, pipeline]) => (
-              <option key={id} value={id}>{pipeline?.name || 'Unknown'}</option>
+            {allPipelines.map((pipeline) => (
+              <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
             ))}
           </select>
         </div>
@@ -256,9 +396,28 @@ export default function PipelineTrackerDeals() {
             <p className="text-xl font-semibold text-gray-900 mb-2">
               {searchTerm ? 'No deals found matching your search' : 'No deals found'}
             </p>
-            <p className="text-gray-500 font-medium">
+            <p className="text-gray-500 font-medium mb-6">
               {searchTerm ? 'Try adjusting your search terms' : 'Create a new deal or sync investments to get started'}
             </p>
+            {!searchTerm && (
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={handleSyncInvestments}
+                  disabled={syncing}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Syncing Investments...' : 'Sync Investments to Deals'}
+                </button>
+                <button
+                  onClick={() => setShowCreateDeal(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Create New Deal
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -290,11 +449,31 @@ export default function PipelineTrackerDeals() {
                 
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    {deal.pipeline && (
-                      <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                        {deal.pipeline.name}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 flex-1">
+                      {deal.pipeline ? (
+                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                          {deal.pipeline.name}
+                        </span>
+                      ) : (
+                        <select
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={async (e) => {
+                            e.stopPropagation()
+                            const pipelineId = e.target.value
+                            if (pipelineId && pipelineId !== 'none') {
+                              await handleAssignToPipeline(deal.id, pipelineId)
+                            }
+                          }}
+                          className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          defaultValue="none"
+                        >
+                          <option value="none">Assign to Pipeline</option>
+                          {allPipelines.map((pipeline) => (
+                            <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                     <div className="flex items-center space-x-2">
                       {deal.stage && (
                         <span 
@@ -381,6 +560,38 @@ export default function PipelineTrackerDeals() {
           isOpen={showCreateDeal}
           onClose={() => setShowCreateDeal(false)}
           onSuccess={handleDealCreated}
+        />
+      )}
+
+      {/* Pipeline Manager Modal */}
+      {showPipelineManager && (
+        <PipelineManager
+          onClose={() => setShowPipelineManager(false)}
+          onPipelineChange={() => {
+            fetchPipelines()
+            // Refresh deals after pipeline change
+            const fetchData = async () => {
+              try {
+                const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+                const params = new URLSearchParams()
+                if (selectedPipeline !== 'all') {
+                  params.append('pipelineId', selectedPipeline)
+                }
+                const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                })
+                if (response.ok) {
+                  const data = await response.json()
+                  setDeals(data || [])
+                }
+              } catch (error) {
+                console.error('Error refreshing deals:', error)
+              }
+            }
+            fetchData()
+          }}
         />
       )}
     </div>

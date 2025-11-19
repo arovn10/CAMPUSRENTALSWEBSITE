@@ -316,7 +316,7 @@ export async function PUT(
         ) as stage,
         jsonb_build_object(
           'id', prop.id,
-          'propertyId', prop."propertyId",
+          'propertyId', prop.id,
           'name', prop.name,
           'address', prop.address
         ) as property,
