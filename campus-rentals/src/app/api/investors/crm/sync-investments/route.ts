@@ -60,46 +60,45 @@ export async function POST(request: NextRequest) {
       // Create default pipeline
       const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
-      if (columnExists?.exists) {
-        // Get a valid user ID that exists in the users table
-        // First try to get the current user's ID from the database
-        const dbUser = await queryOne<{ id: string }>(
-          'SELECT id FROM users WHERE id = $1 OR email = $2 LIMIT 1',
-          [user.id, (user as any).email || '']
+      // Always get a valid user ID for createdBy (required if column exists)
+      // First try to get the current user's ID from the database
+      const dbUser = await queryOne<{ id: string }>(
+        'SELECT id FROM users WHERE id = $1 OR email = $2 LIMIT 1',
+        [user.id, (user as any).email || '']
+      )
+      
+      // If current user not found, get any admin/manager
+      let createdById = dbUser?.id
+      if (!createdById) {
+        const adminUser = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+          ['ADMIN', 'MANAGER']
         )
-        
-        // If current user not found, get any admin/manager
-        let createdById = dbUser?.id
+        createdById = adminUser?.id
+      }
+      
+      // If still no valid user, get the first user in the system
+      if (!createdById) {
+        const firstUser = await queryOne<{ id: string }>(
+          'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
+        )
+        createdById = firstUser?.id
+      }
+      
+      // If createdBy column exists, we MUST have a user ID
+      if (columnExists?.exists) {
         if (!createdById) {
-          const adminUser = await queryOne<{ id: string }>(
-            'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
-            ['ADMIN', 'MANAGER']
+          return NextResponse.json(
+            { error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.' },
+            { status: 500 }
           )
-          createdById = adminUser?.id
         }
-        
-        // If still no valid user, get the first user in the system
-        if (!createdById) {
-          const firstUser = await queryOne<{ id: string }>(
-            'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
-          )
-          createdById = firstUser?.id
-        }
-        
-        // Only include createdBy if we have a valid user ID
-        if (createdById) {
-          await query(`
-            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, true, $4, NOW(), NOW())
-          `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', createdById])
-        } else {
-          // Fallback: create without createdBy if no valid user found
-          await query(`
-            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, true, NOW(), NOW())
-          `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals'])
-        }
+        await query(`
+          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, true, $4, NOW(), NOW())
+        `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', createdById])
       } else {
+        // Column doesn't exist, create without createdBy
         await query(`
           INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, true, NOW(), NOW())
