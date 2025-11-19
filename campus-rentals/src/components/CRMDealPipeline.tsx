@@ -183,45 +183,38 @@ export default function CRMDealPipeline() {
       // First fetch pipelines
       await fetchPipelines()
       
-      // Then auto-sync investments to deals (only once)
+      // Fetch deals immediately (don't wait for sync)
+      if (selectedPipelineId || pipelines.length > 0) {
+        await fetchDeals()
+      }
+      
+      // Then auto-sync investments to deals in background (only once, non-blocking)
       if (!hasSyncedRef.current) {
-        try {
-          const token = getAuthToken()
-          console.log('🔄 Syncing investments to deals...')
-          const response = await fetch('/api/investors/crm/sync-investments', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          })
-          if (response.ok) {
-            const result = await response.json()
-            console.log('✅ Investments auto-synced to deals:', result.message)
-            hasSyncedRef.current = true
-            // Fetch deals after sync completes
-            if (pipelines.length > 0) {
+        hasSyncedRef.current = true // Set immediately to prevent multiple syncs
+        // Run sync in background without blocking UI
+        setTimeout(async () => {
+          try {
+            const token = getAuthToken()
+            console.log('🔄 Syncing investments to deals...')
+            const response = await fetch('/api/investors/crm/sync-investments', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            })
+            if (response.ok) {
+              const result = await response.json()
+              console.log('✅ Investments auto-synced to deals:', result.message)
+              // Refresh deals after successful sync
               await fetchDeals()
+            } else {
+              const errorData = await response.json().catch(() => ({}))
+              console.error('❌ Sync failed:', response.status, errorData)
             }
-          } else {
-            const errorData = await response.json().catch(() => ({}))
-            console.error('❌ Sync failed:', response.status, response.statusText, errorData)
-            // Still try to fetch deals even if sync fails
-            if (pipelines.length > 0) {
-              await fetchDeals()
-            }
+          } catch (error) {
+            console.error('❌ Error auto-syncing investments:', error)
           }
-        } catch (error) {
-          console.error('❌ Error auto-syncing investments:', error)
-          // Still try to fetch deals even if sync fails
-          if (pipelines.length > 0) {
-            await fetchDeals()
-          }
-        }
-      } else {
-        // Already synced, just fetch deals
-        if (pipelines.length > 0) {
-          await fetchDeals()
-        }
+        }, 1000) // Wait 1 second before syncing to not block initial render
       }
     }
     initialize()

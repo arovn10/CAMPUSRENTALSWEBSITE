@@ -930,9 +930,9 @@ export default function InvestorDashboard() {
 
       {/* Premium Navigation */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2">
-            <div className="flex space-x-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 py-2">
+            <div className="flex flex-wrap gap-1 sm:space-x-1 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
               {[
                 { id: 'overview', label: 'Overview', icon: ChartBarIcon },
                 { id: 'deals', label: 'Deals', icon: HomeIcon },
@@ -952,13 +952,13 @@ export default function InvestorDashboard() {
                       sessionStorage.setItem('investorDashboardActiveTab', tab.id)
                     }
                   }}
-                  className={`relative px-6 py-4 font-medium text-sm transition-all duration-300 rounded-xl ${
+                  className={`relative px-3 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all duration-300 rounded-xl whitespace-nowrap ${
                     activeView === tab.id
                       ? 'text-blue-600 bg-blue-50 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  <tab.icon className="h-5 w-5 inline mr-2" />
+                  <tab.icon className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
                   {tab.label}
                   {activeView === tab.id && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full"></div>
@@ -966,25 +966,25 @@ export default function InvestorDashboard() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center flex-wrap gap-2 sm:space-x-2">
               <button
                 onClick={() => router.push('/investors/profile')}
-                className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-2"
+                className="px-3 sm:px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
               >
-                <UserIcon className="h-5 w-5" />
-                <span className="text-sm font-medium">Profile</span>
+                <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xs sm:text-sm font-medium">Profile</span>
               </button>
               {currentUser && (
-                <div className="text-sm text-slate-600 px-3">
+                <div className="text-xs sm:text-sm text-slate-600 px-2 sm:px-3 hidden sm:block">
                   {currentUser.firstName} {currentUser.lastName}
                 </div>
               )}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-2"
+                className="px-3 sm:px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
               >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span className="text-sm font-medium">Logout</span>
+                <ArrowRightOnRectangleIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xs sm:text-sm font-medium">Logout</span>
               </button>
             </div>
           </div>
@@ -992,7 +992,7 @@ export default function InvestorDashboard() {
       </div>
           
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {activeView === 'overview' && (
           <>
             {/* Premium Stats Grid */}
@@ -1023,7 +1023,7 @@ export default function InvestorDashboard() {
             </div>
           </div>
               </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalInvested)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.totalInvested)}</h3>
                 <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
           </div>
           
@@ -1041,7 +1041,7 @@ export default function InvestorDashboard() {
             </div>
           </div>
         </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.currentValue)}</h3>
                 <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
           </div>
 
@@ -1059,7 +1059,7 @@ export default function InvestorDashboard() {
                     </div>
                   </div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.projectedValue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.projectedValue)}</h3>
                 <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
               </div>
 
@@ -1077,7 +1077,7 @@ export default function InvestorDashboard() {
                           </div>
                         </div>
                     </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalDistributions)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.totalDistributions)}</h3>
                 <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
                   </div>
 
@@ -1095,14 +1095,14 @@ export default function InvestorDashboard() {
                       </div>
                       </div>
                     </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatPercentage(stats.averageIRR)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatPercentage(stats.averageIRR)}</h3>
                 <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
                   </div>
                 </div>
 
             {/* Portfolio Summary */}
-            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25">
-              <h2 className="text-2xl font-bold mb-8">Portfolio Summary</h2>
+            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl shadow-blue-500/25">
+              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8">Portfolio Summary</h2>
               
               <div className="space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-white/20">
@@ -1112,62 +1112,62 @@ export default function InvestorDashboard() {
                     </div>
                     <span className="font-medium">Properties</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.totalProperties}</span>
+                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.totalProperties}</span>
                 </div>
                 
                 <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <ChartBarIcon className="h-5 w-5" />
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
+                      <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-medium">Square Feet</span>
+                    <span className="font-medium text-sm sm:text-base">Square Feet</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.totalSquareFeet.toLocaleString()}</span>
+                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.totalSquareFeet.toLocaleString()}</span>
                 </div>
                 
                 <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <UsersIcon className="h-5 w-5" />
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
+                      <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-medium">Active Deals</span>
+                    <span className="font-medium text-sm sm:text-base">Active Deals</span>
                   </div>
-                  <span className="text-2xl font-bold">{stats.activeInvestments}</span>
+                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.activeInvestments}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <BanknotesIcon className="h-5 w-5" />
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
+                      <BanknotesIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-medium">Total Return</span>
+                    <span className="font-medium text-sm sm:text-base">Total Return</span>
                   </div>
-                  <span className="text-2xl font-bold">{formatCurrency(stats.totalReturn)}</span>
+                  <span className="text-xl sm:text-2xl font-bold break-words">{formatCurrency(stats.totalReturn)}</span>
                 </div>
               </div>
             </div>
               
             {/* Recent Activity */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-              <div className="flex items-center justify-between mb-8">
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">Recent Distributions</h2>
-                  <p className="text-slate-500 font-medium">Latest cash flow activity</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Recent Distributions</h2>
+                  <p className="text-slate-500 font-medium text-sm sm:text-base">Latest cash flow activity</p>
                 </div>
                 <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl">
-                  <BanknotesIcon className="h-6 w-6 text-white" />
+                  <BanknotesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
               </div>
               
-              <div className="overflow-hidden rounded-2xl border border-slate-200/60">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/60">
                 <table className="min-w-full divide-y divide-slate-200/60">
                   <thead className="bg-slate-50/80">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
@@ -1177,22 +1177,22 @@ export default function InvestorDashboard() {
                       .slice(0, 10)
                       .map((distribution, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/80 transition-colors duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                            {distribution.propertyName || 'N/A'}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
+                            <span className="break-words">{distribution.propertyName || 'N/A'}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600 whitespace-nowrap">
                             {new Date(distribution.date).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                            <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600">
+                            <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold inline-block">
                               {distribution.type}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold text-emerald-600 whitespace-nowrap">
                             {formatCurrency(distribution.amount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold flex items-center w-fit">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold flex items-center w-fit">
                               <CheckCircleIcon className="h-3 w-3 mr-1" />
                               Processed
                             </span>
@@ -1217,17 +1217,17 @@ export default function InvestorDashboard() {
         )}
 
         {activeView === 'deals' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
-                <p className="text-slate-500 font-medium">Complete investment portfolio</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
+                <p className="text-slate-500 font-medium text-sm sm:text-base">Complete investment portfolio</p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
                 <select
                   value={dealFilter}
                   onChange={(e) => setDealFilter(e.target.value as any)}
-                  className="px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm w-full sm:w-auto"
                 >
                   <option value="ALL">All Status</option>
                   <option value="STABILIZED">Stabilized</option>
@@ -1282,12 +1282,12 @@ export default function InvestorDashboard() {
                       </div>
                     </div>
                   
-                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200 break-words">
                     {investment.propertyName || investment.propertyAddress}
                   </h3>
-                  <p className="text-sm text-slate-500 mb-4 flex items-center">
-                    <MapPinIcon className="h-4 w-4 mr-2" />
-                    {investment.propertyAddress}
+                  <p className="text-xs sm:text-sm text-slate-500 mb-4 flex items-start">
+                    <MapPinIcon className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">{investment.propertyAddress}</span>
                   </p>
                   
                   {investment.bedrooms && (
@@ -1394,12 +1394,12 @@ export default function InvestorDashboard() {
       )}
 
         {activeView === 'analytics' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900 mb-8">Portfolio Performance</h2>
+          <div className="space-y-6 sm:space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8">Portfolio Performance</h2>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
                     setCalcTitle('Total Equity Today (Estimated)')
                     setCalcLines([
                       { label: 'Current Value (Current Portfolio Value)', value: stats.currentValue },
@@ -1408,14 +1408,14 @@ export default function InvestorDashboard() {
                     ])
                     setShowCalcModal(true)
                   }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
+                <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1 break-words" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
                 </div>
-                    <ChartBarIcon className="h-16 w-16 text-blue-600" />
+                    <ChartBarIcon className="h-12 w-12 sm:h-16 sm:w-16 text-blue-600 flex-shrink-0" />
               </div>
 
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer" onClick={() => {
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
                     setCalcTitle('Total Projected Future Equity (Estimated)')
                     setCalcLines([
                       { label: 'Projected Value (Includes pipeline)', value: stats.projectedValue },
@@ -1424,14 +1424,14 @@ export default function InvestorDashboard() {
                     ])
                     setShowCalcModal(true)
                   }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
+                <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1 break-words" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
                 </div>
-                    <ChartBarIcon className="h-16 w-16 text-indigo-600" />
+                    <ChartBarIcon className="h-12 w-12 sm:h-16 sm:w-16 text-indigo-600 flex-shrink-0" />
               </div>
               
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer" onClick={() => {
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
                     setCalcTitle('Total Returns (Current)')
                     setCalcLines([
                       { label: 'Total Equity Today (Estimated)', value: (stats as any).totalEquityToday || 0 },
@@ -1439,25 +1439,25 @@ export default function InvestorDashboard() {
                     ])
                     setShowCalcModal(true)
                   }}>
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1">Total Returns</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.totalReturn)}</p>
+                <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1">Total Returns</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency(stats.totalReturn)}</p>
                 </div>
-                    <ArrowTrendingUpIcon className="h-16 w-16 text-emerald-600" />
+                    <ArrowTrendingUpIcon className="h-12 w-12 sm:h-16 sm:w-16 text-emerald-600 flex-shrink-0" />
               </div>
               
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl">
-                <div>
-                      <p className="text-sm text-slate-600 font-semibold mb-1">Cash Distributions</p>
-                      <p className="text-3xl font-bold text-slate-900">{formatCurrency(stats.totalDistributions)}</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl gap-3 sm:gap-0">
+                <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1">Cash Distributions</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency(stats.totalDistributions)}</p>
                 </div>
-                    <BanknotesIcon className="h-16 w-16 text-purple-600" />
+                    <BanknotesIcon className="h-12 w-12 sm:h-16 sm:w-16 text-purple-600 flex-shrink-0" />
                 </div>
               </div>
               </div>
               
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900 mb-8">Performance Metrics</h2>
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8">Performance Metrics</h2>
                 <div className="space-y-6">
                   <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-blue-300/60 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-4">
@@ -1506,16 +1506,16 @@ export default function InvestorDashboard() {
             </div>
             
             {/* IRR Analysis */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
-                <div className="flex items-center gap-3">
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                   {currentUser?.role === 'ADMIN' ? (
                     <>
                       <select
                         value={analyticsScope}
                         onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                        className="px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm w-full sm:w-auto"
                       >
                         <option value="ALL">All</option>
                         <option value="PERSON">By Person</option>
@@ -1525,7 +1525,7 @@ export default function InvestorDashboard() {
                         value={analyticsTarget}
                         onChange={(e)=>setAnalyticsTarget(e.target.value)}
                         disabled={analyticsScope==='ALL'}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50"
+                        className="px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm disabled:opacity-50 w-full sm:w-auto"
                       >
                     <option value="ALL">All</option>
                     {analyticsScope==='PERSON' && (() => {
@@ -1561,23 +1561,23 @@ export default function InvestorDashboard() {
                   )}
                 </div>
               </div>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200/60">
-                <table className="min-w-full divide-y divide-slate-200/60" style={{ minWidth: '1200px' }}>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/60 -mx-4 sm:mx-0">
+                <table className="min-w-full divide-y divide-slate-200/60" style={{ minWidth: '1000px' }}>
                   <thead className="bg-slate-50/80">
                     <tr>
                       {analyticsScope === 'PERSON' && (
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Person</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Person</th>
                       )}
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Current Debt</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Start</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Complete</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Current Debt</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Start</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Complete</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white/50 divide-y divide-slate-200/60">
@@ -1702,44 +1702,44 @@ export default function InvestorDashboard() {
                           onClick={() => openProforma(inv)}
                         >
                           {analyticsScope === 'PERSON' && (
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                              {inv.personName || 'Unknown'}
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
+                              <span className="break-words">{inv.personName || 'Unknown'}</span>
                             </td>
                           )}
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                            {inv.propertyName || inv.propertyAddress}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
+                            <span className="break-words">{inv.propertyName || inv.propertyAddress}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
                             {formatCurrency(inv.investmentAmount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
                             {typeof inv.estimatedCurrentDebt === 'number' ? formatCurrency(inv.estimatedCurrentDebt) : '—'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
                             {typeof inv.estimatedMonthlyDebtService === 'number' ? formatCurrency(inv.estimatedMonthlyDebtService) : '—'}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${((inv.irr || 0) >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
+                          <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right ${((inv.irr || 0) >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
                             {formatPercentage(inv.irr || 0)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right">
                             {yieldOnCost !== null ? formatPercentage(yieldOnCost) : '—'}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
+                          <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
                             {dscr !== null ? dscr.toFixed(2) : '—'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900">
                             {inv.property?.acquisitionDate ? new Date(inv.property.acquisitionDate).toLocaleDateString() : '—'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900">
                             {inv.property?.constructionCompletionDate ? new Date(inv.property.constructionCompletionDate).toLocaleDateString() : '—'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-right">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 openProforma(inv)
                               }}
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs font-semibold"
+                              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs font-semibold whitespace-nowrap"
                             >
                               View 5Y Proforma
                             </button>
@@ -1986,43 +1986,43 @@ export default function InvestorDashboard() {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200" style={{ minWidth: '1400px' }}>
+            <div className="p-4 sm:p-6 overflow-x-auto -mx-4 sm:mx-0">
+              <table className="min-w-full divide-y divide-slate-200" style={{ minWidth: '1200px' }}>
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Year</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Revenue</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Expenses</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">NOI</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Interest</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Value</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Debt Payoff (Y5)</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds (Net)</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-slate-600">Year</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Revenue</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Expenses</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">NOI</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Interest</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Exit Value</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Debt Payoff (Y5)</th>
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds (Net)</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
+                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-100">
                   {proformaRows.map((r, idx) => (
                     <tr key={idx} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{r.year}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.revenue)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.expenses)}</td>
-                      <td className="px-4 py-3 text-sm text-right font-semibold text-slate-900">{formatCurrency(r.noi)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.interest)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.principal)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.debtService)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.endingDebt)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{formatCurrency(r.exitSaleValue || 0)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-red-600 font-semibold">{formatCurrency(r.debtPayoff || 0)}</td>
-                      <td className="px-4 py-3 text-sm text-right text-emerald-600 font-semibold">{formatCurrency(r.exitProceeds || 0)}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-bold ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
-                      <td className={`px-4 py-3 text-sm text-right font-semibold ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-slate-900">{r.year}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.revenue)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.expenses)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold text-slate-900 whitespace-nowrap">{formatCurrency(r.noi)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.interest)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.principal)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.debtService)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.endingDebt)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.exitSaleValue || 0)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-red-600 font-semibold whitespace-nowrap">{formatCurrency(r.debtPayoff || 0)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-emerald-600 font-semibold whitespace-nowrap">{formatCurrency(r.exitProceeds || 0)}</td>
+                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-bold whitespace-nowrap ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
+                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold whitespace-nowrap ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
+                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold whitespace-nowrap ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -2071,15 +2071,15 @@ export default function InvestorDashboard() {
         </div>
       )}
       {showCalcModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900">{calcTitle}</h3>
-              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-10 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-200 my-4">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words pr-2">{calcTitle}</h3>
+              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <ul className="space-y-3">
                 {calcLines.map((l, idx) => (
                   <li key={idx} className="flex items-center justify-between">
@@ -2097,15 +2097,15 @@ export default function InvestorDashboard() {
         </div>
       )}
       {showInvestedBreakdown && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900">Total Invested Breakdown</h3>
-              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-10 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 my-4">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words pr-2">Total Invested Breakdown</h3>
+              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 divide-y divide-slate-100">
+            <div className="p-4 sm:p-6 divide-y divide-slate-100">
               {investedBreakdown.length > 0 ? (
                 investedBreakdown.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between py-3">

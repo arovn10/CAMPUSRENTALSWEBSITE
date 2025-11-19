@@ -104,8 +104,19 @@ export async function POST(
     let documentS3Key: string | null = null
 
     try {
+      // Validate file size (max 50MB)
+      const maxSize = 50 * 1024 * 1024 // 50MB
+      if (file.size > maxSize) {
+        return NextResponse.json(
+          { error: 'File size exceeds maximum limit of 50MB' },
+          { status: 400 }
+        )
+      }
+
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
+      
+      console.log(`Uploading document for entity ${entityId}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
       
       const uploadResult = await investorS3Service.uploadFile({
         fileName: file.name,
@@ -117,10 +128,15 @@ export async function POST(
       documentUrl = uploadResult.url
       documentFileName = uploadResult.fileName
       documentS3Key = uploadResult.key
+      
+      console.log(`Successfully uploaded document to S3: ${documentUrl}`)
     } catch (uploadError) {
       console.error('Error uploading entity document to S3:', uploadError)
+      const errorMessage = uploadError instanceof Error ? uploadError.message : 'Unknown error'
+      const errorStack = uploadError instanceof Error ? uploadError.stack : undefined
+      console.error('Upload error details:', { errorMessage, errorStack })
       return NextResponse.json(
-        { error: 'Failed to upload document', details: uploadError instanceof Error ? uploadError.message : 'Unknown error' },
+        { error: 'Failed to upload document to storage', details: errorMessage },
         { status: 500 }
       )
     }

@@ -102,9 +102,10 @@ export default function PipelineMaps() {
     (p) => p.latitude && p.longitude
   )
 
+  // Use OpenStreetMap with Leaflet for geocoding and mapping
   const mapUrl = propertiesWithCoords.length > 0
-    ? `https://www.google.com/maps/dir/${propertiesWithCoords.map(p => `${p.latitude},${p.longitude}`).join('/')}`
-    : 'https://www.google.com/maps'
+    ? `https://www.openstreetmap.org/?mlat=${propertiesWithCoords[0].latitude}&mlon=${propertiesWithCoords[0].longitude}&zoom=12`
+    : 'https://www.openstreetmap.org'
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -144,7 +145,7 @@ export default function PipelineMaps() {
                   loading="lazy"
                   allowFullScreen
                   referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps/embed/v1/view?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6d-s6Sn4Xg4RlWM'}&center=${propertiesWithCoords[0]?.latitude},${propertiesWithCoords[0]?.longitude}&zoom=12`}
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${propertiesWithCoords[0]?.longitude - 0.01},${propertiesWithCoords[0]?.latitude - 0.01},${propertiesWithCoords[0]?.longitude + 0.01},${propertiesWithCoords[0]?.latitude + 0.01}&layer=mapnik&marker=${propertiesWithCoords[0]?.latitude},${propertiesWithCoords[0]?.longitude}`}
                 />
               </div>
               <a
@@ -153,7 +154,7 @@ export default function PipelineMaps() {
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg text-center text-sm sm:text-base"
               >
-                Open in Google Maps
+                Open in OpenStreetMap
               </a>
             </div>
           )}

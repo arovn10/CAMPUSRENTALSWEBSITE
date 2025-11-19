@@ -217,7 +217,7 @@ export default function PipelineTrackerDashboard() {
       {/* Deal Pipeline (Toggleable) */}
       {showPipeline && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <CRMDealPipeline />
+          <CRMDealPipeline key="pipeline-component" />
         </div>
       )}
     </div>

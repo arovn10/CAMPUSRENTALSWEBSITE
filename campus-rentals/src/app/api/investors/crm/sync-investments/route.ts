@@ -153,6 +153,8 @@ export async function POST(request: NextRequest) {
       investmentDate: Date | null;
       propertyName: string;
       propertyAddress: string | null;
+      propertyCity: string | null;
+      propertyState: string | null;
       propertyDescription: string | null;
       propertyDealStatus: string | null;
       propertyFundingStatus: string | null;
@@ -166,6 +168,8 @@ export async function POST(request: NextRequest) {
         i."investmentDate",
         p.name as "propertyName",
         p.address as "propertyAddress",
+        p.city as "propertyCity",
+        p."state" as "propertyState",
         p.description as "propertyDescription",
         COALESCE(p."dealStatus"::text, 'STABILIZED') as "propertyDealStatus",
         COALESCE(p."fundingStatus"::text, 'FUNDED') as "propertyFundingStatus",
@@ -173,6 +177,51 @@ export async function POST(request: NextRequest) {
       FROM investments i
       INNER JOIN properties p ON i."propertyId" = p.id
     `)
+
+    // Helper function to determine location-based pipeline
+    const getLocationPipeline = async (address: string | null, city: string | null, state: string | null): Promise<{ id: string; stages: Array<{ id: string; order: number }> } | null> => {
+      if (!address && !city && !state) return null
+      
+      const addressLower = (address || '').toLowerCase()
+      const cityLower = (city || '').toLowerCase()
+      const stateLower = (state || '').toLowerCase()
+      
+      let locationName: string | null = null
+      
+      // Check for New Orleans
+      if (addressLower.includes('new orleans') || addressLower.includes('nola') || 
+          cityLower.includes('new orleans') || stateLower === 'la' || stateLower === 'louisiana') {
+        locationName = 'New Orleans'
+      }
+      // Check for FAU
+      else if (addressLower.includes('fau') || addressLower.includes('florida atlantic') || 
+               addressLower.includes('boca raton') || addressLower.includes('boca') ||
+               cityLower.includes('boca raton') || cityLower.includes('boca')) {
+        locationName = 'FAU'
+      }
+      
+      if (!locationName) return null
+      
+      // Find or return location pipeline
+      const locationPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
+        SELECT 
+          p.id,
+          COALESCE(
+            jsonb_agg(
+              jsonb_build_object('id', s.id, 'order', s."order")
+              ORDER BY s."order" ASC
+            ) FILTER (WHERE s.id IS NOT NULL),
+            '[]'::jsonb
+          ) as stages
+        FROM deal_pipelines p
+        LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
+        WHERE p.name = $1
+        GROUP BY p.id
+        LIMIT 1
+      `, [locationName])
+      
+      return locationPipeline || null
+    }
 
     const syncedDeals = []
     const createdDeals = []
@@ -244,11 +293,21 @@ export async function POST(request: NextRequest) {
           updatedDeals.push(existingDeal.id)
           syncedDeals.push(existingDeal.id)
         } else {
+          // Determine location-based pipeline
+          const locationPipeline = await getLocationPipeline(
+            investment.propertyAddress,
+            investment.propertyCity,
+            investment.propertyState
+          )
+          
+          // Use location pipeline if found, otherwise use default
+          const targetPipeline = locationPipeline || defaultPipeline
+          const firstStage = Array.isArray(targetPipeline.stages) && targetPipeline.stages.length > 0
+            ? targetPipeline.stages[0].id
+            : null
+
           // Create new deal from investment
           const dealId = `deal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          const firstStage = Array.isArray(defaultPipeline.stages) && defaultPipeline.stages.length > 0
-            ? defaultPipeline.stages[0].id
-            : null
 
           await query(`
             INSERT INTO deals (
@@ -264,7 +323,7 @@ export async function POST(request: NextRequest) {
             dealType,
             status,
             priority,
-            defaultPipeline.id,
+            targetPipeline.id,
             firstStage,
             investment.propertyId,
             investment.propertyDescription || null,
