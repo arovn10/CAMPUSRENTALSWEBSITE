@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN users u ON c."createdBy" = u.id
       WHERE ${whereClause}
       ORDER BY c."lastName" ASC, c."firstName" ASC
-    `, params)
+    `, params.length > 0 ? params : [])
 
     return NextResponse.json({ contacts })
   } catch (error: any) {

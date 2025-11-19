@@ -61,28 +61,42 @@ export async function POST(request: NextRequest) {
       const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
       // Always get a valid user ID for createdBy (required if column exists)
-      // First try to get the current user's ID from the database
-      const dbUser = await queryOne<{ id: string }>(
-        'SELECT id FROM users WHERE id = $1 OR email = $2 LIMIT 1',
-        [user.id, (user as any).email || '']
-      )
+      // Try multiple strategies to find a valid user ID
+      let createdById: string | null = null
       
-      // If current user not found, get any admin/manager
-      let createdById = dbUser?.id
+      // Strategy 1: Try to find user by ID (from requireAuth)
+      if (user.id) {
+        const dbUserById = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE id = $1 LIMIT 1',
+          [user.id]
+        )
+        createdById = dbUserById?.id || null
+      }
+      
+      // Strategy 2: Try to find user by email
+      if (!createdById && (user as any).email) {
+        const dbUserByEmail = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE email = $1 LIMIT 1',
+          [(user as any).email]
+        )
+        createdById = dbUserByEmail?.id || null
+      }
+      
+      // Strategy 3: Get any admin/manager user
       if (!createdById) {
         const adminUser = await queryOne<{ id: string }>(
           'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
           ['ADMIN', 'MANAGER']
         )
-        createdById = adminUser?.id
+        createdById = adminUser?.id || null
       }
       
-      // If still no valid user, get the first user in the system
+      // Strategy 4: Get the first user in the system
       if (!createdById) {
         const firstUser = await queryOne<{ id: string }>(
           'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
         )
-        createdById = firstUser?.id
+        createdById = firstUser?.id || null
       }
       
       // If createdBy column exists, we MUST have a user ID
@@ -178,7 +192,7 @@ export async function POST(request: NextRequest) {
       INNER JOIN properties p ON i."propertyId" = p.id
     `)
 
-    // Helper function to determine location-based pipeline
+    // Helper function to get or create location-based pipeline
     const getLocationPipeline = async (address: string | null, city: string | null, state: string | null): Promise<{ id: string; stages: Array<{ id: string; order: number }> } | null> => {
       if (!address && !city && !state) return null
       
@@ -202,8 +216,8 @@ export async function POST(request: NextRequest) {
       
       if (!locationName) return null
       
-      // Find or return location pipeline
-      const locationPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
+      // Find existing location pipeline
+      let locationPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
         SELECT 
           p.id,
           COALESCE(
@@ -219,6 +233,113 @@ export async function POST(request: NextRequest) {
         GROUP BY p.id
         LIMIT 1
       `, [locationName])
+      
+      // If pipeline doesn't exist, create it (but don't fail if we can't - just return null and use default)
+      if (!locationPipeline) {
+        try {
+          // Get user ID for createdBy (same logic as default pipeline)
+          const columnExists = await queryOne<{ exists: boolean }>(`
+            SELECT EXISTS (
+              SELECT 1 
+              FROM information_schema.columns 
+              WHERE table_schema = 'public'
+              AND table_name = 'deal_pipelines' 
+              AND column_name = 'createdBy'
+            ) as exists
+          `)
+          
+          // Use the same user lookup logic as default pipeline creation
+          let createdById: string | null = null
+          
+          // Strategy 1: Try to find user by ID
+          if (user.id) {
+            const dbUserById = await queryOne<{ id: string }>(
+              'SELECT id FROM users WHERE id = $1 LIMIT 1',
+              [user.id]
+            )
+            createdById = dbUserById?.id || null
+          }
+          
+          // Strategy 2: Try to find user by email
+          if (!createdById && user.email) {
+            const dbUserByEmail = await queryOne<{ id: string }>(
+              'SELECT id FROM users WHERE email = $1 LIMIT 1',
+              [user.email]
+            )
+            createdById = dbUserByEmail?.id || null
+          }
+          
+          // Strategy 3: Get any admin/manager user
+          if (!createdById) {
+            const adminUser = await queryOne<{ id: string }>(
+              'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+              ['ADMIN', 'MANAGER']
+            )
+            createdById = adminUser?.id || null
+          }
+          
+          // Strategy 4: Get the first user in the system
+          if (!createdById) {
+            const firstUser = await queryOne<{ id: string }>(
+              'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
+            )
+            createdById = firstUser?.id || null
+          }
+          
+          // Only create if we have a user ID (if column exists) or if column doesn't exist
+          if (!columnExists?.exists || createdById) {
+            const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            
+            if (columnExists?.exists && createdById) {
+              await query(`
+                INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, false, $4, NOW(), NOW())
+              `, [pipelineId, locationName, `Pipeline for ${locationName} deals`, createdById])
+            } else if (!columnExists?.exists) {
+              await query(`
+                INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, false, NOW(), NOW())
+              `, [pipelineId, locationName, `Pipeline for ${locationName} deals`])
+            }
+            
+            // Create default stages
+            const stages = [
+              { name: 'New', order: 0, color: '#3B82F6' },
+              { name: 'In Progress', order: 1, color: '#F59E0B' },
+              { name: 'Closed', order: 2, color: '#10B981' },
+            ]
+            
+            for (const stage of stages) {
+              const stageId = `stage_${Date.now()}_${stage.order}_${Math.random().toString(36).substr(2, 9)}`
+              await query(`
+                INSERT INTO deal_pipeline_stages (id, "pipelineId", name, "order", color, "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+              `, [stageId, pipelineId, stage.name, stage.order, stage.color])
+            }
+            
+            // Fetch the created pipeline
+            locationPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
+              SELECT 
+                p.id,
+                COALESCE(
+                  jsonb_agg(
+                    jsonb_build_object('id', s.id, 'order', s."order")
+                    ORDER BY s."order" ASC
+                  ) FILTER (WHERE s.id IS NOT NULL),
+                  '[]'::jsonb
+                ) as stages
+              FROM deal_pipelines p
+              LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
+              WHERE p.id = $1
+              GROUP BY p.id
+            `, [pipelineId]) || { id: pipelineId, stages: [] }
+          }
+        } catch (error) {
+          console.error(`Error creating location pipeline for ${locationName}:`, error)
+          // Return null to fall back to default pipeline
+          return null
+        }
+      }
       
       return locationPipeline || null
     }

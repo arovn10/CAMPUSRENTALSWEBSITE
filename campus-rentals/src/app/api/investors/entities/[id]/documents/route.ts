@@ -141,6 +141,31 @@ export async function POST(
       )
     }
 
+    // Verify user exists in database and get their ID
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true },
+    })
+
+    if (!dbUser) {
+      // Try to find user by email as fallback
+      const dbUserByEmail = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { id: true },
+      })
+      
+      if (!dbUserByEmail) {
+        console.error(`User not found in database: ${user.id} / ${user.email}`)
+        return NextResponse.json(
+          { error: 'User not found in database' },
+          { status: 500 }
+        )
+      }
+      
+      // Use the email-found user ID
+      user.id = dbUserByEmail.id
+    }
+
     // Create document record
     const document = await prisma.document.create({
       data: {
