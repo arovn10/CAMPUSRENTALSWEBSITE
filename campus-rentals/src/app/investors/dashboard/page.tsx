@@ -174,43 +174,6 @@ export default function InvestorDashboard() {
   const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
   const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
   const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
-  const [deals, setDeals] = useState<any[]>([])
-  const [dealsLoading, setDealsLoading] = useState(false)
-
-  // Fetch FUNDED deals from CRM API for the deals tab
-  const fetchFundedDeals = async () => {
-    if (activeView !== 'deals') return
-    
-    setDealsLoading(true)
-    try {
-      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-      const response = await fetch('/api/investors/crm/deals?fundingStatus=FUNDED', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-      
-      if (response.ok) {
-        const dealsData = await response.json()
-        setDeals(dealsData)
-      } else {
-        console.error('Failed to fetch deals:', response.status)
-        setDeals([])
-      }
-    } catch (error) {
-      console.error('Error fetching deals:', error)
-      setDeals([])
-    } finally {
-      setDealsLoading(false)
-    }
-  }
-
-  // Fetch deals when deals tab is active
-  useEffect(() => {
-    if (activeView === 'deals' && currentUser) {
-      fetchFundedDeals()
-    }
-  }, [activeView, currentUser])
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -1257,8 +1220,8 @@ export default function InvestorDashboard() {
           <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Funded Deals</h2>
-                <p className="text-slate-500 font-medium">Deals that have been fully funded</p>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
+                <p className="text-slate-500 font-medium">Complete investment portfolio</p>
               </div>
               <div className="flex items-center space-x-3">
                 <select
@@ -1275,37 +1238,27 @@ export default function InvestorDashboard() {
               </div>
               </div>
               
-            {dealsLoading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <p className="text-slate-500 font-medium">Loading deals...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {deals
-                  .filter((deal: any) => {
-                    if (dealFilter === 'ALL') return true
-                    // Filter by deal status from property or deal itself
-                    const dealStatus = deal.property?.dealStatus || deal.status
-                    return dealStatus === dealFilter
-                  })
-                  .map((deal: any) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {investments
+                .filter(inv => inv.fundingStatus === 'FUNDED')
+                .filter(inv => dealFilter === 'ALL' ? true : (inv.dealStatus === dealFilter))
+                .map((investment) => (
                 <div
-                  key={deal.id}
+                  key={investment.id}
                   className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl overflow-hidden hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                  onClick={() => router.push(`/investors/crm/deals/${deal.id}`)}
-                  onMouseEnter={() => setHoveredCard(deal.id)}
+                  onClick={() => handleViewInvestmentDetails(investment.id)}
+                  onMouseEnter={() => setHoveredCard(investment.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
                   {/* Thumbnail Image */}
                   {(() => {
-                    const propertyId = deal.property?.id
+                    const propertyId = (investment as any).property?.id || investment.propertyId
                     const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
                     return thumbnail ? (
                       <div className="relative h-48 w-full overflow-hidden">
                         <img
                           src={thumbnail}
-                          alt={deal.name || deal.property?.name || deal.property?.address}
+                          alt={investment.propertyName || investment.propertyAddress}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -1320,78 +1273,121 @@ export default function InvestorDashboard() {
                   <div className="p-6">
                     <div className="flex items-center justify-end mb-4">
                       <div className="flex items-center space-x-2">
-                        {deal.stage && (
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border`} style={{ 
-                            backgroundColor: `${deal.stage.color || '#3B82F6'}20`,
-                            color: deal.stage.color || '#3B82F6',
-                            borderColor: `${deal.stage.color || '#3B82F6'}40`
-                          }}>
-                            {deal.stage.name}
-                          </span>
-                        )}
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(deal.property?.fundingStatus || 'FUNDED')}`}>
-                          {deal.property?.fundingStatus || 'FUNDED'}
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                          {investment.dealStatus || 'STABILIZED'}
+                        </span>
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                          {investment.fundingStatus || 'FUNDED'}
                         </span>
                       </div>
                     </div>
                   
                     <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
-                      {deal.name || deal.property?.name || deal.property?.address}
-                    </h3>
-                    {deal.property?.address && (
-                      <p className="text-sm text-slate-500 mb-4 flex items-center">
-                        <MapPinIcon className="h-4 w-4 mr-2" />
-                        {deal.property.address}
-                      </p>
-                    )}
-                    
-                    {deal.description && (
-                      <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                        {deal.description}
-                      </p>
-                    )}
+                    {investment.propertyName || investment.propertyAddress}
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-4 flex items-center">
+                    <MapPinIcon className="h-4 w-4 mr-2" />
+                    {investment.propertyAddress}
+                  </p>
                   
-                    <div className="space-y-3 mb-6">
-                      {deal.estimatedValue && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-500 font-medium">Estimated Value</span>
-                          <span className="text-sm font-bold text-slate-900">
-                            {formatCurrency(deal.estimatedValue)}
-                          </span>
-                        </div>
-                      )}
-                      {deal._count && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-500 font-medium">Tasks</span>
-                          <span className="text-sm font-bold text-slate-900">
-                            {deal._count.tasks || 0}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                  {investment.bedrooms && (
+                    <p className="text-sm text-slate-600 mb-4 font-medium">
+                      {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
+                    </p>
+                  )}
+                  
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Investment</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {(() => {
+                          // For investors or when filtering by person, show individual investment amount from entity owners
+                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
+                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
+                            const targetName = currentUser?.role === 'INVESTOR' 
+                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                              : analyticsTarget.trim().toLowerCase()
+                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                              (owner.userName || '').trim().toLowerCase() === targetName
+                            )
+                            if (matchingOwner && matchingOwner.investmentAmount) {
+                              return formatCurrency(matchingOwner.investmentAmount)
+                            }
+                          }
+                          return formatCurrency(investment.investmentAmount)
+                        })()}
+                      </span>
+              </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Ownership</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {(() => {
+                          // For investors or when filtering by person, show effective ownership percentage
+                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
+                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
+                            const targetName = currentUser?.role === 'INVESTOR'
+                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                              : analyticsTarget.trim().toLowerCase()
+                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                              (owner.userName || '').trim().toLowerCase() === targetName
+                            )
+                            if (matchingOwner && matchingOwner.ownershipPercentage) {
+                              // Calculate effective ownership: (entity ownership % of property / 100) * (investor ownership % of entity / 100) * 100
+                              // Example: If entity owns 50% of property and investor owns 51% of entity:
+                              // Effective = (50/100) * (51/100) * 100 = 25.5%
+                              const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
+                              const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
+                              const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
+                              return `${effectiveOwnership.toFixed(1)}%`
+                            }
+                          }
+                          return `${investment.ownershipPercentage}%`
+                        })()}
+                      </span>
+              </div>
+                  {typeof investment.estimatedCurrentDebt === 'number' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Est. Current Debt</span>
+                      <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
+          </div>
+                  )}
+                  {typeof investment.estimatedMonthlyDebtService === 'number' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 font-medium">Monthly Debt Service</span>
+                      <span className={`text-sm font-bold text-slate-900`}>{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
+        </div>
+      )}
+                    {investment.irr && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500 font-medium">IRR</span>
+                        <span className={`text-sm font-bold ${investment.irr > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {formatPercentage(investment.irr)}
+                        </span>
+            </div>
+                    )}
+              </div>
               
-                    <div className="pt-4 border-t border-slate-200/60 flex items-center justify-between">
-                      <span className="text-xs text-slate-500 font-medium">
-                        {deal.createdAt ? `Created ${new Date(deal.createdAt).toLocaleDateString()}` : 'Deal'}
-                      </span>
-                      <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
-                        View Deal
-                        <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                      </span>
-                    </div>
+                  <div className="pt-4 border-t border-slate-200/60 flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-medium">
+                      {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
+                    </span>
+                    <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
+                      View Deal
+                      <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+                    </span>
+                  </div>
                   </div>
                 </div>
-                  ))}
+              ))}
               </div>
-            )}
               
-            {!dealsLoading && deals.length === 0 && (
+            {investments.filter(inv => inv.fundingStatus === 'FUNDED').length === 0 && (
               <div className="text-center py-20">
                 <div className="p-6 bg-slate-100 rounded-3xl w-fit mx-auto mb-6">
                   <BuildingOfficeIcon className="h-20 w-20 text-slate-400" />
-                </div>
-                <p className="text-xl font-semibold text-slate-900 mb-2">No funded deals yet</p>
-                <p className="text-slate-500 font-medium">Funded deals will appear here once they are fully funded</p>
+              </div>
+                <p className="text-xl font-semibold text-slate-900 mb-2">No funded investments found.</p>
+                <p className="text-slate-500 font-medium">Funded investments will appear here</p>
               </div>
             )}
         </div>

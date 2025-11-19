@@ -53,7 +53,7 @@ export default function PipelineTrackerLayout({
             <div className="flex items-center space-x-2 sm:space-x-3 z-10 flex-shrink-0">
               <button
                 onClick={() => router.push('/investors/dashboard')}
-                className="text-gray-400 hover:text-accent transition-colors relative z-20 p-1 sm:p-0"
+                className="text-white hover:text-gray-200 transition-colors relative z-20 p-1 sm:p-0"
                 aria-label="Back to dashboard"
               >
                 <ArrowLeftIcon className="h-5 w-5" />

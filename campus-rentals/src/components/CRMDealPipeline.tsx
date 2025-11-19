@@ -133,7 +133,12 @@ export default function CRMDealPipeline() {
       }
 
       // Fetch deals from /api/investors/crm/deals
-      const url = `/api/investors/crm/deals${selectedPipelineId ? `?pipelineId=${selectedPipelineId}` : ''}`
+      // CRM shows FUNDING deals (deals that are still being funded)
+      // Dashboard shows FUNDED deals (deals that are fully funded)
+      const params = new URLSearchParams()
+      if (selectedPipelineId) params.append('pipelineId', selectedPipelineId)
+      params.append('fundingStatus', 'FUNDING') // CRM shows only FUNDING deals
+      const url = `/api/investors/crm/deals?${params.toString()}`
       console.log('Fetching deals from:', url)
 
       const response = await fetch(url, {
