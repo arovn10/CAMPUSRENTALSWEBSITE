@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const pipelineId = searchParams.get('pipelineId');
     const stageId = searchParams.get('stageId');
     const search = searchParams.get('search');
+    const fundingStatus = searchParams.get('fundingStatus'); // Filter by property fundingStatus: 'FUNDED' or 'FUNDING'
 
     let whereConditions: string[] = [];
     let queryParams: any[] = [];
@@ -79,6 +80,21 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
 
+    // Filter by property fundingStatus (FUNDED or FUNDING)
+    // By default, if no fundingStatus is specified, show FUNDING deals for CRM
+    // Dashboard can explicitly request FUNDED deals
+    if (fundingStatus) {
+      whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
+      queryParams.push(fundingStatus);
+      paramIndex++;
+    } else {
+      // Default: show FUNDING deals for CRM (when no filter specified)
+      // This ensures CRM shows deals that are still in funding stage
+      whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
+      queryParams.push('FUNDING');
+      paramIndex++;
+    }
+
     const whereClause = whereConditions.length > 0 
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
@@ -105,7 +121,8 @@ export async function GET(request: NextRequest) {
           'id', prop.id,
           'propertyId', prop."propertyId",
           'name', prop.name,
-          'address', prop.address
+          'address', prop.address,
+          'fundingStatus', prop."fundingStatus"
         ) as property,
         jsonb_build_object(
           'id', u.id,
@@ -279,7 +296,8 @@ export async function POST(request: NextRequest) {
           'id', prop.id,
           'propertyId', prop."propertyId",
           'name', prop.name,
-          'address', prop.address
+          'address', prop.address,
+          'fundingStatus', prop."fundingStatus"
         ) as property,
         jsonb_build_object(
           'id', u.id,
