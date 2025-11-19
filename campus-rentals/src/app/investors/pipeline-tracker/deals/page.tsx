@@ -7,7 +7,10 @@ import {
   MapPinIcon,
   ArrowUpRightIcon,
   BuildingOfficeIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
+import DealCreateModal from '@/components/DealCreateModal'
 
 interface Investment {
   id: string
@@ -39,6 +42,8 @@ export default function PipelineTrackerDeals() {
   const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showCreateDeal, setShowCreateDeal] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,12 +59,11 @@ export default function PipelineTrackerDeals() {
 
         if (response.ok) {
           const data = await response.json()
-          // Filter for FUNDING deals (deals that are still being funded)
-          const fundingDeals = data.filter((inv: Investment) => inv.fundingStatus === 'FUNDING')
-          setInvestments(fundingDeals)
+          // Show both FUNDED and FUNDING deals
+          setInvestments(data)
           
           // Fetch thumbnails for properties
-          const thumbnailPromises = fundingDeals.map(async (inv: Investment) => {
+          const thumbnailPromises = data.map(async (inv: Investment) => {
             const propertyId = inv.property?.id || inv.propertyId
             if (propertyId) {
               try {
@@ -137,25 +141,84 @@ export default function PipelineTrackerDeals() {
     )
   }
 
+  const filteredInvestments = investments.filter((inv) => {
+    if (!searchTerm) return true
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      inv.propertyName?.toLowerCase().includes(searchLower) ||
+      inv.propertyAddress?.toLowerCase().includes(searchLower) ||
+      inv.propertyCity?.toLowerCase().includes(searchLower) ||
+      inv.propertyState?.toLowerCase().includes(searchLower)
+    )
+  })
+
+  const handleDealCreated = () => {
+    // Refresh the investments list after creating a deal
+    const fetchData = async () => {
+      try {
+        const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+        const response = await fetch('/api/investors/properties', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setInvestments(data)
+        }
+      } catch (error) {
+        console.error('Error refreshing investments:', error)
+      }
+    }
+    fetchData()
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
-        <p className="mt-2 text-gray-600">Manage and track all your deals</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
+          <p className="mt-2 text-gray-600">Manage and track all your deals</p>
+        </div>
+        <button
+          onClick={() => setShowCreateDeal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <PlusIcon className="h-5 w-5" />
+          New Deal
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search deals..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {investments.length === 0 ? (
+        {filteredInvestments.length === 0 ? (
           <div className="text-center py-20">
             <div className="p-6 bg-gray-100 rounded-3xl w-fit mx-auto mb-6">
               <BuildingOfficeIcon className="h-20 w-20 text-gray-400" />
             </div>
-            <p className="text-xl font-semibold text-gray-900 mb-2">No funding deals found</p>
-            <p className="text-gray-500 font-medium">Deals that are currently being funded will appear here</p>
+            <p className="text-xl font-semibold text-gray-900 mb-2">
+              {searchTerm ? 'No deals found matching your search' : 'No deals found'}
+            </p>
+            <p className="text-gray-500 font-medium">
+              {searchTerm ? 'Try adjusting your search terms' : 'Create a new deal or sync investments to get started'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {investments.map((investment) => (
+            {filteredInvestments.map((investment) => (
               <div
                 key={investment.id}
                 className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1"
@@ -257,6 +320,15 @@ export default function PipelineTrackerDeals() {
           </div>
         )}
       </div>
+
+      {/* Create Deal Modal */}
+      {showCreateDeal && (
+        <DealCreateModal
+          isOpen={showCreateDeal}
+          onClose={() => setShowCreateDeal(false)}
+          onSuccess={handleDealCreated}
+        />
+      )}
     </div>
   )
 }
