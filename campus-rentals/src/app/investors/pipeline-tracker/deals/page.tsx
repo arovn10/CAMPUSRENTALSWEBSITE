@@ -9,41 +9,52 @@ import {
   BuildingOfficeIcon,
   PlusIcon,
   MagnifyingGlassIcon,
+  FunnelIcon,
 } from '@heroicons/react/24/outline'
 import DealCreateModal from '@/components/DealCreateModal'
 
-interface Investment {
+interface Deal {
   id: string
-  propertyName?: string
-  propertyAddress: string
-  propertyCity?: string
-  propertyState?: string
-  investmentAmount: number
-  ownershipPercentage: number
-  startDate?: string
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD'
-  dealStatus?: 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'
-  fundingStatus?: 'FUNDED' | 'FUNDING'
-  estimatedCurrentDebt?: number
-  estimatedMonthlyDebtService?: number
-  irr?: number
-  investmentType?: 'DIRECT' | 'ENTITY'
-  bedrooms?: number
-  bathrooms?: number
-  squareFeet?: number
-  propertyId?: string
+  name: string
+  description?: string
+  dealType?: string
+  status?: string
+  priority?: string
+  estimatedValue?: number
+  estimatedCloseDate?: string
+  pipeline?: {
+    id: string
+    name: string
+    description?: string
+  }
+  stage?: {
+    id: string
+    name: string
+    order?: number
+    color?: string
+  }
   property?: {
     id: string
+    name?: string
+    address?: string
+    fundingStatus?: string
+  }
+  assignedTo?: {
+    id: string
+    firstName?: string
+    lastName?: string
+    email?: string
   }
 }
 
 export default function PipelineTrackerDeals() {
   const router = useRouter()
-  const [investments, setInvestments] = useState<Investment[]>([])
+  const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateDeal, setShowCreateDeal] = useState(false)
+  const [selectedPipeline, setSelectedPipeline] = useState<string>('all')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +62,13 @@ export default function PipelineTrackerDeals() {
         setLoading(true)
         const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
         
-        const response = await fetch('/api/investors/properties', {
+        // Fetch deals from CRM API - show both FUNDED and FUNDING
+        const params = new URLSearchParams()
+        if (selectedPipeline !== 'all') {
+          params.append('pipelineId', selectedPipeline)
+        }
+        // Don't filter by fundingStatus - show all deals
+        const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -59,12 +76,11 @@ export default function PipelineTrackerDeals() {
 
         if (response.ok) {
           const data = await response.json()
-          // Show both FUNDED and FUNDING deals
-          setInvestments(data)
+          setDeals(data || [])
           
           // Fetch thumbnails for properties
-          const thumbnailPromises = data.map(async (inv: Investment) => {
-            const propertyId = inv.property?.id || inv.propertyId
+          const thumbnailPromises = data.map(async (deal: Deal) => {
+            const propertyId = deal.property?.id
             if (propertyId) {
               try {
                 const thumbResponse = await fetch(`/api/properties/thumbnail/${propertyId}`)
@@ -87,16 +103,18 @@ export default function PipelineTrackerDeals() {
             }
           })
           setPropertyThumbnails(thumbnailMap)
+        } else {
+          console.error('Failed to fetch deals:', response.status, response.statusText)
         }
       } catch (error) {
-        console.error('Error fetching investments:', error)
+        console.error('Error fetching deals:', error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [selectedPipeline])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -129,8 +147,8 @@ export default function PipelineTrackerDeals() {
     }
   }
 
-  const handleViewInvestmentDetails = (investmentId: string) => {
-    router.push(`/investors/investments/${investmentId}`)
+  const handleViewDealDetails = (dealId: string) => {
+    router.push(`/investors/crm/deals/${dealId}`)
   }
 
   if (loading) {
@@ -141,37 +159,47 @@ export default function PipelineTrackerDeals() {
     )
   }
 
-  const filteredInvestments = investments.filter((inv) => {
-    if (!searchTerm) return true
-    const searchLower = searchTerm.toLowerCase()
-    return (
-      inv.propertyName?.toLowerCase().includes(searchLower) ||
-      inv.propertyAddress?.toLowerCase().includes(searchLower) ||
-      inv.propertyCity?.toLowerCase().includes(searchLower) ||
-      inv.propertyState?.toLowerCase().includes(searchLower)
-    )
+  const filteredDeals = deals.filter((deal) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      return (
+        deal.name?.toLowerCase().includes(searchLower) ||
+        deal.property?.name?.toLowerCase().includes(searchLower) ||
+        deal.property?.address?.toLowerCase().includes(searchLower) ||
+        deal.description?.toLowerCase().includes(searchLower)
+      )
+    }
+    return true
   })
 
   const handleDealCreated = () => {
-    // Refresh the investments list after creating a deal
+    // Refresh the deals list after creating a deal
     const fetchData = async () => {
       try {
         const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-        const response = await fetch('/api/investors/properties', {
+        const params = new URLSearchParams()
+        if (selectedPipeline !== 'all') {
+          params.append('pipelineId', selectedPipeline)
+        }
+        const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         })
         if (response.ok) {
           const data = await response.json()
-          setInvestments(data)
+          setDeals(data || [])
         }
       } catch (error) {
-        console.error('Error refreshing investments:', error)
+        console.error('Error refreshing deals:', error)
       }
     }
     fetchData()
   }
+
+  // Get unique pipelines from deals
+  const pipelines = Array.from(new Set(deals.map(d => d.pipeline?.id).filter(Boolean)))
+  const pipelineMap = new Map(deals.map(d => [d.pipeline?.id, d.pipeline]).filter(([id]) => id))
 
   return (
     <div className="space-y-6">
@@ -189,8 +217,24 @@ export default function PipelineTrackerDeals() {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      {/* Pipeline Filter and Search Bar */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="h-5 w-5 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Pipeline:</span>
+          </div>
+          <select
+            value={selectedPipeline}
+            onChange={(e) => setSelectedPipeline(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">All Pipelines</option>
+            {Array.from(pipelineMap.entries()).map(([id, pipeline]) => (
+              <option key={id} value={id}>{pipeline?.name || 'Unknown'}</option>
+            ))}
+          </select>
+        </div>
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
@@ -204,7 +248,7 @@ export default function PipelineTrackerDeals() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {filteredInvestments.length === 0 ? (
+        {filteredDeals.length === 0 ? (
           <div className="text-center py-20">
             <div className="p-6 bg-gray-100 rounded-3xl w-fit mx-auto mb-6">
               <BuildingOfficeIcon className="h-20 w-20 text-gray-400" />
@@ -218,21 +262,21 @@ export default function PipelineTrackerDeals() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredInvestments.map((investment) => (
+            {filteredDeals.map((deal) => (
               <div
-                key={investment.id}
+                key={deal.id}
                 className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                onClick={() => handleViewInvestmentDetails(investment.id)}
+                onClick={() => handleViewDealDetails(deal.id)}
               >
                 {/* Thumbnail Image */}
                 {(() => {
-                  const propertyId = investment.property?.id || investment.propertyId
+                  const propertyId = deal.property?.id
                   const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
                   return thumbnail ? (
                     <div className="relative h-48 w-full overflow-hidden">
                       <img
                         src={thumbnail}
-                        alt={investment.propertyName || investment.propertyAddress}
+                        alt={deal.name || deal.property?.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -245,61 +289,71 @@ export default function PipelineTrackerDeals() {
                 })()}
                 
                 <div className="p-6">
-                  <div className="flex items-center justify-end mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    {deal.pipeline && (
+                      <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        {deal.pipeline.name}
+                      </span>
+                    )}
                     <div className="flex items-center space-x-2">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
-                        {investment.dealStatus || 'STABILIZED'}
-                      </span>
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
-                        {investment.fundingStatus || 'FUNDING'}
-                      </span>
+                      {deal.stage && (
+                        <span 
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border"
+                          style={{ 
+                            backgroundColor: `${deal.stage.color || '#3B82F6'}20`,
+                            color: deal.stage.color || '#3B82F6',
+                            borderColor: `${deal.stage.color || '#3B82F6'}40`
+                          }}
+                        >
+                          {deal.stage.name}
+                        </span>
+                      )}
+                      {deal.property?.fundingStatus && (
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(deal.property.fundingStatus)}`}>
+                          {deal.property.fundingStatus}
+                        </span>
+                      )}
                     </div>
                   </div>
                 
                   <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
-                    {investment.propertyName || investment.propertyAddress}
+                    {deal.name}
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4 flex items-center">
-                    <MapPinIcon className="h-4 w-4 mr-2" />
-                    {investment.propertyAddress}
-                  </p>
+                  {deal.property?.address && (
+                    <p className="text-sm text-gray-500 mb-4 flex items-center">
+                      <MapPinIcon className="h-4 w-4 mr-2" />
+                      {deal.property.address}
+                    </p>
+                  )}
                   
-                  {investment.bedrooms && (
-                    <p className="text-sm text-gray-600 mb-4 font-medium">
-                      {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
+                  {deal.description && (
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      {deal.description}
                     </p>
                   )}
                   
                   <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 font-medium">Investment</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {formatCurrency(investment.investmentAmount)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 font-medium">Ownership</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {investment.ownershipPercentage}%
-                      </span>
-                    </div>
-                    {typeof investment.estimatedCurrentDebt === 'number' && (
+                    {deal.estimatedValue && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">Est. Current Debt</span>
-                        <span className="text-sm font-bold text-gray-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
+                        <span className="text-sm text-gray-500 font-medium">Estimated Value</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {formatCurrency(deal.estimatedValue)}
+                        </span>
                       </div>
                     )}
-                    {typeof investment.estimatedMonthlyDebtService === 'number' && (
+                    {deal.priority && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">Monthly Debt Service</span>
-                        <span className="text-sm font-bold text-gray-900">{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
+                        <span className="text-sm text-gray-500 font-medium">Priority</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {deal.priority}
+                        </span>
                       </div>
                     )}
-                    {investment.irr && (
+                    {deal.assignedTo && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">IRR</span>
-                        <span className={`text-sm font-bold ${investment.irr > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {formatPercentage(investment.irr)}
+                        <span className="text-sm text-gray-500 font-medium">Assigned To</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {deal.assignedTo.firstName} {deal.assignedTo.lastName}
                         </span>
                       </div>
                     )}
@@ -307,7 +361,7 @@ export default function PipelineTrackerDeals() {
             
                   <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
                     <span className="text-xs text-gray-500 font-medium">
-                      {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
+                      {deal.estimatedCloseDate ? `Close: ${new Date(deal.estimatedCloseDate).toLocaleDateString()}` : 'In Progress'}
                     </span>
                     <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
                       View Deal

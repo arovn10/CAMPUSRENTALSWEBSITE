@@ -81,17 +81,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by property fundingStatus (FUNDED or FUNDING)
-    // By default, if no fundingStatus is specified, show FUNDING deals for CRM
-    // Dashboard can explicitly request FUNDED deals
+    // Only filter if explicitly requested
     if (fundingStatus) {
       whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
       queryParams.push(fundingStatus);
-      paramIndex++;
-    } else {
-      // Default: show FUNDING deals for CRM (when no filter specified)
-      // This ensures CRM shows deals that are still in funding stage
-      whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
-      queryParams.push('FUNDING');
       paramIndex++;
     }
 
@@ -119,7 +112,7 @@ export async function GET(request: NextRequest) {
         ) as stage,
         jsonb_build_object(
           'id', prop.id,
-          'propertyId', prop."propertyId",
+          'propertyId', prop.id,
           'name', prop.name,
           'address', prop.address,
           'fundingStatus', prop."fundingStatus"
@@ -294,7 +287,7 @@ export async function POST(request: NextRequest) {
         ) as stage,
         jsonb_build_object(
           'id', prop.id,
-          'propertyId', prop."propertyId",
+          'propertyId', prop.id,
           'name', prop.name,
           'address', prop.address,
           'fundingStatus', prop."fundingStatus"
