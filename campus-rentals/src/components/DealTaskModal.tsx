@@ -89,7 +89,8 @@ export default function DealTaskModal({
 
       if (response.ok) {
         const data = await response.json()
-        setUsers(data)
+        // Handle both { users: [...] } and [...] formats
+        setUsers(Array.isArray(data) ? data : (data?.users || []))
       }
     } catch (error) {
       console.error('Error fetching users:', error)

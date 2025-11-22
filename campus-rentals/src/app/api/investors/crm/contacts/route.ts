@@ -18,26 +18,30 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const tag = searchParams.get('tag')
 
-    let whereClause = '1=1'
+    const whereConditions: string[] = []
     const params: any[] = []
     let paramIndex = 1
 
     if (search) {
-      whereClause += ` AND (
+      whereConditions.push(`(
         LOWER(c."firstName") LIKE LOWER($${paramIndex}) OR
         LOWER(c."lastName") LIKE LOWER($${paramIndex}) OR
         LOWER(c.email) LIKE LOWER($${paramIndex}) OR
         LOWER(c.company) LIKE LOWER($${paramIndex})
-      )`
+      )`)
       params.push(`%${search}%`)
       paramIndex++
     }
 
     if (tag) {
-      whereClause += ` AND $${paramIndex} = ANY(c.tags)`
+      whereConditions.push(`$${paramIndex} = ANY(c.tags)`)
       params.push(tag)
       paramIndex++
     }
+
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : ''
 
     const contacts = await query(`
       SELECT 
@@ -66,9 +70,9 @@ export async function GET(request: NextRequest) {
         ) as creator
       FROM contacts c
       LEFT JOIN users u ON c."createdBy" = u.id
-      WHERE ${whereClause}
+      ${whereClause}
       ORDER BY c."lastName" ASC, c."firstName" ASC
-    `, params.length > 0 ? params : [])
+    `, params)
 
     return NextResponse.json({ contacts })
   } catch (error: any) {

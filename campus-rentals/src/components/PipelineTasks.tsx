@@ -158,7 +158,8 @@ export default function PipelineTasks() {
 
       if (response.ok) {
         const data = await response.json()
-        setDeals(data || [])
+        // Ensure deals is always an array
+        setDeals(Array.isArray(data) ? data : [])
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
@@ -178,7 +179,8 @@ export default function PipelineTasks() {
 
       if (response.ok) {
         const data = await response.json()
-        setUsers(data || [])
+        // Handle both { users: [...] } and [...] formats
+        setUsers(Array.isArray(data) ? data : (data?.users || []))
       }
     } catch (error) {
       console.error('Error fetching users:', error)
