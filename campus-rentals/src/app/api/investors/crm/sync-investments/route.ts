@@ -147,25 +147,46 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      // If createdBy column exists, we MUST have a user ID
+      // If createdBy column exists, we MUST have a user ID that exists in the database
       if (columnExists?.exists) {
         if (!createdById) {
-          // Last resort: Use the authenticated user ID directly (they're authenticated, so they should exist)
-          // This handles cases where there's a mismatch between JWT and database
-          if (user.id) {
-            console.warn('[SYNC-INVESTMENTS] Using authenticated user ID directly as fallback:', user.id)
-            createdById = user.id
-          } else {
-            console.error('[SYNC-INVESTMENTS] CRITICAL: No user found for createdBy field. Column exists but no user available.')
+          console.error('[SYNC-INVESTMENTS] CRITICAL: No user found for createdBy field. Column exists but no user available.')
+          return NextResponse.json(
+            { 
+              error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.',
+              details: `Authenticated user ID: ${user.id || 'N/A'}, Email: ${(user as any).email || 'N/A'}, Role: ${user.role || 'N/A'}. The authenticated user ID does not exist in the database.`
+            },
+            { status: 500 }
+          )
+        }
+        
+        // Verify the user ID exists in the database before using it (to avoid foreign key constraint violations)
+        try {
+          const verifyUser = await queryOne<{ id: string }>(
+            'SELECT id FROM users WHERE id = $1 LIMIT 1',
+            [createdById]
+          )
+          if (!verifyUser) {
+            console.error('[SYNC-INVESTMENTS] User ID does not exist in database:', createdById)
             return NextResponse.json(
               { 
-                error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.',
-                details: `Authenticated user ID: ${user.id || 'N/A'}, Email: ${(user as any).email || 'N/A'}, Role: ${user.role || 'N/A'}`
+                error: 'Failed to sync investments: User ID found but does not exist in database.',
+                details: `User ID: ${createdById}`
               },
               { status: 500 }
             )
           }
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error verifying user ID:', error)
+          return NextResponse.json(
+            { 
+              error: 'Failed to sync investments: Error verifying user ID.',
+              details: error instanceof Error ? error.message : 'Unknown error'
+            },
+            { status: 500 }
+          )
         }
+        
         await query(`
           INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, true, $4, NOW(), NOW())
@@ -219,8 +240,8 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to get or create default pipeline')
     }
 
-    // Fetch all investments with their properties
-    // Using COALESCE to handle potentially missing columns gracefully
+    // Fetch all investments with their properties - including ALL property attributes
+    // This ensures deals have all the same data as the investor dashboard
     let investments: Array<{
       id: string;
       userId: string;
@@ -236,6 +257,21 @@ export async function POST(request: NextRequest) {
       propertyDescription: string | null;
       propertyDealStatus: string | null;
       propertyFundingStatus: string | null;
+      // All property attributes for investor dashboard display
+      bedrooms: number | null;
+      bathrooms: number | null;
+      squareFeet: number | null;
+      monthlyRent: number | null;
+      otherIncome: number | null;
+      annualExpenses: number | null;
+      capRate: number | null;
+      acquisitionDate: Date | null;
+      acquisitionPrice: number | null;
+      constructionCost: number | null;
+      totalCost: number | null;
+      debtAmount: number | null;
+      occupancyRate: number | null;
+      propertyType: string | null;
     }> = []
     
     try {
@@ -254,6 +290,20 @@ export async function POST(request: NextRequest) {
         propertyDescription: string | null;
         propertyDealStatus: string | null;
         propertyFundingStatus: string | null;
+        bedrooms: number | null;
+        bathrooms: number | null;
+        squareFeet: number | null;
+        monthlyRent: number | null;
+        otherIncome: number | null;
+        annualExpenses: number | null;
+        capRate: number | null;
+        acquisitionDate: Date | null;
+        acquisitionPrice: number | null;
+        constructionCost: number | null;
+        totalCost: number | null;
+        debtAmount: number | null;
+        occupancyRate: number | null;
+        propertyType: string | null;
       }>(`
         SELECT 
           i.id,
@@ -269,7 +319,22 @@ export async function POST(request: NextRequest) {
           p.description as "propertyDescription",
           COALESCE(p."dealStatus"::text, 'STABILIZED') as "propertyDealStatus",
           COALESCE(p."fundingStatus"::text, 'FUNDED') as "propertyFundingStatus",
-          COALESCE(p."currentValue", p."totalCost", i."investmentAmount") as "currentValue"
+          COALESCE(p."currentValue", p."totalCost", i."investmentAmount") as "currentValue",
+          -- All property attributes for investor dashboard
+          p.bedrooms,
+          p.bathrooms,
+          p."squareFeet",
+          p."monthlyRent",
+          p."otherIncome",
+          p."annualExpenses",
+          p."capRate",
+          p."acquisitionDate",
+          p."acquisitionPrice",
+          p."constructionCost",
+          p."totalCost",
+          p."debtAmount",
+          p."occupancyRate",
+          p."propertyType"::text as "propertyType"
         FROM investments i
         INNER JOIN properties p ON i."propertyId" = p.id
       `)
@@ -391,6 +456,25 @@ export async function POST(request: NextRequest) {
           // Only create if we have a user ID (if column exists) or if column doesn't exist
           // If column exists but no user found, skip creating this location pipeline (fall back to default)
           if (!columnExists?.exists || createdById) {
+            // Verify the user ID exists in the database before using it
+            if (columnExists?.exists && createdById) {
+              try {
+                const verifyUser = await queryOne<{ id: string }>(
+                  'SELECT id FROM users WHERE id = $1 LIMIT 1',
+                  [createdById]
+                )
+                if (!verifyUser) {
+                  console.error('[SYNC-INVESTMENTS] User ID does not exist in database for location pipeline:', createdById)
+                  // Skip creating this location pipeline, will fall back to default
+                  return null
+                }
+              } catch (error) {
+                console.error('[SYNC-INVESTMENTS] Error verifying user ID for location pipeline:', error)
+                // Skip creating this location pipeline, will fall back to default
+                return null
+              }
+            }
+            
             const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             
             if (columnExists?.exists && createdById) {
