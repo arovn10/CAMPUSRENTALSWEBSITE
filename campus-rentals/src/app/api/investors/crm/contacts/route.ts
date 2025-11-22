@@ -43,6 +43,34 @@ export async function GET(request: NextRequest) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : ''
 
+    // Check if additional columns exist
+    const hasPipelineId = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'pipelineId'
+      ) as exists
+    `)
+    
+    const hasPropertyId = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'propertyId'
+      ) as exists
+    `)
+    
+    const hasServiceType = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'serviceType'
+      ) as exists
+    `)
+
     const contacts = await query(`
       SELECT 
         c.id,
@@ -62,14 +90,34 @@ export async function GET(request: NextRequest) {
         c."createdBy",
         c."createdAt",
         c."updatedAt",
+        ${hasPipelineId?.exists ? 'c."pipelineId",' : ''}
+        ${hasPropertyId?.exists ? 'c."propertyId",' : ''}
+        ${hasServiceType?.exists ? 'c."serviceType",' : ''}
         jsonb_build_object(
           'id', u.id,
           'firstName', u."firstName",
           'lastName', u."lastName",
           'email', u.email
-        ) as creator
+        ) as creator,
+        ${hasPipelineId?.exists ? `
+        CASE WHEN c."pipelineId" IS NOT NULL THEN
+          jsonb_build_object(
+            'id', p.id,
+            'name', p.name
+          )
+        ELSE NULL END as pipeline,` : ''}
+        ${hasPropertyId?.exists ? `
+        CASE WHEN c."propertyId" IS NOT NULL THEN
+          jsonb_build_object(
+            'id', prop.id,
+            'name', prop.name,
+            'address', prop.address
+          )
+        ELSE NULL END as property,` : ''}
       FROM contacts c
       LEFT JOIN users u ON c."createdBy" = u.id
+      ${hasPipelineId?.exists ? 'LEFT JOIN deal_pipelines p ON c."pipelineId" = p.id' : ''}
+      ${hasPropertyId?.exists ? 'LEFT JOIN properties prop ON c."propertyId" = prop.id' : ''}
       ${whereClause}
       ORDER BY c."lastName" ASC, c."firstName" ASC
     `, params)
@@ -111,6 +159,9 @@ export async function POST(request: NextRequest) {
       country,
       notes,
       tags,
+      pipelineId,
+      propertyId,
+      serviceType,
     } = body
 
     if (!firstName || !lastName) {
@@ -122,16 +173,40 @@ export async function POST(request: NextRequest) {
 
     const contactId = `contact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    const contact = await queryOne(`
-      INSERT INTO contacts (
-        id, "firstName", "lastName", email, phone, company, title,
-        address, city, state, "zipCode", country, notes, tags, "createdBy",
-        "createdAt", "updatedAt"
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW()
-      )
-      RETURNING *
-    `, [
+    // Check if pipelineId and propertyId columns exist
+    const hasPipelineId = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'pipelineId'
+      ) as exists
+    `)
+    
+    const hasPropertyId = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'propertyId'
+      ) as exists
+    `)
+    
+    const hasServiceType = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'contacts' 
+        AND column_name = 'serviceType'
+      ) as exists
+    `)
+
+    // Build dynamic INSERT query based on available columns
+    let columns = ['id', '"firstName"', '"lastName"', 'email', 'phone', 'company', 'title',
+      'address', 'city', '"state"', '"zipCode"', 'country', 'notes', 'tags', '"createdBy"',
+      '"createdAt"', '"updatedAt"']
+    let values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', 'NOW()', 'NOW()']
+    let params: any[] = [
       contactId,
       firstName,
       lastName,
@@ -147,7 +222,35 @@ export async function POST(request: NextRequest) {
       notes || null,
       tags ? JSON.stringify(tags) : '[]',
       user.id,
-    ])
+    ]
+    let paramIndex = 16
+
+    if (hasPipelineId?.exists && pipelineId) {
+      columns.push('"pipelineId"')
+      values.push(`$${paramIndex}`)
+      params.push(pipelineId)
+      paramIndex++
+    }
+
+    if (hasPropertyId?.exists && propertyId) {
+      columns.push('"propertyId"')
+      values.push(`$${paramIndex}`)
+      params.push(propertyId)
+      paramIndex++
+    }
+
+    if (hasServiceType?.exists && serviceType) {
+      columns.push('"serviceType"')
+      values.push(`$${paramIndex}`)
+      params.push(serviceType)
+      paramIndex++
+    }
+
+    const contact = await queryOne(`
+      INSERT INTO contacts (${columns.join(', ')})
+      VALUES (${values.join(', ')})
+      RETURNING *
+    `, params)
 
     return NextResponse.json({ contact }, { status: 201 })
   } catch (error: any) {

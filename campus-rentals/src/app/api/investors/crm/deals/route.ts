@@ -115,8 +115,6 @@ export async function GET(request: NextRequest) {
           'propertyId', prop.id,
           'name', prop.name,
           'address', prop.address,
-          'city', prop.city,
-          'state', prop."state",
           'description', prop.description,
           'bedrooms', prop.bedrooms,
           'bathrooms', prop.bathrooms,
@@ -132,8 +130,8 @@ export async function GET(request: NextRequest) {
           'debtAmount', prop."debtAmount",
           'occupancyRate', prop."occupancyRate",
           'currentValue', prop."currentValue",
-          'dealStatus', prop."dealStatus",
-          'fundingStatus', prop."fundingStatus",
+          'dealStatus', prop."dealStatus"::text,
+          'fundingStatus', prop."fundingStatus"::text,
           'propertyType', prop."propertyType"::text
         ) as property,
         jsonb_build_object(

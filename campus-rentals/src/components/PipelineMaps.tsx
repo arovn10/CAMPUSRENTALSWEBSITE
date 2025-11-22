@@ -55,10 +55,10 @@ export default function PipelineMaps() {
               id: deal.property.id,
               name: deal.property.name || deal.name,
               address: deal.property.address || null,
-              latitude: deal.property.latitude || null,
-              longitude: deal.property.longitude || null,
-              dealStatus: deal.dealStatus || null,
-              currentValue: deal.currentValue || deal.property.currentValue || null,
+              latitude: null, // Properties don't have lat/lng in schema, would need property_locations table
+              longitude: null,
+              dealStatus: deal.property.dealStatus || deal.dealStatus || null,
+              currentValue: deal.property.currentValue || deal.currentValue || null,
             })
           }
         })

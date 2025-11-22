@@ -104,23 +104,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get a valid admin user ID for createdBy
-    const adminUser = await queryOne<{ id: string }>(
-      'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
-      ['ADMIN', 'MANAGER']
-    )
-    
-    const createdById = adminUser?.id || user.id
-    
     // Check if createdBy column exists
     const columnExists = await queryOne<{ exists: boolean }>(`
       SELECT EXISTS (
         SELECT 1 
         FROM information_schema.columns 
-        WHERE table_name = 'deal_pipelines' 
+        WHERE table_schema = 'public'
+        AND table_name = 'deal_pipelines' 
         AND column_name = 'createdBy'
       ) as exists
     `)
+
+    // Get a valid user ID for createdBy (required if column exists)
+    let createdById: string | null = null
+    
+    // Strategy 1: Try to find user by ID (from requireAuth)
+    if (user.id) {
+      try {
+        const dbUserById = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE id = $1 LIMIT 1',
+          [user.id]
+        )
+        createdById = dbUserById?.id || null
+      } catch (error) {
+        console.error('Error finding user by ID:', error)
+      }
+    }
+    
+    // Strategy 2: Try to find user by email
+    if (!createdById && (user as any).email) {
+      try {
+        const dbUserByEmail = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE email = $1 LIMIT 1',
+          [(user as any).email]
+        )
+        createdById = dbUserByEmail?.id || null
+      } catch (error) {
+        console.error('Error finding user by email:', error)
+      }
+    }
+    
+    // Strategy 3: Get any admin/manager user
+    if (!createdById) {
+      try {
+        const adminUser = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+          ['ADMIN', 'MANAGER']
+        )
+        createdById = adminUser?.id || null
+      } catch (error) {
+        console.error('Error finding admin/manager user:', error)
+      }
+    }
+    
+    // Strategy 4: Get the first user in the system
+    if (!createdById) {
+      try {
+        const firstUser = await queryOne<{ id: string }>(
+          'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
+        )
+        createdById = firstUser?.id || null
+      } catch (error) {
+        console.error('Error finding first user:', error)
+      }
+    }
 
     // Generate pipeline ID
     const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -128,6 +175,24 @@ export async function POST(request: NextRequest) {
     // Create pipeline
     let pipeline
     if (columnExists?.exists) {
+      if (!createdById) {
+        return NextResponse.json(
+          { error: 'Failed to create pipeline: No user found for createdBy field.' },
+          { status: 500 }
+        )
+      }
+      
+      // Verify the user ID exists before using it
+      const verifyUser = await queryOne<{ id: string }>(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [createdById]
+      )
+      if (!verifyUser) {
+        return NextResponse.json(
+          { error: 'Failed to create pipeline: User ID does not exist in database.' },
+          { status: 500 }
+        )
+      }
       const pipelineQuery = `
         INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
