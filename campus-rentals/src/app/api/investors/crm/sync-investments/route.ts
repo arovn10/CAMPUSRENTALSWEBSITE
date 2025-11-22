@@ -22,28 +22,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Get or create default pipeline
-    let defaultPipeline = await queryOne<{
-      id: string;
-      stages: Array<{ id: string; order: number }>;
-    }>(`
-      SELECT 
-        p.id,
-        p.name,
-        p.description,
-        p."isDefault",
-        COALESCE(
-          jsonb_agg(
-            jsonb_build_object('id', s.id, 'order', s."order")
-            ORDER BY s."order" ASC
-          ) FILTER (WHERE s.id IS NOT NULL),
-          '[]'::jsonb
-        ) as stages
-      FROM deal_pipelines p
-      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
-      WHERE p."isDefault" = true
-      GROUP BY p.id, p.name, p.description, p."isDefault"
-      LIMIT 1
-    `)
+    let defaultPipeline: { id: string; stages: Array<{ id: string; order: number }> } | null = null
+    try {
+      defaultPipeline = await queryOne<{
+        id: string;
+        stages: Array<{ id: string; order: number }>;
+      }>(`
+        SELECT 
+          p.id,
+          p.name,
+          p.description,
+          p."isDefault",
+          COALESCE(
+            jsonb_agg(
+              jsonb_build_object('id', s.id, 'order', s."order")
+              ORDER BY s."order" ASC
+            ) FILTER (WHERE s.id IS NOT NULL),
+            '[]'::jsonb
+          ) as stages
+        FROM deal_pipelines p
+        LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
+        WHERE p."isDefault" = true
+        GROUP BY p.id, p.name, p.description, p."isDefault"
+        LIMIT 1
+      `)
+    } catch (error: any) {
+      console.error('Error fetching default pipeline:', error)
+      throw new Error(`Failed to fetch default pipeline: ${error?.message || error}`)
+    }
 
     if (!defaultPipeline) {
       // Check if createdBy column exists
@@ -155,9 +161,14 @@ export async function POST(request: NextRequest) {
       `, [pipelineId]) || { id: pipelineId, stages: [] }
     }
 
+    // Ensure we have a valid default pipeline
+    if (!defaultPipeline) {
+      throw new Error('Failed to get or create default pipeline')
+    }
+
     // Fetch all investments with their properties
     // Using COALESCE to handle potentially missing columns gracefully
-    const investments = await query<{
+    let investments: Array<{
       id: string;
       userId: string;
       propertyId: string;
@@ -172,25 +183,47 @@ export async function POST(request: NextRequest) {
       propertyDescription: string | null;
       propertyDealStatus: string | null;
       propertyFundingStatus: string | null;
-    }>(`
-      SELECT 
-        i.id,
-        i."userId",
-        i."propertyId",
-        i."investmentAmount",
-        i.status,
-        i."investmentDate",
-        p.name as "propertyName",
-        p.address as "propertyAddress",
-        p.city as "propertyCity",
-        p."state" as "propertyState",
-        p.description as "propertyDescription",
-        COALESCE(p."dealStatus"::text, 'STABILIZED') as "propertyDealStatus",
-        COALESCE(p."fundingStatus"::text, 'FUNDED') as "propertyFundingStatus",
-        COALESCE(p."currentValue", p."totalCost", i."investmentAmount") as "currentValue"
-      FROM investments i
-      INNER JOIN properties p ON i."propertyId" = p.id
-    `)
+    }> = []
+    
+    try {
+      investments = await query<{
+        id: string;
+        userId: string;
+        propertyId: string;
+        investmentAmount: number | null;
+        currentValue: number | null;
+        status: string;
+        investmentDate: Date | null;
+        propertyName: string;
+        propertyAddress: string | null;
+        propertyCity: string | null;
+        propertyState: string | null;
+        propertyDescription: string | null;
+        propertyDealStatus: string | null;
+        propertyFundingStatus: string | null;
+      }>(`
+        SELECT 
+          i.id,
+          i."userId",
+          i."propertyId",
+          i."investmentAmount",
+          i.status,
+          i."investmentDate",
+          p.name as "propertyName",
+          p.address as "propertyAddress",
+          p.city as "propertyCity",
+          p."state" as "propertyState",
+          p.description as "propertyDescription",
+          COALESCE(p."dealStatus"::text, 'STABILIZED') as "propertyDealStatus",
+          COALESCE(p."fundingStatus"::text, 'FUNDED') as "propertyFundingStatus",
+          COALESCE(p."currentValue", p."totalCost", i."investmentAmount") as "currentValue"
+        FROM investments i
+        INNER JOIN properties p ON i."propertyId" = p.id
+      `)
+    } catch (error: any) {
+      console.error('Error fetching investments:', error)
+      throw new Error(`Failed to fetch investments: ${error?.message || error}`)
+    }
 
     // Helper function to get or create location-based pipeline
     const getLocationPipeline = async (address: string | null, city: string | null, state: string | null): Promise<{ id: string; stages: Array<{ id: string; order: number }> } | null> => {
@@ -261,10 +294,10 @@ export async function POST(request: NextRequest) {
           }
           
           // Strategy 2: Try to find user by email
-          if (!createdById && user.email) {
+          if (!createdById && (user as any).email) {
             const dbUserByEmail = await queryOne<{ id: string }>(
               'SELECT id FROM users WHERE email = $1 LIMIT 1',
-              [user.email]
+              [(user as any).email]
             )
             createdById = dbUserByEmail?.id || null
           }
@@ -423,6 +456,10 @@ export async function POST(request: NextRequest) {
           
           // Use location pipeline if found, otherwise use default
           const targetPipeline = locationPipeline || defaultPipeline
+          if (!targetPipeline) {
+            console.error(`No pipeline available for investment ${investment.id}`)
+            continue // Skip this investment if no pipeline is available
+          }
           const firstStage = Array.isArray(targetPipeline.stages) && targetPipeline.stages.length > 0
             ? targetPipeline.stages[0].id
             : null
@@ -471,8 +508,15 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error syncing investments:', error)
+    const errorMessage = error?.message || error?.toString() || 'Unknown error'
+    const errorStack = error?.stack || ''
+    console.error('Error details:', { message: errorMessage, stack: errorStack })
     return NextResponse.json(
-      { error: 'Failed to sync investments', details: error.message },
+      { 
+        error: 'Failed to sync investments', 
+        details: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+      },
       { status: 500 }
     )
   }
