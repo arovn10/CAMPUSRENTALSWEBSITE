@@ -70,48 +70,101 @@ export async function POST(request: NextRequest) {
       // Try multiple strategies to find a valid user ID
       let createdById: string | null = null
       
-      // Strategy 1: Try to find user by ID (from requireAuth)
+      console.log('[SYNC-INVESTMENTS] Looking for user for createdBy. Auth user:', { id: user.id, email: (user as any).email, role: user.role })
+      
+      // Strategy 1: Try to find user by ID (from requireAuth) - this should work since user is authenticated
       if (user.id) {
-        const dbUserById = await queryOne<{ id: string }>(
-          'SELECT id FROM users WHERE id = $1 LIMIT 1',
-          [user.id]
-        )
-        createdById = dbUserById?.id || null
+        try {
+          const dbUserById = await queryOne<{ id: string }>(
+            'SELECT id FROM users WHERE id = $1 LIMIT 1',
+            [user.id]
+          )
+          if (dbUserById?.id) {
+            createdById = dbUserById.id
+            console.log('[SYNC-INVESTMENTS] Found user by ID:', createdById)
+          }
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error finding user by ID:', error)
+        }
       }
       
       // Strategy 2: Try to find user by email
       if (!createdById && (user as any).email) {
-        const dbUserByEmail = await queryOne<{ id: string }>(
-          'SELECT id FROM users WHERE email = $1 LIMIT 1',
-          [(user as any).email]
-        )
-        createdById = dbUserByEmail?.id || null
+        try {
+          const dbUserByEmail = await queryOne<{ id: string }>(
+            'SELECT id FROM users WHERE email = $1 LIMIT 1',
+            [(user as any).email]
+          )
+          if (dbUserByEmail?.id) {
+            createdById = dbUserByEmail.id
+            console.log('[SYNC-INVESTMENTS] Found user by email:', createdById)
+          }
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error finding user by email:', error)
+        }
       }
       
       // Strategy 3: Get any admin/manager user
       if (!createdById) {
-        const adminUser = await queryOne<{ id: string }>(
-          'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
-          ['ADMIN', 'MANAGER']
-        )
-        createdById = adminUser?.id || null
+        try {
+          const adminUser = await queryOne<{ id: string }>(
+            'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+            ['ADMIN', 'MANAGER']
+          )
+          if (adminUser?.id) {
+            createdById = adminUser.id
+            console.log('[SYNC-INVESTMENTS] Found admin/manager user:', createdById)
+          }
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error finding admin/manager user:', error)
+        }
       }
       
       // Strategy 4: Get the first user in the system
       if (!createdById) {
-        const firstUser = await queryOne<{ id: string }>(
-          'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
-        )
-        createdById = firstUser?.id || null
+        try {
+          const firstUser = await queryOne<{ id: string }>(
+            'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
+          )
+          if (firstUser?.id) {
+            createdById = firstUser.id
+            console.log('[SYNC-INVESTMENTS] Found first user in system:', createdById)
+          }
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error finding first user:', error)
+        }
+      }
+      
+      // Strategy 5: Check if users table has any records at all
+      if (!createdById) {
+        try {
+          const userCount = await queryOne<{ count: string }>(
+            'SELECT COUNT(*)::text as count FROM users'
+          )
+          console.log('[SYNC-INVESTMENTS] Total users in database:', userCount?.count || '0')
+        } catch (error) {
+          console.error('[SYNC-INVESTMENTS] Error counting users:', error)
+        }
       }
       
       // If createdBy column exists, we MUST have a user ID
       if (columnExists?.exists) {
         if (!createdById) {
-          return NextResponse.json(
-            { error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.' },
-            { status: 500 }
-          )
+          // Last resort: Use the authenticated user ID directly (they're authenticated, so they should exist)
+          // This handles cases where there's a mismatch between JWT and database
+          if (user.id) {
+            console.warn('[SYNC-INVESTMENTS] Using authenticated user ID directly as fallback:', user.id)
+            createdById = user.id
+          } else {
+            console.error('[SYNC-INVESTMENTS] CRITICAL: No user found for createdBy field. Column exists but no user available.')
+            return NextResponse.json(
+              { 
+                error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.',
+                details: `Authenticated user ID: ${user.id || 'N/A'}, Email: ${(user as any).email || 'N/A'}, Role: ${user.role || 'N/A'}`
+              },
+              { status: 500 }
+            )
+          }
         }
         await query(`
           INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
@@ -286,40 +339,57 @@ export async function POST(request: NextRequest) {
           
           // Strategy 1: Try to find user by ID
           if (user.id) {
-            const dbUserById = await queryOne<{ id: string }>(
-              'SELECT id FROM users WHERE id = $1 LIMIT 1',
-              [user.id]
-            )
-            createdById = dbUserById?.id || null
+            try {
+              const dbUserById = await queryOne<{ id: string }>(
+                'SELECT id FROM users WHERE id = $1 LIMIT 1',
+                [user.id]
+              )
+              createdById = dbUserById?.id || null
+            } catch (error) {
+              console.error('[SYNC-INVESTMENTS] Error finding user by ID in location pipeline:', error)
+            }
           }
           
           // Strategy 2: Try to find user by email
           if (!createdById && (user as any).email) {
-            const dbUserByEmail = await queryOne<{ id: string }>(
-              'SELECT id FROM users WHERE email = $1 LIMIT 1',
-              [(user as any).email]
-            )
-            createdById = dbUserByEmail?.id || null
+            try {
+              const dbUserByEmail = await queryOne<{ id: string }>(
+                'SELECT id FROM users WHERE email = $1 LIMIT 1',
+                [(user as any).email]
+              )
+              createdById = dbUserByEmail?.id || null
+            } catch (error) {
+              console.error('[SYNC-INVESTMENTS] Error finding user by email in location pipeline:', error)
+            }
           }
           
           // Strategy 3: Get any admin/manager user
           if (!createdById) {
-            const adminUser = await queryOne<{ id: string }>(
-              'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
-              ['ADMIN', 'MANAGER']
-            )
-            createdById = adminUser?.id || null
+            try {
+              const adminUser = await queryOne<{ id: string }>(
+                'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+                ['ADMIN', 'MANAGER']
+              )
+              createdById = adminUser?.id || null
+            } catch (error) {
+              console.error('[SYNC-INVESTMENTS] Error finding admin/manager user in location pipeline:', error)
+            }
           }
           
           // Strategy 4: Get the first user in the system
           if (!createdById) {
-            const firstUser = await queryOne<{ id: string }>(
-              'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
-            )
-            createdById = firstUser?.id || null
+            try {
+              const firstUser = await queryOne<{ id: string }>(
+                'SELECT id FROM users ORDER BY "createdAt" ASC LIMIT 1'
+              )
+              createdById = firstUser?.id || null
+            } catch (error) {
+              console.error('[SYNC-INVESTMENTS] Error finding first user in location pipeline:', error)
+            }
           }
           
           // Only create if we have a user ID (if column exists) or if column doesn't exist
+          // If column exists but no user found, skip creating this location pipeline (fall back to default)
           if (!columnExists?.exists || createdById) {
             const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             
