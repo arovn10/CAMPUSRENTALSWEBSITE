@@ -379,8 +379,9 @@ export async function GET(request: NextRequest) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    // Main query with joins - simplified to avoid SQL errors
-    const dealsQuery = `
+    // Main query - start simple, build up complexity
+    // First try the simplest possible query
+    let dealsQuery = `
       SELECT 
         d.id,
         d.name,
@@ -398,119 +399,88 @@ export async function GET(request: NextRequest) {
         d.section,
         d."assignedToId",
         d."createdAt",
-        d."updatedAt",
-        jsonb_build_object(
-          'id', p.id,
-          'pipelineId', p.id,
-          'name', p.name,
-          'description', p.description,
-          'isDefault', p."isDefault"
-        ) as pipeline,
-        jsonb_build_object(
-          'id', s.id,
-          'stageId', s.id,
-          'name', s.name,
-          'order', s."order",
-          'color', s.color
-        ) as stage,
-        jsonb_build_object(
-          'id', prop.id,
-          'propertyId', prop.id,
-          'name', prop.name,
-          'address', prop.address,
-          'description', prop.description,
-          'bedrooms', prop.bedrooms,
-          'bathrooms', prop.bathrooms,
-          'squareFeet', prop."squareFeet",
-          'monthlyRent', prop."monthlyRent",
-          'otherIncome', prop."otherIncome",
-          'annualExpenses', prop."annualExpenses",
-          'capRate', prop."capRate",
-          'acquisitionDate', prop."acquisitionDate",
-          'acquisitionPrice', prop."acquisitionPrice",
-          'constructionCost', prop."constructionCost",
-          'totalCost', prop."totalCost",
-          'debtAmount', prop."debtAmount",
-          'occupancyRate', prop."occupancyRate",
-          'currentValue', prop."currentValue",
-          'dealStatus', prop."dealStatus"::text,
-          'fundingStatus', prop."fundingStatus"::text,
-          'propertyType', prop."propertyType"::text
-        ) as property,
-        jsonb_build_object(
-          'id', u.id,
-          'firstName', u."firstName",
-          'lastName', u."lastName",
-          'email', u.email
-        ) as "assignedTo",
-        jsonb_build_object(
-          'tasks', COALESCE(task_count.count, 0),
-          'notes', COALESCE(note_count.count, 0),
-          'relationships', COALESCE(rel_count.count, 0)
-        ) as _count
+        d."updatedAt"
       FROM deals d
-      LEFT JOIN deal_pipelines p ON d."pipelineId" = p.id
-      LEFT JOIN deal_pipeline_stages s ON d."stageId" = s.id
-      LEFT JOIN properties prop ON d."propertyId" = prop.id
-      LEFT JOIN users u ON d."assignedToId" = u.id
-      LEFT JOIN (
-        SELECT "dealId", COUNT(*)::integer as count
-        FROM deal_tasks
-        GROUP BY "dealId"
-      ) task_count ON d.id = task_count."dealId"
-      LEFT JOIN (
-        SELECT "dealId", COUNT(*)::integer as count
-        FROM deal_notes
-        GROUP BY "dealId"
-      ) note_count ON d.id = note_count."dealId"
-      LEFT JOIN (
-        SELECT "dealId", COUNT(*)::integer as count
-        FROM deal_relationships
-        GROUP BY "dealId"
-      ) rel_count ON d.id = rel_count."dealId"
       ${whereClause}
       ORDER BY d."createdAt" DESC
+      LIMIT 1000
     `;
 
     let deals: any[] = [];
     try {
-      // Execute query with proper error handling
-      console.log(`[CRM Deals] Executing query with ${queryParams.length} params`);
+      // Execute simple query first
+      console.log(`[CRM Deals] Executing simple query with ${queryParams.length} params`);
       const result = await query(dealsQuery, queryParams);
       deals = Array.isArray(result) ? result : [];
-      console.log(`[CRM Deals] Query executed successfully, found ${deals?.length || 0} deals`);
+      console.log(`[CRM Deals] Simple query succeeded, found ${deals?.length || 0} deals`);
       
-      // Log first deal structure for debugging
+      // Now enrich with relations if we have deals
       if (deals.length > 0) {
-        console.log(`[CRM Deals] Sample deal keys:`, Object.keys(deals[0]));
+        const dealIds = deals.map(d => d.id);
+        const placeholders = dealIds.map((_, i) => `$${i + 1}`).join(', ');
+        
+        // Get pipelines
+        const pipelines = await query(`
+          SELECT id, name, description, "isDefault"
+          FROM deal_pipelines
+          WHERE id IN (SELECT DISTINCT "pipelineId" FROM deals WHERE id IN (${placeholders}))
+        `, dealIds);
+        const pipelineMap = new Map(pipelines.map((p: any) => [p.id, p]));
+        
+        // Get stages
+        const stages = await query(`
+          SELECT id, "pipelineId", name, "order", color
+          FROM deal_pipeline_stages
+          WHERE id IN (SELECT DISTINCT "stageId" FROM deals WHERE id IN (${placeholders}))
+        `, dealIds);
+        const stageMap = new Map(stages.map((s: any) => [s.id, s]));
+        
+        // Get properties
+        const propertyIds = deals.map(d => d.propertyId).filter(Boolean);
+        if (propertyIds.length > 0) {
+          const propPlaceholders = propertyIds.map((_, i) => `$${i + 1}`).join(', ');
+          const properties = await query(`
+            SELECT 
+              id, name, address, description, bedrooms, bathrooms, "squareFeet",
+              "monthlyRent", "otherIncome", "annualExpenses", "capRate",
+              "acquisitionDate", "acquisitionPrice", "constructionCost", "totalCost",
+              "debtAmount", "occupancyRate", "currentValue",
+              "dealStatus"::text as "dealStatus",
+              "fundingStatus"::text as "fundingStatus",
+              "propertyType"::text as "propertyType"
+            FROM properties
+            WHERE id IN (${propPlaceholders})
+          `, propertyIds);
+          const propertyMap = new Map(properties.map((p: any) => [p.id, p]));
+          
+          // Enrich deals
+          deals = deals.map(deal => ({
+            ...deal,
+            pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
+            stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
+            property: deal.propertyId ? (propertyMap.get(deal.propertyId) || null) : null,
+            assignedTo: null, // Can be added later if needed
+            _count: { tasks: 0, notes: 0, relationships: 0 } // Can be added later if needed
+          }));
+        } else {
+          deals = deals.map(deal => ({
+            ...deal,
+            pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
+            stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
+            property: null,
+            assignedTo: null,
+            _count: { tasks: 0, notes: 0, relationships: 0 }
+          }));
+        }
       }
     } catch (error: any) {
       console.error(`[CRM Deals] Query error:`, error);
       console.error(`[CRM Deals] Error message:`, error?.message);
       console.error(`[CRM Deals] Error code:`, error?.code);
       console.error(`[CRM Deals] Error detail:`, error?.detail);
-      console.error(`[CRM Deals] Error hint:`, error?.hint);
-      console.error(`[CRM Deals] Query was:`, dealsQuery.substring(0, 1000));
-      console.error(`[CRM Deals] Params were:`, JSON.stringify(queryParams));
-      console.error(`[CRM Deals] Where clause:`, whereClause);
-      
-      // Try a simpler query as fallback
-      try {
-        console.log(`[CRM Deals] Attempting simpler fallback query...`);
-        const simpleQuery = `
-          SELECT d.*, d.id as deal_id, d.name as deal_name
-          FROM deals d
-          ${whereClause}
-          ORDER BY d."createdAt" DESC
-          LIMIT 100
-        `;
-        const simpleResult = await query(simpleQuery, queryParams);
-        deals = Array.isArray(simpleResult) ? simpleResult : [];
-        console.log(`[CRM Deals] Fallback query succeeded, found ${deals.length} deals`);
-      } catch (fallbackError: any) {
-        console.error(`[CRM Deals] Fallback query also failed:`, fallbackError?.message);
-        deals = [];
-      }
+      console.error(`[CRM Deals] Query was:`, dealsQuery);
+      console.error(`[CRM Deals] Params:`, JSON.stringify(queryParams));
+      deals = [];
     }
     
     console.log(`[CRM Deals] Returning ${deals?.length || 0} deals (filters: pipelineId=${pipelineId || 'all'}, stageId=${stageId || 'none'}, search=${search || 'none'}, fundingStatus=${fundingStatus || 'all'})`);
