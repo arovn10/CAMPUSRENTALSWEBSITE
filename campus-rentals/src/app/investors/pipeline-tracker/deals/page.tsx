@@ -11,7 +11,6 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   CogIcon,
-  ArrowPathIcon,
 } from '@heroicons/react/24/outline'
 import DealCreateModal from '@/components/DealCreateModal'
 import PipelineManager from '@/components/PipelineManager'
@@ -65,9 +64,8 @@ export default function PipelineTrackerDeals() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateDeal, setShowCreateDeal] = useState(false)
   const [showPipelineManager, setShowPipelineManager] = useState(false)
-  const [selectedPipeline, setSelectedPipeline] = useState<string>('all')
+  const [selectedPipeline, setSelectedPipeline] = useState<string>('all') // 'all' shows all pipelines, specific ID filters
   const [allPipelines, setAllPipelines] = useState<Array<{ id: string; name: string }>>([])
-  const [syncing, setSyncing] = useState(false)
 
   const fetchPipelines = async () => {
     try {
@@ -261,45 +259,6 @@ export default function PipelineTrackerDeals() {
     fetchData()
   }
 
-  const handleSyncInvestments = async () => {
-    try {
-      setSyncing(true)
-      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-      const response = await fetch('/api/investors/crm/sync-investments', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        // Refresh deals and pipelines after sync
-        await fetchPipelines()
-        const params = new URLSearchParams()
-        if (selectedPipeline !== 'all') {
-          params.append('pipelineId', selectedPipeline)
-        }
-        const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (dealsResponse.ok) {
-          const data = await dealsResponse.json()
-          setDeals(data || [])
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Failed to sync investments:', errorData)
-        alert(`Failed to sync investments: ${errorData.error || 'Unknown error'}`)
-      }
-    } catch (error) {
-      console.error('Error syncing investments:', error)
-      alert('Error syncing investments. Please try again.')
-    } finally {
-      setSyncing(false)
-    }
-  }
 
   const handleAssignToPipeline = async (dealId: string, pipelineId: string, stageId?: string) => {
     try {
@@ -373,14 +332,6 @@ export default function PipelineTrackerDeals() {
         {currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSyncInvestments}
-              disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing...' : 'Sync Investments'}
-            </button>
-            <button
               onClick={() => setShowPipelineManager(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
@@ -442,14 +393,6 @@ export default function PipelineTrackerDeals() {
             </p>
             {!searchTerm && currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
               <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={handleSyncInvestments}
-                  disabled={syncing}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Syncing Investments...' : 'Sync Investments to Deals'}
-                </button>
                 <button
                   onClick={() => setShowCreateDeal(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
