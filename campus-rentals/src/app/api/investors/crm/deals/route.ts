@@ -379,10 +379,26 @@ export async function GET(request: NextRequest) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    // Main query with joins
+    // Main query with joins - simplified to avoid SQL errors
     const dealsQuery = `
       SELECT 
-        d.*,
+        d.id,
+        d.name,
+        d."dealType",
+        d.status,
+        d.priority,
+        d."pipelineId",
+        d."stageId",
+        d."propertyId",
+        d.description,
+        d."estimatedValue",
+        d."estimatedCloseDate",
+        d.source,
+        d.tags,
+        d.section,
+        d."assignedToId",
+        d."createdAt",
+        d."updatedAt",
         jsonb_build_object(
           'id', p.id,
           'pipelineId', p.id,
@@ -426,7 +442,7 @@ export async function GET(request: NextRequest) {
           'firstName', u."firstName",
           'lastName', u."lastName",
           'email', u.email
-        ) as assignedTo,
+        ) as "assignedTo",
         jsonb_build_object(
           'tasks', COALESCE(task_count.count, 0),
           'notes', COALESCE(note_count.count, 0),
@@ -438,17 +454,17 @@ export async function GET(request: NextRequest) {
       LEFT JOIN properties prop ON d."propertyId" = prop.id
       LEFT JOIN users u ON d."assignedToId" = u.id
       LEFT JOIN (
-        SELECT "dealId", COUNT(*) as count
+        SELECT "dealId", COUNT(*)::integer as count
         FROM deal_tasks
         GROUP BY "dealId"
       ) task_count ON d.id = task_count."dealId"
       LEFT JOIN (
-        SELECT "dealId", COUNT(*) as count
+        SELECT "dealId", COUNT(*)::integer as count
         FROM deal_notes
         GROUP BY "dealId"
       ) note_count ON d.id = note_count."dealId"
       LEFT JOIN (
-        SELECT "dealId", COUNT(*) as count
+        SELECT "dealId", COUNT(*)::integer as count
         FROM deal_relationships
         GROUP BY "dealId"
       ) rel_count ON d.id = rel_count."dealId"
