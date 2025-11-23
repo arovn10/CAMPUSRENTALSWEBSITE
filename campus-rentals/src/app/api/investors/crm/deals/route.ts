@@ -472,21 +472,45 @@ export async function GET(request: NextRequest) {
       ORDER BY d."createdAt" DESC
     `;
 
-    let deals;
+    let deals: any[] = [];
     try {
       // Execute query with proper error handling
+      console.log(`[CRM Deals] Executing query with ${queryParams.length} params`);
       const result = await query(dealsQuery, queryParams);
       deals = Array.isArray(result) ? result : [];
       console.log(`[CRM Deals] Query executed successfully, found ${deals?.length || 0} deals`);
+      
+      // Log first deal structure for debugging
+      if (deals.length > 0) {
+        console.log(`[CRM Deals] Sample deal keys:`, Object.keys(deals[0]));
+      }
     } catch (error: any) {
       console.error(`[CRM Deals] Query error:`, error);
       console.error(`[CRM Deals] Error message:`, error?.message);
-      console.error(`[CRM Deals] Error stack:`, error?.stack);
-      console.error(`[CRM Deals] Query was:`, dealsQuery.substring(0, 500) + '...');
-      console.error(`[CRM Deals] Params were:`, queryParams);
-      // Return empty array instead of error to prevent frontend crash
-      deals = [];
-      console.warn(`[CRM Deals] Returning empty deals array due to query error`);
+      console.error(`[CRM Deals] Error code:`, error?.code);
+      console.error(`[CRM Deals] Error detail:`, error?.detail);
+      console.error(`[CRM Deals] Error hint:`, error?.hint);
+      console.error(`[CRM Deals] Query was:`, dealsQuery.substring(0, 1000));
+      console.error(`[CRM Deals] Params were:`, JSON.stringify(queryParams));
+      console.error(`[CRM Deals] Where clause:`, whereClause);
+      
+      // Try a simpler query as fallback
+      try {
+        console.log(`[CRM Deals] Attempting simpler fallback query...`);
+        const simpleQuery = `
+          SELECT d.*, d.id as deal_id, d.name as deal_name
+          FROM deals d
+          ${whereClause}
+          ORDER BY d."createdAt" DESC
+          LIMIT 100
+        `;
+        const simpleResult = await query(simpleQuery, queryParams);
+        deals = Array.isArray(simpleResult) ? simpleResult : [];
+        console.log(`[CRM Deals] Fallback query succeeded, found ${deals.length} deals`);
+      } catch (fallbackError: any) {
+        console.error(`[CRM Deals] Fallback query also failed:`, fallbackError?.message);
+        deals = [];
+      }
     }
     
     console.log(`[CRM Deals] Returning ${deals?.length || 0} deals (filters: pipelineId=${pipelineId || 'all'}, stageId=${stageId || 'none'}, search=${search || 'none'}, fundingStatus=${fundingStatus || 'all'})`);

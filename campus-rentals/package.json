@@ -15,7 +15,8 @@
     "migrate:insurance-tax-docs": "tsx scripts/run-insurance-tax-docs-migration.ts",
     "migrate:insurance-tax-docs:direct": "tsx scripts/run-insurance-tax-docs-migration-direct.ts",
     "migrate:pending": "tsx scripts/run-pending-migrations.ts",
-    "setup:deals-pipeline": "tsx scripts/setup-deals-pipeline.ts"
+    "setup:deals-pipeline": "tsx scripts/setup-deals-pipeline.ts",
+    "test:deals-api": "tsx scripts/test-deals-api.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
