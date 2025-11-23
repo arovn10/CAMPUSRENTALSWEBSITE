@@ -416,42 +416,55 @@ export async function GET(request: NextRequest) {
       
       // Now enrich with relations if we have deals
       if (deals.length > 0) {
-        const dealIds = deals.map(d => d.id);
-        const placeholders = dealIds.map((_, i) => `$${i + 1}`).join(', ');
-        
-        // Get pipelines
-        const pipelines = await query(`
-          SELECT id, name, description, "isDefault"
-          FROM deal_pipelines
-          WHERE id IN (SELECT DISTINCT "pipelineId" FROM deals WHERE id IN (${placeholders}))
-        `, dealIds);
-        const pipelineMap = new Map(pipelines.map((p: any) => [p.id, p]));
-        
-        // Get stages
-        const stages = await query(`
-          SELECT id, "pipelineId", name, "order", color
-          FROM deal_pipeline_stages
-          WHERE id IN (SELECT DISTINCT "stageId" FROM deals WHERE id IN (${placeholders}))
-        `, dealIds);
-        const stageMap = new Map(stages.map((s: any) => [s.id, s]));
-        
-        // Get properties
-        const propertyIds = deals.map(d => d.propertyId).filter(Boolean);
-        if (propertyIds.length > 0) {
-          const propPlaceholders = propertyIds.map((_, i) => `$${i + 1}`).join(', ');
-          const properties = await query(`
-            SELECT 
-              id, name, address, description, bedrooms, bathrooms, "squareFeet",
-              "monthlyRent", "otherIncome", "annualExpenses", "capRate",
-              "acquisitionDate", "acquisitionPrice", "constructionCost", "totalCost",
-              "debtAmount", "occupancyRate", "currentValue",
-              "dealStatus"::text as "dealStatus",
-              "fundingStatus"::text as "fundingStatus",
-              "propertyType"::text as "propertyType"
-            FROM properties
-            WHERE id IN (${propPlaceholders})
-          `, propertyIds);
-          const propertyMap = new Map(properties.map((p: any) => [p.id, p]));
+        try {
+          // Get unique pipeline and stage IDs
+          const pipelineIds = [...new Set(deals.map(d => d.pipelineId).filter(Boolean))];
+          const stageIds = [...new Set(deals.map(d => d.stageId).filter(Boolean))];
+          const propertyIds = [...new Set(deals.map(d => d.propertyId).filter(Boolean))];
+          
+          const pipelineMap = new Map();
+          const stageMap = new Map();
+          const propertyMap = new Map();
+          
+          // Get pipelines
+          if (pipelineIds.length > 0) {
+            const pipelinePlaceholders = pipelineIds.map((_, i) => `$${i + 1}`).join(', ');
+            const pipelines = await query(`
+              SELECT id, name, description, "isDefault"
+              FROM deal_pipelines
+              WHERE id IN (${pipelinePlaceholders})
+            `, pipelineIds);
+            pipelines.forEach((p: any) => pipelineMap.set(p.id, p));
+          }
+          
+          // Get stages
+          if (stageIds.length > 0) {
+            const stagePlaceholders = stageIds.map((_, i) => `$${i + 1}`).join(', ');
+            const stages = await query(`
+              SELECT id, "pipelineId", name, "order", color
+              FROM deal_pipeline_stages
+              WHERE id IN (${stagePlaceholders})
+            `, stageIds);
+            stages.forEach((s: any) => stageMap.set(s.id, s));
+          }
+          
+          // Get properties
+          if (propertyIds.length > 0) {
+            const propPlaceholders = propertyIds.map((_, i) => `$${i + 1}`).join(', ');
+            const properties = await query(`
+              SELECT 
+                id, name, address, description, bedrooms, bathrooms, "squareFeet",
+                "monthlyRent", "otherIncome", "annualExpenses", "capRate",
+                "acquisitionDate", "acquisitionPrice", "constructionCost", "totalCost",
+                "debtAmount", "occupancyRate", "currentValue",
+                "dealStatus"::text as "dealStatus",
+                "fundingStatus"::text as "fundingStatus",
+                "propertyType"::text as "propertyType"
+              FROM properties
+              WHERE id IN (${propPlaceholders})
+            `, propertyIds);
+            properties.forEach((p: any) => propertyMap.set(p.id, p));
+          }
           
           // Enrich deals
           deals = deals.map(deal => ({
@@ -459,18 +472,12 @@ export async function GET(request: NextRequest) {
             pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
             stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
             property: deal.propertyId ? (propertyMap.get(deal.propertyId) || null) : null,
-            assignedTo: null, // Can be added later if needed
-            _count: { tasks: 0, notes: 0, relationships: 0 } // Can be added later if needed
-          }));
-        } else {
-          deals = deals.map(deal => ({
-            ...deal,
-            pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
-            stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
-            property: null,
             assignedTo: null,
             _count: { tasks: 0, notes: 0, relationships: 0 }
           }));
+        } catch (enrichError: any) {
+          console.error(`[CRM Deals] Error enriching deals:`, enrichError?.message);
+          // Continue with basic deals data
         }
       }
     } catch (error: any) {

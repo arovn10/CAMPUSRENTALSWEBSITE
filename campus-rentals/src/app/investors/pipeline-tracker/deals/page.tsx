@@ -332,6 +332,49 @@ export default function PipelineTrackerDeals() {
         {currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
           <div className="flex items-center gap-2">
             <button
+              onClick={async () => {
+                try {
+                  const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+                  const response = await fetch('/api/investors/crm/setup-pipeline', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  })
+
+                  if (response.ok) {
+                    const data = await response.json()
+                    alert(`Pipeline setup complete!\nCreated: ${data.created}\nUpdated: ${data.updated}\nTotal: ${data.total}`)
+                    // Refresh deals
+                    const params = new URLSearchParams()
+                    if (selectedPipeline !== 'all') {
+                      params.append('pipelineId', selectedPipeline)
+                    }
+                    const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                      },
+                    })
+                    if (dealsResponse.ok) {
+                      const dealsData = await dealsResponse.json()
+                      setDeals(dealsData || [])
+                    }
+                  } else {
+                    const error = await response.json()
+                    alert(`Setup failed: ${error.error || 'Unknown error'}`)
+                  }
+                } catch (error) {
+                  console.error('Error setting up pipeline:', error)
+                  alert('Failed to setup pipeline. Check console for details.')
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <CogIcon className="h-5 w-5" />
+              Setup Pipeline
+            </button>
+            <button
               onClick={() => setShowPipelineManager(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
