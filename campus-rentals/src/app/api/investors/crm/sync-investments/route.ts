@@ -486,9 +486,17 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // Only create if we have a user ID (if column exists) or if column doesn't exist
-          // If column exists but no user found, skip creating this location pipeline (fall back to default)
-          if (!columnExists?.exists || createdById) {
+          // Check if createdBy column allows NULL
+          const columnNullable = await queryOne<{ is_nullable: string }>(`
+            SELECT is_nullable 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public'
+            AND table_name = 'deal_pipelines' 
+            AND column_name = 'createdBy'
+          `)
+          
+          // Only create if we have a user ID (if column exists and is NOT NULL) or if column doesn't exist or allows NULL
+          if (!columnExists?.exists || createdById || columnNullable?.is_nullable === 'YES') {
             // Verify the user ID exists in the database before using it
             if (columnExists?.exists && createdById) {
               try {
@@ -497,14 +505,23 @@ export async function POST(request: NextRequest) {
                   [createdById]
                 )
                 if (!verifyUser) {
-                  console.error('[SYNC-INVESTMENTS] User ID does not exist in database for location pipeline:', createdById)
-                  // Skip creating this location pipeline, will fall back to default
-                  return null
+                  console.warn('[SYNC-INVESTMENTS] User ID does not exist in database for location pipeline:', createdById)
+                  if (columnNullable?.is_nullable === 'YES') {
+                    // Column allows NULL, use NULL instead
+                    createdById = null
+                  } else {
+                    // Skip creating this location pipeline, will fall back to default
+                    return null
+                  }
                 }
               } catch (error) {
                 console.error('[SYNC-INVESTMENTS] Error verifying user ID for location pipeline:', error)
-                // Skip creating this location pipeline, will fall back to default
-                return null
+                if (columnNullable?.is_nullable === 'YES') {
+                  createdById = null
+                } else {
+                  // Skip creating this location pipeline, will fall back to default
+                  return null
+                }
               }
             }
             
@@ -515,6 +532,12 @@ export async function POST(request: NextRequest) {
                 INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
                 VALUES ($1, $2, $3, false, $4, NOW(), NOW())
               `, [pipelineId, locationName, `Pipeline for ${locationName} deals`, createdById])
+            } else if (columnExists?.exists && columnNullable?.is_nullable === 'YES') {
+              // Column exists but allows NULL, use NULL
+              await query(`
+                INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, false, NULL, NOW(), NOW())
+              `, [pipelineId, locationName, `Pipeline for ${locationName} deals`])
             } else if (!columnExists?.exists) {
               await query(`
                 INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")

@@ -89,24 +89,35 @@ export default function PipelineTrackerDeals() {
 
   useEffect(() => {
     fetchPipelines()
-    // Fetch current user
-    const fetchUser = async () => {
+    // Fetch current user from sessionStorage (same as dashboard)
+    const userStr = sessionStorage.getItem('currentUser')
+    if (userStr) {
       try {
-        const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (response.ok) {
-          const userData = await response.json()
-          setCurrentUser(userData)
-        }
+        const userData = JSON.parse(userStr)
+        setCurrentUser(userData)
       } catch (error) {
-        console.error('Error fetching user:', error)
+        console.error('Error parsing user from sessionStorage:', error)
       }
+    } else {
+      // Fallback to API call
+      const fetchUser = async () => {
+        try {
+          const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+          if (response.ok) {
+            const data = await response.json()
+            setCurrentUser(data.user || data)
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error)
+        }
+      }
+      fetchUser()
     }
-    fetchUser()
   }, [])
 
   useEffect(() => {
@@ -354,10 +365,12 @@ export default function PipelineTrackerDeals() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
-          <p className="mt-2 text-gray-600">Manage and track all your deals</p>
+          <p className="mt-2 text-gray-600">
+            {currentUser?.role === 'INVESTOR' ? 'View all your deals' : 'Manage and track all your deals'}
+          </p>
         </div>
         {/* Only show action buttons for admins/managers - investors have view-only access */}
-        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+        {currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
           <div className="flex items-center gap-2">
             <button
               onClick={handleSyncInvestments}
@@ -427,7 +440,7 @@ export default function PipelineTrackerDeals() {
             <p className="text-gray-500 font-medium mb-6">
               {searchTerm ? 'Try adjusting your search terms' : 'Create a new deal or sync investments to get started'}
             </p>
-            {!searchTerm && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+            {!searchTerm && currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={handleSyncInvestments}
@@ -483,7 +496,7 @@ export default function PipelineTrackerDeals() {
                           {deal.pipeline.name}
                         </span>
                       ) : (
-                        (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') ? (
+                        currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') ? (
                           <select
                             onClick={(e) => e.stopPropagation()}
                             onChange={async (e) => {
