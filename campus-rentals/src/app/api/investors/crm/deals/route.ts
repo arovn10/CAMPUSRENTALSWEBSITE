@@ -25,105 +25,41 @@ export async function GET(request: NextRequest) {
     // Get investments from the same source as investor dashboard (/api/investors/properties)
     // IMPORTANT: Get ALL investments regardless of status for CRM backend
     let investments;
-    if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-      // Admin/Manager sees ALL investments (all statuses, all fundingStatus)
-      investments = await prisma.investment.findMany({
-        include: { 
-          property: true,
-          distributions: true,
-          user: true
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-    } else {
-      // Investors only see their own investments (all statuses)
-      investments = await prisma.investment.findMany({
-        where: { userId: user.id },
-        include: { 
-          property: true,
-          distributions: true
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+    try {
+      if (user.role === 'ADMIN' || user.role === 'MANAGER') {
+        // Admin/Manager sees ALL investments (all statuses, all fundingStatus)
+        investments = await prisma.investment.findMany({
+          include: { 
+            property: true,
+            distributions: true,
+            user: true
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+      } else {
+        // Investors only see their own investments (all statuses)
+        investments = await prisma.investment.findMany({
+          where: { userId: user.id },
+          include: { 
+            property: true,
+            distributions: true
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+      console.log(`[CRM Deals] Found ${investments.length} investments for user ${user.id} (role: ${user.role})`);
+    } catch (error: any) {
+      console.error(`[CRM Deals] Error fetching investments:`, error.message);
+      console.error(`[CRM Deals] Error stack:`, error.stack);
+      return NextResponse.json(
+        { error: 'Failed to fetch investments', details: error.message },
+        { status: 500 }
+      );
     }
 
-    console.log(`[CRM Deals] Found ${investments.length} investments for user ${user.id} (role: ${user.role})`);
-
     // Get or create New Orleans pipeline
-    let newOrleansPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
-      SELECT 
-        p.id,
-        COALESCE(
-          jsonb_agg(
-            jsonb_build_object('id', s.id, 'order', s."order")
-            ORDER BY s."order" ASC
-          ) FILTER (WHERE s.id IS NOT NULL),
-          '[]'::jsonb
-        ) as stages
-      FROM deal_pipelines p
-      LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
-      WHERE p.name = 'New Orleans'
-      GROUP BY p.id
-      LIMIT 1
-    `);
-
-    if (!newOrleansPipeline) {
-      // Create New Orleans pipeline
-      const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Check if createdBy column exists and allows NULL
-      const columnExists = await queryOne<{ exists: boolean; is_nullable: string }>(`
-        SELECT 
-          EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_schema = 'public' AND table_name = 'deal_pipelines' AND column_name = 'createdBy'
-          ) as exists,
-          COALESCE((
-            SELECT is_nullable FROM information_schema.columns 
-            WHERE table_schema = 'public' AND table_name = 'deal_pipelines' AND column_name = 'createdBy'
-          ), 'YES') as is_nullable
-      `);
-
-      if (columnExists?.exists && columnExists?.is_nullable === 'NO') {
-        // Try to find a valid user
-        const adminUser = await queryOne<{ id: string }>(
-          'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
-          ['ADMIN', 'MANAGER']
-        );
-        if (adminUser) {
-          await query(`
-            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, false, $4, NOW(), NOW())
-          `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals', adminUser.id]);
-        } else {
-          await query(`
-            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, false, NOW(), NOW())
-          `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals']);
-        }
-      } else {
-        await query(`
-          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, false, NULL, NOW(), NOW())
-        `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals']);
-      }
-
-      // Create default stages
-      const stages = [
-        { name: 'New', order: 0, color: '#3B82F6' },
-        { name: 'In Progress', order: 1, color: '#F59E0B' },
-        { name: 'Closed', order: 2, color: '#10B981' },
-      ];
-
-      for (const stage of stages) {
-        const stageId = `stage_${Date.now()}_${stage.order}_${Math.random().toString(36).substr(2, 9)}`;
-        await query(`
-          INSERT INTO deal_pipeline_stages (id, "pipelineId", name, "order", color, "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-        `, [stageId, pipelineId, stage.name, stage.order, stage.color]);
-      }
-
-      // Fetch the created pipeline
+    let newOrleansPipeline;
+    try {
       newOrleansPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
         SELECT 
           p.id,
@@ -136,9 +72,110 @@ export async function GET(request: NextRequest) {
           ) as stages
         FROM deal_pipelines p
         LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
-        WHERE p.id = $1
+        WHERE p.name = 'New Orleans'
         GROUP BY p.id
-      `, [pipelineId]) || { id: pipelineId, stages: [] };
+        LIMIT 1
+      `);
+    } catch (error: any) {
+      console.error(`[CRM Deals] Error fetching New Orleans pipeline:`, error.message);
+      return NextResponse.json(
+        { error: 'Failed to fetch pipeline', details: error.message },
+        { status: 500 }
+      );
+    }
+
+    if (!newOrleansPipeline) {
+      try {
+        // Create New Orleans pipeline
+        const pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Check if createdBy column exists and allows NULL
+        const columnExists = await queryOne<{ exists: boolean; is_nullable: string }>(`
+          SELECT 
+            EXISTS (
+              SELECT 1 FROM information_schema.columns 
+              WHERE table_schema = 'public' AND table_name = 'deal_pipelines' AND column_name = 'createdBy'
+            ) as exists,
+            COALESCE((
+              SELECT is_nullable FROM information_schema.columns 
+              WHERE table_schema = 'public' AND table_name = 'deal_pipelines' AND column_name = 'createdBy'
+            ), 'YES') as is_nullable
+        `);
+
+        if (columnExists?.exists && columnExists?.is_nullable === 'NO') {
+          // Try to find a valid user
+          const adminUser = await queryOne<{ id: string }>(
+            'SELECT id FROM users WHERE role = $1 OR role = $2 LIMIT 1',
+            ['ADMIN', 'MANAGER']
+          );
+          if (adminUser) {
+            await query(`
+              INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+              VALUES ($1, $2, $3, false, $4, NOW(), NOW())
+            `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals', adminUser.id]);
+          } else {
+            await query(`
+              INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdAt", "updatedAt")
+              VALUES ($1, $2, $3, false, NOW(), NOW())
+            `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals']);
+          }
+        } else {
+          await query(`
+            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, false, NULL, NOW(), NOW())
+          `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals']);
+        }
+
+        // Create default stages
+        const stages = [
+          { name: 'New', order: 0, color: '#3B82F6' },
+          { name: 'In Progress', order: 1, color: '#F59E0B' },
+          { name: 'Closed', order: 2, color: '#10B981' },
+        ];
+
+        for (const stage of stages) {
+          const stageId = `stage_${Date.now()}_${stage.order}_${Math.random().toString(36).substr(2, 9)}`;
+          await query(`
+            INSERT INTO deal_pipeline_stages (id, "pipelineId", name, "order", color, "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          `, [stageId, pipelineId, stage.name, stage.order, stage.color]);
+        }
+
+        // Fetch the created pipeline
+        newOrleansPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
+          SELECT 
+            p.id,
+            COALESCE(
+              jsonb_agg(
+                jsonb_build_object('id', s.id, 'order', s."order")
+                ORDER BY s."order" ASC
+              ) FILTER (WHERE s.id IS NOT NULL),
+              '[]'::jsonb
+            ) as stages
+          FROM deal_pipelines p
+          LEFT JOIN deal_pipeline_stages s ON p.id = s."pipelineId"
+          WHERE p.id = $1
+          GROUP BY p.id
+        `, [pipelineId]);
+        
+        if (!newOrleansPipeline) {
+          newOrleansPipeline = { id: pipelineId, stages: [] };
+        }
+      } catch (error: any) {
+        console.error(`[CRM Deals] Error creating New Orleans pipeline:`, error.message);
+        return NextResponse.json(
+          { error: 'Failed to create pipeline', details: error.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (!newOrleansPipeline || !newOrleansPipeline.id) {
+      console.error(`[CRM Deals] Failed to get or create New Orleans pipeline`);
+      return NextResponse.json(
+        { error: 'Failed to initialize pipeline' },
+        { status: 500 }
+      );
     }
 
     const firstStage = Array.isArray(newOrleansPipeline.stages) && newOrleansPipeline.stages.length > 0
@@ -150,7 +187,8 @@ export async function GET(request: NextRequest) {
     let createdCount = 0;
     let skippedCount = 0;
     
-    for (const investment of investments) {
+    try {
+      for (const investment of investments) {
       if (!investment.property) {
         console.log(`[CRM Deals] Skipping investment ${investment.id} - no property`);
         skippedCount++;
@@ -214,6 +252,10 @@ export async function GET(request: NextRequest) {
       } else {
         skippedCount++;
       }
+    } catch (error: any) {
+      console.error(`[CRM Deals] Error during auto-creation loop:`, error.message);
+      console.error(`[CRM Deals] Error stack:`, error.stack);
+      // Continue anyway - we'll still try to fetch existing deals
     }
     
     console.log(`[CRM Deals] Auto-creation complete: ${createdCount} created, ${skippedCount} already existed`);
