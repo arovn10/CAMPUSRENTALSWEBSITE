@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 // GET /api/investors/crm/deals - Fetch all deals from investments (same source as investor dashboard)
 // Auto-creates deals from investments if they don't exist, assigns to New Orleans pipeline
 export async function GET(request: NextRequest) {
   try {
+    console.log('[CRM Deals] Request received');
     const user = await requireAuth(request);
+    console.log('[CRM Deals] User authenticated:', user?.id, user?.role);
     
     if (!user) {
+      console.error('[CRM Deals] No user found');
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -24,41 +26,101 @@ export async function GET(request: NextRequest) {
 
     // Get investments from the same source as investor dashboard (/api/investors/properties)
     // IMPORTANT: Get ALL investments regardless of status for CRM backend
-    let investments;
+    // Using SQL instead of Prisma
+    let investments: any[] = [];
     try {
       if (user.role === 'ADMIN' || user.role === 'MANAGER') {
         // Admin/Manager sees ALL investments (all statuses, all fundingStatus)
-        investments = await prisma.investment.findMany({
-          include: { 
-            property: true,
-            distributions: true,
-            user: true
-          },
-          orderBy: { createdAt: 'desc' }
-        });
+        investments = await query<{
+          id: string;
+          userId: string;
+          propertyId: string;
+          investmentAmount: number | null;
+          property: {
+            id: string;
+            name: string | null;
+            address: string | null;
+            description: string | null;
+            dealStatus: string | null;
+            fundingStatus: string | null;
+            currentValue: number | null;
+            totalCost: number | null;
+            acquisitionDate: Date | null;
+          };
+        }>(`
+          SELECT 
+            i.id,
+            i."userId",
+            i."propertyId",
+            i."investmentAmount",
+            jsonb_build_object(
+              'id', p.id,
+              'name', p.name,
+              'address', p.address,
+              'description', p.description,
+              'dealStatus', p."dealStatus"::text,
+              'fundingStatus', p."fundingStatus"::text,
+              'currentValue', p."currentValue",
+              'totalCost', p."totalCost",
+              'acquisitionDate', p."acquisitionDate"
+            ) as property
+          FROM investments i
+          INNER JOIN properties p ON i."propertyId" = p.id
+          ORDER BY i."createdAt" DESC
+        `);
       } else {
         // Investors only see their own investments (all statuses)
-        investments = await prisma.investment.findMany({
-          where: { userId: user.id },
-          include: { 
-            property: true,
-            distributions: true
-          },
-          orderBy: { createdAt: 'desc' }
-        });
+        investments = await query<{
+          id: string;
+          userId: string;
+          propertyId: string;
+          investmentAmount: number | null;
+          property: {
+            id: string;
+            name: string | null;
+            address: string | null;
+            description: string | null;
+            dealStatus: string | null;
+            fundingStatus: string | null;
+            currentValue: number | null;
+            totalCost: number | null;
+            acquisitionDate: Date | null;
+          };
+        }>(`
+          SELECT 
+            i.id,
+            i."userId",
+            i."propertyId",
+            i."investmentAmount",
+            jsonb_build_object(
+              'id', p.id,
+              'name', p.name,
+              'address', p.address,
+              'description', p.description,
+              'dealStatus', p."dealStatus"::text,
+              'fundingStatus', p."fundingStatus"::text,
+              'currentValue', p."currentValue",
+              'totalCost', p."totalCost",
+              'acquisitionDate', p."acquisitionDate"
+            ) as property
+          FROM investments i
+          INNER JOIN properties p ON i."propertyId" = p.id
+          WHERE i."userId" = $1
+          ORDER BY i."createdAt" DESC
+        `, [user.id]);
       }
-      console.log(`[CRM Deals] Found ${investments.length} investments for user ${user.id} (role: ${user.role})`);
+      console.log(`[CRM Deals] Found ${investments?.length || 0} investments for user ${user.id} (role: ${user.role})`);
     } catch (error: any) {
-      console.error(`[CRM Deals] Error fetching investments:`, error.message);
-      console.error(`[CRM Deals] Error stack:`, error.stack);
-      return NextResponse.json(
-        { error: 'Failed to fetch investments', details: error.message },
-        { status: 500 }
-      );
+      console.error(`[CRM Deals] Error fetching investments:`, error);
+      console.error(`[CRM Deals] Error message:`, error?.message);
+      console.error(`[CRM Deals] Error stack:`, error?.stack);
+      // Return empty array instead of error - we can still show existing deals
+      investments = [];
+      console.warn(`[CRM Deals] Continuing with empty investments array`);
     }
 
     // Get or create New Orleans pipeline
-    let newOrleansPipeline;
+    let newOrleansPipeline: { id: string; stages: Array<{ id: string; order: number }> } | null = null;
     try {
       newOrleansPipeline = await queryOne<{ id: string; stages: Array<{ id: string; order: number }> }>(`
         SELECT 
@@ -76,12 +138,13 @@ export async function GET(request: NextRequest) {
         GROUP BY p.id
         LIMIT 1
       `);
+      console.log(`[CRM Deals] Pipeline query result:`, newOrleansPipeline ? 'Found' : 'Not found');
     } catch (error: any) {
-      console.error(`[CRM Deals] Error fetching New Orleans pipeline:`, error.message);
-      return NextResponse.json(
-        { error: 'Failed to fetch pipeline', details: error.message },
-        { status: 500 }
-      );
+      console.error(`[CRM Deals] Error fetching New Orleans pipeline:`, error);
+      console.error(`[CRM Deals] Error message:`, error?.message);
+      console.error(`[CRM Deals] Error stack:`, error?.stack);
+      // Continue - we'll try to create it
+      newOrleansPipeline = null;
     }
 
     if (!newOrleansPipeline) {
@@ -194,90 +257,102 @@ export async function GET(request: NextRequest) {
     let createdCount = 0;
     let skippedCount = 0;
     
-    try {
-      for (const investment of investments) {
-      if (!investment || !investment.propertyId) {
-        console.log(`[CRM Deals] Skipping invalid investment: ${investment?.id || 'unknown'}`);
-        skippedCount++;
-        continue;
+    // Only try to create deals if we have investments and a valid pipeline
+    if (investments && investments.length > 0 && newOrleansPipeline && newOrleansPipeline.id) {
+      try {
+        for (const investment of investments) {
+          if (!investment || !investment.propertyId) {
+            console.log(`[CRM Deals] Skipping invalid investment: ${investment?.id || 'unknown'}`);
+            skippedCount++;
+            continue;
+          }
+          
+          // Property is returned as JSON from SQL query
+          const property = typeof investment.property === 'string' 
+            ? JSON.parse(investment.property) 
+            : investment.property;
+          
+          if (!property || !property.id) {
+            console.log(`[CRM Deals] Skipping investment ${investment.id} - no property (propertyId: ${investment.propertyId})`);
+            skippedCount++;
+            continue;
+          }
+
+          // Check if deal already exists for this property
+          let existingDeal;
+          try {
+            existingDeal = await queryOne<{ id: string }>(
+              'SELECT id FROM deals WHERE "propertyId" = $1 LIMIT 1',
+              [investment.propertyId]
+            );
+          } catch (error: any) {
+            console.error(`[CRM Deals] Error checking for existing deal:`, error?.message);
+            continue; // Skip this investment if we can't check
+          }
+
+          if (!existingDeal) {
+            // Create deal from investment - ALL investments get deals
+            const dealId = `deal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const dealType = property.dealStatus === 'UNDER_CONSTRUCTION' ? 'DEVELOPMENT' : 'ACQUISITION';
+            const status = property.dealStatus || 'STABILIZED';
+            const priority = 'MEDIUM';
+            const estimatedValue = property.currentValue || property.totalCost || investment.investmentAmount || 0;
+            
+            // Include both FUNDED and FUNDING in tags
+            const tags = [];
+            if (property.fundingStatus === 'FUNDING') {
+              tags.push('FUNDING');
+            } else {
+              tags.push('FUNDED');
+            }
+            
+            const section = 'ACQUISITIONS';
+
+            try {
+              await query(`
+                INSERT INTO deals (
+                  id, name, "dealType", status, priority, "pipelineId", "stageId",
+                  "propertyId", description, "estimatedValue", "estimatedCloseDate",
+                  source, tags, section, "createdAt", "updatedAt"
+                ) VALUES (
+                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+                )
+              `, [
+                dealId,
+                property.name || `Property ${investment.propertyId}`,
+                dealType,
+                status,
+                priority,
+                newOrleansPipeline.id,
+                firstStage,
+                investment.propertyId,
+                property.description || null,
+                estimatedValue,
+                property.acquisitionDate ? new Date(property.acquisitionDate) : null,
+                'Auto-created from Investment',
+                JSON.stringify(tags),
+                section,
+              ]);
+              createdCount++;
+              console.log(`[CRM Deals] Created deal ${dealId} for property ${investment.propertyId}`);
+            } catch (error: any) {
+              console.error(`[CRM Deals] Error creating deal for property ${investment.propertyId}:`, error?.message);
+            }
+          } else {
+            skippedCount++;
+          }
+        }
+      } catch (error: any) {
+        console.error(`[CRM Deals] Error during auto-creation loop:`, error);
+        console.error(`[CRM Deals] Error message:`, error?.message);
+        console.error(`[CRM Deals] Error stack:`, error?.stack);
+        // Continue anyway - we'll still try to fetch existing deals
       }
       
-      if (!investment.property) {
-        console.log(`[CRM Deals] Skipping investment ${investment.id} - no property (propertyId: ${investment.propertyId})`);
-        skippedCount++;
-        continue;
-      }
-
-      // Check if deal already exists for this property
-      let existingDeal;
-      try {
-        existingDeal = await queryOne<{ id: string }>(
-          'SELECT id FROM deals WHERE "propertyId" = $1 LIMIT 1',
-          [investment.propertyId]
-        );
-      } catch (error: any) {
-        console.error(`[CRM Deals] Error checking for existing deal:`, error.message);
-        continue; // Skip this investment if we can't check
-      }
-
-      if (!existingDeal) {
-        // Create deal from investment - ALL investments get deals
-        const dealId = `deal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const dealType = investment.property.dealStatus === 'UNDER_CONSTRUCTION' ? 'DEVELOPMENT' : 'ACQUISITION';
-        const status = investment.property.dealStatus || 'STABILIZED';
-        const priority = 'MEDIUM';
-        const estimatedValue = investment.property.currentValue || investment.property.totalCost || investment.investmentAmount || 0;
-        
-        // Include both FUNDED and FUNDING in tags
-        const tags = [];
-        if (investment.property.fundingStatus === 'FUNDING') {
-          tags.push('FUNDING');
-        } else {
-          tags.push('FUNDED');
-        }
-        
-        const section = 'ACQUISITIONS';
-
-        try {
-          await query(`
-            INSERT INTO deals (
-              id, name, "dealType", status, priority, "pipelineId", "stageId",
-              "propertyId", description, "estimatedValue", "estimatedCloseDate",
-              source, tags, section, "createdAt", "updatedAt"
-            ) VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
-            )
-          `, [
-            dealId,
-            investment.property.name || `Property ${investment.propertyId}`,
-            dealType,
-            status,
-            priority,
-            newOrleansPipeline.id,
-            firstStage,
-            investment.propertyId,
-            investment.property.description || null,
-            estimatedValue,
-            investment.property.acquisitionDate ? new Date(investment.property.acquisitionDate) : null,
-            'Auto-created from Investment',
-            JSON.stringify(tags),
-            section,
-          ]);
-          createdCount++;
-          console.log(`[CRM Deals] Created deal ${dealId} for property ${investment.propertyId}`);
-        } catch (error: any) {
-          console.error(`[CRM Deals] Error creating deal for property ${investment.propertyId}:`, error.message);
-        }
-      } else {
-        skippedCount++;
-      }
-    } catch (error: any) {
-      console.error(`[CRM Deals] Error during auto-creation loop:`, error.message);
-      console.error(`[CRM Deals] Error stack:`, error.stack);
-      // Continue anyway - we'll still try to fetch existing deals
+      console.log(`[CRM Deals] Auto-creation complete: ${createdCount} created, ${skippedCount} already existed`);
+    } else {
+      console.log(`[CRM Deals] Skipping auto-creation - investments: ${investments?.length || 0}, pipeline: ${newOrleansPipeline ? 'exists' : 'missing'}`);
     }
-    
-    console.log(`[CRM Deals] Auto-creation complete: ${createdCount} created, ${skippedCount} already existed`);
 
     // Now fetch all deals (including newly created ones)
     let whereConditions: string[] = [];
