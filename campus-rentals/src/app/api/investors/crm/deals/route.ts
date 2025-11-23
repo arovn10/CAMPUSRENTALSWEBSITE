@@ -31,78 +31,42 @@ export async function GET(request: NextRequest) {
     try {
       if (user.role === 'ADMIN' || user.role === 'MANAGER') {
         // Admin/Manager sees ALL investments (all statuses, all fundingStatus)
-        investments = await query<{
-          id: string;
-          userId: string;
-          propertyId: string;
-          investmentAmount: number | null;
-          property: {
-            id: string;
-            name: string | null;
-            address: string | null;
-            description: string | null;
-            dealStatus: string | null;
-            fundingStatus: string | null;
-            currentValue: number | null;
-            totalCost: number | null;
-            acquisitionDate: Date | null;
-          };
-        }>(`
+        investments = await query<any>(`
           SELECT 
             i.id,
             i."userId",
             i."propertyId",
             i."investmentAmount",
-            jsonb_build_object(
-              'id', p.id,
-              'name', p.name,
-              'address', p.address,
-              'description', p.description,
-              'dealStatus', p."dealStatus"::text,
-              'fundingStatus', p."fundingStatus"::text,
-              'currentValue', p."currentValue",
-              'totalCost', p."totalCost",
-              'acquisitionDate', p."acquisitionDate"
-            ) as property
+            p.id as "property_id",
+            p.name as "property_name",
+            p.address as "property_address",
+            p.description as "property_description",
+            p."dealStatus"::text as "property_dealStatus",
+            p."fundingStatus"::text as "property_fundingStatus",
+            p."currentValue" as "property_currentValue",
+            p."totalCost" as "property_totalCost",
+            p."acquisitionDate" as "property_acquisitionDate"
           FROM investments i
           INNER JOIN properties p ON i."propertyId" = p.id
           ORDER BY i."createdAt" DESC
         `);
       } else {
         // Investors only see their own investments (all statuses)
-        investments = await query<{
-          id: string;
-          userId: string;
-          propertyId: string;
-          investmentAmount: number | null;
-          property: {
-            id: string;
-            name: string | null;
-            address: string | null;
-            description: string | null;
-            dealStatus: string | null;
-            fundingStatus: string | null;
-            currentValue: number | null;
-            totalCost: number | null;
-            acquisitionDate: Date | null;
-          };
-        }>(`
+        investments = await query<any>(`
           SELECT 
             i.id,
             i."userId",
             i."propertyId",
             i."investmentAmount",
-            jsonb_build_object(
-              'id', p.id,
-              'name', p.name,
-              'address', p.address,
-              'description', p.description,
-              'dealStatus', p."dealStatus"::text,
-              'fundingStatus', p."fundingStatus"::text,
-              'currentValue', p."currentValue",
-              'totalCost', p."totalCost",
-              'acquisitionDate', p."acquisitionDate"
-            ) as property
+            p.id as "property_id",
+            p.name as "property_name",
+            p.address as "property_address",
+            p.description as "property_description",
+            p."dealStatus"::text as "property_dealStatus",
+            p."fundingStatus"::text as "property_fundingStatus",
+            p."currentValue" as "property_currentValue",
+            p."totalCost" as "property_totalCost",
+            p."acquisitionDate" as "property_acquisitionDate"
           FROM investments i
           INNER JOIN properties p ON i."propertyId" = p.id
           WHERE i."userId" = $1
@@ -267,10 +231,18 @@ export async function GET(request: NextRequest) {
             continue;
           }
           
-          // Property is returned as JSON from SQL query
-          const property = typeof investment.property === 'string' 
-            ? JSON.parse(investment.property) 
-            : investment.property;
+          // Property fields are returned as separate columns from SQL query
+          const property = {
+            id: investment.property_id,
+            name: investment.property_name,
+            address: investment.property_address,
+            description: investment.property_description,
+            dealStatus: investment.property_dealStatus,
+            fundingStatus: investment.property_fundingStatus,
+            currentValue: investment.property_currentValue,
+            totalCost: investment.property_totalCost,
+            acquisitionDate: investment.property_acquisitionDate
+          };
           
           if (!property || !property.id) {
             console.log(`[CRM Deals] Skipping investment ${investment.id} - no property (propertyId: ${investment.propertyId})`);
