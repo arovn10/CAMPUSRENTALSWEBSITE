@@ -147,50 +147,83 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      // If createdBy column exists, we MUST have a user ID that exists in the database
+      // If createdBy column exists, try to use a user ID, but handle NULL if column allows it
       if (columnExists?.exists) {
-        if (!createdById) {
-          console.error('[SYNC-INVESTMENTS] CRITICAL: No user found for createdBy field. Column exists but no user available.')
-          return NextResponse.json(
-            { 
-              error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.',
-              details: `Authenticated user ID: ${user.id || 'N/A'}, Email: ${(user as any).email || 'N/A'}, Role: ${user.role || 'N/A'}. The authenticated user ID does not exist in the database.`
-            },
-            { status: 500 }
-          )
-        }
+        // Check if createdBy column allows NULL
+        const columnNullable = await queryOne<{ is_nullable: string }>(`
+          SELECT is_nullable 
+          FROM information_schema.columns 
+          WHERE table_schema = 'public'
+          AND table_name = 'deal_pipelines' 
+          AND column_name = 'createdBy'
+        `)
         
-        // Verify the user ID exists in the database before using it (to avoid foreign key constraint violations)
-        try {
-          const verifyUser = await queryOne<{ id: string }>(
-            'SELECT id FROM users WHERE id = $1 LIMIT 1',
-            [createdById]
-          )
-          if (!verifyUser) {
-            console.error('[SYNC-INVESTMENTS] User ID does not exist in database:', createdById)
+        if (!createdById) {
+          if (columnNullable?.is_nullable === 'NO') {
+            // Column doesn't allow NULL, we need a user ID
+            console.error('[SYNC-INVESTMENTS] CRITICAL: No user found for createdBy field. Column is NOT NULL and no user available.')
             return NextResponse.json(
               { 
-                error: 'Failed to sync investments: User ID found but does not exist in database.',
-                details: `User ID: ${createdById}`
+                error: 'Failed to sync investments: No user found for createdBy field. Please ensure at least one user exists in the system.',
+                details: `Authenticated user ID: ${user.id || 'N/A'}, Email: ${(user as any).email || 'N/A'}, Role: ${user.role || 'N/A'}. The authenticated user ID does not exist in the database.`
               },
               { status: 500 }
             )
           }
-        } catch (error) {
-          console.error('[SYNC-INVESTMENTS] Error verifying user ID:', error)
-          return NextResponse.json(
-            { 
-              error: 'Failed to sync investments: Error verifying user ID.',
-              details: error instanceof Error ? error.message : 'Unknown error'
-            },
-            { status: 500 }
-          )
+          // Column allows NULL, proceed without createdBy
+          console.warn('[SYNC-INVESTMENTS] No user found, but createdBy allows NULL. Creating pipeline without createdBy.')
+        } else {
+          // Verify the user ID exists in the database before using it (to avoid foreign key constraint violations)
+          try {
+            const verifyUser = await queryOne<{ id: string }>(
+              'SELECT id FROM users WHERE id = $1 LIMIT 1',
+              [createdById]
+            )
+            if (!verifyUser) {
+              console.warn('[SYNC-INVESTMENTS] User ID does not exist in database:', createdById)
+              if (columnNullable?.is_nullable === 'YES') {
+                // Column allows NULL, use NULL instead
+                createdById = null
+                console.warn('[SYNC-INVESTMENTS] Using NULL for createdBy since column allows it.')
+              } else {
+                // Column doesn't allow NULL, we need a valid user
+                return NextResponse.json(
+                  { 
+                    error: 'Failed to sync investments: User ID found but does not exist in database.',
+                    details: `User ID: ${createdById}`
+                  },
+                  { status: 500 }
+                )
+              }
+            }
+          } catch (error) {
+            console.error('[SYNC-INVESTMENTS] Error verifying user ID:', error)
+            if (columnNullable?.is_nullable === 'YES') {
+              createdById = null
+            } else {
+              return NextResponse.json(
+                { 
+                  error: 'Failed to sync investments: Error verifying user ID.',
+                  details: error instanceof Error ? error.message : 'Unknown error'
+                },
+                { status: 500 }
+              )
+            }
+          }
         }
         
-        await query(`
-          INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, true, $4, NOW(), NOW())
-        `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', createdById])
+        if (createdById) {
+          await query(`
+            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, true, $4, NOW(), NOW())
+          `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals', createdById])
+        } else {
+          // createdBy is NULL (column allows NULL)
+          await query(`
+            INSERT INTO deal_pipelines (id, name, description, "isDefault", "createdBy", "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, true, NULL, NOW(), NOW())
+          `, [pipelineId, 'Default Pipeline', 'Default pipeline for all deals'])
+        }
       } else {
         // Column doesn't exist, create without createdBy
         await query(`

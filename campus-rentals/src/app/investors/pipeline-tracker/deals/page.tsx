@@ -50,10 +50,17 @@ interface Deal {
   }
 }
 
+interface User {
+  id: string
+  role: string
+  email?: string
+}
+
 export default function PipelineTrackerDeals() {
   const router = useRouter()
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateDeal, setShowCreateDeal] = useState(false)
@@ -82,6 +89,24 @@ export default function PipelineTrackerDeals() {
 
   useEffect(() => {
     fetchPipelines()
+    // Fetch current user
+    const fetchUser = async () => {
+      try {
+        const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (response.ok) {
+          const userData = await response.json()
+          setCurrentUser(userData)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      }
+    }
+    fetchUser()
   }, [])
 
   useEffect(() => {
@@ -331,30 +356,33 @@ export default function PipelineTrackerDeals() {
           <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
           <p className="mt-2 text-gray-600">Manage and track all your deals</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSyncInvestments}
-            disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync Investments'}
-          </button>
-          <button
-            onClick={() => setShowPipelineManager(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <CogIcon className="h-5 w-5" />
-            Manage Pipelines
-          </button>
-          <button
-            onClick={() => setShowCreateDeal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <PlusIcon className="h-5 w-5" />
-            New Deal
-          </button>
-        </div>
+        {/* Only show action buttons for admins/managers - investors have view-only access */}
+        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSyncInvestments}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowPathIcon className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : 'Sync Investments'}
+            </button>
+            <button
+              onClick={() => setShowPipelineManager(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <CogIcon className="h-5 w-5" />
+              Manage Pipelines
+            </button>
+            <button
+              onClick={() => setShowCreateDeal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5" />
+              New Deal
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Pipeline Filter and Search Bar */}
@@ -399,7 +427,7 @@ export default function PipelineTrackerDeals() {
             <p className="text-gray-500 font-medium mb-6">
               {searchTerm ? 'Try adjusting your search terms' : 'Create a new deal or sync investments to get started'}
             </p>
-            {!searchTerm && (
+            {!searchTerm && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={handleSyncInvestments}
@@ -455,23 +483,29 @@ export default function PipelineTrackerDeals() {
                           {deal.pipeline.name}
                         </span>
                       ) : (
-                        <select
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={async (e) => {
-                            e.stopPropagation()
-                            const pipelineId = e.target.value
-                            if (pipelineId && pipelineId !== 'none') {
-                              await handleAssignToPipeline(deal.id, pipelineId)
-                            }
-                          }}
-                          className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                          defaultValue="none"
-                        >
-                          <option value="none">Assign to Pipeline</option>
-                          {allPipelines.map((pipeline) => (
-                            <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
-                          ))}
-                        </select>
+                        (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') ? (
+                          <select
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={async (e) => {
+                              e.stopPropagation()
+                              const pipelineId = e.target.value
+                              if (pipelineId && pipelineId !== 'none') {
+                                await handleAssignToPipeline(deal.id, pipelineId)
+                              }
+                            }}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            defaultValue="none"
+                          >
+                            <option value="none">Assign to Pipeline</option>
+                            {allPipelines.map((pipeline) => (
+                              <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-500 border border-gray-200">
+                            No Pipeline
+                          </span>
+                        )
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
