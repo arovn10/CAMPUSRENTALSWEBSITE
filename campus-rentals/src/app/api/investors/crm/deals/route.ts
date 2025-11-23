@@ -172,15 +172,22 @@ export async function GET(request: NextRequest) {
 
     if (!newOrleansPipeline || !newOrleansPipeline.id) {
       console.error(`[CRM Deals] Failed to get or create New Orleans pipeline`);
+      console.error(`[CRM Deals] Pipeline value:`, JSON.stringify(newOrleansPipeline));
       return NextResponse.json(
-        { error: 'Failed to initialize pipeline' },
+        { error: 'Failed to initialize pipeline', details: 'New Orleans pipeline not found or created' },
         { status: 500 }
       );
     }
 
+    console.log(`[CRM Deals] Using pipeline: ${newOrleansPipeline.id} with ${newOrleansPipeline.stages?.length || 0} stages`);
+
     const firstStage = Array.isArray(newOrleansPipeline.stages) && newOrleansPipeline.stages.length > 0
       ? newOrleansPipeline.stages[0].id
       : null;
+    
+    if (!firstStage) {
+      console.warn(`[CRM Deals] Warning: No stages found in New Orleans pipeline, deals will be created without stageId`);
+    }
 
     // Auto-create deals from investments if they don't exist
     // IMPORTANT: Create deals for ALL investments regardless of fundingStatus
@@ -189,17 +196,29 @@ export async function GET(request: NextRequest) {
     
     try {
       for (const investment of investments) {
+      if (!investment || !investment.propertyId) {
+        console.log(`[CRM Deals] Skipping invalid investment: ${investment?.id || 'unknown'}`);
+        skippedCount++;
+        continue;
+      }
+      
       if (!investment.property) {
-        console.log(`[CRM Deals] Skipping investment ${investment.id} - no property`);
+        console.log(`[CRM Deals] Skipping investment ${investment.id} - no property (propertyId: ${investment.propertyId})`);
         skippedCount++;
         continue;
       }
 
       // Check if deal already exists for this property
-      const existingDeal = await queryOne<{ id: string }>(
-        'SELECT id FROM deals WHERE "propertyId" = $1 LIMIT 1',
-        [investment.propertyId]
-      );
+      let existingDeal;
+      try {
+        existingDeal = await queryOne<{ id: string }>(
+          'SELECT id FROM deals WHERE "propertyId" = $1 LIMIT 1',
+          [investment.propertyId]
+        );
+      } catch (error: any) {
+        console.error(`[CRM Deals] Error checking for existing deal:`, error.message);
+        continue; // Skip this investment if we can't check
+      }
 
       if (!existingDeal) {
         // Create deal from investment - ALL investments get deals
@@ -418,9 +437,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(transformedDeals);
   } catch (error: any) {
-    console.error('Error fetching deals:', error);
+    console.error('[CRM Deals] Top-level error:', error);
+    console.error('[CRM Deals] Error message:', error?.message);
+    console.error('[CRM Deals] Error stack:', error?.stack);
+    console.error('[CRM Deals] Error name:', error?.name);
     return NextResponse.json(
-      { error: 'Failed to fetch deals', details: error.message },
+      { 
+        error: 'Failed to fetch deals', 
+        details: error?.message || String(error),
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }
