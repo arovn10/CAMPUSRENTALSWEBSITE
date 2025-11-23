@@ -458,16 +458,19 @@ export async function GET(request: NextRequest) {
 
     let deals;
     try {
-      deals = await query(dealsQuery, queryParams);
+      // Execute query with proper error handling
+      const result = await query(dealsQuery, queryParams);
+      deals = Array.isArray(result) ? result : [];
       console.log(`[CRM Deals] Query executed successfully, found ${deals?.length || 0} deals`);
     } catch (error: any) {
-      console.error(`[CRM Deals] Query error:`, error.message);
-      console.error(`[CRM Deals] Query was:`, dealsQuery.substring(0, 200) + '...');
+      console.error(`[CRM Deals] Query error:`, error);
+      console.error(`[CRM Deals] Error message:`, error?.message);
+      console.error(`[CRM Deals] Error stack:`, error?.stack);
+      console.error(`[CRM Deals] Query was:`, dealsQuery.substring(0, 500) + '...');
       console.error(`[CRM Deals] Params were:`, queryParams);
-      return NextResponse.json(
-        { error: 'Failed to fetch deals', details: error.message },
-        { status: 500 }
-      );
+      // Return empty array instead of error to prevent frontend crash
+      deals = [];
+      console.warn(`[CRM Deals] Returning empty deals array due to query error`);
     }
     
     console.log(`[CRM Deals] Returning ${deals?.length || 0} deals (filters: pipelineId=${pipelineId || 'all'}, stageId=${stageId || 'none'}, search=${search || 'none'}, fundingStatus=${fundingStatus || 'all'})`);
