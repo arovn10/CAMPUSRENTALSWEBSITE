@@ -7,196 +7,253 @@ import {
   MapPinIcon,
   ArrowUpRightIcon,
   BuildingOfficeIcon,
-  PlusIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  CogIcon,
 } from '@heroicons/react/24/outline'
-import DealCreateModal from '@/components/DealCreateModal'
-import PipelineManager from '@/components/PipelineManager'
 
-interface Deal {
+interface Investment {
   id: string
-  name: string
-  description?: string
-  dealType?: string
-  status?: string
-  priority?: string
-  estimatedValue?: number
-  estimatedCloseDate?: string
-  pipeline?: {
-    id: string
-    name: string
-    description?: string
-  }
-  stage?: {
-    id: string
-    name: string
-    order?: number
-    color?: string
-  }
+  name?: string
+  propertyName?: string
+  propertyAddress: string
+  propertyCity?: string
+  propertyState?: string
+  totalInvestment?: number
+  investorId?: string
+  investorEmail?: string
+  investmentAmount: number
+  ownershipPercentage: number
+  startDate?: string
+  expectedReturn?: number
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SOLD'
+  currentValue?: number
+  totalReturn?: number
+  irr?: number
+  investmentType?: 'DIRECT' | 'ENTITY'
+  entityName?: string
+  entityType?: string
+  bedrooms?: number
+  bathrooms?: number
+  squareFeet?: number
+  acquisitionDate?: string
+  monthlyRent?: number
+  capRate?: number
+  dealStatus?: 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'
+  fundingStatus?: 'FUNDED' | 'FUNDING'
+  estimatedCurrentDebt?: number
+  estimatedMonthlyDebtService?: number
   property?: {
-    id: string
-    name?: string
-    address?: string
-    fundingStatus?: string
+    id?: string
+    monthlyRent?: number
+    otherIncome?: number
+    annualExpenses?: number
+    capRate?: number
+    totalCost?: number
+    acquisitionPrice?: number
+    constructionCost?: number
   }
-  assignedTo?: {
-    id: string
-    firstName?: string
-    lastName?: string
-    email?: string
-  }
+  propertyId?: string
+  entityOwners?: Array<{
+    userId?: string
+    userName?: string
+    investmentAmount?: number
+    ownershipPercentage?: number
+  }>
 }
 
 interface User {
   id: string
   role: string
   email?: string
+  firstName?: string
+  lastName?: string
 }
 
 export default function PipelineTrackerDeals() {
   const router = useRouter()
-  const [deals, setDeals] = useState<Deal[]>([])
+  const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showCreateDeal, setShowCreateDeal] = useState(false)
-  const [showPipelineManager, setShowPipelineManager] = useState(false)
-  const [selectedPipeline, setSelectedPipeline] = useState<string>('all') // 'all' shows all pipelines, specific ID filters
-  const [allPipelines, setAllPipelines] = useState<Array<{ id: string; name: string }>>([])
-
-  const fetchPipelines = async () => {
-    try {
-      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-      const response = await fetch('/api/investors/crm/pipelines', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAllPipelines(data || [])
-      }
-    } catch (error) {
-      console.error('Error fetching pipelines:', error)
-    }
-  }
+  const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchPipelines()
     // Fetch current user from sessionStorage (same as dashboard)
     const userStr = sessionStorage.getItem('currentUser')
     if (userStr) {
       try {
         const userData = JSON.parse(userStr)
         setCurrentUser(userData)
+        fetchDashboardData(userData)
       } catch (error) {
         console.error('Error parsing user from sessionStorage:', error)
+        // Fallback to API call
+        fetchUser()
       }
     } else {
       // Fallback to API call
-      const fetchUser = async () => {
-        try {
-          const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-          const response = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          })
-          if (response.ok) {
-            const data = await response.json()
-            setCurrentUser(data.user || data)
-          }
-        } catch (error) {
-          console.error('Error fetching user:', error)
-        }
-      }
       fetchUser()
     }
   }, [])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-        
-        // Fetch deals from CRM API - show both FUNDED and FUNDING
-        const params = new URLSearchParams()
-        if (selectedPipeline !== 'all') {
-          params.append('pipelineId', selectedPipeline)
-        }
-        // Don't filter by fundingStatus - show all deals
-        const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
+  const fetchUser = async () => {
+    try {
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
+      const response = await fetch('/api/investors/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      if (response.ok) {
+        const userData = await response.json()
+        setCurrentUser(userData)
+        sessionStorage.setItem('currentUser', JSON.stringify(userData))
+        fetchDashboardData(userData)
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      setLoading(false)
+    }
+  }
 
-        if (response.ok) {
-          const data = await response.json()
-          setDeals(data || [])
-          
-          // Fetch thumbnails for properties
-          const thumbnailPromises = data.map(async (deal: Deal) => {
-            const propertyId = deal.property?.id
-            if (propertyId) {
-              try {
-                const thumbResponse = await fetch(`/api/properties/thumbnail/${propertyId}`)
-                if (thumbResponse.ok) {
-                  const thumbData = await thumbResponse.json()
-                  return { propertyId, thumbnail: thumbData.thumbnail }
+  const fetchDashboardData = async (user: User) => {
+    try {
+      setLoading(true)
+      
+      const token = sessionStorage.getItem('authToken') || user.email
+      const investmentsResponse = await fetch('/api/investors/properties', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (investmentsResponse.ok) {
+        const investmentsData = await investmentsResponse.json()
+        
+        // For investors, extract individual amounts from entity owners (same as dashboard)
+        if (user.role === 'INVESTOR') {
+          const investorName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+          const investorInvestments = investmentsData.map((inv: any) => {
+            if (inv.investmentType === 'ENTITY' && inv.entityOwners && Array.isArray(inv.entityOwners)) {
+              const targetNameLower = investorName.toLowerCase()
+              const investorId = user.id
+              
+              // First, try to find direct owner match
+              let matchingOwner = inv.entityOwners.find((owner: any) => {
+                const ownerId = owner.userId || null
+                const ownerName = (owner.userName || '').trim()
+                return (
+                  (ownerId && investorId && String(ownerId) === String(investorId)) ||
+                  (ownerName.toLowerCase() === targetNameLower)
+                )
+              })
+              
+              if (matchingOwner && matchingOwner.investmentAmount) {
+                return {
+                  ...inv,
+                  investmentAmount: parseFloat(matchingOwner.investmentAmount) || 0,
+                  entityOwners: inv.entityOwners
                 }
-              } catch (error) {
-                console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
+              }
+              
+              // If no direct match, check if investor is nested in an entity owner's breakdown
+              const entityOwnerWithBreakdown = inv.entityOwners.find((owner: any) => {
+                return !!owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0
+              })
+              
+              if (entityOwnerWithBreakdown && Array.isArray(entityOwnerWithBreakdown.breakdown)) {
+                const breakdownMatch = entityOwnerWithBreakdown.breakdown.find((item: any) => {
+                  const itemId = item.id || null
+                  const itemLabel = (item.label || '').trim().toLowerCase()
+                  return (
+                    (itemId && investorId && String(itemId) === String(investorId)) ||
+                    (itemLabel === targetNameLower)
+                  )
+                })
+                
+                if (breakdownMatch && breakdownMatch.amount) {
+                  return {
+                    ...inv,
+                    investmentAmount: parseFloat(breakdownMatch.amount) || 0,
+                    entityOwners: inv.entityOwners
+                  }
+                }
+              }
+              
+              return {
+                ...inv,
+                investmentAmount: inv.investmentAmount || 0,
+                entityOwners: inv.entityOwners
               }
             }
-            return { propertyId: propertyId || '', thumbnail: null }
-          })
-          
-          const thumbnailResults = await Promise.all(thumbnailPromises)
-          const thumbnailMap: { [key: string]: string | null } = {}
-          thumbnailResults.forEach((result) => {
-            if (result.propertyId) {
-              thumbnailMap[result.propertyId] = result.thumbnail
+            return {
+              ...inv,
+              investorName: inv.user ? `${inv.user.firstName || ''} ${inv.user.lastName || ''}`.trim() : investorName
             }
           })
-          setPropertyThumbnails(thumbnailMap)
+          setInvestments(investorInvestments)
         } else {
-          console.error('Failed to fetch deals:', response.status, response.statusText)
+          setInvestments(investmentsData)
         }
-      } catch (error) {
-        console.error('Error fetching deals:', error)
-      } finally {
-        setLoading(false)
+
+        // Fetch property thumbnails (same as dashboard)
+        const propertyIds = investmentsData
+          .map((inv: any) => inv.property?.id || inv.propertyId)
+          .filter((id: string | undefined) => id)
+        
+        const thumbnailPromises = propertyIds.map(async (propertyId: string) => {
+          try {
+            const thumbResponse = await fetch(`/api/properties/${propertyId}/thumbnail`)
+            if (thumbResponse.ok) {
+              const thumbData = await thumbResponse.json()
+              return { propertyId, thumbnail: thumbData.thumbnail }
+            }
+          } catch (error) {
+            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
+          }
+          return { propertyId, thumbnail: null }
+        })
+        
+        const thumbnailResults = await Promise.all(thumbnailPromises)
+        const thumbnailMap: { [key: string]: string | null } = {}
+        thumbnailResults.forEach(({ propertyId, thumbnail }) => {
+          thumbnailMap[propertyId] = thumbnail
+        })
+        setPropertyThumbnails(thumbnailMap)
+      } else {
+        console.error('Failed to fetch investments:', investmentsResponse.statusText)
       }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchData()
-  }, [selectedPipeline])
+  const handleViewInvestmentDetails = (investmentId: string) => {
+    router.push(`/investors/investments/${investmentId}`)
+  }
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value)
+    }).format(amount)
   }
 
   const formatPercentage = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`
+    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
   }
 
   const getDealBadge = (dealStatus?: string) => {
     switch (dealStatus) {
       case 'STABILIZED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'UNDER_CONSTRUCTION': return 'bg-orange-50 text-orange-700 border-orange-200'
+      case 'UNDER_CONSTRUCTION': return 'bg-amber-50 text-amber-700 border-amber-200'
       case 'UNDER_CONTRACT': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'SOLD': return 'bg-gray-50 text-gray-700 border-gray-200'
+      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
       default: return 'bg-slate-50 text-slate-700 border-slate-200'
     }
   }
@@ -209,425 +266,195 @@ export default function PipelineTrackerDeals() {
     }
   }
 
-  const handleViewDealDetails = (dealId: string) => {
-    router.push(`/investors/crm/deals/${dealId}`)
-  }
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-blue-200"></div>
+            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+          </div>
+          <p className="mt-6 text-slate-600 font-medium">Loading your portfolio...</p>
+        </div>
       </div>
     )
   }
 
-  const filteredDeals = deals.filter((deal) => {
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      return (
-        deal.name?.toLowerCase().includes(searchLower) ||
-        deal.property?.name?.toLowerCase().includes(searchLower) ||
-        deal.property?.address?.toLowerCase().includes(searchLower) ||
-        deal.description?.toLowerCase().includes(searchLower)
-      )
-    }
-    return true
-  })
-
-  const handleDealCreated = () => {
-    // Refresh the deals list after creating a deal
-    const fetchData = async () => {
-      try {
-        const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-        const params = new URLSearchParams()
-        if (selectedPipeline !== 'all') {
-          params.append('pipelineId', selectedPipeline)
-        }
-        const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setDeals(data || [])
-        }
-      } catch (error) {
-        console.error('Error refreshing deals:', error)
-      }
-    }
-    fetchData()
-  }
-
-
-  const handleAssignToPipeline = async (dealId: string, pipelineId: string, stageId?: string) => {
-    try {
-      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-      
-      // If no stageId provided, get the first stage of the pipeline
-      let targetStageId = stageId
-      if (!targetStageId && pipelineId) {
-        const pipelineResponse = await fetch(`/api/investors/crm/pipelines/${pipelineId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (pipelineResponse.ok) {
-          const pipelineData = await pipelineResponse.json()
-          if (pipelineData.stages && pipelineData.stages.length > 0) {
-            // Get the first stage (lowest order)
-            targetStageId = pipelineData.stages[0].id
-          }
-        }
-      }
-
-      const response = await fetch(`/api/investors/crm/deals/${dealId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          pipelineId,
-          stageId: targetStageId,
-        }),
-      })
-
-      if (response.ok) {
-        // Refresh deals
-        const params = new URLSearchParams()
-        if (selectedPipeline !== 'all') {
-          params.append('pipelineId', selectedPipeline)
-        }
-        const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (dealsResponse.ok) {
-          const data = await dealsResponse.json()
-          setDeals(data || [])
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Failed to assign deal to pipeline:', errorData)
-        alert(`Failed to assign deal: ${errorData.error || 'Unknown error'}`)
-      }
-    } catch (error) {
-      console.error('Error assigning deal to pipeline:', error)
-      alert('Error assigning deal. Please try again.')
-    }
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
-          <p className="mt-2 text-gray-600">
-            {currentUser?.role === 'INVESTOR' ? 'View all your deals' : 'Manage and track all your deals'}
-          </p>
-        </div>
-        {/* Only show action buttons for admins/managers - investors have view-only access */}
-        {currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={async () => {
-                try {
-                  const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-                  const response = await fetch('/api/investors/crm/setup-pipeline', {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  })
-
-                  if (response.ok) {
-                    const data = await response.json()
-                    alert(`Pipeline setup complete!\nCreated: ${data.created}\nUpdated: ${data.updated}\nTotal: ${data.total}`)
-                    // Refresh deals
-                    const params = new URLSearchParams()
-                    if (selectedPipeline !== 'all') {
-                      params.append('pipelineId', selectedPipeline)
-                    }
-                    const dealsResponse = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-                      headers: {
-                        'Authorization': `Bearer ${token}`,
-                      },
-                    })
-                    if (dealsResponse.ok) {
-                      const dealsData = await dealsResponse.json()
-                      setDeals(dealsData || [])
-                    }
-                  } else {
-                    const error = await response.json()
-                    alert(`Setup failed: ${error.error || 'Unknown error'}`)
-                  }
-                } catch (error) {
-                  console.error('Error setting up pipeline:', error)
-                  alert('Failed to setup pipeline. Check console for details.')
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <CogIcon className="h-5 w-5" />
-              Setup Pipeline
-            </button>
-            <button
-              onClick={() => setShowPipelineManager(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <CogIcon className="h-5 w-5" />
-              Manage Pipelines
-            </button>
-            <button
-              onClick={() => setShowCreateDeal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <PlusIcon className="h-5 w-5" />
-              New Deal
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Pipeline Filter and Search Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="h-5 w-5 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Pipeline:</span>
-          </div>
-          <select
-            value={selectedPipeline}
-            onChange={(e) => setSelectedPipeline(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Pipelines</option>
-            {allPipelines.map((pipeline) => (
-              <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search deals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {filteredDeals.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="p-6 bg-gray-100 rounded-3xl w-fit mx-auto mb-6">
-              <BuildingOfficeIcon className="h-20 w-20 text-gray-400" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
+              <p className="text-slate-500 font-medium text-sm sm:text-base">Complete investment portfolio</p>
             </div>
-            <p className="text-xl font-semibold text-gray-900 mb-2">
-              {searchTerm ? 'No deals found matching your search' : 'No deals found'}
-            </p>
-            <p className="text-gray-500 font-medium mb-6">
-              {searchTerm ? 'Try adjusting your search terms' : 'Create a new deal or sync investments to get started'}
-            </p>
-            {!searchTerm && currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && (
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={() => setShowCreateDeal(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                  Create New Deal
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDeals.map((deal) => (
-              <div
-                key={deal.id}
-                className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                onClick={() => handleViewDealDetails(deal.id)}
+            <div className="flex items-center space-x-3 w-full sm:w-auto">
+              <select
+                value={dealFilter}
+                onChange={(e) => setDealFilter(e.target.value as any)}
+                className="px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm w-full sm:w-auto"
               >
-                {/* Thumbnail Image */}
-                {(() => {
-                  const propertyId = deal.property?.id
-                  const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
-                  return thumbnail ? (
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <img
-                        src={thumbnail}
-                        alt={deal.name || deal.property?.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                  ) : (
-                    <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                      <HomeIcon className="h-12 w-12 text-blue-400" />
-                    </div>
-                  )
-                })()}
-                
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2 flex-1">
-                      {deal.pipeline ? (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                          {deal.pipeline.name}
+                <option value="ALL">All Status</option>
+                <option value="STABILIZED">Stabilized</option>
+                <option value="UNDER_CONSTRUCTION">Under Construction</option>
+                <option value="UNDER_CONTRACT">Under Contract</option>
+                <option value="SOLD">Sold</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {investments
+              .filter(inv => inv.fundingStatus === 'FUNDED')
+              .filter(inv => dealFilter === 'ALL' ? true : (inv.dealStatus === dealFilter))
+              .map((investment) => (
+                <div
+                  key={investment.id}
+                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl overflow-hidden hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
+                  onClick={() => handleViewInvestmentDetails(investment.id)}
+                  onMouseEnter={() => setHoveredCard(investment.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  {/* Thumbnail Image */}
+                  {(() => {
+                    const propertyId = (investment as any).property?.id || investment.propertyId
+                    const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
+                    return thumbnail ? (
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <img
+                          src={thumbnail}
+                          alt={investment.propertyName || investment.propertyAddress}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    ) : (
+                      <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <HomeIcon className="h-12 w-12 text-blue-400" />
+                      </div>
+                    )
+                  })()}
+                  
+                  <div className="p-6">
+                    <div className="flex items-center justify-end mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
+                          {investment.dealStatus || 'STABILIZED'}
                         </span>
-                      ) : (
-                        currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') ? (
-                          <select
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={async (e) => {
-                              e.stopPropagation()
-                              const pipelineId = e.target.value
-                              if (pipelineId && pipelineId !== 'none') {
-                                await handleAssignToPipeline(deal.id, pipelineId)
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
+                          {investment.fundingStatus || 'FUNDED'}
+                        </span>
+                      </div>
+                    </div>
+                  
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200 break-words">
+                      {investment.propertyName || investment.propertyAddress}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mb-4 flex items-start">
+                      <MapPinIcon className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="break-words">{investment.propertyAddress}</span>
+                    </p>
+                    
+                    {investment.bedrooms && (
+                      <p className="text-sm text-slate-600 mb-4 font-medium">
+                        {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
+                      </p>
+                    )}
+                    
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500 font-medium">Investment</span>
+                        <span className="text-sm font-bold text-slate-900">
+                          {(() => {
+                            // For investors, show individual investment amount from entity owners
+                            const shouldShowIndividual = (currentUser?.role === 'INVESTOR')
+                            if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
+                              const targetName = currentUser?.role === 'INVESTOR' 
+                                ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                                : ''
+                              const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                                (owner.userName || '').trim().toLowerCase() === targetName
+                              )
+                              if (matchingOwner && matchingOwner.investmentAmount) {
+                                return formatCurrency(matchingOwner.investmentAmount)
                               }
-                            }}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                            defaultValue="none"
-                          >
-                            <option value="none">Assign to Pipeline</option>
-                            {allPipelines.map((pipeline) => (
-                              <option key={pipeline.id} value={pipeline.id}>{pipeline.name}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 text-gray-500 border border-gray-200">
-                            No Pipeline
+                            }
+                            return formatCurrency(investment.investmentAmount)
+                          })()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500 font-medium">Ownership</span>
+                        <span className="text-sm font-bold text-slate-900">
+                          {(() => {
+                            // For investors, show effective ownership percentage
+                            const shouldShowIndividual = (currentUser?.role === 'INVESTOR')
+                            if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
+                              const targetName = currentUser?.role === 'INVESTOR'
+                                ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
+                                : ''
+                              const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
+                                (owner.userName || '').trim().toLowerCase() === targetName
+                              )
+                              if (matchingOwner && matchingOwner.ownershipPercentage) {
+                                const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
+                                const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
+                                const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
+                                return `${effectiveOwnership.toFixed(1)}%`
+                              }
+                            }
+                            return `${investment.ownershipPercentage}%`
+                          })()}
+                        </span>
+                      </div>
+                      {typeof investment.estimatedCurrentDebt === 'number' && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-500 font-medium">Est. Current Debt</span>
+                          <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
+                        </div>
+                      )}
+                      {typeof investment.estimatedMonthlyDebtService === 'number' && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-500 font-medium">Monthly Debt Service</span>
+                          <span className={`text-sm font-bold text-slate-900`}>{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
+                        </div>
+                      )}
+                      {investment.irr && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-500 font-medium">IRR</span>
+                          <span className={`text-sm font-bold ${investment.irr > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {formatPercentage(investment.irr)}
                           </span>
-                        )
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {deal.stage && (
-                        <span 
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold border"
-                          style={{ 
-                            backgroundColor: `${deal.stage.color || '#3B82F6'}20`,
-                            color: deal.stage.color || '#3B82F6',
-                            borderColor: `${deal.stage.color || '#3B82F6'}40`
-                          }}
-                        >
-                          {deal.stage.name}
-                        </span>
-                      )}
-                      {deal.property?.fundingStatus && (
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(deal.property.fundingStatus)}`}>
-                          {deal.property.fundingStatus}
-                        </span>
-                      )}
+                    
+                    <div className="pt-4 border-t border-slate-200/60 flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-medium">
+                        {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
+                      </span>
+                      <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
+                        View Deal
+                        <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+                      </span>
                     </div>
-                  </div>
-                
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
-                    {deal.name}
-                  </h3>
-                  {deal.property?.address && (
-                    <p className="text-sm text-gray-500 mb-4 flex items-center">
-                      <MapPinIcon className="h-4 w-4 mr-2" />
-                      {deal.property.address}
-                    </p>
-                  )}
-                  
-                  {deal.description && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {deal.description}
-                    </p>
-                  )}
-                  
-                  <div className="space-y-3 mb-6">
-                    {deal.estimatedValue && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">Estimated Value</span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {formatCurrency(deal.estimatedValue)}
-                        </span>
-                      </div>
-                    )}
-                    {deal.priority && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">Priority</span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {deal.priority}
-                        </span>
-                      </div>
-                    )}
-                    {deal.assignedTo && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 font-medium">Assigned To</span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {deal.assignedTo.firstName} {deal.assignedTo.lastName}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-            
-                  <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-                    <span className="text-xs text-gray-500 font-medium">
-                      {deal.estimatedCloseDate ? `Close: ${new Date(deal.estimatedCloseDate).toLocaleDateString()}` : 'In Progress'}
-                    </span>
-                    <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
-                      View Deal
-                      <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
-        )}
+          
+          {investments.filter(inv => inv.fundingStatus === 'FUNDED').length === 0 && (
+            <div className="text-center py-20">
+              <div className="p-6 bg-slate-100 rounded-3xl w-fit mx-auto mb-6">
+                <BuildingOfficeIcon className="h-20 w-20 text-slate-400" />
+              </div>
+              <p className="text-xl font-semibold text-slate-900 mb-2">No funded investments found.</p>
+              <p className="text-slate-500 font-medium">Funded investments will appear here</p>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Create Deal Modal */}
-      {showCreateDeal && (
-        <DealCreateModal
-          isOpen={showCreateDeal}
-          onClose={() => setShowCreateDeal(false)}
-          onSuccess={handleDealCreated}
-        />
-      )}
-
-      {/* Pipeline Manager Modal */}
-      {showPipelineManager && (
-        <PipelineManager
-          onClose={() => setShowPipelineManager(false)}
-          onPipelineChange={() => {
-            fetchPipelines()
-            // Refresh deals after pipeline change
-            const fetchData = async () => {
-              try {
-                const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('token')
-                const params = new URLSearchParams()
-                if (selectedPipeline !== 'all') {
-                  params.append('pipelineId', selectedPipeline)
-                }
-                const response = await fetch(`/api/investors/crm/deals?${params.toString()}`, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                  },
-                })
-                if (response.ok) {
-                  const data = await response.json()
-                  setDeals(data || [])
-                }
-              } catch (error) {
-                console.error('Error refreshing deals:', error)
-              }
-            }
-            fetchData()
-          }}
-        />
-      )}
     </div>
   )
 }
-
