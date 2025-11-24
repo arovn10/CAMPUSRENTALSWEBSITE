@@ -72,7 +72,7 @@ export default function PipelineTrackerLayout({
             </div>
 
             {/* Navigation Tabs - Mobile: Scrollable, Desktop: Centered */}
-            <div className="flex items-center space-x-1 flex-1 justify-center overflow-x-auto scrollbar-hide px-2 sm:px-0">
+            <div className="flex items-center space-x-1 flex-1 justify-center overflow-x-auto scrollbar-hide px-2 sm:px-0 min-w-0">
               {navigationTabs.map((tab) => {
                 const isActive = activeTab === tab.id
                 const Icon = tab.icon
@@ -80,13 +80,13 @@ export default function PipelineTrackerLayout({
                   <Link
                     key={tab.id}
                     href={tab.path}
-                    className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                    className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                       isActive
                         ? 'bg-gradient-to-r from-accent to-primary text-white shadow-md'
                         : 'text-gray-300 hover:text-accent hover:bg-gray-800'
                     }`}
                   >
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium hidden sm:inline">{tab.label}</span>
                   </Link>
                 )
