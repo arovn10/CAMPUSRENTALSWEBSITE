@@ -237,7 +237,7 @@ export default function PipelineTrackerDeals() {
   }
 
   const handleViewInvestmentDetails = (investmentId: string) => {
-    router.push(`/investors/investments/${investmentId}`)
+    router.push(`/investors/pipeline-tracker/deals/${investmentId}`)
   }
 
   const formatCurrency = (amount: number) => {
