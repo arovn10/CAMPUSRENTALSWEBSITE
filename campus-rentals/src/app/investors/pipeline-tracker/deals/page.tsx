@@ -197,17 +197,20 @@ export default function PipelineTrackerDeals() {
           setInvestments(investmentsData)
         }
 
-        // Fetch property thumbnails (same as dashboard)
-        const propertyIds = investmentsData
-          .map((inv: any) => inv.property?.id || inv.propertyId)
-          .filter((id: string | undefined) => id)
-        
-        const thumbnailPromises = propertyIds.map(async (propertyId: string) => {
+        // Fetch thumbnails for all investments (same as dashboard)
+        const thumbnailPromises = (investmentsData || []).map(async (inv: any) => {
+          const propertyId = inv.property?.id || inv.propertyId
+          if (!propertyId) return null
+          
           try {
-            const thumbResponse = await fetch(`/api/properties/${propertyId}/thumbnail`)
-            if (thumbResponse.ok) {
-              const thumbData = await thumbResponse.json()
-              return { propertyId, thumbnail: thumbData.thumbnail }
+            const response = await fetch(`/api/properties/thumbnail/${propertyId}`, {
+              headers: {
+                'Authorization': `Bearer ${token || ''}`
+              }
+            })
+            if (response.ok) {
+              const data = await response.json()
+              return { propertyId, thumbnail: data.thumbnail }
             }
           } catch (error) {
             console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
@@ -217,8 +220,10 @@ export default function PipelineTrackerDeals() {
         
         const thumbnailResults = await Promise.all(thumbnailPromises)
         const thumbnailMap: { [key: string]: string | null } = {}
-        thumbnailResults.forEach(({ propertyId, thumbnail }) => {
-          thumbnailMap[propertyId] = thumbnail
+        thumbnailResults.forEach((result) => {
+          if (result) {
+            thumbnailMap[result.propertyId] = result.thumbnail
+          }
         })
         setPropertyThumbnails(thumbnailMap)
       } else {
