@@ -2111,72 +2111,7 @@ export default function InvestmentDetailPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {currentUser?.role === 'ADMIN' && (
-                <button
-                  onClick={() => {
-                    console.log('Edit Investment button clicked')
-                    console.log('Investment object:', investment)
-                    
-                    if (!investment) {
-                      console.error('Investment object is null or undefined')
-                      alert('Investment data not loaded. Please refresh the page.')
-                      return
-                    }
-                    
-                    try {
-                      // Populate edit data with current investment data - with safe conversions
-                      const editDataToSet = {
-                        investmentAmount: (investment.investmentAmount || 0).toString(),
-                        ownershipPercentage: (investment.ownershipPercentage || 0).toString(),
-                        monthlyRent: (investment.property.monthlyRent || 0).toString(),
-                        capRate: (investment.property.capRate || 0).toString(),
-                        occupancyRate: (investment.property.occupancyRate || 0).toString(),
-                        annualExpenses: (investment.property.annualExpenses || 0).toString(),
-                        currentValue: (investment.property.currentValue || 0).toString(),
-                        debtAmount: investment.property.debtAmount?.toString() || '',
-                        debtDetails: investment.property.debtDetails || '',
-                        acquisitionPrice: (investment.property.acquisitionPrice || 0).toString(),
-                        constructionCost: (investment.property.constructionCost || 0).toString(),
-                        totalCost: (investment.property.totalCost || 0).toString(),
-                        acquisitionDate: investment.property.acquisitionDate ? new Date(investment.property.acquisitionDate).toISOString().split('T')[0] : '',
-                        constructionCompletionDate: investment.property.constructionCompletionDate ? new Date(investment.property.constructionCompletionDate).toISOString().split('T')[0] : '',
-                        stabilizationDate: investment.property.stabilizationDate ? new Date(investment.property.stabilizationDate).toISOString().split('T')[0] : '',
-                        investmentDate: investment.investmentDate ? new Date(investment.investmentDate).toISOString().split('T')[0] : '',
-                        propertyName: investment.property.name || '',
-                        propertyAddress: investment.property.address || '',
-                        description: investment.property.description || '',
-                        bedrooms: (investment.property.bedrooms || 0).toString(),
-                        bathrooms: (investment.property.bathrooms || 0).toString(),
-                        squareFeet: (investment.property.squareFeet || 0).toString(),
-                        propertyType: investment.property.propertyType || 'RESIDENTIAL',
-                        // Refinance fields - set to defaults for existing investments
-                        isRefinance: false,
-                        newLoanAmount: '',
-                        oldLoanPayoff: '',
-                        prepaymentPenalty: '',
-                        originationFee: ''
-                      }
-                      
-                      console.log('Setting edit data:', editDataToSet)
-                      setEditData(editDataToSet)
-                      setShowEditModal(true)
-                      console.log('Edit modal should now be open')
-                    } catch (error) {
-                      console.error('Error setting edit data:', error)
-                      console.error('Error details:', {
-                        message: error instanceof Error ? error.message : 'Unknown error',
-                        stack: error instanceof Error ? error.stack : 'No stack trace',
-                        investment: investment,
-                        property: investment?.property
-                      })
-                      alert('Error opening edit modal. Please try again.')
-                    }
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                >
-                  Edit Investment
-                </button>
-              )}
+              {/* Edit button removed - investment detail page is view-only */}
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                 {currentUser?.role}
               </span>

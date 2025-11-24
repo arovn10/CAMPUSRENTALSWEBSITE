@@ -71,53 +71,81 @@ export async function GET(request: NextRequest) {
       ) as exists
     `)
 
-    const contacts = await query(`
-      SELECT 
-        c.id,
-        c."firstName",
-        c."lastName",
-        c.email,
-        c.phone,
-        c.company,
-        c.title,
-        c.address,
-        c.city,
-        c.state,
-        c."zipCode",
-        c.country,
-        c.notes,
-        COALESCE(c.tags, '[]'::jsonb) as tags,
-        c."createdBy",
-        c."createdAt",
-        c."updatedAt",
-        ${hasPipelineId?.exists ? 'c."pipelineId",' : ''}
-        ${hasPropertyId?.exists ? 'c."propertyId",' : ''}
-        ${hasServiceType?.exists ? 'c."serviceType",' : ''}
-        jsonb_build_object(
-          'id', u.id,
-          'firstName', u."firstName",
-          'lastName', u."lastName",
-          'email', u.email
-        ) as creator,
-        ${hasPipelineId?.exists ? `
+    // Build the SELECT clause dynamically
+    let selectColumns = [
+      'c.id',
+      'c."firstName"',
+      'c."lastName"',
+      'c.email',
+      'c.phone',
+      'c.company',
+      'c.title',
+      'c.address',
+      'c.city',
+      'c.state',
+      'c."zipCode"',
+      'c.country',
+      'c.notes',
+      'COALESCE(c.tags, \'[]\'::jsonb) as tags',
+      'c."createdBy"',
+      'c."createdAt"',
+      'c."updatedAt"',
+    ]
+    
+    if (hasPipelineId?.exists) {
+      selectColumns.push('c."pipelineId"')
+    }
+    if (hasPropertyId?.exists) {
+      selectColumns.push('c."propertyId"')
+    }
+    if (hasServiceType?.exists) {
+      selectColumns.push('c."serviceType"')
+    }
+    
+    selectColumns.push(`
+      jsonb_build_object(
+        'id', u.id,
+        'firstName', u."firstName",
+        'lastName', u."lastName",
+        'email', u.email
+      ) as creator
+    `)
+    
+    if (hasPipelineId?.exists) {
+      selectColumns.push(`
         CASE WHEN c."pipelineId" IS NOT NULL THEN
           jsonb_build_object(
             'id', p.id,
             'name', p.name
           )
-        ELSE NULL END as pipeline,` : ''}
-        ${hasPropertyId?.exists ? `
+        ELSE NULL END as pipeline
+      `)
+    }
+    
+    if (hasPropertyId?.exists) {
+      selectColumns.push(`
         CASE WHEN c."propertyId" IS NOT NULL THEN
           jsonb_build_object(
             'id', prop.id,
             'name', prop.name,
             'address', prop.address
           )
-        ELSE NULL END as property,` : ''}
+        ELSE NULL END as property
+      `)
+    }
+    
+    let joinClauses = ['LEFT JOIN users u ON c."createdBy" = u.id']
+    if (hasPipelineId?.exists) {
+      joinClauses.push('LEFT JOIN deal_pipelines p ON c."pipelineId" = p.id')
+    }
+    if (hasPropertyId?.exists) {
+      joinClauses.push('LEFT JOIN properties prop ON c."propertyId" = prop.id')
+    }
+    
+    const contacts = await query(`
+      SELECT ${selectColumns.join(', ')}
       FROM contacts c
-      LEFT JOIN users u ON c."createdBy" = u.id
-      ${hasPipelineId?.exists ? 'LEFT JOIN deal_pipelines p ON c."pipelineId" = p.id' : ''}
-      ${hasPropertyId?.exists ? 'LEFT JOIN properties prop ON c."propertyId" = prop.id' : ''}
+      ${joinClauses.join(' ')}
       ${whereClause}
       ORDER BY c."lastName" ASC, c."firstName" ASC
     `, params)

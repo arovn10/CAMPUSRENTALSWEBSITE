@@ -20,7 +20,6 @@ const navigationTabs = [
   { id: 'deals', label: 'Deals', icon: FolderIcon, path: '/investors/pipeline-tracker/deals' },
   { id: 'contacts', label: 'Contacts', icon: UserGroupIcon, path: '/investors/pipeline-tracker/contacts' },
   { id: 'tasks', label: 'Tasks', icon: CogIcon, path: '/investors/pipeline-tracker/tasks' },
-  { id: 'properties', label: 'Properties', icon: BuildingOfficeIcon, path: '/investors/pipeline-tracker/properties' },
   { id: 'maps', label: 'Maps', icon: MapIcon, path: '/investors/pipeline-tracker/maps' },
   { id: 'reports', label: 'Reports', icon: ChartBarIcon, path: '/investors/pipeline-tracker/reports' },
   { id: 'more', label: 'More', icon: EllipsisHorizontalIcon, path: '/investors/pipeline-tracker/more' },
@@ -37,9 +36,18 @@ export default function PipelineTrackerLayout({
 
   useEffect(() => {
     // Determine active tab based on current path
-    const currentTab = navigationTabs.find(tab => pathname === tab.path || pathname?.startsWith(tab.path + '/'))
+    // Check exact match first, then prefix match
+    const currentTab = navigationTabs.find(tab => {
+      if (pathname === tab.path) return true
+      // For nested routes, check if pathname starts with the tab path followed by /
+      if (pathname?.startsWith(tab.path + '/')) return true
+      return false
+    })
     if (currentTab) {
       setActiveTab(currentTab.id)
+    } else {
+      // Default to dashboard if no match
+      setActiveTab('dashboard')
     }
   }, [pathname])
 
