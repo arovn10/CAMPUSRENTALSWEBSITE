@@ -226,6 +226,7 @@ export async function PUT(
       assignedToId,
       tags,
       metadata,
+      published,
     } = body;
 
     // Build update query dynamically
@@ -292,6 +293,21 @@ export async function PUT(
     if (metadata !== undefined) {
       updates.push(`metadata = $${paramIndex++}`);
       values.push(JSON.stringify(metadata));
+    }
+    
+    // Check if published column exists and update if provided
+    const hasPublished = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'deals' 
+        AND column_name = 'published'
+      ) as exists
+    `);
+    
+    if (hasPublished?.exists && published !== undefined) {
+      updates.push(`published = $${paramIndex++}`);
+      values.push(published);
     }
 
     if (updates.length > 0) {

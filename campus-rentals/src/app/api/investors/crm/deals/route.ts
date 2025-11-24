@@ -281,13 +281,26 @@ export async function GET(request: NextRequest) {
             const section = 'ACQUISITIONS';
 
             try {
+              // Check if published column exists
+              const hasPublished = await queryOne<{ exists: boolean }>(`
+                SELECT EXISTS (
+                  SELECT 1 FROM information_schema.columns 
+                  WHERE table_schema = 'public' 
+                  AND table_name = 'deals' 
+                  AND column_name = 'published'
+                ) as exists
+              `);
+              
+              const publishedColumn = hasPublished?.exists ? ', "published"' : '';
+              const publishedValue = hasPublished?.exists ? ', false' : '';
+              
               await query(`
                 INSERT INTO deals (
                   id, name, "dealType", status, priority, "pipelineId", "stageId",
                   "propertyId", description, "estimatedValue", "estimatedCloseDate",
-                  source, tags, section, "createdAt", "updatedAt"
+                  source, tags, section${publishedColumn}, "createdAt", "updatedAt"
                 ) VALUES (
-                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14${publishedValue}, NOW(), NOW()
                 )
               `, [
                 dealId,
@@ -357,9 +370,24 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
 
-    // If user is investor, only show deals for properties they've invested in
-    // For ADMIN/MANAGER, show ALL deals regardless of investment status
+    // If user is investor, only show published deals for properties they've invested in
+    // For ADMIN/MANAGER, show ALL deals regardless of published status
     if (user.role === 'INVESTOR') {
+      // Check if published column exists
+      const hasPublished = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'deals' 
+          AND column_name = 'published'
+        ) as exists
+      `);
+      
+      // Only show published deals to investors
+      if (hasPublished?.exists) {
+        whereConditions.push(`d.published = true`);
+      }
+      
       const propertyIds = investments.map(inv => inv.propertyId).filter(Boolean);
       if (propertyIds.length === 0) {
         console.log(`[CRM Deals] Investor ${user.id} has no investments, returning empty array`);
@@ -369,16 +397,26 @@ export async function GET(request: NextRequest) {
       whereConditions.push(`d."propertyId" IN (${placeholders})`);
       queryParams.push(...propertyIds);
       paramIndex += propertyIds.length;
-      console.log(`[CRM Deals] Investor filter: showing deals for ${propertyIds.length} properties`);
+      console.log(`[CRM Deals] Investor filter: showing published deals for ${propertyIds.length} properties`);
     } else {
-      // ADMIN/MANAGER: Show ALL deals (no property filter)
-      console.log(`[CRM Deals] Admin/Manager view: showing ALL deals`);
+      // ADMIN/MANAGER: Show ALL deals (no published filter)
+      console.log(`[CRM Deals] Admin/Manager view: showing ALL deals (including unpublished)`);
     }
 
     const whereClause = whereConditions.length > 0 
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
+    // Check if published column exists for SELECT
+    const hasPublished = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'deals' 
+        AND column_name = 'published'
+      ) as exists
+    `);
+    
     // Main query - start simple, build up complexity
     // First try the simplest possible query
     let dealsQuery = `
@@ -399,7 +437,7 @@ export async function GET(request: NextRequest) {
         d.section,
         d."assignedToId",
         d."createdAt",
-        d."updatedAt"
+        d."updatedAt"${hasPublished?.exists ? ', d.published' : ''}
       FROM deals d
       ${whereClause}
       ORDER BY d."createdAt" DESC

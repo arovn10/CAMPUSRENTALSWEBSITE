@@ -229,7 +229,13 @@ export default function CRMDealPipeline() {
   }, [selectedPipelineId, searchTerm, fetchDeals])
 
   const handleDealClick = (dealId: string) => {
-    router.push(`/investors/crm/deals/${dealId}`)
+    // Check if we're in pipeline-tracker context
+    const isPipelineTracker = typeof window !== 'undefined' && window.location.pathname.startsWith('/investors/pipeline-tracker')
+    if (isPipelineTracker) {
+      router.push(`/investors/pipeline-tracker/deals/${dealId}`)
+    } else {
+      router.push(`/investors/crm/deals/${dealId}`)
+    }
   }
 
   const handleDragStart = (deal: Deal) => {

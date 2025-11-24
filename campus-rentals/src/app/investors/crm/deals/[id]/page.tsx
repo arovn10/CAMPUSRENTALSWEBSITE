@@ -127,6 +127,8 @@ export default function DealDetailPage() {
   const [showLocationMap, setShowLocationMap] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const [published, setPublished] = useState(false)
+  const [updatingPublished, setUpdatingPublished] = useState(false)
 
   useEffect(() => {
     if (dealId) {
@@ -161,6 +163,39 @@ export default function DealDetailPage() {
       console.error('Error fetching deal:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleTogglePublished = async () => {
+    if (!deal) return
+    
+    setUpdatingPublished(true)
+    try {
+      const token = getAuthToken()
+      const newPublished = !published
+      const response = await fetch(`/api/investors/crm/deals/${dealId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          published: newPublished
+        }),
+      })
+
+      if (response.ok) {
+        setPublished(newPublished)
+        setDeal({ ...deal, published: newPublished })
+      } else {
+        const error = await response.json()
+        alert(`Failed to update published status: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error updating published status:', error)
+      alert('Failed to update published status')
+    } finally {
+      setUpdatingPublished(false)
     }
   }
 
@@ -254,7 +289,29 @@ export default function DealDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Publish Toggle */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg">
+                <label className="text-sm font-medium text-slate-700">Published:</label>
+                <button
+                  onClick={handleTogglePublished}
+                  disabled={updatingPublished}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    published ? 'bg-blue-600' : 'bg-gray-200'
+                  } ${updatingPublished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  role="switch"
+                  aria-checked={published}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      published ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <span className="text-xs text-slate-600">
+                  {published ? 'Yes' : 'No'}
+                </span>
+              </div>
               <button
                 onClick={handleDeleteDeal}
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"

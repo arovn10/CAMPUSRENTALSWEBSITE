@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { query } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
       } catch {}
     } else {
       // Investors only see their own investments
+      // AND only for properties that have published deals
       investments = await prisma.investment.findMany({
         where: { userId: user.id },
         include: { 
@@ -69,6 +71,42 @@ export async function GET(request: NextRequest) {
           distributions: true
         }
       })
+      
+      // Filter investments to only show those with published deals
+      try {
+        // Check if published column exists
+        const hasPublishedResult = await query<{ exists: boolean }>(`
+          SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'deals' 
+            AND column_name = 'published'
+          ) as exists
+        `)
+        
+        const hasPublished = Array.isArray(hasPublishedResult) && hasPublishedResult.length > 0 && hasPublishedResult[0].exists
+        
+        if (hasPublished) {
+          // Get property IDs that have published deals
+          const publishedDeals = await query<{ propertyId: string }>(`
+            SELECT DISTINCT "propertyId" 
+            FROM deals 
+            WHERE published = true AND "propertyId" IS NOT NULL
+          `)
+          
+          const publishedPropertyIds = new Set(publishedDeals.map(d => d.propertyId))
+          
+          // Filter investments to only those with published deals
+          investments = investments.filter((inv: any) => 
+            inv.propertyId && publishedPropertyIds.has(inv.propertyId)
+          )
+          
+          console.log(`[INVESTORS/PROPERTIES] Filtered to ${investments.length} investments with published deals`)
+        }
+      } catch (error: any) {
+        console.error('[INVESTORS/PROPERTIES] Error filtering by published deals:', error?.message)
+        // Continue with all investments if filtering fails
+      }
       try {
         const totalInv = investments.reduce((s: number, i: any) => s + (i.investmentAmount || 0), 0)
         console.log('[INVESTORS/PROPERTIES][INVESTOR] Direct investments', JSON.stringify({
@@ -121,6 +159,39 @@ export async function GET(request: NextRequest) {
           ]
         }
       })
+      
+      // Filter entity investments to only show those with published deals
+      try {
+        const hasPublishedResult2 = await query<{ exists: boolean }>(`
+          SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = 'deals' 
+            AND column_name = 'published'
+          ) as exists
+        `)
+        
+        const hasPublished2 = Array.isArray(hasPublishedResult2) && hasPublishedResult2.length > 0 && hasPublishedResult2[0].exists
+        
+        if (hasPublished2) {
+          const publishedDeals = await query<{ propertyId: string }>(`
+            SELECT DISTINCT "propertyId" 
+            FROM deals 
+            WHERE published = true AND "propertyId" IS NOT NULL
+          `)
+          
+          const publishedPropertyIds = new Set(publishedDeals.map((d: any) => d.propertyId))
+          
+          entityInvestments = entityInvestments.filter((ei: any) => 
+            ei.propertyId && publishedPropertyIds.has(ei.propertyId)
+          )
+          
+          console.log(`[INVESTORS/PROPERTIES] Filtered to ${entityInvestments.length} entity investments with published deals`)
+        }
+      } catch (error: any) {
+        console.error('[INVESTORS/PROPERTIES] Error filtering entity investments by published deals:', error?.message)
+        // Continue with all entity investments if filtering fails
+      }
 
       try {
         const ownersCount = entityInvestments.reduce((s: number, ei: any) => s + ((ei.entityInvestmentOwners?.length || ei.entity?.entityOwners?.length || 0)), 0)
