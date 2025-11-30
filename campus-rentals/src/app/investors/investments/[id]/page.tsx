@@ -3016,21 +3016,23 @@ export default function InvestmentDetailPage() {
                     }
                   </span>
                 </div>
-                <button
-                  onClick={() => {
-                    setNoiData({
-                      monthlyRent: investment?.property?.monthlyRent?.toString() || '',
-                      otherIncome: investment?.property?.otherIncome?.toString() || '0',
-                      annualExpenses: investment?.property?.annualExpenses?.toString() || '',
-                      capRate: investment?.property?.capRate?.toString() || '',
-                      currentValueEstimate: investment?.property?.currentValue?.toString() || ''
-                    })
-                    setShowNOIModal(true)
-                  }}
-                  className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                >
-                  Update NOI Calculations
-                </button>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                  <button
+                    onClick={() => {
+                      setNoiData({
+                        monthlyRent: investment?.property?.monthlyRent?.toString() || '',
+                        otherIncome: investment?.property?.otherIncome?.toString() || '0',
+                        annualExpenses: investment?.property?.annualExpenses?.toString() || '',
+                        capRate: investment?.property?.capRate?.toString() || '',
+                        currentValueEstimate: investment?.property?.currentValue?.toString() || ''
+                      })
+                      setShowNOIModal(true)
+                    }}
+                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                  >
+                    Update NOI Calculations
+                  </button>
+                )}
                 )}
               </div>
             </div>
@@ -3324,45 +3326,47 @@ export default function InvestmentDetailPage() {
                 ) : (
                   <p className="text-sm text-gray-500 italic">No waterfall structures</p>
                 )}
-                <div className="space-y-2">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowCreateWaterfallModal(true)}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                    >
-                      Create Structure
-                    </button>
-                    <button
-                      onClick={() => {
-                        // Check if selected structure is global
-                        const selectedStructureData = waterfallStructures.find(s => s.id === distributionData.waterfallStructureId) || 
-                                                     globalWaterfallStructures.find(s => s.id === distributionData.waterfallStructureId)
-                        if (selectedStructureData && !selectedStructureData.propertyId) {
-                          alert('Cannot process distributions from global structures. Please copy the structure to create a local one first.')
-                          return
-                        }
-                        setShowWaterfallModal(true)
-                      }}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors duration-200 font-medium"
-                    >
-                      Process Distribution
-                    </button>
+                {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowCreateWaterfallModal(true)}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        Create Structure
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Check if selected structure is global
+                          const selectedStructureData = waterfallStructures.find(s => s.id === distributionData.waterfallStructureId) || 
+                                                       globalWaterfallStructures.find(s => s.id === distributionData.waterfallStructureId)
+                          if (selectedStructureData && !selectedStructureData.propertyId) {
+                            alert('Cannot process distributions from global structures. Please copy the structure to create a local one first.')
+                            return
+                          }
+                          setShowWaterfallModal(true)
+                        }}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        Process Distribution
+                      </button>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowCreateGlobalWaterfallModal(true)}
+                        className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        Create Global Structure
+                      </button>
+                      <button
+                        onClick={() => setShowApplyWaterfallModal(true)}
+                        className="flex-1 px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        Apply Structure
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowCreateGlobalWaterfallModal(true)}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200 font-medium"
-                    >
-                      Create Global Structure
-                    </button>
-                    <button
-                      onClick={() => setShowApplyWaterfallModal(true)}
-                      className="flex-1 px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded-lg transition-colors duration-200 font-medium"
-                    >
-                      Apply Structure
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
             )}

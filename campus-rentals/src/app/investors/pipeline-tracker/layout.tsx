@@ -33,8 +33,65 @@ export default function PipelineTrackerLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if user is admin or manager
+    const checkAuth = async () => {
+      try {
+        const userStr = sessionStorage.getItem('currentUser')
+        if (userStr) {
+          const userData = JSON.parse(userStr)
+          if (userData.role === 'ADMIN' || userData.role === 'MANAGER') {
+            setIsAuthorized(true)
+          } else {
+            // Redirect investors to their dashboard
+            router.push('/investors/dashboard')
+            return
+          }
+        } else {
+          // Try to fetch user from API
+          const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
+          if (token) {
+            const response = await fetch('/api/investors/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            })
+            if (response.ok) {
+              const userData = await response.json()
+              if (userData.role === 'ADMIN' || userData.role === 'MANAGER') {
+                setIsAuthorized(true)
+                sessionStorage.setItem('currentUser', JSON.stringify(userData))
+              } else {
+                router.push('/investors/dashboard')
+                return
+              }
+            } else {
+              router.push('/investors/login')
+              return
+            }
+          } else {
+            router.push('/investors/login')
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        router.push('/investors/login')
+        return
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (!isAuthorized) return
+    
     // Determine active tab based on current path
     // Check exact match first, then prefix match
     const currentTab = navigationTabs.find(tab => {
@@ -49,7 +106,19 @@ export default function PipelineTrackerLayout({
       // Default to dashboard if no match
       setActiveTab('dashboard')
     }
-  }, [pathname])
+  }, [pathname, isAuthorized])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return null // Will redirect
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
