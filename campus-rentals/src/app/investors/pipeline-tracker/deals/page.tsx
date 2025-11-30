@@ -236,8 +236,56 @@ export default function PipelineTrackerDeals() {
     }
   }
 
-  const handleViewInvestmentDetails = (investmentId: string) => {
-    router.push(`/investors/pipeline-tracker/deals/${investmentId}`)
+  const handleViewInvestmentDetails = async (investmentId: string) => {
+    try {
+      // Find the investment to get its propertyId
+      const investment = investments.find(inv => inv.id === investmentId)
+      if (!investment) {
+        console.error('Investment not found:', investmentId)
+        // Fallback to investment detail page
+        router.push(`/investors/investments/${investmentId}`)
+        return
+      }
+
+      const propertyId = (investment as any).property?.id || (investment as any).propertyId
+      if (!propertyId) {
+        console.error('No propertyId found for investment:', investmentId)
+        // Fallback to investment detail page
+        router.push(`/investors/investments/${investmentId}`)
+        return
+      }
+
+      // Fetch the deal associated with this property
+      const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
+      const dealsResponse = await fetch(`/api/investors/crm/deals?propertyId=${propertyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token || ''}`
+        }
+      })
+
+      if (dealsResponse.ok) {
+        const dealsData = await dealsResponse.json()
+        // Find deal for this property (should be first result if propertyId filter works)
+        const deal = Array.isArray(dealsData) && dealsData.length > 0
+          ? dealsData[0]
+          : null
+
+        if (deal && deal.id) {
+          router.push(`/investors/pipeline-tracker/deals/${deal.id}`)
+        } else {
+          // No deal found, navigate to investment detail page instead
+          router.push(`/investors/investments/${investmentId}`)
+        }
+      } else {
+        // API error, fallback to investment detail page
+        console.error('Error fetching deal:', dealsResponse.status, dealsResponse.statusText)
+        router.push(`/investors/investments/${investmentId}`)
+      }
+    } catch (error) {
+      console.error('Error finding deal for investment:', error)
+      // Fallback to investment detail page
+      router.push(`/investors/investments/${investmentId}`)
+    }
   }
 
   const formatCurrency = (amount: number) => {

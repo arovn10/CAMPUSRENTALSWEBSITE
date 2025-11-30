@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const stageId = searchParams.get('stageId');
     const search = searchParams.get('search');
     const fundingStatus = searchParams.get('fundingStatus');
+    const propertyId = searchParams.get('propertyId');
 
     // Get investments from the same source as investor dashboard (/api/investors/properties)
     // IMPORTANT: Get ALL investments regardless of status for CRM backend
@@ -367,6 +368,12 @@ export async function GET(request: NextRequest) {
     if (fundingStatus) {
       whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
       queryParams.push(fundingStatus);
+      paramIndex++;
+    }
+
+    if (propertyId) {
+      whereConditions.push(`d."propertyId" = $${paramIndex}`);
+      queryParams.push(propertyId);
       paramIndex++;
     }
 
