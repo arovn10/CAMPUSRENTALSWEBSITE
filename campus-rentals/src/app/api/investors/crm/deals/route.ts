@@ -635,7 +635,7 @@ export async function POST(request: NextRequest) {
       actualCloseDate ? new Date(actualCloseDate) : null,
       source || null,
       assignedToId || null,
-      tags ? JSON.stringify(tags) : JSON.stringify([]),
+      tags && Array.isArray(tags) ? tags : (tags ? [tags] : []),
       metadata ? JSON.stringify(metadata) : JSON.stringify({}),
     ]);
 

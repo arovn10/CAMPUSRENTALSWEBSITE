@@ -44,32 +44,48 @@ export async function GET(request: NextRequest) {
       : ''
 
     // Check if additional columns exist
-    const hasPipelineId = await queryOne<{ exists: boolean }>(`
-      SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'contacts' 
-        AND column_name = 'pipelineId'
-      ) as exists
-    `)
+    let hasPipelineId = { exists: false }
+    let hasPropertyId = { exists: false }
+    let hasServiceType = { exists: false }
     
-    const hasPropertyId = await queryOne<{ exists: boolean }>(`
-      SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'contacts' 
-        AND column_name = 'propertyId'
-      ) as exists
-    `)
+    try {
+      hasPipelineId = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'contacts' 
+          AND column_name = 'pipelineId'
+        ) as exists
+      `) || { exists: false }
+    } catch (error) {
+      console.warn('[Contacts API] Error checking pipelineId column:', error)
+    }
     
-    const hasServiceType = await queryOne<{ exists: boolean }>(`
-      SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'contacts' 
-        AND column_name = 'serviceType'
-      ) as exists
-    `)
+    try {
+      hasPropertyId = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'contacts' 
+          AND column_name = 'propertyId'
+        ) as exists
+      `) || { exists: false }
+    } catch (error) {
+      console.warn('[Contacts API] Error checking propertyId column:', error)
+    }
+    
+    try {
+      hasServiceType = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'contacts' 
+          AND column_name = 'serviceType'
+        ) as exists
+      `) || { exists: false }
+    } catch (error) {
+      console.warn('[Contacts API] Error checking serviceType column:', error)
+    }
 
     // Build the SELECT clause dynamically
     let selectColumns = [
@@ -86,7 +102,7 @@ export async function GET(request: NextRequest) {
       'c."zipCode"',
       'c.country',
       'c.notes',
-      'COALESCE(c.tags, \'[]\'::jsonb) as tags',
+      'COALESCE(c.tags, ARRAY[]::TEXT[]) as tags',
       'c."createdBy"',
       'c."createdAt"',
       'c."updatedAt"',
@@ -143,23 +159,30 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      const contacts = await query(`
+      const queryText = `
         SELECT ${selectColumns.join(', ')}
         FROM contacts c
         ${joinClauses.join(' ')}
         ${whereClause}
         ORDER BY c."lastName" ASC, c."firstName" ASC
-      `, params)
-
+      `
+      console.log('[Contacts API] Executing query with', params.length, 'params')
+      const contacts = await query(queryText, params)
+      console.log('[Contacts API] Query succeeded, found', contacts?.length || 0, 'contacts')
       return NextResponse.json({ contacts: contacts || [] })
     } catch (queryError: any) {
       console.error('[Contacts API] Query error:', queryError)
-      console.error('[Contacts API] Query details:', {
-        selectColumns: selectColumns.length,
-        joinClauses: joinClauses.length,
-        whereClause,
-        paramsCount: params.length
-      })
+      console.error('[Contacts API] Error message:', queryError?.message)
+      console.error('[Contacts API] Error code:', queryError?.code)
+      console.error('[Contacts API] Error detail:', queryError?.detail)
+      console.error('[Contacts API] Query was:', `
+        SELECT ${selectColumns.join(', ')}
+        FROM contacts c
+        ${joinClauses.join(' ')}
+        ${whereClause}
+        ORDER BY c."lastName" ASC, c."firstName" ASC
+      `)
+      console.error('[Contacts API] Params:', JSON.stringify(params))
       throw queryError
     }
   } catch (error: any) {
@@ -259,7 +282,7 @@ export async function POST(request: NextRequest) {
       zipCode || null,
       country || 'US',
       notes || null,
-      tags ? JSON.stringify(tags) : '[]',
+      tags && Array.isArray(tags) ? tags : (tags ? [tags] : []),
       user.id,
     ]
     let paramIndex = 16
