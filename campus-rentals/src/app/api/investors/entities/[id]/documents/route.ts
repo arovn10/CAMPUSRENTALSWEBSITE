@@ -147,22 +147,30 @@ export async function POST(
     )
 
     if (!dbUser) {
-      // Try to find user by email as fallback
-      const dbUserByEmail = await queryOne<{ id: string }>(
-        'SELECT id FROM users WHERE email = $1',
-        [user.email]
-      )
-      
-      if (!dbUserByEmail) {
-        console.error(`User not found in database: ${user.id} / ${user.email}`)
+      // Try to find user by email as fallback (if email is available)
+      if (user.email) {
+        const dbUserByEmail = await queryOne<{ id: string }>(
+          'SELECT id FROM users WHERE email = $1',
+          [user.email]
+        )
+        
+        if (dbUserByEmail) {
+          // Use the email-found user ID
+          user.id = dbUserByEmail.id
+        } else {
+          console.error(`User not found in database: ${user.id} / ${user.email || 'no email'}`)
+          return NextResponse.json(
+            { error: 'User not found in database' },
+            { status: 500 }
+          )
+        }
+      } else {
+        console.error(`User not found in database and no email available: ${user.id}`)
         return NextResponse.json(
           { error: 'User not found in database' },
           { status: 500 }
         )
       }
-      
-      // Use the email-found user ID
-      user.id = dbUserByEmail.id
     }
 
     // Create document record using SQL

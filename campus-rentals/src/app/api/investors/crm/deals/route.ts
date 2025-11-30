@@ -365,7 +365,18 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
 
+    // Check if published column exists for SELECT (do this once before building WHERE clause)
+    const hasPublished = await queryOne<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'deals' 
+        AND column_name = 'published'
+      ) as exists
+    `);
+
     if (fundingStatus) {
+      // Need to join with properties table for fundingStatus filter
       whereConditions.push(`prop."fundingStatus" = $${paramIndex}::text`);
       queryParams.push(fundingStatus);
       paramIndex++;
@@ -380,16 +391,6 @@ export async function GET(request: NextRequest) {
     // If user is investor, only show published deals for properties they've invested in
     // For ADMIN/MANAGER, show ALL deals regardless of published status
     if (user.role === 'INVESTOR') {
-      // Check if published column exists
-      const hasPublished = await queryOne<{ exists: boolean }>(`
-        SELECT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_schema = 'public' 
-          AND table_name = 'deals' 
-          AND column_name = 'published'
-        ) as exists
-      `);
-      
       // Only show published deals to investors
       if (hasPublished?.exists) {
         whereConditions.push(`d.published = true`);
@@ -414,16 +415,11 @@ export async function GET(request: NextRequest) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    // Check if published column exists for SELECT
-    const hasPublished = await queryOne<{ exists: boolean }>(`
-      SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'deals' 
-        AND column_name = 'published'
-      ) as exists
-    `);
-    
+    // Add LEFT JOIN with properties if we're filtering by fundingStatus
+    const joinClause = fundingStatus 
+      ? 'LEFT JOIN properties prop ON d."propertyId" = prop.id'
+      : '';
+
     // Main query - start simple, build up complexity
     // First try the simplest possible query
     let dealsQuery = `
@@ -446,6 +442,7 @@ export async function GET(request: NextRequest) {
         d."createdAt",
         d."updatedAt"${hasPublished?.exists ? ', d.published' : ''}
       FROM deals d
+      ${joinClause}
       ${whereClause}
       ORDER BY d."createdAt" DESC
       LIMIT 1000
