@@ -142,15 +142,26 @@ export async function GET(request: NextRequest) {
       joinClauses.push('LEFT JOIN properties prop ON c."propertyId" = prop.id')
     }
     
-    const contacts = await query(`
-      SELECT ${selectColumns.join(', ')}
-      FROM contacts c
-      ${joinClauses.join(' ')}
-      ${whereClause}
-      ORDER BY c."lastName" ASC, c."firstName" ASC
-    `, params)
+    try {
+      const contacts = await query(`
+        SELECT ${selectColumns.join(', ')}
+        FROM contacts c
+        ${joinClauses.join(' ')}
+        ${whereClause}
+        ORDER BY c."lastName" ASC, c."firstName" ASC
+      `, params)
 
-    return NextResponse.json({ contacts })
+      return NextResponse.json({ contacts: contacts || [] })
+    } catch (queryError: any) {
+      console.error('[Contacts API] Query error:', queryError)
+      console.error('[Contacts API] Query details:', {
+        selectColumns: selectColumns.length,
+        joinClauses: joinClauses.length,
+        whereClause,
+        paramsCount: params.length
+      })
+      throw queryError
+    }
   } catch (error: any) {
     console.error('Error fetching contacts:', error)
     return NextResponse.json(

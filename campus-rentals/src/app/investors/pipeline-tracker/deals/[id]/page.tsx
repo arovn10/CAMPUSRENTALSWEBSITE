@@ -130,6 +130,8 @@ export default function DealDetailPage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [published, setPublished] = useState(false)
   const [updatingPublished, setUpdatingPublished] = useState(false)
+  const [funded, setFunded] = useState(false)
+  const [updatingFunded, setUpdatingFunded] = useState(false)
 
   useEffect(() => {
     if (dealId) {
@@ -158,6 +160,7 @@ export default function DealDetailPage() {
         const data = await response.json()
         setDeal(data)
         setPublished(data.published || false)
+        setFunded(data.property?.fundingStatus === 'FUNDED' || false)
       } else {
         router.push('/investors/pipeline-tracker/deals')
       }
@@ -198,6 +201,47 @@ export default function DealDetailPage() {
       alert('Failed to update published status')
     } finally {
       setUpdatingPublished(false)
+    }
+  }
+
+  const handleToggleFunded = async () => {
+    if (!deal || !deal.propertyId) return
+    
+    setUpdatingFunded(true)
+    try {
+      const token = getAuthToken()
+      const newFundingStatus = funded ? 'FUNDING' : 'FUNDED'
+      
+      // Update the property's funding status
+      const response = await fetch(`/api/investors/properties/${deal.propertyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fundingStatus: newFundingStatus
+        }),
+      })
+
+      if (response.ok) {
+        setFunded(newFundingStatus === 'FUNDED')
+        setDeal({ 
+          ...deal, 
+          property: { 
+            ...deal.property, 
+            fundingStatus: newFundingStatus 
+          } 
+        })
+      } else {
+        const error = await response.json()
+        alert(`Failed to update funding status: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error updating funding status:', error)
+      alert('Failed to update funding status')
+    } finally {
+      setUpdatingFunded(false)
     }
   }
 
@@ -314,6 +358,30 @@ export default function DealDetailPage() {
                   {published ? 'Yes' : 'No'}
                 </span>
               </div>
+              {/* Funded Toggle */}
+              {deal.propertyId && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg">
+                  <label className="text-xs sm:text-sm font-medium text-slate-700">Funded:</label>
+                  <button
+                    onClick={handleToggleFunded}
+                    disabled={updatingFunded}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                      funded ? 'bg-green-600' : 'bg-gray-200'
+                    } ${updatingFunded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    role="switch"
+                    aria-checked={funded}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        funded ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-xs text-slate-600">
+                    {funded ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              )}
               <button
                 onClick={handleDeleteDeal}
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"

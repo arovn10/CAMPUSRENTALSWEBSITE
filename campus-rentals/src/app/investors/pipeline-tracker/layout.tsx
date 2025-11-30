@@ -90,14 +90,14 @@ export default function PipelineTrackerLayout({
   }, [router])
 
   useEffect(() => {
-    if (!isAuthorized) return
+    if (!isAuthorized || !pathname) return
     
     // Determine active tab based on current path
     // Check exact match first, then prefix match
     const currentTab = navigationTabs.find(tab => {
       if (pathname === tab.path) return true
       // For nested routes, check if pathname starts with the tab path followed by /
-      if (pathname?.startsWith(tab.path + '/')) return true
+      if (pathname.startsWith(tab.path + '/')) return true
       return false
     })
     if (currentTab) {

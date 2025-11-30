@@ -158,8 +158,12 @@ export default function PipelineTasks() {
 
       if (response.ok) {
         const data = await response.json()
-        // Ensure deals is always an array
-        setDeals(Array.isArray(data) ? data : [])
+        // Handle both { deals: [...] } and [...] formats
+        const dealsArray = Array.isArray(data) ? data : (data?.deals || data || [])
+        setDeals(dealsArray)
+      } else {
+        console.error('Failed to fetch deals:', response.status)
+        setDeals([])
       }
     } catch (error) {
       console.error('Error fetching deals:', error)

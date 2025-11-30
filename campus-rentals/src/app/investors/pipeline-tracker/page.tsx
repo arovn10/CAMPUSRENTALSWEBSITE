@@ -204,22 +204,7 @@ export default function PipelineTrackerDashboard() {
         </div>
       </div>
 
-      {/* Toggle Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowPipeline(!showPipeline)}
-          className="px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg"
-        >
-          {showPipeline ? 'Hide' : 'Show'} Deal Pipeline
-        </button>
-      </div>
-
-      {/* Deal Pipeline (Toggleable) */}
-      {showPipeline && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <CRMDealPipeline key="pipeline-component" />
-        </div>
-      )}
+      {/* Removed "Show Deal Pipeline" button - deals are now accessible via the Deals tab */}
     </div>
   )
 }

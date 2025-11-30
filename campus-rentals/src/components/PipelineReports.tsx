@@ -87,12 +87,26 @@ export default function PipelineReports() {
     return `${value.toFixed(1)}%`
   }
 
-  // Calculate statistics
-  const totalDeals = deals.length
-  const activeDeals = deals.filter(d => d.dealStatus === 'ACTIVE' || d.fundingStatus === 'FUNDED').length
-  const totalValue = deals.reduce((sum, d) => sum + (d.currentValue || 0), 0)
-  const totalCost = deals.reduce((sum, d) => sum + (d.totalCost || 0), 0)
-  const totalROI = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 0
+  // Calculate statistics from deals with property data
+  const dealsWithProperty = deals.filter(d => d.property)
+  const totalDeals = dealsWithProperty.length
+  const activeDeals = dealsWithProperty.filter(d => d.dealStatus === 'ACTIVE' || d.fundingStatus === 'FUNDED').length
+  
+  // Calculate total invested from all deals (using totalCost or estimatedValue)
+  const totalInvested = dealsWithProperty.reduce((sum, d) => {
+    // Try to get totalCost from property, fallback to deal's totalCost or estimatedValue
+    const cost = d.totalCost || (d.property as any)?.totalCost || 0
+    return sum + cost
+  }, 0)
+  
+  // Calculate total value from all deals
+  const totalValue = dealsWithProperty.reduce((sum, d) => {
+    const value = d.currentValue || (d.property as any)?.currentValue || 0
+    return sum + value
+  }, 0)
+  
+  // Calculate ROI
+  const totalROI = totalInvested > 0 ? ((totalValue - totalInvested) / totalInvested) * 100 : 0
 
   const dealsByStatus = deals.reduce((acc, deal) => {
     const status = deal.dealStatus || 'UNKNOWN'
@@ -106,8 +120,12 @@ export default function PipelineReports() {
     return acc
   }, {} as Record<string, number>)
 
-  const topDeals = [...deals]
-    .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
+  const topDeals = [...dealsWithProperty]
+    .sort((a, b) => {
+      const aValue = a.currentValue || (a.property as any)?.currentValue || 0
+      const bValue = b.currentValue || (b.property as any)?.currentValue || 0
+      return bValue - aValue
+    })
     .slice(0, 5)
 
   return (
@@ -169,7 +187,7 @@ export default function PipelineReports() {
             {formatPercent(totalROI)}
           </p>
           <p className="text-xs text-text mt-1">
-            {formatCurrency(totalValue - totalCost)} gain/loss
+            {formatCurrency(totalValue - totalInvested)} gain/loss
           </p>
         </div>
 
@@ -181,7 +199,7 @@ export default function PipelineReports() {
             <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
           </div>
           <p className="text-xs text-text mb-1">Total Invested</p>
-          <p className="text-2xl font-bold text-secondary">{formatCurrency(totalCost)}</p>
+          <p className="text-2xl font-bold text-secondary">{formatCurrency(totalInvested)}</p>
           <p className="text-xs text-text mt-1">Initial investment</p>
         </div>
       </div>
@@ -268,20 +286,20 @@ export default function PipelineReports() {
               </thead>
               <tbody>
                 {topDeals.map((deal) => {
-                  const roi = deal.totalCost && deal.totalCost > 0
-                    ? ((deal.currentValue || 0) - deal.totalCost) / deal.totalCost * 100
-                    : 0
+                  const dealCost = deal.totalCost || (deal.property as any)?.totalCost || 0
+                  const dealValue = deal.currentValue || (deal.property as any)?.currentValue || 0
+                  const roi = dealCost > 0 ? ((dealValue - dealCost) / dealCost) * 100 : 0
                   return (
                     <tr key={deal.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm text-secondary">{deal.name}</td>
                       <td className="py-3 px-4 text-sm text-text">
-                        {deal.property?.name || 'N/A'}
+                        {deal.property?.name || deal.property?.address || 'N/A'}
                       </td>
                       <td className="py-3 px-4 text-sm text-right font-medium text-secondary">
-                        {formatCurrency(deal.currentValue)}
+                        {formatCurrency(dealValue)}
                       </td>
                       <td className="py-3 px-4 text-sm text-right text-text">
-                        {formatCurrency(deal.totalCost)}
+                        {formatCurrency(dealCost)}
                       </td>
                       <td className={`py-3 px-4 text-sm text-right font-medium ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatPercent(roi)}

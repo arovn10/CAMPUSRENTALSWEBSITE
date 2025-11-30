@@ -49,20 +49,61 @@ export default function PipelineMaps() {
       if (response.ok) {
         const data = await response.json()
         const uniqueProperties = new Map<string, Property>()
-        data.forEach((deal: any) => {
+        const dealsArray = Array.isArray(data) ? data : []
+        
+        // First pass: collect unique properties
+        for (const deal of dealsArray) {
           if (deal.property && !uniqueProperties.has(deal.property.id)) {
             uniqueProperties.set(deal.property.id, {
               id: deal.property.id,
               name: deal.property.name || deal.name,
               address: deal.property.address || null,
-              latitude: null, // Properties don't have lat/lng in schema, would need property_locations table
+              latitude: null,
               longitude: null,
               dealStatus: deal.property.dealStatus || deal.dealStatus || null,
               currentValue: deal.property.currentValue || deal.currentValue || null,
             })
           }
+        }
+        
+        // Second pass: geocode addresses in parallel (with rate limiting)
+        const propertiesArray = Array.from(uniqueProperties.values())
+        const geocodePromises = propertiesArray.map(async (property) => {
+          if (!property.address) return property
+          
+          try {
+            // Add delay to respect Nominatim rate limits (1 request per second)
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            const geocodeResponse = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(property.address!)}&limit=1`,
+              {
+                headers: {
+                  'User-Agent': 'CampusRentals/1.0'
+                }
+              }
+            )
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json()
+              if (geocodeData && geocodeData.length > 0) {
+                property.latitude = parseFloat(geocodeData[0].lat)
+                property.longitude = parseFloat(geocodeData[0].lon)
+              }
+            }
+          } catch (geocodeError) {
+            console.error('Error geocoding address:', geocodeError)
+          }
+          
+          return property
         })
-        setProperties(Array.from(uniqueProperties.values()))
+        
+        // Wait for all geocoding to complete (or timeout after 30 seconds)
+        await Promise.race([
+          Promise.all(geocodePromises),
+          new Promise(resolve => setTimeout(resolve, 30000))
+        ])
+        
+        setProperties(propertiesArray)
       } else {
         console.error('Failed to fetch properties:', response.status)
         setProperties([])
@@ -134,19 +175,38 @@ export default function PipelineMaps() {
             <div className="text-center py-12">
               <MapPinIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-text">No properties with coordinates found</p>
+              <p className="text-xs text-gray-500 mt-2">Addresses are being geocoded...</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${propertiesWithCoords[0]?.longitude - 0.01},${propertiesWithCoords[0]?.latitude - 0.01},${propertiesWithCoords[0]?.longitude + 0.01},${propertiesWithCoords[0]?.latitude + 0.01}&layer=mapnik&marker=${propertiesWithCoords[0]?.latitude},${propertiesWithCoords[0]?.longitude}`}
-                />
+                {/* Calculate bounding box for all properties */}
+                {(() => {
+                  const lats = propertiesWithCoords.map(p => p.latitude!).filter(Boolean)
+                  const lngs = propertiesWithCoords.map(p => p.longitude!).filter(Boolean)
+                  const minLat = Math.min(...lats)
+                  const maxLat = Math.max(...lats)
+                  const minLng = Math.min(...lngs)
+                  const maxLng = Math.max(...lngs)
+                  const padding = 0.01
+                  
+                  // Build markers query string
+                  const markers = propertiesWithCoords.map(p => 
+                    `${p.latitude},${p.longitude}`
+                  ).join('|')
+                  
+                  return (
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${minLng - padding},${minLat - padding},${maxLng + padding},${maxLat + padding}&layer=mapnik&marker=${markers}`}
+                    />
+                  )
+                })()}
               </div>
               <a
                 href={mapUrl}
@@ -154,7 +214,7 @@ export default function PipelineMaps() {
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg text-center text-sm sm:text-base"
               >
-                Open in OpenStreetMap
+                Open in OpenStreetMap ({propertiesWithCoords.length} locations)
               </a>
             </div>
           )}

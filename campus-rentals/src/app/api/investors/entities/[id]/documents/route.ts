@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { investorS3Service } from '@/lib/investorS3Service'
+import { query, queryOne } from '@/lib/db'
 
 // Increase max duration for file uploads
 export const maxDuration = 60
@@ -18,35 +18,33 @@ export async function GET(
 
     const entityId = params.id
 
-    // Verify entity exists
-    const entity = await prisma.entity.findUnique({
-      where: { id: entityId },
-    })
+    // Verify entity exists using SQL
+    const entity = await queryOne<{ id: string }>(
+      'SELECT id FROM entities WHERE id = $1',
+      [entityId]
+    )
 
     if (!entity) {
       return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
     }
 
-    // Get all documents for this entity
-    const documents = await prisma.document.findMany({
-      where: {
-        entityId: entityId,
-        entityType: 'USER', // Entities use USER type in Document model
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    })
+    // Get all documents for this entity using SQL
+    const documents = await query(`
+      SELECT 
+        d.*,
+        jsonb_build_object(
+          'id', u.id,
+          'firstName', u."firstName",
+          'lastName', u."lastName",
+          'email', u.email
+        ) as user
+      FROM documents d
+      LEFT JOIN users u ON d."uploadedBy" = u.id
+      WHERE d."entityId" = $1 AND d."entityType" = 'USER'
+      ORDER BY d."createdAt" DESC
+    `, [entityId])
 
-    return NextResponse.json(documents)
+    return NextResponse.json(documents || [])
   } catch (error) {
     console.error('Error fetching entity documents:', error)
     return NextResponse.json(
@@ -75,10 +73,11 @@ export async function POST(
 
     const entityId = params.id
 
-    // Verify entity exists
-    const entity = await prisma.entity.findUnique({
-      where: { id: entityId },
-    })
+    // Verify entity exists using SQL
+    const entity = await queryOne<{ id: string }>(
+      'SELECT id FROM entities WHERE id = $1',
+      [entityId]
+    )
 
     if (!entity) {
       return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
@@ -141,18 +140,18 @@ export async function POST(
       )
     }
 
-    // Verify user exists in database and get their ID
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { id: true },
-    })
+    // Verify user exists in database and get their ID using SQL
+    const dbUser = await queryOne<{ id: string }>(
+      'SELECT id FROM users WHERE id = $1',
+      [user.id]
+    )
 
     if (!dbUser) {
       // Try to find user by email as fallback
-      const dbUserByEmail = await prisma.user.findUnique({
-        where: { email: user.email },
-        select: { id: true },
-      })
+      const dbUserByEmail = await queryOne<{ id: string }>(
+        'SELECT id FROM users WHERE email = $1',
+        [user.email]
+      )
       
       if (!dbUserByEmail) {
         console.error(`User not found in database: ${user.id} / ${user.email}`)
@@ -166,25 +165,35 @@ export async function POST(
       user.id = dbUserByEmail.id
     }
 
-    // Create document record
-    const document = await prisma.document.create({
-      data: {
-        title,
-        description: description || title,
-        fileName: documentFileName,
-        filePath: documentUrl, // Store S3 URL
-        fileSize: file.size,
-        mimeType: file.type || 'application/pdf',
-        documentType: (documentType as any) || 'OTHER',
-        entityType: 'USER', // Entities use USER type
-        entityId: entityId,
-        isPublic: true,
-        visibleToAdmin: true,
-        visibleToManager: true,
-        visibleToInvestor: false, // Entity documents typically not visible to investors
-        uploadedBy: user.id,
-      },
-    })
+    // Create document record using SQL
+    const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const document = await queryOne(`
+      INSERT INTO documents (
+        id, title, description, "fileName", "filePath", "fileSize", "mimeType",
+        "documentType", "entityType", "entityId", "isPublic",
+        "visibleToAdmin", "visibleToManager", "visibleToInvestor", "uploadedBy",
+        "createdAt", "updatedAt"
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW()
+      )
+      RETURNING *
+    `, [
+      documentId,
+      title,
+      description || title,
+      documentFileName,
+      documentUrl,
+      file.size,
+      file.type || 'application/pdf',
+      documentType || 'OTHER',
+      'USER',
+      entityId,
+      true,
+      true,
+      true,
+      false,
+      user.id
+    ])
 
     return NextResponse.json(document, { status: 201 })
   } catch (error) {
