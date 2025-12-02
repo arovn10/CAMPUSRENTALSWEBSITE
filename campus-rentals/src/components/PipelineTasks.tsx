@@ -148,8 +148,12 @@ export default function PipelineTasks() {
   const fetchDeals = useCallback(async () => {
     try {
       const token = getAuthToken()
-      if (!token) return
+      if (!token) {
+        console.error('No auth token available')
+        return
+      }
 
+      // Fetch deals the same way as the CRM deals tab
       const response = await fetch('/api/investors/crm/deals', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,16 +161,24 @@ export default function PipelineTasks() {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        // Handle both { deals: [...] } and [...] formats
-        const dealsArray = Array.isArray(data) ? data : (data?.deals || data || [])
-        setDeals(dealsArray)
+        const deals = await response.json()
+        // API returns array directly (same as CRMDealPipeline)
+        const dealsArray = Array.isArray(deals) ? deals : []
+        // Extract just id and name for the dropdown
+        const dealsForDropdown = dealsArray.map((deal: any) => ({
+          id: deal.id,
+          name: deal.name || deal.property?.name || `Deal ${deal.id}`
+        }))
+        setDeals(dealsForDropdown)
+        console.log('Fetched deals for tasks:', dealsForDropdown.length, 'deals')
       } else {
-        console.error('Failed to fetch deals:', response.status)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to fetch deals:', response.status, response.statusText, errorData)
         setDeals([])
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
+      setDeals([])
     }
   }, [])
 

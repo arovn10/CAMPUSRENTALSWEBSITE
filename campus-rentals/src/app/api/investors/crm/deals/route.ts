@@ -411,17 +411,18 @@ export async function GET(request: NextRequest) {
       console.log(`[CRM Deals] Admin/Manager view: showing ALL deals (including unpublished)`);
     }
 
-    const whereClause = whereConditions.length > 0 
-      ? `WHERE ${whereConditions.join(' AND ')}`
-      : '';
-
     // Add LEFT JOIN with properties if we're filtering by fundingStatus
     const joinClause = fundingStatus 
       ? 'LEFT JOIN properties prop ON d."propertyId" = prop.id'
       : '';
 
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
     // Main query - start simple, build up complexity
     // First try the simplest possible query
+    // Handle tags as TEXT[] - use COALESCE to ensure it's always an array
     let dealsQuery = `
       SELECT 
         d.id,
@@ -436,7 +437,7 @@ export async function GET(request: NextRequest) {
         d."estimatedValue",
         d."estimatedCloseDate",
         d.source,
-        d.tags,
+        COALESCE(d.tags, ARRAY[]::TEXT[]) as tags,
         d.section,
         d."assignedToId",
         d."createdAt",
@@ -508,15 +509,32 @@ export async function GET(request: NextRequest) {
             properties.forEach((p: any) => propertyMap.set(p.id, p));
           }
           
-          // Enrich deals
-          deals = deals.map(deal => ({
-            ...deal,
-            pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
-            stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
-            property: deal.propertyId ? (propertyMap.get(deal.propertyId) || null) : null,
-            assignedTo: null,
-            _count: { tasks: 0, notes: 0, relationships: 0 }
-          }));
+          // Enrich deals - handle tags as TEXT[] array
+          deals = deals.map(deal => {
+            // Ensure tags is always an array
+            let tags = deal.tags
+            if (!Array.isArray(tags)) {
+              if (typeof tags === 'string') {
+                try {
+                  tags = JSON.parse(tags)
+                } catch {
+                  tags = []
+                }
+              } else {
+                tags = []
+              }
+            }
+            
+            return {
+              ...deal,
+              tags: tags,
+              pipeline: deal.pipelineId ? (pipelineMap.get(deal.pipelineId) || null) : null,
+              stage: deal.stageId ? (stageMap.get(deal.stageId) || null) : null,
+              property: deal.propertyId ? (propertyMap.get(deal.propertyId) || null) : null,
+              assignedTo: null,
+              _count: { tasks: 0, notes: 0, relationships: 0 }
+            }
+          });
         } catch (enrichError: any) {
           console.error(`[CRM Deals] Error enriching deals:`, enrichError?.message);
           // Continue with basic deals data
@@ -527,22 +545,43 @@ export async function GET(request: NextRequest) {
       console.error(`[CRM Deals] Error message:`, error?.message);
       console.error(`[CRM Deals] Error code:`, error?.code);
       console.error(`[CRM Deals] Error detail:`, error?.detail);
+      console.error(`[CRM Deals] Error hint:`, error?.hint);
       console.error(`[CRM Deals] Query was:`, dealsQuery);
       console.error(`[CRM Deals] Params:`, JSON.stringify(queryParams));
+      console.error(`[CRM Deals] Join clause:`, joinClause);
+      console.error(`[CRM Deals] Where clause:`, whereClause);
+      // Return empty array instead of failing - allows frontend to continue
       deals = [];
     }
     
     console.log(`[CRM Deals] Returning ${deals?.length || 0} deals (filters: pipelineId=${pipelineId || 'all'}, stageId=${stageId || 'none'}, search=${search || 'none'}, fundingStatus=${fundingStatus || 'all'})`);
 
     // Transform the results to match expected format
-    const transformedDeals = (deals || []).map((deal: any) => ({
-      ...deal,
-      pipeline: deal.pipeline || null,
-      stage: deal.stage || null,
-      property: deal.property || null,
-      assignedTo: deal.assignedTo || null,
-      _count: deal._count || { tasks: 0, notes: 0, relationships: 0 },
-    }));
+    // Ensure tags is always an array
+    const transformedDeals = (deals || []).map((deal: any) => {
+      let tags = deal.tags
+      if (!Array.isArray(tags)) {
+        if (typeof tags === 'string') {
+          try {
+            tags = JSON.parse(tags)
+          } catch {
+            tags = []
+          }
+        } else {
+          tags = []
+        }
+      }
+      
+      return {
+        ...deal,
+        tags: tags,
+        pipeline: deal.pipeline || null,
+        stage: deal.stage || null,
+        property: deal.property || null,
+        assignedTo: deal.assignedTo || null,
+        _count: deal._count || { tasks: 0, notes: 0, relationships: 0 },
+      }
+    });
 
     return NextResponse.json(transformedDeals);
   } catch (error: any) {
