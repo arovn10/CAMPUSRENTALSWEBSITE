@@ -140,6 +140,35 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Look for any deal files on this property that appear to be tied to this distribution.
+    // We tag refinance statements with "Distribution ID: {id}" in the description when uploading.
+    let attachedFiles: Array<{
+      id: string
+      originalName: string
+      createdAt: Date
+      description: string | null
+      propertyId: string
+    }> = []
+
+    if (waterfallDistribution.waterfallStructure.propertyId) {
+      attachedFiles = await prisma.dealFile.findMany({
+        where: {
+          propertyId: waterfallDistribution.waterfallStructure.propertyId,
+          description: {
+            contains: distributionId,
+          },
+        },
+        select: {
+          id: true,
+          originalName: true,
+          createdAt: true,
+          description: true,
+          propertyId: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    }
+    
     return NextResponse.json({
       distribution: waterfallDistribution,
       detailedBreakdown: {
@@ -150,9 +179,10 @@ export async function GET(request: NextRequest) {
           totalDistributed: waterfallDistribution.totalAmount,
           totalEntities: entityBreakdown.length,
           totalInvestors: uniqueInvestors.size,
-          tiersProcessed: Object.keys(breakdownByTier).length
-        }
-      }
+          tiersProcessed: Object.keys(breakdownByTier).length,
+        },
+      },
+      attachedFiles,
     })
   } catch (error) {
     console.error('Error fetching distribution breakdown:', error)

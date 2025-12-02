@@ -273,6 +273,7 @@ export default function InvestmentDetailPage() {
   })
   const [refinanceStatementFile, setRefinanceStatementFile] = useState<File | null>(null)
   const [refinanceStatementDescription, setRefinanceStatementDescription] = useState('')
+  const [attachedFileError, setAttachedFileError] = useState<string | null>(null)
   const [applyWaterfallData, setApplyWaterfallData] = useState({
     waterfallStructureId: '',
     entityInvestmentId: ''
@@ -1952,15 +1953,23 @@ export default function InvestmentDetailPage() {
               )
             }
 
-            await fetch(`/api/investors/properties/${investment.property.id}/files`, {
+            const uploadResponse = await fetch(`/api/investors/properties/${investment.property.id}/files`, {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${getAuthToken()}`,
               },
               body: formData,
             })
+
+            if (!uploadResponse.ok) {
+              console.error('Failed to upload refinance statement for distribution')
+              setAttachedFileError('Statement uploaded failed, but the distribution was processed successfully. You can retry attaching it from the Deal Files section.')
+            } else {
+              setAttachedFileError(null)
+            }
           } catch (uploadError) {
             console.error('Error uploading refinance statement to deal files:', uploadError)
+            setAttachedFileError('Statement upload failed, but the distribution was processed successfully.')
           } finally {
             setRefinanceStatementFile(null)
             setRefinanceStatementDescription('')
@@ -5864,6 +5873,11 @@ export default function InvestmentDetailPage() {
                     <p className="text-xs text-gray-500 mt-1">
                       If provided, the statement will be saved into the deal&apos;s files and tagged with this distribution.
                     </p>
+                    {attachedFileError && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {attachedFileError}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -6885,6 +6899,53 @@ export default function InvestmentDetailPage() {
             </div>
             
             <div className="space-y-6">
+              {/* Attached refinance / closing statements */}
+              {Array.isArray(breakdownData.attachedFiles) && breakdownData.attachedFiles.length > 0 && (
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-900 mb-3">📄 Attached Closing Statements</h4>
+                  <ul className="space-y-2">
+                    {breakdownData.attachedFiles.map((file: any) => (
+                      <li key={file.id} className="flex items-center justify-between text-sm">
+                        <div>
+                          <p className="font-medium text-slate-900">{file.originalName}</p>
+                          {file.description && (
+                            <p className="text-xs text-slate-500 line-clamp-1">{file.description}</p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(
+                                `/api/investors/properties/${file.propertyId}/files/${file.id}`,
+                                {
+                                  headers: {
+                                    Authorization: `Bearer ${getAuthToken()}`,
+                                  },
+                                }
+                              )
+                              if (res.ok) {
+                                const data = await res.json()
+                                if (data.url) {
+                                  window.open(data.url, '_blank')
+                                }
+                              } else {
+                                console.error('Failed to fetch file URL for attached statement')
+                              }
+                            } catch (err) {
+                              console.error('Error opening attached statement:', err)
+                            }
+                          }}
+                          className="ml-4 inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+                        >
+                          Open
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Summary Section */}
               {breakdownData.detailedBreakdown?.summary && (
                 <div className="bg-blue-50 rounded-lg p-4">
