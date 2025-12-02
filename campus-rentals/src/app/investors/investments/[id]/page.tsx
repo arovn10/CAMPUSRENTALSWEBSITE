@@ -268,8 +268,11 @@ export default function InvestmentDetailPage() {
     originationFees: '',
     closingFees: '',
     closingFeesItems: [] as { category: string; amount: string }[],
-    prepaymentPenalty: ''
+    prepaymentPenalty: '',
+    cashToBorrower: '',
   })
+  const [refinanceStatementFile, setRefinanceStatementFile] = useState<File | null>(null)
+  const [refinanceStatementDescription, setRefinanceStatementDescription] = useState('')
   const [applyWaterfallData, setApplyWaterfallData] = useState({
     waterfallStructureId: '',
     entityInvestmentId: ''
@@ -1878,8 +1881,9 @@ export default function InvestmentDetailPage() {
         prepaymentPenalty: distributionData.prepaymentPenalty,
         closingFeesItems: (distributionData.closingFeesItems || []).map((i: any) => ({
           category: i.category,
-          amount: parseFloat(i.amount || '0') || 0
-        }))
+          amount: parseFloat(i.amount || '0') || 0,
+        })),
+        cashToBorrower: parseFloat(distributionData.cashToBorrower || distributionData.totalAmount || '0') || 0,
       })
     }
     
@@ -1924,6 +1928,44 @@ export default function InvestmentDetailPage() {
         breakdownMessage += `• Individual Investors: ${result.detailedBreakdown.summary.totalInvestors}\n\n`
         
         breakdownMessage += `📋 Detailed Breakdown:\n\n`
+
+        // If a refinance statement file was provided, upload it to the deal files now
+        if (
+          distributionData.distributionType === 'REFINANCE' &&
+          refinanceStatementFile &&
+          investment?.property?.id
+        ) {
+          try {
+            const formData = new FormData()
+            formData.append('file', refinanceStatementFile)
+            if (refinanceStatementDescription) {
+              formData.append(
+                'description',
+                refinanceStatementDescription
+              )
+            } else {
+              const distId = result.waterfallDistribution?.id
+              const baseDescription = `Refinance statement for distribution on ${distributionData.distributionDate}`
+              formData.append(
+                'description',
+                distId ? `${baseDescription} (Distribution ID: ${distId})` : baseDescription
+              )
+            }
+
+            await fetch(`/api/investors/properties/${investment.property.id}/files`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${getAuthToken()}`,
+              },
+              body: formData,
+            })
+          } catch (uploadError) {
+            console.error('Error uploading refinance statement to deal files:', uploadError)
+          } finally {
+            setRefinanceStatementFile(null)
+            setRefinanceStatementDescription('')
+          }
+        }
         
         // Add breakdown by tier
         Object.entries(result.detailedBreakdown.byTier).forEach(([tierName, tierData]: [string, any]) => {
@@ -5550,7 +5592,7 @@ export default function InvestmentDetailPage() {
                   Choose the waterfall structure that defines how this distribution will be split among investors
                 </p>
               </div>
-              {/* Total Amount - Greyed out (readOnly) when refinance, but still visible */}
+              {/* Total Amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Amount
@@ -5560,15 +5602,14 @@ export default function InvestmentDetailPage() {
                   step="0.01"
                   value={distributionData.totalAmount}
                   onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${distributionData.distributionType === 'REFINANCE' ? 'bg-gray-100 text-gray-500' : ''}`}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
-                  readOnly={distributionData.distributionType === 'REFINANCE'}
                   placeholder="0.00"
                 />
                   <p className="text-xs text-gray-500 mt-1">
                     {distributionData.distributionType === 'REFINANCE'
-                      ? 'Calculated distribution amount after subtracting old debt and all fees from refinance amount'
-                      : 'The total amount to be distributed (e.g., $50,000 in rental income)'}
+                      ? 'For refinance distributions, this will be kept in sync with the Cash to Borrower amount below.'
+                      : 'The total amount to be distributed (e.g., $50,000 in rental income).'}
                   </p>
               </div>
               <div>
@@ -5620,8 +5661,8 @@ export default function InvestmentDetailPage() {
                     </p>
                     <ul className="text-xs text-blue-700 mt-2 ml-4 list-disc">
                       <li>Set the new debt amount to the refinance amount</li>
-                      <li>Calculate distribution as: Refinance Amount - Previous Debt - All Fees</li>
-                      <li>Distribute the remaining amount to investors</li>
+                      <li>Use the <strong>Cash to Borrower</strong> amount as the total distribution through the waterfall</li>
+                      <li>Optionally upload a refinance statement which is saved into the deal files</li>
                     </ul>
                   </div>
                   
@@ -5635,21 +5676,12 @@ export default function InvestmentDetailPage() {
                       value={distributionData.refinanceAmount}
                       onChange={(e) => {
                         const refinanceAmount = parseFloat(e.target.value) || 0
-                        const originationFees = parseFloat(distributionData.originationFees) || 0
-                        const closingFees = parseFloat(distributionData.closingFees) || 0
-                        const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
-                        
-                        // Get current debt amount from the investment's property
-                        const currentDebtAmount = investment?.property?.debtAmount || 0
-                        
-                        // Calculate distribution amount: Refinance Amount - Previous Debt - All Fees
-                        const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFees - prepaymentPenalty
-                        
                         setDistributionData({ 
                           ...distributionData, 
                           refinanceAmount: e.target.value,
                           newDebtAmount: e.target.value, // New debt becomes the refinance amount
-                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
+                          // Keep totalAmount in sync with cashToBorrower if it was already entered
+                          totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5670,21 +5702,10 @@ export default function InvestmentDetailPage() {
                       step="0.01"
                       value={distributionData.originationFees}
                       onChange={(e) => {
-                        const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
-                        const originationFees = parseFloat(e.target.value) || 0
-                        const closingFees = parseFloat(distributionData.closingFees) || 0
-                        const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
-                        
-                        // Get current debt amount from the investment's property
-                        const currentDebtAmount = investment?.property?.debtAmount || 0
-                        
-                        // Calculate distribution amount: Refinance Amount - Previous Debt - All Fees
-                        const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFees - prepaymentPenalty
-                        
                         setDistributionData({ 
                           ...distributionData, 
                           originationFees: e.target.value,
-                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
+                          totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5724,24 +5745,24 @@ export default function InvestmentDetailPage() {
                               const items = [...distributionData.closingFeesItems]
                               items[idx] = { ...items[idx], amount: e.target.value }
                               // Recalculate totals
-                              const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
-                              const originationFees = parseFloat(distributionData.originationFees) || 0
-                              const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
                               const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
-                              const currentDebtAmount = investment?.property?.debtAmount || 0
-                              const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
-                              setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount.toString() })
+                              setDistributionData({
+                                ...distributionData,
+                                closingFeesItems: items,
+                                closingFees: closingFeesSum.toString(),
+                                totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
+                              })
                             }}
                           />
                           <button type="button" className="col-span-1 text-red-600 hover:text-red-800" onClick={() => {
                             const items = distributionData.closingFeesItems.filter((_, i) => i !== idx)
-                            const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
-                            const originationFees = parseFloat(distributionData.originationFees) || 0
-                            const prepaymentPenalty = parseFloat(distributionData.prepaymentPenalty) || 0
                             const closingFeesSum = items.reduce((s, it) => s + (parseFloat(it.amount || '0') || 0), 0)
-                            const currentDebtAmount = investment?.property?.debtAmount || 0
-                            const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFeesSum - prepaymentPenalty
-                            setDistributionData({ ...distributionData, closingFeesItems: items, closingFees: closingFeesSum.toString(), totalAmount: distributionAmount.toString() })
+                            setDistributionData({
+                              ...distributionData,
+                              closingFeesItems: items,
+                              closingFees: closingFeesSum.toString(),
+                              totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
+                            })
                           }}>
                             <XMarkIcon className="h-5 w-5" />
                           </button>
@@ -5766,21 +5787,10 @@ export default function InvestmentDetailPage() {
                       step="0.01"
                       value={distributionData.prepaymentPenalty}
                       onChange={(e) => {
-                        const refinanceAmount = parseFloat(distributionData.refinanceAmount) || 0
-                        const originationFees = parseFloat(distributionData.originationFees) || 0
-                        const closingFees = parseFloat(distributionData.closingFees) || 0
-                        const prepaymentPenalty = parseFloat(e.target.value) || 0
-                        
-                        // Get current debt amount from the investment's property
-                        const currentDebtAmount = investment?.property?.debtAmount || 0
-                        
-                        // Calculate distribution amount: Refinance Amount - Previous Debt - All Fees
-                        const distributionAmount = refinanceAmount - currentDebtAmount - originationFees - closingFees - prepaymentPenalty
-                        
                         setDistributionData({ 
                           ...distributionData, 
                           prepaymentPenalty: e.target.value,
-                          totalAmount: distributionAmount.toString() // Use calculated distribution amount
+                          totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5800,7 +5810,59 @@ export default function InvestmentDetailPage() {
                       </span>
                     </div>
                     <p className="text-xs text-green-600 mt-1">
-                      Refinance Amount - Previous Debt - Origination Fees - Closing Fees - Prepayment Penalty
+                      This matches the Cash to Borrower amount and is what gets distributed through the waterfall.
+                    </p>
+                  </div>
+
+                  {/* Cash to Borrower (controls distribution amount) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cash to Borrower (Distribution Amount) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={distributionData.cashToBorrower}
+                      onChange={(e) => {
+                        const cashToBorrower = e.target.value
+                        setDistributionData({
+                          ...distributionData,
+                          cashToBorrower,
+                          totalAmount: cashToBorrower, // keep waterfall amount in sync
+                        })
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This is the cash-out amount that will flow through the distribution waterfall to investors.
+                    </p>
+                  </div>
+
+                  {/* Optional refinance statement upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Refinance Statement (optional)
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null
+                        setRefinanceStatementFile(file)
+                      }}
+                      className="block w-full text-sm text-gray-900 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <input
+                      type="text"
+                      value={refinanceStatementDescription}
+                      onChange={(e) => setRefinanceStatementDescription(e.target.value)}
+                      placeholder="Short description for this statement (optional)"
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      If provided, the statement will be saved into the deal&apos;s files and tagged with this distribution.
                     </p>
                   </div>
                 </div>

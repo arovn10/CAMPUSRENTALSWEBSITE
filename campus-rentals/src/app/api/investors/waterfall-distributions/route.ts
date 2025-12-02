@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       property = waterfallStructure.property
     }
 
-    // If refinance, compute distribution by subtracting old debt and fees from new debt
+    // If refinance, compute distribution based on explicit "cash to borrower" amount
     let totalDistributionAmount = body.totalAmount
     let debtAmount = property.debtAmount || 0
     let isRefinancing = false
@@ -166,24 +166,31 @@ export async function POST(request: NextRequest) {
       const newDebtAmount = parseFloat(body.newDebtAmount || '0') || 0
       const originationFees = parseFloat(body.originationFees || '0') || 0
       const prepaymentPenalty = parseFloat(body.prepaymentPenalty || '0') || 0
-      const closingFeesList: Array<{ category: string; amount: number }> = Array.isArray(body.closingFeesItems) ? body.closingFeesItems.map((i: any) => ({ category: String(i.category || ''), amount: Number(i.amount || 0) })) : []
+      const closingFeesList: Array<{ category: string; amount: number }> = Array.isArray(body.closingFeesItems)
+        ? body.closingFeesItems.map((i: any) => ({
+            category: String(i.category || ''),
+            amount: Number(i.amount || 0),
+          }))
+        : []
       const closingFees = closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)
+      const cashToBorrower = parseFloat(body.cashToBorrower || body.totalAmount || '0') || 0
 
       // For refinance, the new debt amount becomes the current debt
       debtAmount = newDebtAmount
       isRefinancing = true
-      
-      // Calculate distribution amount: New Debt - Old Debt - Origination - Closing - Prepayment
-      const oldDebtAmount = property.debtAmount || 0
-      totalDistributionAmount = newDebtAmount - oldDebtAmount - originationFees - closingFees - prepaymentPenalty
-      
+
+      // For refinance distributions, the user explicitly specifies the cash that is being
+      // distributed to the borrower. That number should drive the waterfall, NOT a
+      // derived value from the refinance math.
+      totalDistributionAmount = cashToBorrower
+
       // Ensure distribution amount is not negative
       if (totalDistributionAmount < 0) {
         totalDistributionAmount = 0
       }
-      
-      // For refinance, we don't subtract debt again since it's already accounted for in the calculation
-      // The distribution amount is what's available after paying off old debt and fees
+
+      // We still record the refinance economics (old debt, new debt, fees) for reporting,
+      // but we no longer recompute the distribution amount from them.
     } else {
       // For non-refinance distributions, subtract debt as usual
       totalDistributionAmount = totalDistributionAmount - debtAmount
