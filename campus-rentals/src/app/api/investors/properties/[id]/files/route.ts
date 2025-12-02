@@ -145,12 +145,18 @@ export async function POST(
     }
 
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const folderId = formData.get('folderId') as string | null;
-    const description = formData.get('description') as string | null;
+    const file = formData.get('file') as File | null;
+    const folderIdRaw = formData.get('folderId');
+    const folderId = folderIdRaw && typeof folderIdRaw === 'string' && folderIdRaw.trim() !== '' ? folderIdRaw.trim() : null;
+    const descriptionRaw = formData.get('description');
+    const description = descriptionRaw && typeof descriptionRaw === 'string' && descriptionRaw.trim() !== '' ? descriptionRaw.trim() : null;
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ error: 'No file provided or invalid file' }, { status: 400 });
+    }
+
+    if (file.size === 0) {
+      return NextResponse.json({ error: 'File is empty' }, { status: 400 });
     }
 
     // Check if property exists
@@ -177,52 +183,89 @@ export async function POST(
     }
 
     // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(await file.arrayBuffer());
+    } catch (error) {
+      console.error('Error converting file to buffer:', error);
+      return NextResponse.json(
+        { error: 'Failed to process file', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
 
     // Upload to S3
-    const uploadResult = await investorS3Service.uploadFile({
-      fileName: file.name,
-      buffer,
-      contentType: file.type,
-      propertyId: params.id,
-    });
+    let uploadResult;
+    try {
+      uploadResult = await investorS3Service.uploadFile({
+        fileName: file.name,
+        buffer,
+        contentType: file.type || 'application/octet-stream',
+        propertyId: params.id,
+      });
+    } catch (error) {
+      console.error('Error uploading file to S3:', error);
+      return NextResponse.json(
+        { error: 'Failed to upload file to storage', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
 
     // Save file record
-    const dealFile = await prisma.dealFile.create({
-      data: {
-        propertyId: params.id,
-        folderId: folderId || null,
-        fileName: uploadResult.key.split('/').pop() || file.name,
-        originalName: file.name,
-        filePath: uploadResult.url,
-        fileSize: buffer.length,
-        mimeType: file.type,
-        description: description || null,
-        uploadedBy: user.id,
-      },
-      include: {
-        folder: {
-          select: {
-            id: true,
-            name: true,
+    let dealFile;
+    try {
+      dealFile = await prisma.dealFile.create({
+        data: {
+          propertyId: params.id,
+          folderId: folderId || null,
+          fileName: uploadResult.key.split('/').pop() || file.name,
+          originalName: file.name,
+          filePath: uploadResult.url,
+          fileSize: buffer.length,
+          mimeType: file.type || 'application/octet-stream',
+          description: description || null,
+          uploadedBy: user.id,
+        },
+        include: {
+          folder: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          uploader: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
           },
         },
-        uploader: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('Error saving file record to database:', error);
+      // Try to clean up S3 file if database save fails
+      try {
+        const key = uploadResult.key || uploadResult.url;
+        await investorS3Service.deletePhoto(key);
+      } catch (cleanupError) {
+        console.error('Error cleaning up S3 file after database failure:', cleanupError);
+      }
+      return NextResponse.json(
+        { error: 'Failed to save file record', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ file: dealFile }, { status: 201 });
   } catch (error) {
     console.error('Error uploading file:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { errorMessage, errorStack });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     );
   }
