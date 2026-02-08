@@ -97,7 +97,8 @@ function getOldBackendIdsForProperty(propertyName: string): number[] {
 async function fetchPhotosFromOldBackend(propertyId: number): Promise<OldBackendPhoto[]> {
   try {
     // Use the same endpoint as the main website uses
-    const response = await fetch(`https://abode-backend.onrender.com/api/photos/get/${propertyId}`, {
+    const ABODE_API = process.env.NEXT_PUBLIC_ABODE_API_BASE_URL || 'https://abodingo-backend.onrender.com/api';
+    const response = await fetch(`${ABODE_API}/photos/get/${propertyId}`, {
       cache: 'no-store',
     })
     

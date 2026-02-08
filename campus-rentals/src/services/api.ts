@@ -1,7 +1,8 @@
 // API Service for Campus Rentals
 // Simplified and optimized for better performance
+import { ABODE_API_BASE_URL } from '@/lib/apiConfig';
 
-const API_BASE_URL = 'https://abode-backend.onrender.com/api';
+const API_BASE_URL = ABODE_API_BASE_URL;
 const CACHE_DURATION = 2 * 60 * 1000; // Reduced to 2 minutes to prevent memory issues
 
 // Simplified in-memory cache

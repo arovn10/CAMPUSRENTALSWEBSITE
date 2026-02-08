@@ -4,11 +4,12 @@ This document lists all API endpoints used by Campus Rentals: **external Abode b
 
 ---
 
-## 1. External Abode Backend (AbodeBackend)
+## 1. External Abode / Abodingo Backend
 
-**Base URL:** `https://abode-backend.onrender.com/api`
+**Base URL (default):** `https://abodingo-backend.onrender.com/api`  
+Override with `NEXT_PUBLIC_ABODE_API_BASE_URL` in `.env` if needed. Configured in `src/lib/apiConfig.ts` and used by `src/services/api.ts`, `src/utils/api.ts`, and the seed script.
 
-Canonical paths from **AbodeBackend** (abodingo-website repo: `AbodeBackend/Routing.cs`, `Routing/Photos/PhotosRouting.cs`, `Routing/Amenities/AmenitiesRouting.cs`). Campus Rentals uses these in `src/services/api.ts` and `src/utils/api.ts`.
+Properties are fetched for the account **campusrentalsnola** via `GET /property/campusrentalsnola`. Paths match **AbodeBackend** (abodingo-website repo).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

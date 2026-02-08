@@ -1,3 +1,5 @@
+import { ABODE_API_BASE_URL } from '@/lib/apiConfig';
+
 export interface Photo {
   propertyKey: number;
   photoLink: string;
@@ -40,7 +42,7 @@ export interface PropertyAmenities {
 
 export async function fetchProperties(): Promise<Property[]> {
   try {
-    const response = await fetch('https://abode-backend.onrender.com/api/property/campusrentalsnola', {
+    const response = await fetch(`${ABODE_API_BASE_URL}/property/campusrentalsnola`, {
       cache: 'no-store',
     });
     if (!response.ok) {
@@ -55,7 +57,7 @@ export async function fetchProperties(): Promise<Property[]> {
 
 export async function fetchPropertyPhotos(propertyId: number): Promise<Photo[]> {
   try {
-    const response = await fetch(`https://abode-backend.onrender.com/api/photos/get/${propertyId}`, {
+    const response = await fetch(`${ABODE_API_BASE_URL}/photos/get/${propertyId}`, {
       cache: 'no-store',
     });
     if (!response.ok) {
@@ -70,7 +72,7 @@ export async function fetchPropertyPhotos(propertyId: number): Promise<Photo[]> 
 
 export async function fetchPropertyAmenities(propertyId: number): Promise<PropertyAmenities | null> {
   try {
-    const response = await fetch(`https://abode-backend.onrender.com/api/amenities/${propertyId}`, {
+    const response = await fetch(`${ABODE_API_BASE_URL}/amenities/${propertyId}`, {
       cache: 'no-store',
     });
     if (!response.ok) {
