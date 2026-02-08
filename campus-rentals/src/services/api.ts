@@ -74,20 +74,20 @@ async function apiRequest<T>(
   }
 }
 
-// Essential property API calls only
+// Essential property API calls only (paths match AbodeBackend Routing.cs)
 export const propertyAPI = {
   getProperties: async (): Promise<any[]> => {
     return apiRequest('/property/campusrentalsnola');
   },
   getPropertyById: async (id: number): Promise<any> => {
-    return apiRequest(`/property/${id}`);
+    return apiRequest(`/propertyfromID/${id}`);
   },
 };
 
-// Essential photo API calls only
+// Essential photo API calls only (paths match AbodeBackend PhotosRouting.cs)
 export const photoAPI = {
   getPropertyPhotos: async (propertyId: number): Promise<any[]> => {
-    return apiRequest(`/photos/property/${propertyId}`);
+    return apiRequest(`/photos/get/${propertyId}`);
   },
 };
 
