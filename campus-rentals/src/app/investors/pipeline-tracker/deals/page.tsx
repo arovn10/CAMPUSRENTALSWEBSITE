@@ -72,7 +72,8 @@ export default function PipelineTrackerDealsPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setDeals(Array.isArray(data) ? data : [])
+        const list = Array.isArray(data) ? data : (data?.deals && Array.isArray(data.deals) ? data.deals : [])
+        setDeals(list)
       } else {
         setDeals([])
       }
@@ -206,11 +207,11 @@ export default function PipelineTrackerDealsPage() {
           </div>
           {isAdminOrManager && (
             <button
+              type="button"
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              className="bg-accent text-white"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
             >
-              <PlusIcon className="h-5 w-5" />
+              <PlusIcon className="h-4 w-4" />
               New deal
             </button>
           )}
@@ -342,10 +343,11 @@ export default function PipelineTrackerDealsPage() {
             </p>
             {isAdminOrManager && (
               <button
+                type="button"
                 onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-accent text-white font-semibold rounded-xl hover:opacity-90"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
-                <PlusIcon className="h-5 w-5" />
+                <PlusIcon className="h-4 w-4" />
                 New deal
               </button>
             )}

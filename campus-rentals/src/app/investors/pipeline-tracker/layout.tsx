@@ -7,30 +7,20 @@ import {
   ChartBarIcon,
   ListBulletIcon,
   MapIcon,
-  CalendarDaysIcon,
-  ClockIcon,
-  CubeIcon,
-  FolderIcon,
   UserGroupIcon,
   CogIcon,
   DocumentChartBarIcon,
-  EllipsisHorizontalIcon,
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 
-/* Nav: Overview, List, Map, Timeline, Upcoming Dates, Unit Summary, Deal Files, Contacts + Tasks, Reports, More */
+/* Nav: Overview, List, Map, Contacts, Tasks, Reports (no placeholder "More" tabs) */
 const navigationTabs = [
   { id: 'overview', label: 'Overview', icon: ChartBarIcon, path: '/investors/pipeline-tracker', exact: true },
   { id: 'list', label: 'List', icon: ListBulletIcon, path: '/investors/pipeline-tracker/deals' },
   { id: 'map', label: 'Map', icon: MapIcon, path: '/investors/pipeline-tracker/maps' },
-  { id: 'timeline', label: 'Timeline', icon: CalendarDaysIcon, path: '/investors/pipeline-tracker/deals', exact: false },
-  { id: 'upcoming', label: 'Upcoming Dates', icon: ClockIcon, path: '/investors/pipeline-tracker', exact: false },
-  { id: 'units', label: 'Unit Summary', icon: CubeIcon, path: '/investors/pipeline-tracker/more' },
-  { id: 'files', label: 'Deal Files', icon: FolderIcon, path: '/investors/pipeline-tracker/more' },
   { id: 'contacts', label: 'Contacts', icon: UserGroupIcon, path: '/investors/pipeline-tracker/contacts' },
   { id: 'tasks', label: 'Tasks', icon: CogIcon, path: '/investors/pipeline-tracker/tasks' },
   { id: 'reports', label: 'Reports', icon: DocumentChartBarIcon, path: '/investors/pipeline-tracker/reports' },
-  { id: 'more', label: 'More', icon: EllipsisHorizontalIcon, path: '/investors/pipeline-tracker/more' },
 ]
 
 export default function PipelineTrackerLayout({
