@@ -110,8 +110,8 @@ export async function POST() {
     console.log('🖼️ Cleaning old image cache...');
     cleanOldCache();
     
-    // Fetch fresh property data from API (ALL FIELDS)
-    console.log('📡 Fetching fresh property data from backend API...');
+    // Fetch fresh listing data from Abodingo (properties, photos, amenities). See docs/ADMIN-DATA-SOURCES.md.
+    console.log('📡 Fetching fresh property data from backend API (Abodingo)...');
     console.log('   📋 This includes: property_id, username, address, name, description');
     console.log('   🛏️ bedrooms, bathrooms, price, squareFeet, amenities, leaseTerms');
     console.log('   🏫 photo, school - ALL property data points');

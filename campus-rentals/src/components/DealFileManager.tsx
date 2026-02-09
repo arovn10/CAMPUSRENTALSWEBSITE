@@ -231,9 +231,22 @@ export default function DealFileManager({
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        // Open signed URL in new tab for download
+      if (!response.ok) return;
+      const data = await response.json();
+
+      if (data.local) {
+        const downloadRes = await fetch(data.url, {
+          headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        if (!downloadRes.ok) return;
+        const blob = await downloadRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = data.fileName || file.originalName;
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+      } else {
         window.open(data.url, '_blank');
       }
     } catch (error) {

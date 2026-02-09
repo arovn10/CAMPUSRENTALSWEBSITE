@@ -14,12 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
-    }
+    // Any authenticated user can add a note to a deal (for full pipeline tracking)
 
     const body = await request.json();
     const { dealId, content, isPrivate } = body;

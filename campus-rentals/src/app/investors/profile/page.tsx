@@ -187,7 +187,7 @@ export default function InvestorProfilePage() {
             </div>
             <button
               onClick={() => router.push('/investors/dashboard')}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
               Back to Dashboard
             </button>
@@ -249,7 +249,7 @@ export default function InvestorProfilePage() {
                   type="email"
                   value={profile?.email || ''}
                   disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                 />
                 <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
@@ -463,11 +463,13 @@ export default function InvestorProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select entity type</option>
+                  <option value="Individual">Individual</option>
                   <option value="LLC">LLC</option>
+                  <option value="IRA">IRA / Self-Directed IRA</option>
+                  <option value="Trust">Trust</option>
                   <option value="S-Corp">S-Corp</option>
                   <option value="Partnership">Partnership</option>
                   <option value="C-Corp">C-Corp</option>
-                  <option value="Trust">Trust</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -524,14 +526,14 @@ export default function InvestorProfilePage() {
             <button
               type="button"
               onClick={() => router.push('/investors/dashboard')}
-              className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+              className="px-6 py-3 font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 font-semibold bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

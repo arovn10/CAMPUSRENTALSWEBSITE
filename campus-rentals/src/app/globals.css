@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Apple-style system font stack */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 /* Leaflet/OpenStreetMap Styles */
 .leaflet-container {
   height: 100%;
@@ -12,16 +17,27 @@
 @layer base {
   body {
     @apply text-text;
+    font-family: var(--font-sans);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply text-secondary font-semibold;
+    font-family: var(--font-sans);
   }
   a {
     @apply text-text hover:text-accent transition-colors duration-200;
   }
   button {
-    @apply bg-accent text-white hover:bg-primary transition-colors duration-200;
+    @apply bg-accent text-white hover:bg-primary transition-colors duration-200 font-semibold;
   }
+}
+
+/* Hide scrollbar for overflow areas (e.g. nav) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 @layer components {

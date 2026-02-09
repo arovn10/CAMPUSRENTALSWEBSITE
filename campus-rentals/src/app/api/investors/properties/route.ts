@@ -227,9 +227,10 @@ export async function GET(request: NextRequest) {
     // Transform the regular investments data
     const formattedInvestments = investments.map((investment: any) => {
       const totalDistributions = investment.distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
-      const currentValue = investment.property.currentValue || investment.investmentAmount
-      const totalReturn = currentValue - investment.investmentAmount + totalDistributions
-      const irr = investment.investmentAmount > 0 ? ((currentValue / investment.investmentAmount - 1) * 100) : 0
+      const currentValue = investment.property?.currentValue ?? investment.investmentAmount ?? 0
+      const invested = investment.investmentAmount ?? 0
+      const totalReturn = currentValue - invested + totalDistributions
+      const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
 
       return {
         id: investment.id,
@@ -493,9 +494,9 @@ export async function GET(request: NextRequest) {
       }
 
       const totalDistributions = entityInvestment.entityDistributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
-      const currentValue = entityInvestment.property.currentValue || finalInvestmentAmount
+      const currentValue = entityInvestment.property?.currentValue ?? finalInvestmentAmount
       const totalReturn = currentValue - finalInvestmentAmount + totalDistributions
-      const irr = finalInvestmentAmount > 0 ? ((currentValue / finalInvestmentAmount - 1) * 100) : 0
+      const irr = finalInvestmentAmount > 0 ? (totalReturn / finalInvestmentAmount) * 100 : 0
 
       // For entity investments, show the entity itself as the investor on dashboards
       const investorName = entityInvestment.entity?.name || 'Entity Investor'

@@ -10,30 +10,30 @@ export default function PipelineTrackerContacts() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-secondary">Contacts</h1>
-        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-text">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Contacts</h1>
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-slate-600">
           Manage your contacts and entities
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      {/* Tabs - high contrast */}
+      <div className="flex rounded-lg border border-gray-200 bg-gray-100 p-1 gap-1 inline-flex">
         <button
           onClick={() => setActiveTab('contacts')}
-          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+          className={`px-4 py-2 font-medium text-sm transition-colors rounded-md ${
             activeTab === 'contacts'
-              ? 'border-accent text-accent'
-              : 'border-transparent text-text hover:text-secondary'
+              ? 'bg-secondary text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-gray-200'
           }`}
         >
           Contacts
         </button>
         <button
           onClick={() => setActiveTab('entities')}
-          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+          className={`px-4 py-2 font-medium text-sm transition-colors rounded-md ${
             activeTab === 'entities'
-              ? 'border-accent text-accent'
-              : 'border-transparent text-text hover:text-secondary'
+              ? 'bg-secondary text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-gray-200'
           }`}
         >
           Entities

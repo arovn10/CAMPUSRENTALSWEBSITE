@@ -115,7 +115,7 @@ export default function InvestorsLayout({
     sessionStorage.removeItem('authToken')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('currentUser')
-    router.push('/investors/login')
+    router.push('/')
   }
 
   if (authorized === null && !isPublic) {
@@ -140,12 +140,12 @@ export default function InvestorsLayout({
       {/* Sidebar - desktop: Apple-style clean panel */}
       <aside className="hidden lg:flex flex-col w-60 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 shadow-sm fixed inset-y-0 left-0 z-40">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity" title="Back to main site">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
               <BuildingOffice2Icon className="w-5 h-5 text-white" />
             </div>
             <span className="font-semibold text-slate-900 text-[17px] tracking-tight">Campus Rentals</span>
-          </div>
+          </Link>
           {currentUser?.role && <RoleBadge role={currentUser.role} />}
         </div>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -189,13 +189,13 @@ export default function InvestorsLayout({
         >
           {sidebarOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
         </button>
-        <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
+        <Link href="/" className="flex items-center gap-2 min-w-0 flex-1 justify-center hover:opacity-90 transition-opacity" title="Back to main site">
           <div className="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
             <BuildingOffice2Icon className="w-4 h-4 text-white" />
           </div>
           <span className="font-semibold text-slate-900 truncate">Campus Rentals</span>
           {currentUser?.role && <RoleBadge role={currentUser.role} />}
-        </div>
+        </Link>
         <div className="w-10 flex-shrink-0" />
       </div>
 

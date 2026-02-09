@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { investorS3Service } from '@/lib/investorS3Service';
+import { saveDealFile } from '@/lib/dealFileStorage';
 
 // GET - Get all files and folders for a property/deal
 export async function GET(
@@ -194,33 +195,43 @@ export async function POST(
       );
     }
 
-    // Upload to S3
-    let uploadResult;
-    try {
-      uploadResult = await investorS3Service.uploadFile({
-        fileName: file.name,
-        buffer,
-        contentType: file.type || 'application/octet-stream',
-        propertyId: params.id,
-      });
-    } catch (error) {
-      console.error('Error uploading file to S3:', error);
-      return NextResponse.json(
-        { error: 'Failed to upload file to storage', details: error instanceof Error ? error.message : 'Unknown error' },
-        { status: 500 }
-      );
+    const hasS3 =
+      (process.env.INVESTOR_AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID) &&
+      (process.env.INVESTOR_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY);
+
+    let filePath: string;
+    let storedFileName: string;
+    if (hasS3) {
+      try {
+        const uploadResult = await investorS3Service.uploadFile({
+          fileName: file.name,
+          buffer,
+          contentType: file.type || 'application/octet-stream',
+          propertyId: params.id,
+        });
+        filePath = uploadResult.url;
+        storedFileName = uploadResult.key.split('/').pop() || file.name;
+      } catch (s3Error) {
+        console.error('S3 upload failed, using local storage:', s3Error);
+        const saved = await saveDealFile(buffer, file.name, params.id);
+        filePath = saved.relativePath;
+        storedFileName = saved.fileName;
+      }
+    } else {
+      const saved = await saveDealFile(buffer, file.name, params.id);
+      filePath = saved.relativePath;
+      storedFileName = saved.fileName;
     }
 
-    // Save file record
     let dealFile;
     try {
       dealFile = await prisma.dealFile.create({
         data: {
           propertyId: params.id,
           folderId: folderId || null,
-          fileName: uploadResult.key.split('/').pop() || file.name,
+          fileName: storedFileName,
           originalName: file.name,
-          filePath: uploadResult.url,
+          filePath,
           fileSize: buffer.length,
           mimeType: file.type || 'application/octet-stream',
           description: description || null,
@@ -245,13 +256,6 @@ export async function POST(
       });
     } catch (error) {
       console.error('Error saving file record to database:', error);
-      // Try to clean up S3 file if database save fails
-      try {
-        const key = uploadResult.key || uploadResult.url;
-        await investorS3Service.deletePhoto(key);
-      } catch (cleanupError) {
-        console.error('Error cleaning up S3 file after database failure:', cleanupError);
-      }
       return NextResponse.json(
         { error: 'Failed to save file record', details: error instanceof Error ? error.message : 'Unknown error' },
         { status: 500 }

@@ -14,6 +14,9 @@ import {
   DocumentTextIcon,
   LinkIcon,
   MapPinIcon,
+  PaperClipIcon,
+  ArrowDownTrayIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 import DealTaskModal from '@/components/DealTaskModal'
 import DealNoteModal from '@/components/DealNoteModal'
@@ -132,12 +135,22 @@ export default function DealDetailPage() {
   const [updatingPublished, setUpdatingPublished] = useState(false)
   const [funded, setFunded] = useState(false)
   const [updatingFunded, setUpdatingFunded] = useState(false)
+  const [dealFiles, setDealFiles] = useState<Array<{ id: string; originalName: string; fileSize: number; createdAt: string }>>([])
+  const [loadingFiles, setLoadingFiles] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [rejectLoading, setRejectLoading] = useState(false)
 
   useEffect(() => {
     if (dealId) {
       fetchDeal()
     }
   }, [dealId])
+
+  useEffect(() => {
+    if (dealId && deal) {
+      fetchDealFiles()
+    }
+  }, [dealId, deal?.id])
 
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
@@ -266,6 +279,112 @@ export default function DealDetailPage() {
     }
   }
 
+  const fetchDealFiles = async () => {
+    setLoadingFiles(true)
+    try {
+      const token = getAuthToken()
+      const res = await fetch(`/api/investors/crm/deals/${dealId}/files`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setDealFiles(Array.isArray(data) ? data : [])
+      } else {
+        setDealFiles([])
+      }
+    } catch {
+      setDealFiles([])
+    } finally {
+      setLoadingFiles(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!deal || !confirm('Mark this deal as Rejected?')) return
+    setRejectLoading(true)
+    try {
+      const token = getAuthToken()
+      const res = await fetch(`/api/investors/crm/deals/${dealId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: 'REJECTED' }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setDeal({ ...deal, status: 'REJECTED', stage: updated.stage || deal.stage })
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Failed to reject deal')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Failed to reject deal')
+    } finally {
+      setRejectLoading(false)
+    }
+  }
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !dealId) return
+    setUploadingFile(true)
+    try {
+      const token = getAuthToken()
+      const form = new FormData()
+      form.set('file', file)
+      const res = await fetch(`/api/investors/crm/deals/${dealId}/files`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      if (res.ok) {
+        await fetchDealFiles()
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      }
+    } catch (err) {
+      alert('Upload failed')
+    } finally {
+      setUploadingFile(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!confirm('Remove this file?')) return
+    try {
+      const token = getAuthToken()
+      const res = await fetch(`/api/investors/crm/deals/${dealId}/files/${fileId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) await fetchDealFiles()
+      else alert('Failed to delete file')
+    } catch {
+      alert('Failed to delete file')
+    }
+  }
+
+  const handleDownloadFile = async (fileId: string, originalName: string) => {
+    try {
+      const token = getAuthToken()
+      const res = await fetch(`/api/investors/crm/deals/${dealId}/files/${fileId}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Download failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = originalName || 'download'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Download failed')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -281,7 +400,7 @@ export default function DealDetailPage() {
           <p className="text-slate-600">Deal not found</p>
           <button
             onClick={() => router.push('/investors/pipeline-tracker/deals')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Back to Deals
           </button>
@@ -320,17 +439,17 @@ export default function DealDetailPage() {
                 <span
                   className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                     deal.priority === 'URGENT'
-                      ? 'bg-red-100 text-red-700'
+                      ? 'bg-red-100 text-red-800'
                       : deal.priority === 'HIGH'
-                      ? 'bg-orange-100 text-orange-700'
+                      ? 'bg-orange-100 text-orange-800'
                       : deal.priority === 'MEDIUM'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-slate-100 text-slate-700'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-slate-100 text-slate-800'
                   }`}
                 >
                   {deal.priority}
                 </span>
-                <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium">
+                <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-semibold">
                   {deal.dealType}
                 </span>
               </div>
@@ -382,9 +501,18 @@ export default function DealDetailPage() {
                   </span>
                 </div>
               )}
+              {deal.status !== 'REJECTED' && (
+                <button
+                  onClick={handleReject}
+                  disabled={rejectLoading}
+                  className="px-3 py-2 font-medium text-red-700 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200 disabled:opacity-50"
+                >
+                  {rejectLoading ? '…' : 'Reject deal'}
+                </button>
+              )}
               <button
                 onClick={handleDeleteDeal}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 font-medium text-red-700 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <TrashIcon className="h-5 w-5" />
               </button>
@@ -476,7 +604,7 @@ export default function DealDetailPage() {
                     setEditingTask(null)
                     setShowTaskModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Task
@@ -510,10 +638,10 @@ export default function DealDetailPage() {
                         <span
                           className={`px-2 py-1 rounded ${
                             task.priority === 'URGENT'
-                              ? 'bg-red-100 text-red-700'
+                              ? 'bg-red-100 text-red-800'
                               : task.priority === 'HIGH'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-yellow-100 text-yellow-700'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-yellow-100 text-yellow-800'
                           }`}
                         >
                           {task.priority}
@@ -545,7 +673,7 @@ export default function DealDetailPage() {
                     setEditingNote(null)
                     setShowNoteModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Note
@@ -564,7 +692,7 @@ export default function DealDetailPage() {
                         </p>
                       </div>
                       {note.isPrivate && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
                           Private
                         </span>
                       )}
@@ -576,6 +704,64 @@ export default function DealDetailPage() {
                   <p className="text-sm text-slate-500 text-center py-4">No notes yet</p>
                 )}
               </div>
+            </div>
+
+            {/* Files */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Files</h2>
+                <label className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer disabled:opacity-50">
+                  <PaperClipIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  {uploadingFile ? 'Uploading…' : 'Upload file'}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/*"
+                    onChange={handleUploadFile}
+                    disabled={uploadingFile}
+                  />
+                </label>
+              </div>
+              {loadingFiles ? (
+                <p className="text-sm text-slate-500 py-4">Loading files…</p>
+              ) : dealFiles.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-4">No files yet. Upload offers, LOIs, or other documents.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {dealFiles.map((f) => (
+                    <li
+                      key={f.id}
+                      className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <DocumentTextIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-slate-900 truncate">{f.originalName}</span>
+                        <span className="text-xs text-slate-500 flex-shrink-0">
+                          {(f.fileSize / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadFile(f.id, f.originalName)}
+                          className="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-lg"
+                          title="Download"
+                        >
+                          <ArrowDownTrayIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFile(f.id)}
+                          className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Remove"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -605,7 +791,7 @@ export default function DealDetailPage() {
                 <h3 className="text-base sm:text-lg font-semibold text-slate-900">Contacts</h3>
                 <button
                   onClick={() => setShowContactModal(true)}
-                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <PlusIcon className="h-5 w-5" />
                 </button>

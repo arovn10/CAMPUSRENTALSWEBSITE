@@ -237,7 +237,7 @@ export default function PipelineContacts() {
             resetForm()
             setShowModal(true)
           }}
-          className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-accent to-primary text-white rounded-lg hover:from-accent/90 hover:to-primary/90 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+          className="w-full sm:w-auto px-4 py-2 bg-secondary text-white rounded-lg hover:bg-primary transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
         >
           <PlusIcon className="h-5 w-5" />
           <span>Add Contact</span>

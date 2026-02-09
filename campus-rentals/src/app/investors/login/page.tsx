@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -89,6 +90,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back to main site
+        </Link>
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center">
@@ -175,7 +183,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
+                  className="font-semibold text-blue-700 hover:text-blue-800 transition-colors duration-200 underline"
                 >
                   Forgot your password?
                 </button>
@@ -202,7 +210,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => router.push('/register')}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
+                  className="font-semibold text-blue-700 hover:text-blue-800 transition-colors duration-200 underline"
                 >
                   Contact us to get started
                 </button>
@@ -258,14 +266,14 @@ export default function LoginPage() {
                   setForgotPasswordMessage('')
                   setForgotPasswordEmail('')
                 }}
-                className="flex-1 py-3 px-4 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className="flex-1 py-3 px-4 border border-slate-300 text-sm font-semibold rounded-xl text-slate-800 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
               >
                 Back to Login
               </button>
               <button
                 type="submit"
                 disabled={forgotPasswordLoading}
-                className="flex-1 py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-500/25"
+                className="flex-1 py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-500/25"
               >
                 {forgotPasswordLoading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto"></div>

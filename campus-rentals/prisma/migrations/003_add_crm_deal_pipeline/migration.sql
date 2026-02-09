@@ -153,6 +153,14 @@ BEGIN
     END IF;
 END $$;
 
+-- Ensure deals has assignedToId (if table existed from older migration)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'deals') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deals' AND column_name = 'assignedToId') THEN
+        ALTER TABLE "deals" ADD COLUMN "assignedToId" TEXT;
+    END IF;
+END $$;
+
 -- AddForeignKey (only if table exists and foreign key doesn't exist)
 DO $$
 BEGIN
@@ -166,9 +174,17 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deals_propertyId_fkey') THEN
             ALTER TABLE "deals" ADD CONSTRAINT "deals_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "properties"("id") ON DELETE SET NULL ON UPDATE CASCADE;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deals_assignedToId_fkey') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deals_assignedToId_fkey') AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deals' AND column_name = 'assignedToId') THEN
             ALTER TABLE "deals" ADD CONSTRAINT "deals_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
         END IF;
+    END IF;
+END $$;
+
+-- Ensure deal_tasks has assignedToId if missing
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'deal_tasks') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_tasks' AND column_name = 'assignedToId') THEN
+        ALTER TABLE "deal_tasks" ADD COLUMN "assignedToId" TEXT;
     END IF;
 END $$;
 
@@ -179,9 +195,18 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_tasks_dealId_fkey') THEN
             ALTER TABLE "deal_tasks" ADD CONSTRAINT "deal_tasks_dealId_fkey" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_tasks_assignedToId_fkey') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_tasks_assignedToId_fkey') AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_tasks' AND column_name = 'assignedToId') THEN
             ALTER TABLE "deal_tasks" ADD CONSTRAINT "deal_tasks_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
         END IF;
+    END IF;
+END $$;
+
+-- Ensure deal_notes has createdById if missing (nullable so FK can be added)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'deal_notes') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_notes' AND column_name = 'createdById') THEN
+        ALTER TABLE "deal_notes" ADD COLUMN "createdById" TEXT;
+        UPDATE "deal_notes" SET "createdById" = (SELECT "id" FROM "users" LIMIT 1) WHERE "createdById" IS NULL;
     END IF;
 END $$;
 
@@ -192,8 +217,21 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_notes_dealId_fkey') THEN
             ALTER TABLE "deal_notes" ADD CONSTRAINT "deal_notes_dealId_fkey" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_notes_createdById_fkey') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_notes_createdById_fkey') AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_notes' AND column_name = 'createdById') THEN
             ALTER TABLE "deal_notes" ADD CONSTRAINT "deal_notes_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+        END IF;
+    END IF;
+END $$;
+
+-- Ensure deal_relationships has contactId, userId if missing
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'deal_relationships') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_relationships' AND column_name = 'contactId') THEN
+            ALTER TABLE "deal_relationships" ADD COLUMN "contactId" TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_relationships' AND column_name = 'userId') THEN
+            ALTER TABLE "deal_relationships" ADD COLUMN "userId" TEXT;
         END IF;
     END IF;
 END $$;
@@ -205,10 +243,10 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_relationships_dealId_fkey') THEN
             ALTER TABLE "deal_relationships" ADD CONSTRAINT "deal_relationships_dealId_fkey" FOREIGN KEY ("dealId") REFERENCES "deals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_relationships_contactId_fkey') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_relationships_contactId_fkey') AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_relationships' AND column_name = 'contactId') AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'contacts') THEN
             ALTER TABLE "deal_relationships" ADD CONSTRAINT "deal_relationships_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_relationships_userId_fkey') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'deal_relationships_userId_fkey') AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deal_relationships' AND column_name = 'userId') THEN
             ALTER TABLE "deal_relationships" ADD CONSTRAINT "deal_relationships_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
     END IF;

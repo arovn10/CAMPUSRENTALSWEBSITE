@@ -22,11 +22,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files (NEVER commit - contain secrets and DB URLs)
 .env
+.env*.local
 .env.production
 .env.development
+.env.development.local
+.env.test.local
+.env.bak*
+.env.new-db-urls
+.env.production.local
 
 # vercel
 .vercel
@@ -38,6 +43,9 @@ next-env.d.ts
 # IDE
 .idea/
 .vscode/
+
+# Uploaded files (documents, deal files) - stored in DB metadata only
+/uploads/
 
 # Large media files
 /public/ArchitecturalAnimation.MP4 

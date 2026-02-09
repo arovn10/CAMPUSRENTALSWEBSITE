@@ -154,11 +154,12 @@ export async function GET(request: NextRequest) {
           `, [pipelineId, 'New Orleans', 'Pipeline for New Orleans deals']);
         }
 
-        // Create default stages
+        // Create default stages (including Rejected for tracking declined deals)
         const stages = [
           { name: 'New', order: 0, color: '#3B82F6' },
           { name: 'In Progress', order: 1, color: '#F59E0B' },
           { name: 'Closed', order: 2, color: '#10B981' },
+          { name: 'Rejected', order: 3, color: '#EF4444' },
         ];
 
         for (const stage of stages) {

@@ -7,9 +7,13 @@ This document lists all API endpoints used by Campus Rentals: **external Abode b
 ## 1. External Abode / Abodingo Backend
 
 **Base URL (default):** `https://abodingo-backend.onrender.com/api`  
-Override with `NEXT_PUBLIC_ABODE_API_BASE_URL` in `.env` if needed. Configured in `src/lib/apiConfig.ts` and used by `src/services/api.ts`, `src/utils/api.ts`, and the seed script.
+Override with `NEXT_PUBLIC_ABODE_API_BASE_URL` in `.env` if needed. Configured in `src/lib/apiConfig.ts`.
 
-Properties are fetched for the account **campusrentalsnola** via `GET /property/campusrentalsnola`. Paths match **AbodeBackend** (abodingo-website repo).
+**Alignment with abodingo-website:** All outbound calls to the Abode backend use the same logic and behavior as the other repo:
+- **Single client:** `src/lib/abodeClient.ts` – same request behavior as `abodingo-website/website/src/lib/api.ts` (apiRequest): 401/404/502/503 handling, `normalizePropertyUpdateBody` for property updates, backend error parsing (message, error, details, innerException), empty-body and "not found" text handling.
+- **API surface:** Matches `abodingo-website/website/src/lib/api-clients/base-api-client.ts`: `properties.getByUsername`, `properties.getById`, `photos.get`, `amenities.getByPropertyId` (same paths).
+- **Data:** Property list, photos, and amenities come from the Abode backend; all investor/CRM/deal data stays in Campus Rentals DB and local `/api/investors/...` routes.
+- **Usage:** `src/services/api.ts` and `src/utils/api.ts` call `abodeApi` / `abodeRequest` only; no direct fetch to the Abode base URL elsewhere.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

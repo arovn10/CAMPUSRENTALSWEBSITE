@@ -1,7 +1,7 @@
--- Create DealPhoto table for managing photos per investment/deal
+-- Create DealPhoto table (linked to property per current schema)
 CREATE TABLE IF NOT EXISTS "deal_photos" (
   "id" TEXT NOT NULL,
-  "investmentId" TEXT NOT NULL,
+  "propertyId" TEXT NOT NULL,
   "photoUrl" TEXT NOT NULL,
   "s3Key" TEXT NOT NULL,
   "fileName" TEXT NOT NULL,
@@ -12,16 +12,20 @@ CREATE TABLE IF NOT EXISTS "deal_photos" (
   "mimeType" TEXT,
   "uploadedBy" TEXT NOT NULL,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT "deal_photos_pkey" PRIMARY KEY ("id")
 );
 
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS "deal_photos_investmentId_idx" ON "deal_photos"("investmentId");
-CREATE INDEX IF NOT EXISTS "deal_photos_investmentId_displayOrder_idx" ON "deal_photos"("investmentId", "displayOrder");
+CREATE INDEX IF NOT EXISTS "deal_photos_propertyId_idx" ON "deal_photos"("propertyId");
+CREATE INDEX IF NOT EXISTS "deal_photos_propertyId_displayOrder_idx" ON "deal_photos"("propertyId", "displayOrder");
 
--- Add foreign key constraints
-ALTER TABLE "deal_photos" ADD CONSTRAINT "deal_photos_investmentId_fkey" FOREIGN KEY ("investmentId") REFERENCES "investments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "deal_photos" ADD CONSTRAINT "deal_photos_uploadedBy_fkey" FOREIGN KEY ("uploadedBy") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'deal_photos_propertyId_fkey') THEN
+    ALTER TABLE "deal_photos" ADD CONSTRAINT "deal_photos_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "properties"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'deal_photos_uploadedBy_fkey') THEN
+    ALTER TABLE "deal_photos" ADD CONSTRAINT "deal_photos_uploadedBy_fkey" FOREIGN KEY ("uploadedBy") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END $$;

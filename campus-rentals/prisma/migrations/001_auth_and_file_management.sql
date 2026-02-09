@@ -144,15 +144,15 @@ CREATE INDEX IF NOT EXISTS "idx_email_logs_createdAt" ON "email_logs"("createdAt
 CREATE INDEX IF NOT EXISTS "idx_system_settings_key" ON "system_settings"("key");
 CREATE INDEX IF NOT EXISTS "idx_system_settings_category" ON "system_settings"("category");
 
--- Insert default system settings
-INSERT INTO "system_settings" ("id", "key", "value", "description", "category") VALUES
-('smtp_host', 'SMTP_HOST', 'smtp.gmail.com', 'SMTP server host', 'email'),
-('smtp_port', 'SMTP_PORT', '587', 'SMTP server port', 'email'),
-('smtp_secure', 'SMTP_SECURE', 'false', 'Use secure SMTP connection', 'email'),
-('smtp_user', 'SMTP_USER', '', 'SMTP username', 'email'),
-('smtp_pass', 'SMTP_PASS', '', 'SMTP password', 'email'),
-('from_email', 'FROM_EMAIL', 'noreply@campusrentals.cc', 'Default from email address', 'email'),
-('support_email', 'SUPPORT_EMAIL', 'support@campusrentals.cc', 'Support email address', 'email'),
-('app_name', 'APP_NAME', 'Campus Rentals LLC', 'Application name', 'general'),
-('app_url', 'APP_URL', 'https://campusrentals.cc', 'Application URL', 'general')
+-- Insert default system settings (include createdAt/updatedAt for NOT NULL)
+INSERT INTO "system_settings" ("id", "key", "value", "description", "category", "createdAt", "updatedAt") VALUES
+('smtp_host', 'SMTP_HOST', 'smtp.gmail.com', 'SMTP server host', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('smtp_port', 'SMTP_PORT', '587', 'SMTP server port', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('smtp_secure', 'SMTP_SECURE', 'false', 'Use secure SMTP connection', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('smtp_user', 'SMTP_USER', '', 'SMTP username', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('smtp_pass', 'SMTP_PASS', '', 'SMTP password', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('from_email', 'FROM_EMAIL', 'noreply@campusrentals.cc', 'Default from email address', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('support_email', 'SUPPORT_EMAIL', 'support@campusrentals.cc', 'Support email address', 'email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('app_name', 'APP_NAME', 'Campus Rentals LLC', 'Application name', 'general', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('app_url', 'APP_URL', 'https://campusrentals.cc', 'Application URL', 'general', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("key") DO NOTHING;

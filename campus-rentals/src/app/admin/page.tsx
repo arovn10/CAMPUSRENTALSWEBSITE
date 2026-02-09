@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ABODINGO_WEBSITE_URL } from '@/lib/apiConfig'
 
 interface User {
   id: string
@@ -294,6 +295,37 @@ export default function AdminDashboard() {
             >
               Manage Cache
             </Link>
+          </div>
+
+          {/* Listing data (Abodingo) */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Listing data (Abodingo)</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Deal/lease/tenant, rent details, amenities, photos, and all listing content come from <strong>Abodingo</strong>. Everything else in this dashboard is native Campus Rentals.
+            </p>
+            <div className="flex flex-col gap-2">
+              <a
+                href={ABODINGO_WEBSITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200 text-center"
+              >
+                Edit listings on Abodingo
+              </a>
+              <Link
+                href="/admin/cache"
+                className="block w-full px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors duration-200 text-center"
+              >
+                Refresh listing data from Abodingo
+              </Link>
+            </div>
           </div>
 
           {/* Coordinate Cache */}

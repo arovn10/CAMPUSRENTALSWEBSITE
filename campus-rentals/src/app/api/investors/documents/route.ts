@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import {
+  saveDocumentFile,
+  isAllowedMimeType,
+  getMaxFileSize,
+} from '@/lib/documentStorage'
 
 // Real database documents only - no mock data
 
@@ -12,26 +15,49 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    console.log('Documents requested by:', user.email)
+    const { searchParams } = new URL(request.url)
+    const scope = searchParams.get('scope')
+    const isAdminList = (user.role === 'ADMIN' || user.role === 'MANAGER') && scope === 'all'
 
-    // Get real documents from database
-    const documents = await prisma.document.findMany({
-      where: { 
-        uploadedBy: user.id,
-        isPublic: true
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    let documents: Awaited<ReturnType<typeof prisma.document.findMany>>
+    if (isAdminList) {
+      documents = await prisma.document.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+    } else {
+      const investments = await prisma.investment.findMany({
+        where: { userId: user.id },
+        select: { propertyId: true }
+      })
+      const propertyIds = [...new Set(investments.map((i) => i.propertyId).filter(Boolean))]
+      documents = await prisma.document.findMany({
+        where: {
+          isPublic: true,
+          visibleToInvestor: true,
+          OR: [
+            { uploadedBy: user.id },
+            ...(propertyIds.length > 0
+              ? [{ entityType: 'PROPERTY' as const, entityId: { in: propertyIds } }]
+              : [])
+          ]
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    }
 
-    // Transform to match expected format
-    const formattedDocuments = documents.map(doc => ({
+    // Transform to match expected format (include filePath for download)
+    const formattedDocuments = documents.map((doc) => ({
       id: doc.id,
       title: doc.title,
       documentType: doc.documentType,
       entityType: doc.entityType,
+      entityId: doc.entityId,
       entityName: doc.description || 'Unknown Entity',
       uploadedAt: doc.createdAt.toISOString(),
-      fileSize: doc.fileSize || 0
+      fileSize: doc.fileSize || 0,
+      filePath: doc.filePath,
+      fileName: doc.fileName,
+      mimeType: doc.mimeType
     }))
 
     return NextResponse.json(formattedDocuments)
@@ -56,13 +82,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Insufficient permissions' }, { status: 403 })
     }
 
-    // Handle both JSON and FormData
-    let title, description, documentType, entityType, entityId, fileSize, fileName, mimeType, visibleToAdmin, visibleToManager, visibleToInvestor
-    
+    let title: string | undefined,
+      description: string | undefined,
+      documentType: string | undefined,
+      entityType: string | undefined,
+      entityId: string | undefined,
+      fileSize: number = 0,
+      fileName: string | undefined,
+      mimeType: string = 'application/pdf',
+      visibleToAdmin: boolean = true,
+      visibleToManager: boolean = true,
+      visibleToInvestor: boolean = true
+    let filePathForDb: string | undefined
+
     const contentType = request.headers.get('content-type') || ''
     
     if (contentType.includes('multipart/form-data')) {
-      // Handle file upload
       const formData = await request.formData()
       title = formData.get('title') as string
       description = formData.get('description') as string
@@ -72,41 +107,40 @@ export async function POST(request: NextRequest) {
       visibleToAdmin = formData.get('visibleToAdmin') === 'true'
       visibleToManager = formData.get('visibleToManager') === 'true'
       visibleToInvestor = formData.get('visibleToInvestor') === 'true'
-      const file = formData.get('file') as File
-      
-      if (file) {
-        fileName = file.name
-        fileSize = file.size
-        mimeType = file.type
-        
-        // Save the file to the server
-        try {
-          // Create documents directory if it doesn't exist
-          const documentsDir = join(process.cwd(), 'public', 'documents')
-          await mkdir(documentsDir, { recursive: true })
-          
-          // Generate unique filename
-          const timestamp = Date.now()
-          const uniqueFileName = `${timestamp}-${fileName}`
-          const filePath = join(documentsDir, uniqueFileName)
-          
-          // Convert File to Buffer and save
-          const bytes = await file.arrayBuffer()
-          const buffer = Buffer.from(bytes)
-          await writeFile(filePath, buffer)
-          
-          console.log('File saved successfully:', filePath)
-          
-          // Update filePath for database
-          fileName = uniqueFileName
-          fileSize = buffer.length
-        } catch (fileError) {
-          console.error('Error saving file:', fileError)
-          return NextResponse.json({ 
-            error: 'Failed to save file to server',
-            details: fileError instanceof Error ? fileError.message : 'Unknown file error'
-          }, { status: 500 })
+      const file = formData.get('file') as File | null
+
+      if (!file || !(file instanceof File) || file.size === 0) {
+        return NextResponse.json({ error: 'A file is required for upload' }, { status: 400 })
+      }
+      if (file.size > getMaxFileSize()) {
+        return NextResponse.json({
+          error: `File size must be under ${getMaxFileSize() / 1024 / 1024}MB`,
+        }, { status: 400 })
+      }
+      mimeType = file.type || 'application/octet-stream'
+      if (!isAllowedMimeType(mimeType)) {
+        return NextResponse.json({
+          error: 'File type not allowed. Allowed: PDF, Word, Excel, images, CSV, text.',
+        }, { status: 400 })
+      }
+
+      try {
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        const saved = await saveDocumentFile(buffer, file.name, mimeType)
+        fileName = saved.fileName
+        fileSize = saved.fileSize
+        filePathForDb = saved.relativePath
+      } catch (fileError) {
+        const msg = fileError instanceof Error ? fileError.message : 'Unknown error'
+        console.error('Error saving file:', fileError)
+        if (msg.includes('size') || msg.includes('MB')) {
+          return NextResponse.json({ error: msg }, { status: 400 })
         }
+        if (msg.includes('type not allowed')) {
+          return NextResponse.json({ error: 'This file type isn\'t supported. Use PDF, Word, Excel, images (JPG, PNG, HEIC), or CSV.' }, { status: 400 })
+        }
+        return NextResponse.json({ error: 'File could not be saved. Try a different file or name.' }, { status: 500 })
       }
     } else {
       // Handle JSON data
@@ -120,18 +154,20 @@ export async function POST(request: NextRequest) {
       visibleToManager = body.visibleToManager !== undefined ? body.visibleToManager : true
       visibleToInvestor = body.visibleToInvestor !== undefined ? body.visibleToInvestor : true
       fileSize = body.fileSize || 0
-      fileName = body.fileName || `${title}.pdf`
+      fileName = body.fileName || (title ? `${title}.pdf` : 'document.pdf')
       mimeType = body.mimeType || 'application/pdf'
+      filePathForDb = body.filePath || (fileName ? `documents/${fileName}` : undefined)
     }
 
-    // Validate required fields
     if (!title || !entityType || !entityId) {
-      console.log('Missing required fields:', { title, entityType, entityId })
-      return NextResponse.json({ 
-        error: 'Missing required fields', 
-        details: { title: !!title, entityType: !!entityType, entityId: !!entityId }
+      return NextResponse.json({
+        error: 'Please provide a title, and choose where to save (Company or a property).',
       }, { status: 400 })
     }
+
+    // entityId "company" = company-wide (no property); only admins/managers see in list
+    const validDocumentTypes = ['RECEIPT', 'EXPENSE', 'TAX_DOCUMENT', 'PPM', 'OFFERING_MEMORANDUM', 'OPERATING_AGREEMENT', 'FINANCIAL_STATEMENT', 'CONTRACT', 'APPRAISAL', 'INSURANCE', 'TITLE_REPORT', 'ENVIRONMENTAL_REPORT', 'OTHER']
+    const safeDocumentType = documentType && validDocumentTypes.includes(documentType) ? documentType : 'OTHER'
 
     // Map entityType to valid enum values
     let validEntityType = entityType
@@ -141,16 +177,15 @@ export async function POST(request: NextRequest) {
     
     console.log('Creating document with entityType:', validEntityType, 'original:', entityType)
     
-    // Create new document in database
     const newDocument = await prisma.document.create({
       data: {
         title,
         description: description || 'Document',
         fileName: fileName || `${title}.pdf`,
-        filePath: `/documents/${fileName}`,
+        filePath: filePathForDb || `documents/${fileName || 'doc'}`,
         fileSize: fileSize || 0,
         mimeType: mimeType || 'application/pdf',
-        documentType: documentType || 'OTHER',
+        documentType: safeDocumentType,
         entityType: validEntityType as any,
         entityId: entityId,
         isPublic: true,

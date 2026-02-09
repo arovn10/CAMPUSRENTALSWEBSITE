@@ -83,9 +83,10 @@ export async function GET(request: NextRequest) {
     // Transform the data to match the expected format
     const formattedInvestments = investments.map(investment => {
       const totalDistributions = investment.distributions.reduce((sum, dist) => sum + dist.amount, 0)
-      const currentValue = investment.property.currentValue || investment.investmentAmount
-      const totalReturn = currentValue - investment.investmentAmount + totalDistributions
-      const irr = investment.investmentAmount > 0 ? ((currentValue / investment.investmentAmount - 1) * 100) : 0
+      const currentValue = investment.property?.currentValue ?? investment.investmentAmount ?? 0
+      const invested = investment.investmentAmount ?? 0
+      const totalReturn = currentValue - invested + totalDistributions
+      const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
 
       return {
         id: investment.id,

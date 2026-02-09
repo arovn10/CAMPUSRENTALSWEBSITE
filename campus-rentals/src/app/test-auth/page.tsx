@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   CheckCircleIcon,
@@ -17,6 +17,13 @@ export default function AuthTestPage() {
   const router = useRouter()
   const [testResults, setTestResults] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
+
+  const isProduction = typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
+  useEffect(() => {
+    if (isProduction) router.replace('/')
+  }, [router, isProduction])
+
+  if (isProduction) return null
 
   const runTest = async (testName: string, testFunction: () => Promise<any>) => {
     setLoading(prev => ({ ...prev, [testName]: true }))

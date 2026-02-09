@@ -2,40 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  ChartBarIcon, 
-  DocumentTextIcon, 
-  CurrencyDollarIcon, 
-  HomeIcon,
-  BuildingOfficeIcon,
+import Link from 'next/link'
+import {
+  ChartBarIcon,
+  DocumentTextIcon,
+  CurrencyDollarIcon,
   BellIcon,
-  CogIcon,
-  UserIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  CalendarIcon,
   BanknotesIcon,
-  DocumentIcon,
-  PlusIcon,
-  UsersIcon,
-  ChartPieIcon,
-  CalculatorIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowRightOnRectangleIcon,
   XMarkIcon,
-  MapPinIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ArrowUpRightIcon,
-  SparklesIcon,
-  StarIcon,
-  BriefcaseIcon
+  ArrowUpRightIcon
 } from '@heroicons/react/24/outline'
-import CRMDealPipeline from '@/components/CRMDealPipeline'
-import CRMContacts from '@/components/CRMContacts'
 
 interface Investment {
   id: string
@@ -159,21 +136,10 @@ export default function InvestorDashboard() {
     totalProjectCost: 0
   })
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'overview' | 'deals' | 'analytics' | 'crm'>('overview')
-  const [crmSubView, setCrmSubView] = useState<'pipeline' | 'contacts'>('pipeline')
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [propertyThumbnails, setPropertyThumbnails] = useState<{ [propertyId: string]: string | null }>({})
-  const [dealFilter, setDealFilter] = useState<'ALL' | 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'>('ALL')
-  const [analyticsScope, setAnalyticsScope] = useState<'ALL' | 'PERSON' | 'ENTITY'>('ALL')
-  const [analyticsTarget, setAnalyticsTarget] = useState<string>('ALL')
-  const [showProformaModal, setShowProformaModal] = useState(false)
-  const [proformaRows, setProformaRows] = useState<any[]>([])
-  const [proformaTitle, setProformaTitle] = useState<string>('')
-  const [showCalcModal, setShowCalcModal] = useState(false)
-  const [calcTitle, setCalcTitle] = useState('')
-  const [calcLines, setCalcLines] = useState<{ label: string; value: number }[]>([])
   const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
   const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
+  // Legacy: keep a single "overview" view so any stray reference to activeView (e.g. from sessionStorage or links) does not throw
+  const activeView = 'overview'
 
   useEffect(() => {
     const user = sessionStorage.getItem('currentUser')
@@ -182,92 +148,11 @@ export default function InvestorDashboard() {
       setCurrentUser(userData)
       
       // Restore active tab from sessionStorage if available
-      const savedTab = sessionStorage.getItem('investorDashboardActiveTab')
-      if (savedTab && ['overview', 'deals', 'analytics', 'crm'].includes(savedTab)) {
-        setActiveView(savedTab as 'overview' | 'deals' | 'analytics' | 'crm')
-      }
-      
-      // For investors (non-admin), automatically filter by their name
-      if (userData.role === 'INVESTOR') {
-        const investorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-        if (investorName) {
-          setAnalyticsScope('PERSON')
-          setAnalyticsTarget(investorName)
-        }
-      }
-      
       fetchDashboardData(userData)
     } else {
       router.push('/investors/login')
     }
   }, [router])
-
-  // Check for thumbnail updates when page loads or regains focus
-  useEffect(() => {
-    const checkAndRefreshThumbnails = async () => {
-      // Check sessionStorage for thumbnail updates
-      const thumbnailUpdates = JSON.parse(sessionStorage.getItem('thumbnailUpdates') || '{}')
-      const propertiesToRefresh: string[] = []
-      
-      // Find properties that have been updated
-      Object.keys(thumbnailUpdates).forEach(propertyId => {
-        const update = thumbnailUpdates[propertyId]
-        // Refresh if updated within the last 5 minutes
-        if (update && Date.now() - update.updated < 5 * 60 * 1000) {
-          propertiesToRefresh.push(propertyId)
-        }
-      })
-      
-      if (propertiesToRefresh.length > 0) {
-        // Refresh thumbnails for updated properties
-        const thumbnailPromises = propertiesToRefresh.map(async (propertyId) => {
-          try {
-            const response = await fetch(`/api/properties/thumbnail/${propertyId}`)
-            if (response.ok) {
-              const data = await response.json()
-              return { propertyId, thumbnail: data.thumbnail }
-            }
-          } catch (error) {
-            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
-          }
-          return { propertyId, thumbnail: null }
-        })
-        
-        const thumbnailResults = await Promise.all(thumbnailPromises)
-        const thumbnailMap: { [key: string]: string | null } = {}
-        thumbnailResults.forEach((result) => {
-          if (result.propertyId) {
-            thumbnailMap[result.propertyId] = result.thumbnail
-          }
-        })
-        setPropertyThumbnails(prev => ({ ...prev, ...thumbnailMap }))
-        
-        // Clear old updates (older than 5 minutes)
-        const cleanedUpdates: { [key: string]: any } = {}
-        Object.keys(thumbnailUpdates).forEach(propertyId => {
-          const update = thumbnailUpdates[propertyId]
-          if (update && Date.now() - update.updated < 5 * 60 * 1000) {
-            cleanedUpdates[propertyId] = update
-          }
-        })
-        sessionStorage.setItem('thumbnailUpdates', JSON.stringify(cleanedUpdates))
-      }
-    }
-
-    // Check on mount and when page regains focus
-    checkAndRefreshThumbnails()
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndRefreshThumbnails()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
 
   const fetchDashboardData = async (user: User) => {
     try {
@@ -411,323 +296,12 @@ export default function InvestorDashboard() {
           setInvestments(investmentsData || [])
           calculateStats(investmentsData || [])
         }
-        
-        // Fetch thumbnails for all investments
-        const thumbnailPromises = (investmentsData || []).map(async (inv: any) => {
-          const propertyId = inv.property?.id || inv.propertyId
-          if (!propertyId) return null
-          
-          try {
-            const response = await fetch(`/api/properties/thumbnail/${propertyId}`, {
-              headers: {
-                'Authorization': `Bearer ${token || ''}`
-              }
-            })
-            if (response.ok) {
-              const data = await response.json()
-              return { propertyId, thumbnail: data.thumbnail }
-            }
-          } catch (error) {
-            console.error(`Error fetching thumbnail for property ${propertyId}:`, error)
-          }
-          return { propertyId, thumbnail: null }
-        })
-        
-        const thumbnailResults = await Promise.all(thumbnailPromises)
-        const thumbnailMap: { [key: string]: string | null } = {}
-        thumbnailResults.forEach((result) => {
-          if (result) {
-            thumbnailMap[result.propertyId] = result.thumbnail
-          }
-        })
-        setPropertyThumbnails(thumbnailMap)
       }
     } catch (error) {
       // Silent error handling for smooth UX
     } finally {
       setLoading(false)
     }
-  }
-
-  // Recalculate stats when person filter changes
-  useEffect(() => {
-    if (investments.length > 0 && analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
-      // Filter investments to only this person's investments
-      // NOTE: We do NOT scale property values here - scaling only applies to Analytics table display
-      const personInvestments: Investment[] = []
-      const targetName = analyticsTarget.trim().toLowerCase()
-      
-      investments.forEach(inv => {
-        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0) {
-          // Check if this person is an owner in this entity investment (case-insensitive match)
-          const matchingOwner = (inv as any).entityOwners.find((owner: any) => {
-            const ownerName = (owner.userName || '').trim().toLowerCase()
-            // Also try matching by first and last name separately if userName is a full name
-            const ownerNameParts = ownerName.split(' ')
-            const targetNameParts = targetName.split(' ')
-            const exactMatch = ownerName === targetName
-            const namePartsMatch = ownerNameParts.length >= 2 && targetNameParts.length >= 2 && 
-                                  ownerNameParts[0] === targetNameParts[0] && 
-                                  ownerNameParts[1] === targetNameParts[1]
-            
-            // Debug logging for Joseph St specifically
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
-              console.log(`[Person Filter] Checking Joseph St investment:`, {
-                property: inv.propertyName,
-                ownerName,
-                targetName,
-                exactMatch,
-                namePartsMatch,
-                ownerNameParts,
-                targetNameParts,
-                allOwners: (inv as any).entityOwners.map((o: any) => o.userName)
-              })
-            }
-            
-            return exactMatch || namePartsMatch
-          })
-          
-          if (matchingOwner) {
-            // Only update investmentAmount to individual amount, keep property values at full amount
-            personInvestments.push({
-              ...inv,
-              investmentAmount: matchingOwner.investmentAmount || 0
-            })
-            
-            // Debug logging
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
-              console.log(`[Person Filter] Matched Joseph St for ${targetName}:`, {
-                individualInvestment: matchingOwner.investmentAmount,
-                totalInvestment: inv.investmentAmount
-              })
-            }
-          } else {
-            // If no direct owner match, check nested ownership via breakdown arrays (entity within entity)
-            const ownerWithBreakdown = (inv as any).entityOwners.find((owner: any) => owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0)
-            if (ownerWithBreakdown && Array.isArray(ownerWithBreakdown.breakdown)) {
-              const nested = ownerWithBreakdown.breakdown.find((item: any) => {
-                const itemLabel = (item.label || '').trim().toLowerCase()
-                return itemLabel === targetName
-              })
-              if (nested && (nested.amount || nested.investmentAmount)) {
-                personInvestments.push({
-                  ...inv,
-                  investmentAmount: parseFloat(nested.amount || nested.investmentAmount || 0)
-                })
-                return
-              }
-            }
-
-            // Debug logging for unmatched entity investments
-            if (inv.propertyName && inv.propertyName.includes('Joseph')) {
-              console.log(`[Person Filter] Joseph St NOT matched for ${targetName}. Entity owners:`, (inv as any).entityOwners.map((o: any) => ({
-                userName: o.userName,
-                userNameLower: (o.userName || '').trim().toLowerCase()
-              })))
-            }
-          }
-        } else if (inv.investmentType === 'DIRECT') {
-          // Direct investment - check if investor name matches (case-insensitive)
-          // Try multiple name fields
-          const invName = (
-            (inv as any).investorName || 
-            ((inv as any).user ? `${(inv as any).user.firstName || ''} ${(inv as any).user.lastName || ''}`.trim() : '') ||
-            ''
-          ).trim().toLowerCase()
-          if (invName === targetName) {
-            personInvestments.push(inv)
-          }
-        }
-      })
-      
-      // Enhanced debugging - check all entity investments
-      const entityInvestments = investments.filter((inv: any) => inv.investmentType === 'ENTITY')
-      const directInvestments = investments.filter((inv: any) => inv.investmentType === 'DIRECT')
-      
-      console.log('Person filter stats calculation:', {
-        targetName,
-        totalInvestments: investments.length,
-        entityInvestmentsCount: entityInvestments.length,
-        directInvestmentsCount: directInvestments.length,
-        personInvestments: personInvestments.length,
-        entityInvestmentsWithOwners: entityInvestments.filter((inv: any) => (inv as any).entityOwners && Array.isArray((inv as any).entityOwners) && (inv as any).entityOwners.length > 0).length,
-        entityInvestmentsDetails: entityInvestments.slice(0, 3).map((inv: any) => ({
-          property: inv.propertyName,
-          hasEntityOwners: !!(inv as any).entityOwners,
-          entityOwnersCount: (inv as any).entityOwners?.length || 0,
-          entityOwnerNames: (inv as any).entityOwners?.map((o: any) => ({
-            userName: o.userName,
-            userNameLower: (o.userName || '').trim().toLowerCase(),
-            investmentAmount: o.investmentAmount
-          })) || [],
-          matchesTarget: (inv as any).entityOwners?.some((o: any) => 
-            (o.userName || '').trim().toLowerCase() === targetName
-          ) || false
-        })),
-        directInvestmentsDetails: directInvestments.slice(0, 3).map((inv: any) => ({
-          property: inv.propertyName,
-          investorName: (inv as any).investorName,
-          investorNameLower: ((inv as any).investorName || '').trim().toLowerCase(),
-          matchesTarget: ((inv as any).investorName || '').trim().toLowerCase() === targetName
-        }))
-      })
-      
-      // Recalculate stats based on person's investments only
-      calculateStats(personInvestments)
-    } else if (investments.length > 0 && (analyticsScope === 'ALL' || analyticsTarget === 'ALL')) {
-      // Recalculate stats for all investments
-      calculateStats(investments)
-    }
-  }, [analyticsScope, analyticsTarget, investments])
-
-  const estimateValueFromNOI = (inv: Investment) => {
-    const rent = inv.property?.monthlyRent || 0
-    const other = inv.property?.otherIncome || 0
-    const annualExp = inv.property?.annualExpenses || 0
-    const capRate = inv.property?.capRate || 0
-    const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
-    return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
-  }
-
-  const openProforma = (inv: Investment) => {
-    const years = [0,1,2,3,4,5]
-    const rows: any[] = []
-    const cashflows: number[] = []
-
-    const loans: any[] = (inv as any).loans || []
-    const loanStates = loans.map(l => ({
-      balance: (l.currentBalance ?? l.originalAmount ?? 0) as number,
-      rate: ((l.interestRate ?? 0) as number) / 100,
-      monthlyPayment: (l.monthlyPayment ?? 0) as number,
-      type: (l.paymentType || 'AMORTIZING') as string,
-      amortYears: (l.amortizationYears || 30) as number
-    }))
-    const hasLoans = loanStates.length > 0
-
-    const annualRevenue = ((inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)) * 12
-    const annualExpenses = inv.property?.annualExpenses || 0
-
-    years.forEach((yr) => {
-      if (yr === 0) {
-        rows.push({
-          year: 0,
-          revenue: 0,
-          expenses: 0,
-          noi: 0,
-          interest: 0,
-          principal: 0,
-          debtService: 0,
-          endingDebt: loanStates.reduce((s, l) => s + l.balance, 0),
-          exitProceeds: 0,
-          cashFlow: -(inv.investmentAmount || 0),
-          dscr: null,
-          irrToDate: null
-        })
-        cashflows.push(-(inv.investmentAmount || 0))
-        return
-      }
-
-      let interestPaid = 0
-      let principalPaid = 0
-      if (hasLoans) {
-        loanStates.forEach(ls => {
-          if (ls.balance <= 0) return
-          if (ls.type === 'IO') {
-            const annualInterest = ls.balance * ls.rate
-            interestPaid += annualInterest
-          } else {
-            let monthlyPay = ls.monthlyPayment
-            if (!monthlyPay || monthlyPay <= 0) {
-              const i = ls.rate / 12
-              const n = (ls.amortYears || 30) * 12
-              monthlyPay = i > 0 ? (ls.balance * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)) : (ls.balance / n)
-            }
-            for (let m = 0; m < 12; m++) {
-              const monthlyInterest = ls.balance * (ls.rate / 12)
-              const monthlyPrincipal = Math.max(monthlyPay - monthlyInterest, 0)
-              interestPaid += monthlyInterest
-              const appliedPrincipal = Math.min(monthlyPrincipal, ls.balance)
-              principalPaid += appliedPrincipal
-              ls.balance = Math.max(ls.balance - appliedPrincipal, 0)
-              if (ls.balance <= 0) break
-            }
-          }
-        })
-      } else {
-        // Fallback to estimated monthly debt service when loans are not available
-        const annualDebtSvc = (inv.estimatedMonthlyDebtService || 0) * 12
-        interestPaid = annualDebtSvc
-        principalPaid = 0
-      }
-
-      const revenue = annualRevenue
-      const expenses = annualExpenses
-      const noi = Math.max(revenue - expenses, 0)
-      const debtService = interestPaid + principalPaid
-
-      let exitSaleValue = 0
-      let debtPayoff = 0
-      if (yr === 5) {
-        exitSaleValue = estimateValueFromNOI(inv)
-        const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
-        debtPayoff = endingDebtVal
-      }
-
-      const cashFlow = (noi - debtService) + (exitSaleValue - debtPayoff)
-      cashflows.push(cashFlow)
-
-      const dscr = debtService > 0 ? (noi / debtService) : null
-      const irrToDate = computeIRR(cashflows)
-
-      const endingDebtVal = hasLoans ? loanStates.reduce((s, l) => s + l.balance, 0) : (inv.estimatedCurrentDebt || 0)
-      rows.push({
-        year: yr,
-        revenue,
-        expenses,
-        noi,
-        interest: interestPaid,
-        principal: principalPaid,
-        debtService,
-        endingDebt: endingDebtVal,
-        exitSaleValue,
-        debtPayoff: yr === 5 ? endingDebtVal : 0,
-        exitProceeds: Math.max(exitSaleValue - debtPayoff, 0),
-        cashFlow,
-        dscr,
-        irrToDate,
-      })
-    })
-
-    setProformaRows(rows)
-    setProformaTitle(inv.propertyName || inv.propertyAddress)
-    setShowProformaModal(true)
-  }
-
-  // Internal IRR calculator (Newton-Raphson with guardrails)
-  const computeIRR = (flows: number[]) => {
-    if (!flows || flows.length < 2) return null
-    // Ensure at least one negative and one positive for convergence
-    const hasNeg = flows.some(f => f < 0)
-    const hasPos = flows.some(f => f > 0)
-    if (!hasNeg || !hasPos) return null
-    let rate = 0.1
-    for (let iter = 0; iter < 50; iter++) {
-      let npv = 0
-      let dnpv = 0
-      for (let t = 0; t < flows.length; t++) {
-        const denom = Math.pow(1 + rate, t)
-        npv += flows[t] / denom
-        if (t > 0) {
-          dnpv -= (t * flows[t]) / (denom * (1 + rate))
-        }
-      }
-      if (Math.abs(npv) < 1e-6) return rate * 100
-      const step = dnpv !== 0 ? (npv / dnpv) : 0
-      rate -= step
-      if (!isFinite(rate)) return null
-      if (rate <= -0.99) rate = -0.99
-    }
-    return null
   }
 
   const calculateStats = (investmentData: Investment[]) => {
@@ -738,52 +312,55 @@ export default function InvestorDashboard() {
     // Overview: Total Invested = sum of investments for FUNDED deals (any status)
     const totalInvestedOverview = investmentData
       .filter(inv => inv.fundingStatus === 'FUNDED')
-      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
+      .reduce((sum, inv) => sum + (inv.investmentAmount ?? 0), 0)
     // Helpers to estimate value from NOI calculator
     const estimateValue = (inv: Investment) => {
-      const rent = inv.property?.monthlyRent || 0
-      const other = inv.property?.otherIncome || 0
-      const annualExp = inv.property?.annualExpenses || 0
-      const capRate = inv.property?.capRate || 0
+      const rent = inv.property?.monthlyRent ?? 0
+      const other = inv.property?.otherIncome ?? 0
+      const annualExp = inv.property?.annualExpenses ?? 0
+      const capRate = inv.property?.capRate ?? 0
       const annualNOI = Math.max(((rent + other) * 12) - annualExp, 0)
-      return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue || 0)
+      return capRate > 0 ? (annualNOI / (capRate / 100)) : (inv.currentValue ?? 0)
     }
     // Current value: sum of estimated values for active (stabilized) properties
-    // When scaled for person, values are already scaled in the investment data
     const currentValue = investmentData
       .filter(inv => inv.dealStatus === 'STABILIZED')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
     // Projected value: sum for all not SOLD projects (includes under construction)
-    // When scaled for person, values are already scaled in the investment data
     const projectedValue = investmentData
       .filter(inv => inv.dealStatus !== 'SOLD')
       .reduce((sum: number, inv: Investment) => sum + estimateValue(inv), 0)
+    // Total current value (all FUNDED) for return calc: same formula as API (currentValue + distributions - invested)
+    const fundedForReturn = investmentData.filter(inv => inv.fundingStatus === 'FUNDED')
+    const totalCurrentValueAll = fundedForReturn.reduce((sum: number, inv: Investment) => {
+      const val = inv.currentValue ?? inv.property?.currentValue ?? estimateValue(inv)
+      return sum + (typeof val === 'number' ? val : 0)
+    }, 0)
     // Totals for FUNDED
     const totalFundedDebt = investmentData
       .filter(inv => inv.fundingStatus === 'FUNDED')
-      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt ?? 0), 0)
     const totalFundedAndStabilizedDebt = investmentData
       .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
-      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
+      .reduce((sum, inv) => sum + (inv.estimatedCurrentDebt ?? 0), 0)
     const totalInvestedFundedAndStabilized = investmentData
       .filter(inv => inv.fundingStatus === 'FUNDED' && inv.dealStatus === 'STABILIZED')
-      .reduce((sum, inv) => sum + inv.investmentAmount, 0)
+      .reduce((sum, inv) => sum + (inv.investmentAmount ?? 0), 0)
 
     // Equity (Today): currentValue (stabilized) - invested (FUNDED & STABILIZED) - current debt (FUNDED & STABILIZED)
     const totalEquityToday = currentValue - totalInvestedFundedAndStabilized - totalFundedAndStabilizedDebt
     // Equity (Projected): projectedValue (all non-sold) - invested (FUNDED) - current debt (FUNDED)
     const totalEquityProjected = projectedValue - totalInvestedOverview - totalFundedDebt
-    // Backward compatibility single totalEquity mirrors Today
     const totalEquity = totalEquityToday
 
-    // Total Returns to date = Total Equity Today − Total Invested (FUNDED & STABILIZED)
-    const totalReturn = totalEquityToday - totalInvestedFundedAndStabilized
-    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
-    const totalDistributions = investmentData.reduce((sum, inv) => 
-      sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) || 0), 0
+    const totalDistributions = investmentData.reduce((sum, inv) =>
+      sum + (inv.distributions?.reduce((distSum, dist) => distSum + dist.amount, 0) ?? 0), 0
     )
-    const averageIRR = irrIncluded.length > 0 
-      ? irrIncluded.reduce((sum, inv) => sum + (inv.irr || 0), 0) / irrIncluded.length 
+    // Total return = current value + distributions - invested (consistent with API and reports)
+    const totalReturn = totalCurrentValueAll + totalDistributions - totalInvestedOverview
+    const activeInvestments = investmentData.filter(inv => inv.status === 'ACTIVE').length
+    const averageIRR = irrIncluded.length > 0
+      ? irrIncluded.reduce((sum, inv) => sum + (inv.irr ?? 0), 0) / irrIncluded.length
       : 0
     const totalProperties = investmentData.length
     const totalSquareFeet = investmentData.reduce((sum, inv) => sum + (inv.squareFeet || 0), 0)
@@ -857,17 +434,6 @@ export default function InvestorDashboard() {
     })
   }
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('currentUser')
-    router.push('/investors/login')
-  }
-
-  const handleViewInvestmentDetails = (investmentId: string) => {
-    // Store the current active tab before navigating
-    sessionStorage.setItem('investorDashboardActiveTab', activeView)
-    router.push(`/investors/investments/${investmentId}`)
-  }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -879,34 +445,6 @@ export default function InvestorDashboard() {
 
   const formatPercentage = (value: number) => {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'PENDING': return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'COMPLETED': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getDealBadge = (dealStatus?: string) => {
-    switch (dealStatus) {
-      case 'STABILIZED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'UNDER_CONSTRUCTION': return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'UNDER_CONTRACT': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'SOLD': return 'bg-slate-50 text-slate-700 border-slate-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getFundingBadge = (fundingStatus?: string) => {
-    switch (fundingStatus) {
-      case 'FUNDED': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'FUNDING': return 'bg-indigo-50 text-indigo-700 border-indigo-200'
-      default: return 'bg-slate-50 text-slate-700 border-slate-200'
-    }
   }
 
   if (loading) {
@@ -923,1185 +461,126 @@ export default function InvestorDashboard() {
     )
   }
 
-  
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-[#fafafa]" style={{ fontFamily: 'var(--font-sans)' }}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <header className="mb-10 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">Overview</h1>
+          <p className="mt-1 text-[15px] text-slate-500">Your portfolio at a glance</p>
+        </header>
 
-      {/* Premium Navigation */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-slate-200/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 py-2">
-            <div className="flex flex-wrap gap-1 sm:space-x-1 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-              {[
-                { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-                { id: 'deals', label: 'Deals', icon: HomeIcon },
-                { id: 'analytics', label: 'Analytics', icon: ChartPieIcon },
-                ...(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' 
-                  ? [{ id: 'crm', label: 'CRM', icon: BriefcaseIcon }]
-                  : [])
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (tab.id === 'crm') {
-                      console.log('Navigating to Pipeline Tracker...')
-                      router.push('/investors/pipeline-tracker')
-                    } else {
-                      setActiveView(tab.id as any)
-                      sessionStorage.setItem('investorDashboardActiveTab', tab.id)
-                    }
-                  }}
-                  className={`relative px-3 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all duration-300 rounded-xl whitespace-nowrap ${
-                    activeView === tab.id
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <tab.icon className="h-4 w-4 sm:h-5 sm:w-5 inline mr-1 sm:mr-2" />
-                  {tab.label}
-                  {activeView === tab.id && (
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full"></div>
-                  )}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center flex-wrap gap-2 sm:space-x-2">
-              <button
-                onClick={() => router.push('/investors/profile')}
-                className="px-3 sm:px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
-              >
-                <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-xs sm:text-sm font-medium">Profile</span>
-              </button>
-              {currentUser && (
-                <div className="text-xs sm:text-sm text-slate-600 px-2 sm:px-3 hidden sm:block">
-                  {currentUser.firstName} {currentUser.lastName}
-                </div>
-              )}
-              <button
-                onClick={handleLogout}
-                className="px-3 sm:px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
-              >
-                <ArrowRightOnRectangleIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-xs sm:text-sm font-medium">Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-          
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {activeView === 'overview' && (
-          <>
-            {/* Premium Stats Grid */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-              {/* Total Invested */}
-              <div
-                className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-1 cursor-pointer"
-                onClick={() => {
-                  // Build per-deal breakdown for the investor using the processed investments
-                  const breakdown = investments
-                    .filter(inv => inv.fundingStatus === 'FUNDED')
-                    .map(inv => ({ property: inv.propertyName || inv.name || 'Deal', amount: inv.investmentAmount || 0 }))
-                    .filter(item => (item.amount || 0) > 0)
-                    .sort((a, b) => b.amount - a.amount)
-                  setInvestedBreakdown(breakdown)
-                  setShowInvestedBreakdown(true)
-                }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <CurrencyDollarIcon className="h-6 w-6 text-white" />
-              </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
-                    <div className="flex items-center mt-1">
-                      <ArrowTrendingUpIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-xs text-emerald-600 font-medium">Growing</span>
-            </div>
-          </div>
-              </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.totalInvested)}</h3>
-                <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
-          </div>
-          
-              {/* Current Value */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ChartBarIcon className="h-6 w-6 text-white" />
-              </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
-                    <div className="flex items-center mt-1">
-                      <SparklesIcon className="h-3 w-3 text-emerald-500 mr-1" />
-                      <span className="text-xs text-emerald-600 font-medium">Appreciating</span>
-            </div>
-          </div>
-        </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.currentValue)}</h3>
-                <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"></div>
-          </div>
-
-              {/* Projected Value */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ChartBarIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Projected Value</p>
-                    <div className="flex items-center mt-1">
-                      <SparklesIcon className="h-3 w-3 text-indigo-500 mr-1" />
-                      <span className="text-xs text-indigo-600 font-medium">Includes pipeline</span>
-                    </div>
-                  </div>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.projectedValue)}</h3>
-                <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"></div>
-              </div>
-
-              {/* Total Distributions */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300" title="Portfolio Value = sum of estimated values of stabilized properties">
-                    <BanknotesIcon className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Distributions</p>
-                    <div className="flex items-center mt-1">
-                      <StarIcon className="h-3 w-3 text-purple-500 mr-1" />
-                      <span className="text-xs text-purple-600 font-medium">Cash Flow</span>
-                          </div>
-                        </div>
-                    </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatCurrency(stats.totalDistributions)}</h3>
-                <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
-                  </div>
-
-              {/* Average IRR */}
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500 hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
-                      </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
-                    <div className="flex items-center mt-1">
-                      <ChartBarIcon className="h-3 w-3 text-orange-500 mr-1" />
-                      <span className="text-xs text-orange-600 font-medium">Performance</span>
-                      </div>
-                      </div>
-                    </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">{formatPercentage(stats.averageIRR)}</h3>
-                <div className="h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full"></div>
-                  </div>
-                </div>
-
-            {/* Portfolio Summary */}
-            <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl shadow-blue-500/25">
-              <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8">Portfolio Summary</h2>
-              
-              <div className="space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-white/20 rounded-xl">
-                      <HomeIcon className="h-5 w-5" />
-                    </div>
-                    <span className="font-medium">Properties</span>
-                  </div>
-                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.totalProperties}</span>
-                </div>
-                
-                <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-2 sm:space-x-3">
-                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
-                      <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <span className="font-medium text-sm sm:text-base">Square Feet</span>
-                  </div>
-                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.totalSquareFeet.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex items-center justify-between pb-4 border-b border-white/20">
-                  <div className="flex items-center space-x-2 sm:space-x-3">
-                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
-                      <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <span className="font-medium text-sm sm:text-base">Active Deals</span>
-                  </div>
-                  <span className="text-xl sm:text-2xl font-bold break-words">{stats.activeInvestments}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 sm:space-x-3">
-                    <div className="p-2 sm:p-2.5 bg-white/20 rounded-xl">
-                      <BanknotesIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <span className="font-medium text-sm sm:text-base">Total Return</span>
-                  </div>
-                  <span className="text-xl sm:text-2xl font-bold break-words">{formatCurrency(stats.totalReturn)}</span>
-                </div>
-              </div>
-            </div>
-              
-            {/* Recent Activity */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Recent Distributions</h2>
-                  <p className="text-slate-500 font-medium text-sm sm:text-base">Latest cash flow activity</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl">
-                  <BanknotesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-              </div>
-              
-              <div className="overflow-x-auto rounded-2xl border border-slate-200/60">
-                <table className="min-w-full divide-y divide-slate-200/60">
-                  <thead className="bg-slate-50/80">
-                    <tr>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white/50 divide-y divide-slate-200/60">
-                    {investments
-                      .flatMap(inv => inv.distributions?.map(dist => ({ ...dist, propertyName: inv.propertyName })) || [])
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .slice(0, 10)
-                      .map((distribution, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors duration-200">
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
-                            <span className="break-words">{distribution.propertyName || 'N/A'}</span>
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600 whitespace-nowrap">
-                            {new Date(distribution.date).toLocaleDateString()}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600">
-                            <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold inline-block">
-                              {distribution.type}
-                            </span>
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold text-emerald-600 whitespace-nowrap">
-                            {formatCurrency(distribution.amount)}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4">
-                            <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold flex items-center w-fit">
-                              <CheckCircleIcon className="h-3 w-3 mr-1" />
-                              Processed
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    {investments.flatMap(inv => inv.distributions || []).length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-16 text-center text-slate-500">
-                          <div className="p-4 bg-slate-100 rounded-2xl w-fit mx-auto mb-4">
-                            <BanknotesIcon className="h-12 w-12 text-slate-400" />
-              </div>
-                          <p className="font-medium">No distributions yet</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-          </div>
-        </div>
-          </>
-        )}
-
-        {activeView === 'deals' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">All Deals & Properties</h2>
-                <p className="text-slate-500 font-medium text-sm sm:text-base">Complete investment portfolio</p>
-              </div>
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
-                <select
-                  value={dealFilter}
-                  onChange={(e) => setDealFilter(e.target.value as any)}
-                  className="px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm w-full sm:w-auto"
-                >
-                  <option value="ALL">All Status</option>
-                  <option value="STABILIZED">Stabilized</option>
-                  <option value="UNDER_CONSTRUCTION">Under Construction</option>
-                  <option value="UNDER_CONTRACT">Under Contract</option>
-                  <option value="SOLD">Sold</option>
-                </select>
-              </div>
-              </div>
-              
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {investments
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              const breakdown = investments
                 .filter(inv => inv.fundingStatus === 'FUNDED')
-                .filter(inv => dealFilter === 'ALL' ? true : (inv.dealStatus === dealFilter))
-                .map((investment) => (
-                <div
-                  key={investment.id}
-                  className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl overflow-hidden hover:border-blue-300/60 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                  onClick={() => handleViewInvestmentDetails(investment.id)}
-                  onMouseEnter={() => setHoveredCard(investment.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                >
-                  {/* Thumbnail Image */}
-                  {(() => {
-                    const propertyId = (investment as any).property?.id || investment.propertyId
-                    const thumbnail = propertyId ? propertyThumbnails[propertyId] : null
-                    return thumbnail ? (
-                      <div className="relative h-48 w-full overflow-hidden">
-                        <img
-                          src={thumbnail}
-                          alt={investment.propertyName || investment.propertyAddress}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </div>
-                    ) : (
-                      <div className="h-48 w-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        <HomeIcon className="h-12 w-12 text-blue-400" />
-                      </div>
-                    )
-                  })()}
-                  
-                  <div className="p-6">
-                    <div className="flex items-center justify-end mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getDealBadge(investment.dealStatus)}`}>
-                          {investment.dealStatus || 'STABILIZED'}
-                        </span>
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getFundingBadge(investment.fundingStatus)}`}>
-                          {investment.fundingStatus || 'FUNDED'}
-                        </span>
-                      </div>
-                    </div>
-                  
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors duration-200 break-words">
-                    {investment.propertyName || investment.propertyAddress}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mb-4 flex items-start">
-                    <MapPinIcon className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="break-words">{investment.propertyAddress}</span>
-                  </p>
-                  
-                  {investment.bedrooms && (
-                    <p className="text-sm text-slate-600 mb-4 font-medium">
-                      {investment.bedrooms} bed • {investment.bathrooms} bath • {investment.squareFeet?.toLocaleString()} sqft
-                    </p>
-                  )}
-                  
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Investment</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {(() => {
-                          // For investors or when filtering by person, show individual investment amount from entity owners
-                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
-                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
-                            const targetName = currentUser?.role === 'INVESTOR' 
-                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                              : analyticsTarget.trim().toLowerCase()
-                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
-                              (owner.userName || '').trim().toLowerCase() === targetName
-                            )
-                            if (matchingOwner && matchingOwner.investmentAmount) {
-                              return formatCurrency(matchingOwner.investmentAmount)
-                            }
-                          }
-                          return formatCurrency(investment.investmentAmount)
-                        })()}
-                      </span>
+                .map(inv => ({ property: inv.propertyName || inv.name || 'Deal', amount: inv.investmentAmount || 0 }))
+                .filter(item => (item.amount || 0) > 0)
+                .sort((a, b) => b.amount - a.amount)
+              setInvestedBreakdown(breakdown)
+              setShowInvestedBreakdown(true)
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLElement).click()}
+            className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300/80 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 rounded-xl">
+                <CurrencyDollarIcon className="h-5 w-5 text-slate-600" />
               </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Ownership</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {(() => {
-                          // For investors or when filtering by person, show effective ownership percentage
-                          const shouldShowIndividual = (currentUser?.role === 'INVESTOR') || (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL')
-                          if (investment.investmentType === 'ENTITY' && shouldShowIndividual && (investment as any).entityOwners) {
-                            const targetName = currentUser?.role === 'INVESTOR'
-                              ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim().toLowerCase()
-                              : analyticsTarget.trim().toLowerCase()
-                            const matchingOwner = (investment as any).entityOwners.find((owner: any) => 
-                              (owner.userName || '').trim().toLowerCase() === targetName
-                            )
-                            if (matchingOwner && matchingOwner.ownershipPercentage) {
-                              // Calculate effective ownership: (entity ownership % of property / 100) * (investor ownership % of entity / 100) * 100
-                              // Example: If entity owns 50% of property and investor owns 51% of entity:
-                              // Effective = (50/100) * (51/100) * 100 = 25.5%
-                              const entityOwnershipOfProperty = (investment.ownershipPercentage || 0) / 100
-                              const investorOwnershipOfEntity = (matchingOwner.ownershipPercentage || 0) / 100
-                              const effectiveOwnership = entityOwnershipOfProperty * investorOwnershipOfEntity * 100
-                              return `${effectiveOwnership.toFixed(1)}%`
-                            }
-                          }
-                          return `${investment.ownershipPercentage}%`
-                        })()}
-                      </span>
-              </div>
-                  {typeof investment.estimatedCurrentDebt === 'number' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Est. Current Debt</span>
-                      <span className="text-sm font-bold text-slate-900">{formatCurrency(investment.estimatedCurrentDebt)}</span>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Invested</span>
+            </div>
+            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.totalInvested)}</p>
+            <p className="text-sm text-emerald-600 font-medium mt-1">Growing</p>
           </div>
-                  )}
-                  {typeof investment.estimatedMonthlyDebtService === 'number' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500 font-medium">Monthly Debt Service</span>
-                      <span className={`text-sm font-bold text-slate-900`}>{formatCurrency(investment.estimatedMonthlyDebtService)}</span>
-        </div>
-      )}
-                    {investment.irr && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500 font-medium">IRR</span>
-                        <span className={`text-sm font-bold ${investment.irr > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {formatPercentage(investment.irr)}
-                        </span>
-            </div>
-                    )}
-              </div>
-              
-                  <div className="pt-4 border-t border-slate-200/60 flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-medium">
-                      {investment.startDate ? `Started ${new Date(investment.startDate).toLocaleDateString()}` : 'In Progress'}
-                    </span>
-                    <span className="text-sm text-blue-600 font-semibold group-hover:text-blue-700 flex items-center transition-colors duration-200">
-                      View Deal
-                      <ArrowUpRightIcon className="h-4 w-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                    </span>
-                  </div>
-                  </div>
-                </div>
-              ))}
-              </div>
-              
-            {investments.filter(inv => inv.fundingStatus === 'FUNDED').length === 0 && (
-              <div className="text-center py-20">
-                <div className="p-6 bg-slate-100 rounded-3xl w-fit mx-auto mb-6">
-                  <BuildingOfficeIcon className="h-20 w-20 text-slate-400" />
-              </div>
-                <p className="text-xl font-semibold text-slate-900 mb-2">No funded investments found.</p>
-                <p className="text-slate-500 font-medium">Funded investments will appear here</p>
-              </div>
-            )}
-        </div>
-      )}
 
-        {activeView === 'analytics' && (
-          <div className="space-y-6 sm:space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8">Portfolio Performance</h2>
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
-                    setCalcTitle('Total Equity Today (Estimated)')
-                    setCalcLines([
-                      { label: 'Current Value (Current Portfolio Value)', value: stats.currentValue },
-                      { label: '− Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
-                      { label: '− Current Debt (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1 break-words" title="Current Value − Invested (FUNDED & STABILIZED) − Debt (FUNDED & STABILIZED)">Total Equity Today (Estimated)</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency((stats as any).totalEquityToday || 0)}</p>
-                </div>
-                    <ChartBarIcon className="h-12 w-12 sm:h-16 sm:w-16 text-blue-600 flex-shrink-0" />
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 rounded-xl">
+                <ChartBarIcon className="h-5 w-5 text-slate-600" />
               </div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Current Value</span>
+            </div>
+            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.currentValue)}</p>
+            <p className="text-sm text-slate-500 font-medium mt-1">Stabilized portfolio</p>
+          </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
-                    setCalcTitle('Total Projected Future Equity (Estimated)')
-                    setCalcLines([
-                      { label: 'Projected Value (Includes pipeline)', value: stats.projectedValue },
-                      { label: '− Invested (FUNDED)', value: -(stats.totalInvested) },
-                      { label: '− Current Debt (FUNDED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED').reduce((s,i)=> s + (i.estimatedCurrentDebt||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1 break-words" title="Projected Value − Invested (FUNDED) − Debt (FUNDED)">Total Projected Future Equity (Estimated)</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency((stats as any).totalEquityProjected || 0)}</p>
-                </div>
-                    <ChartBarIcon className="h-12 w-12 sm:h-16 sm:w-16 text-indigo-600 flex-shrink-0" />
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 rounded-xl">
+                <BanknotesIcon className="h-5 w-5 text-slate-600" />
               </div>
-              
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl cursor-pointer gap-3 sm:gap-0" onClick={() => {
-                    setCalcTitle('Total Returns (Current)')
-                    setCalcLines([
-                      { label: 'Total Equity Today (Estimated)', value: (stats as any).totalEquityToday || 0 },
-                      { label: '− Total Invested (FUNDED & STABILIZED)', value: -(investments.filter(i => i.fundingStatus==='FUNDED' && i.dealStatus==='STABILIZED').reduce((s,i)=> s + (i.investmentAmount||0),0)) },
-                    ])
-                    setShowCalcModal(true)
-                  }}>
-                <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1">Total Returns</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency(stats.totalReturn)}</p>
-                </div>
-                    <ArrowTrendingUpIcon className="h-12 w-12 sm:h-16 sm:w-16 text-emerald-600 flex-shrink-0" />
-              </div>
-              
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl gap-3 sm:gap-0">
-                <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-slate-600 font-semibold mb-1">Cash Distributions</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{formatCurrency(stats.totalDistributions)}</p>
-                </div>
-                    <BanknotesIcon className="h-12 w-12 sm:h-16 sm:w-16 text-purple-600 flex-shrink-0" />
-                </div>
-              </div>
-              </div>
-              
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8">Performance Metrics</h2>
-                <div className="space-y-6">
-                  <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-blue-300/60 transition-colors duration-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-semibold text-slate-700" title="IRR excludes under construction">Average IRR</span>
-                      <span className="text-2xl font-bold text-blue-600">{formatPercentage(stats.averageIRR)}</span>
-              </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-1000" 
-                        style={{ width: `${Math.min(Math.abs(stats.averageIRR) * 10, 100)}%` }}
-                      ></div>
-                      </div>
-                  </div>
-                  
-                  <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-emerald-300/60 transition-colors duration-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Total Properties</span>
-                      <span className="text-2xl font-bold text-emerald-600">{stats.totalProperties}</span>
-              </div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Distributions</span>
             </div>
-                  
-                  <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-purple-300/60 transition-colors duration-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Current Portfolio Value">Portfolio Size (Current)</span>
-                      <span className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalProjectCost)}</span>
+            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.totalDistributions)}</p>
+            <p className="text-sm text-slate-500 font-medium mt-1">Cash received</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 rounded-xl">
+                <ArrowTrendingUpIcon className="h-5 w-5 text-slate-600" />
+              </div>
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Average IRR</span>
             </div>
-              </div>
-              
-                  <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-indigo-300/60 transition-colors duration-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700" title="Total Original Debt (FUNDED + STABILIZED) + Total Equity Today">Total Project Cost (Current)</span>
-                      <span className="text-2xl font-bold text-indigo-600">{formatCurrency(stats.totalProjectCost)}</span>
-              </div>
-              </div>
-              
-                  <div className="p-6 border border-slate-200/60 rounded-2xl hover:border-rose-300/60 transition-colors duration-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">Portfolio Yield on Cost</span>
-                      <span className={`text-2xl font-bold ${(stats.totalProjectCost > 0 && stats.yearlyNOIBeforeDebt / stats.totalProjectCost >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
-                        {formatPercentage(stats.totalProjectCost > 0 ? (stats.yearlyNOIBeforeDebt / stats.totalProjectCost) * 100 : 0)}
-                      </span>
-              </div>
-              </div>
+            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatPercentage(stats.averageIRR)}</p>
+            <p className="text-sm text-slate-500 font-medium mt-1">Performance</p>
           </div>
         </div>
-            </div>
-            
-            {/* IRR Analysis */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200/60 shadow-sm">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Deal IRR Analysis</h2>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                  {currentUser?.role === 'ADMIN' ? (
-                    <>
-                      <select
-                        value={analyticsScope}
-                        onChange={(e)=>{ setAnalyticsScope(e.target.value as any); setAnalyticsTarget('ALL') }}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm w-full sm:w-auto"
-                      >
-                        <option value="ALL">All</option>
-                        <option value="PERSON">By Person</option>
-                        <option value="ENTITY">By Entity</option>
-                      </select>
-                      <select
-                        value={analyticsTarget}
-                        onChange={(e)=>setAnalyticsTarget(e.target.value)}
-                        disabled={analyticsScope==='ALL'}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm disabled:opacity-50 w-full sm:w-auto"
-                      >
-                    <option value="ALL">All</option>
-                    {analyticsScope==='PERSON' && (() => {
-                      // Collect all individual people from direct investments and entity owners
-                      const allPeople = new Set<string>()
-                      investments.forEach(inv => {
-                        // Direct investments
-                        if ((inv as any).investorName) {
-                          allPeople.add((inv as any).investorName)
-                        }
-                        // Entity investments - get individual owners
-                        if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners) {
-                          (inv as any).entityOwners.forEach((owner: any) => {
-                            if (owner.userName) {
-                              allPeople.add(owner.userName)
-                            }
-                          })
-                        }
-                      })
-                      return Array.from(allPeople).sort().map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))
-                    })()}
-                    {analyticsScope==='ENTITY' && Array.from(new Set(investments.map(inv => inv.entityName).filter(Boolean))).map(name=> (
-                      <option key={name as string} value={name as string}>{name as string}</option>
-                    ))}
-                  </select>
-                    </>
-                  ) : (
-                    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 font-semibold">
-                      Viewing: {analyticsTarget || 'Your Investments'}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200/60 -mx-4 sm:mx-0">
-                <table className="min-w-full divide-y divide-slate-200/60" style={{ minWidth: '1000px' }}>
-                  <thead className="bg-slate-50/80">
-                    <tr>
-                      {analyticsScope === 'PERSON' && (
-                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Person</th>
-                      )}
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Property</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Current Debt</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">IRR</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Yield on Cost</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">DSCR</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Start</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Construction Complete</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Proforma</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white/50 divide-y divide-slate-200/60">
-                    {(() => {
-                      // Transform investments for "By Person" view - expand entity investments into individual person rows
-                      let displayInvestments: any[] = []
-                      
-                      if (analyticsScope === 'PERSON') {
-                        investments
-                          .forEach(inv => {
-                            if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                              // Expand entity investment into individual person rows
-                              (inv as any).entityOwners.forEach((owner: any) => {
-                                // Check if this is a direct user owner
-                                if (owner.userName && owner.userId) {
-                                  // Apply person filter if specified
-                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) {
-                                    return
-                                  }
-                                  // Calculate effective ownership percentage for scaling
-                                  const entityOwnershipPct = inv.ownershipPercentage || 0
-                                  const individualOwnershipPct = owner.ownershipPercentage || 0
-                                  const effectiveOwnershipPct = (entityOwnershipPct / 100) * (individualOwnershipPct / 100)
-                                  
-                                  displayInvestments.push({
-                                    ...inv,
-                                    id: `${inv.id}_${owner.id}`,
-                                    personName: owner.userName,
-                                    investmentAmount: owner.investmentAmount || 0,
-                                    ownershipPercentage: owner.ownershipPercentage || 0,
-                                    // Scale property-level values by ownership for Analytics table
-                                    estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
-                                    estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
-                                    property: inv.property ? {
-                                      ...inv.property,
-                                      monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
-                                      otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
-                                      annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
-                                      totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
-                                      acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
-                                      constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
-                                    } : undefined
-                                  })
-                                } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
-                                  // This owner is an entity with a breakdown array - check nested investors
-                                  owner.breakdown.forEach((breakdownItem: any) => {
-                                    const breakdownLabel = (breakdownItem.label || '').trim()
-                                    // Apply person filter if specified (case-insensitive comparison)
-                                    if (analyticsTarget !== 'ALL' && breakdownLabel.toLowerCase() !== analyticsTarget.toLowerCase()) {
-                                      return
-                                    }
-                                    // Calculate effective ownership: (entity % of property / 100) * (entity owner % / 100) * (breakdown item % / 100)
-                                    const entityOwnershipPct = inv.ownershipPercentage || 0
-                                    const entityOwnerPct = owner.ownershipPercentage || 0
-                                    // Note: breakdown items don't have ownership %, so we use the amount proportion
-                                    const breakdownTotal = owner.breakdown.reduce((sum: number, item: any) => sum + (parseFloat(item.amount || 0)), 0)
-                                    const breakdownItemPct = breakdownTotal > 0 ? (parseFloat(breakdownItem.amount || 0) / breakdownTotal) * 100 : 0
-                                    const effectiveOwnershipPct = (entityOwnershipPct / 100) * (entityOwnerPct / 100) * (breakdownItemPct / 100)
-                                    
-                                    displayInvestments.push({
-                                      ...inv,
-                                      id: `${inv.id}_${owner.id}_${breakdownItem.id || breakdownItem.label}`,
-                                      personName: breakdownLabel,
-                                      investmentAmount: parseFloat(breakdownItem.amount || 0),
-                                      ownershipPercentage: effectiveOwnershipPct * 100,
-                                      // Scale property-level values by ownership for Analytics table
-                                      estimatedCurrentDebt: (inv.estimatedCurrentDebt || 0) * effectiveOwnershipPct,
-                                      estimatedMonthlyDebtService: (inv.estimatedMonthlyDebtService || 0) * effectiveOwnershipPct,
-                                      property: inv.property ? {
-                                        ...inv.property,
-                                        monthlyRent: (inv.property.monthlyRent || 0) * effectiveOwnershipPct,
-                                        otherIncome: (inv.property.otherIncome || 0) * effectiveOwnershipPct,
-                                        annualExpenses: (inv.property.annualExpenses || 0) * effectiveOwnershipPct,
-                                        totalCost: (inv.property.totalCost || 0) * effectiveOwnershipPct,
-                                        acquisitionPrice: (inv.property.acquisitionPrice || 0) * effectiveOwnershipPct,
-                                        constructionCost: (inv.property.constructionCost || 0) * effectiveOwnershipPct
-                                      } : undefined
-                                    })
-                                  })
-                                }
-                              })
-                            } else {
-                              // Direct investment - apply person filter if specified
-                              if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) {
-                                return
-                              }
-                              displayInvestments.push({
-                                ...inv,
-                                personName: (inv as any).investorName || 'Direct Investor'
-                              })
-                            }
-                          })
-                      } else {
-                        // Non-person view - use existing filter logic
-                        displayInvestments = investments
-                          .filter(inv => {
-                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
-                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
-                            return true
-                          })
-                      }
-                      
-                      return displayInvestments
-                    })().map((inv) => {
-                      const rent = inv.property?.monthlyRent || 0
-                      const other = inv.property?.otherIncome || 0
-                      const annualExp = inv.property?.annualExpenses || 0
-                      const monthlyExp = annualExp / 12
-                      const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                      const annualNOI = monthlyNOI * 12
-                      const totalProjectCost = (inv.property?.totalCost && inv.property?.totalCost! > 0)
-                        ? (inv.property?.totalCost as number)
-                        : ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0))
-                      const yieldOnCost = totalProjectCost > 0 ? (annualNOI / totalProjectCost) * 100 : null
-                      const annualDebtService = (inv.estimatedMonthlyDebtService || 0) * 12
-                      const dscr = annualDebtService > 0 ? (annualNOI / annualDebtService) : null
 
-                      return (
-                        <tr 
-                          key={inv.id} 
-                          className="hover:bg-slate-50/80 transition-colors duration-200 cursor-pointer"
-                          onClick={() => openProforma(inv)}
-                        >
-                          {analyticsScope === 'PERSON' && (
-                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
-                              <span className="break-words">{inv.personName || 'Unknown'}</span>
-                            </td>
-                          )}
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-slate-900">
-                            <span className="break-words">{inv.propertyName || inv.propertyAddress}</span>
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
-                            {formatCurrency(inv.investmentAmount)}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
-                            {typeof inv.estimatedCurrentDebt === 'number' ? formatCurrency(inv.estimatedCurrentDebt) : '—'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900 text-right">
-                            {typeof inv.estimatedMonthlyDebtService === 'number' ? formatCurrency(inv.estimatedMonthlyDebtService) : '—'}
-                          </td>
-                          <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right ${((inv.irr || 0) >= 0) ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {formatPercentage(inv.irr || 0)}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right">
-                            {yieldOnCost !== null ? formatPercentage(yieldOnCost) : '—'}
-                          </td>
-                          <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-bold text-right ${dscr !== null && dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>
-                            {dscr !== null ? dscr.toFixed(2) : '—'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900">
-                            {inv.property?.acquisitionDate ? new Date(inv.property.acquisitionDate).toLocaleDateString() : '—'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-slate-900">
-                            {inv.property?.constructionCompletionDate ? new Date(inv.property.constructionCompletionDate).toLocaleDateString() : '—'}
-                          </td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                openProforma(inv)
-                              }}
-                              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs font-semibold whitespace-nowrap"
-                            >
-                              View 5Y Proforma
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                    {(() => {
-                      // Calculate summary stats for selected person
-                      if (analyticsScope === 'PERSON' && analyticsTarget !== 'ALL') {
-                        const personInvestments = (() => {
-                          let result: any[] = []
-                          investments
-                            .forEach(inv => {
-                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                                (inv as any).entityOwners.forEach((owner: any) => {
-                                  // Check if this is a direct user owner
-                                  if (owner.userName && owner.userId && owner.userName === analyticsTarget) {
-                                    result.push({
-                                      ...inv,
-                                      personName: owner.userName,
-                                      investmentAmount: owner.investmentAmount || 0,
-                                      ownershipPercentage: owner.ownershipPercentage || 0
-                                    })
-                                  } else if (owner.investorEntityId && Array.isArray(owner.breakdown) && owner.breakdown.length > 0) {
-                                    // Check breakdown array for nested investors
-                                    owner.breakdown.forEach((breakdownItem: any) => {
-                                      const breakdownLabel = (breakdownItem.label || '').trim()
-                                      if (breakdownLabel.toLowerCase() === analyticsTarget.toLowerCase()) {
-                                        result.push({
-                                          ...inv,
-                                          personName: breakdownLabel,
-                                          investmentAmount: parseFloat(breakdownItem.amount || 0),
-                                          ownershipPercentage: 0 // Will be calculated in display logic
-                                        })
-                                      }
-                                    })
-                                  }
-                                })
-                              } else {
-                                if ((inv as any).investorName === analyticsTarget) {
-                                  result.push({
-                                    ...inv,
-                                    personName: (inv as any).investorName || 'Direct Investor'
-                                  })
-                                }
-                              }
-                            })
-                          return result
-                        })()
+        <section className="border-t border-slate-200/80 pt-8">
+          <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Quick access</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link
+              href="/investors/documents"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+            >
+              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                <DocumentTextIcon className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-slate-900">Documents</p>
+                <p className="text-xs text-slate-500">Tax, PPM, statements</p>
+              </div>
+              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+            </Link>
+            <Link
+              href="/investors/updates"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+            >
+              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                <BellIcon className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-slate-900">Updates</p>
+                <p className="text-xs text-slate-500">Announcements & notices</p>
+              </div>
+              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+            </Link>
+            <Link
+              href="/investors/performance"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+            >
+              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                <ChartBarIcon className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-slate-900">Performance</p>
+                <p className="text-xs text-slate-500">Reports & export</p>
+              </div>
+              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+            </Link>
+          </div>
+        </section>
+      </div>
 
-                        if (personInvestments.length > 0) {
-                          const totalInvested = personInvestments.reduce((sum, inv) => sum + (inv.investmentAmount || 0), 0)
-                          const totalDebt = personInvestments.reduce((sum, inv) => sum + (inv.estimatedCurrentDebt || 0), 0)
-                          const totalMonthlyDebtService = personInvestments.reduce((sum, inv) => sum + (inv.estimatedMonthlyDebtService || 0), 0)
-                          const avgIRR = personInvestments.length > 0 
-                            ? personInvestments.reduce((sum, inv) => sum + (inv.irr || 0), 0) / personInvestments.length 
-                            : 0
-                          const totalProperties = personInvestments.length
-
-                          // Calculate weighted average yield on cost
-                          let totalYield = 0
-                          let totalCost = 0
-                          personInvestments.forEach(inv => {
-                            const rent = inv.property?.monthlyRent || 0
-                            const other = inv.property?.otherIncome || 0
-                            const annualExp = inv.property?.annualExpenses || 0
-                            const monthlyExp = annualExp / 12
-                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                            const annualNOI = monthlyNOI * 12
-                            const projectCost = (inv.property?.totalCost && inv.property?.totalCost! > 0)
-                              ? (inv.property?.totalCost as number)
-                              : ((inv.property?.acquisitionPrice || 0) + (inv.property?.constructionCost || 0))
-                            if (projectCost > 0) {
-                              totalYield += (annualNOI / projectCost) * 100
-                              totalCost += projectCost
-                            }
-                          })
-                          const avgYieldOnCost = totalCost > 0 ? (totalYield / personInvestments.length) : 0
-
-                          // Calculate weighted average DSCR
-                          let totalDSCR = 0
-                          let dscrCount = 0
-                          personInvestments.forEach(inv => {
-                            const rent = inv.property?.monthlyRent || 0
-                            const other = inv.property?.otherIncome || 0
-                            const annualExp = inv.property?.annualExpenses || 0
-                            const monthlyExp = annualExp / 12
-                            const monthlyNOI = Math.max((rent + other) - monthlyExp, 0)
-                            const annualNOI = monthlyNOI * 12
-                            const annualDebtService = (inv.estimatedMonthlyDebtService || 0) * 12
-                            if (annualDebtService > 0) {
-                              totalDSCR += annualNOI / annualDebtService
-                              dscrCount++
-                            }
-                          })
-                          const avgDSCR = dscrCount > 0 ? totalDSCR / dscrCount : 0
-
-                          return (
-                            <>
-                              <tr className="bg-slate-100/50 border-t-2 border-slate-300">
-                                {analyticsScope === 'PERSON' && (
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                                    TOTAL
-                                  </td>
-                                )}
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                                  {analyticsScope === 'PERSON' ? `${totalProperties} Properties` : 'TOTAL'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
-                                  {formatCurrency(totalInvested)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
-                                  {formatCurrency(totalDebt)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 text-right">
-                                  {formatCurrency(totalMonthlyDebtService)}
-                                </td>
-                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgIRR >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                  {formatPercentage(avgIRR)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-right">
-                                  {avgYieldOnCost > 0 ? formatPercentage(avgYieldOnCost) : '—'}
-                                </td>
-                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${avgDSCR >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                  {avgDSCR > 0 ? avgDSCR.toFixed(2) : '—'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                  <span className="text-xs text-slate-500">—</span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                  <span className="text-xs text-slate-500">—</span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                  <span className="text-xs text-slate-500">Summary</span>
-                                </td>
-                              </tr>
-                            </>
-                          )
-                        }
-                      }
-
-                      const displayInvestments = (() => {
-                        if (analyticsScope === 'PERSON') {
-                          let result: any[] = []
-                          investments
-                            .forEach(inv => {
-                              if (inv.investmentType === 'ENTITY' && (inv as any).entityOwners && Array.isArray((inv as any).entityOwners)) {
-                                (inv as any).entityOwners.forEach((owner: any) => {
-                                  if (analyticsTarget !== 'ALL' && owner.userName !== analyticsTarget) return
-                                  result.push(inv)
-                                })
-                              } else {
-                                if (analyticsTarget !== 'ALL' && (inv as any).investorName !== analyticsTarget) return
-                                result.push(inv)
-                              }
-                            })
-                          return result
-                        } else {
-                          return investments.filter(inv => {
-                            if (analyticsScope==='ALL' || analyticsTarget==='ALL') return true
-                            if (analyticsScope==='ENTITY') return (inv.entityName) === analyticsTarget
-                            return true
-                          })
-                        }
-                      })()
-                      return displayInvestments.length === 0 && (
-                        <tr>
-                          <td colSpan={analyticsScope === 'PERSON' ? 11 : 10} className="px-6 py-12 text-center text-slate-500 text-sm">No investments found</td>
-                        </tr>
-                      )
-                    })()}
-                  </tbody>
-                </table>
-                </div>
-              </div>
-              
-            {/* NOI Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <div 
-                className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                onClick={() => {
-                  // Show revenue breakdown for stabilized, funded properties
-                  const revenueBreakdown = investments
-                    .filter(inv => inv.dealStatus === 'STABILIZED' && inv.fundingStatus === 'FUNDED')
-                    .map(inv => ({
-                      label: inv.propertyName || inv.propertyAddress,
-                      value: (inv.property?.monthlyRent || 0) + (inv.property?.otherIncome || 0)
-                    }))
-                    .filter(item => item.value > 0)
-                  
-                  setCalcTitle('Monthly Revenue Breakdown (Stabilized & Funded Properties)')
-                  setCalcLines(revenueBreakdown)
-                  setShowCalcModal(true)
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Revenue (Before Debt)</span>
-              </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyRevenue)}</h3>
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <CalculatorIcon className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Debt Service and Condo Fees</span>
-            </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyDebtServiceAndCondoFees)}</h3>
-          </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly NOI (After Debt)</span>
-            </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.monthlyNOIAfterDebt)}</h3>
-          </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Yearly NOI (Before Debt)</span>
-        </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.yearlyNOIBeforeDebt)}</h3>
-            </div>
-              <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Yearly NOI (After Debt)</span>
-              </div>
-                <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(stats.yearlyNOIAfterDebt)}</h3>
-              </div>
-          </div>
-        </div>
-      )}
-      {showProformaModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl border border-slate-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">5-Year Proforma</h3>
-                <p className="text-sm text-slate-500">{proformaTitle}</p>
-              </div>
-              <button
-                onClick={() => setShowProformaModal(false)}
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4 sm:p-6 overflow-x-auto -mx-4 sm:mx-0">
-              <table className="min-w-full divide-y divide-slate-200" style={{ minWidth: '1200px' }}>
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-slate-600">Year</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Revenue</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Expenses</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">NOI</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Interest</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Principal</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Debt Service</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Ending Debt</th>
-                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Exit Value</th>
-                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Debt Payoff (Y5)</th>
-                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Exit Proceeds (Net)</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">Cash Flow</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">DSCR</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold text-slate-600">IRR to Date</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-100">
-                  {proformaRows.map((r, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50">
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-slate-900">{r.year}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.revenue)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.expenses)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold text-slate-900 whitespace-nowrap">{formatCurrency(r.noi)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.interest)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.principal)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.debtService)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.endingDebt)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-slate-700 whitespace-nowrap">{formatCurrency(r.exitSaleValue || 0)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-red-600 font-semibold whitespace-nowrap">{formatCurrency(r.debtPayoff || 0)}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-emerald-600 font-semibold whitespace-nowrap">{formatCurrency(r.exitProceeds || 0)}</td>
-                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-bold whitespace-nowrap ${r.cashFlow >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(r.cashFlow)}</td>
-                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold whitespace-nowrap ${r.dscr !== null && r.dscr < 1 ? 'text-red-500' : 'text-emerald-600'}`}>{r.dscr !== null ? r.dscr.toFixed(2) : '—'}</td>
-                      <td className={`px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-semibold whitespace-nowrap ${r.irrToDate !== null && r.irrToDate < 0 ? 'text-red-500' : 'text-emerald-600'}`}>{r.irrToDate !== null ? `${r.irrToDate.toFixed(1)}%` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-      {activeView === 'crm' && (currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* CRM Sub-navigation */}
-          <div className="mb-6 border-b border-slate-200">
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => setCrmSubView('pipeline')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  crmSubView === 'pipeline'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <BriefcaseIcon className="h-5 w-5" />
-                  <span>Pipeline</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setCrmSubView('contacts')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  crmSubView === 'contacts'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <UsersIcon className="h-5 w-5" />
-                  <span>Contacts</span>
-                </div>
-              </button>
-            </nav>
-          </div>
-          
-          {/* CRM Content */}
-          {crmSubView === 'pipeline' && <CRMDealPipeline />}
-          {crmSubView === 'contacts' && <CRMContacts />}
-        </div>
-      )}
-      {showCalcModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-slate-200 my-4">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words pr-2">{calcTitle}</h3>
-              <button onClick={() => setShowCalcModal(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4 sm:p-6">
-              <ul className="space-y-3">
-                {calcLines.map((l, idx) => (
-                  <li key={idx} className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">{l.label}</span>
-                    <span className={`text-sm font-semibold ${l.value < 0 ? 'text-red-600' : 'text-slate-900'}`}>{formatCurrency(l.value)}</span>
-                  </li>
-                ))}
-                <li className="flex items-center justify-between pt-3 border-t border-slate-200 mt-2">
-                  <span className="text-sm font-semibold text-slate-900">Result</span>
-                  <span className="text-sm font-bold text-blue-600">{formatCurrency(calcLines.reduce((s,l)=> s + l.value, 0))}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
       {showInvestedBreakdown && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-10 px-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 my-4">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words pr-2">Total Invested Breakdown</h3>
-              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex-shrink-0">
+              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg flex-shrink-0 font-medium">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
@@ -2124,7 +603,6 @@ export default function InvestorDashboard() {
           </div>
         </div>
       )}
-      </div>
     </div>
   )
 } 

@@ -2,10 +2,15 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
+  // Don't show main site header inside investor or admin app — they have their own nav
+  if (pathname?.startsWith('/investors') || pathname?.startsWith('/admin')) {
+    return null;
+  }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [propertiesDropdownOpen, setPropertiesDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

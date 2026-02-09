@@ -1,210 +1,166 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  ArrowTrendingUpIcon,
+  ArrowRightIcon,
   BuildingOfficeIcon,
-  SparklesIcon,
-  BanknotesIcon,
-  StarIcon,
 } from '@heroicons/react/24/outline'
-import CRMDealPipeline from '@/components/CRMDealPipeline'
 
-interface Investment {
+interface Deal {
   id: string
-  propertyName?: string
-  propertyAddress?: string
-  investmentAmount: number
-  ownershipPercentage: number
-  status: string
-  currentValue?: number
-  totalReturn?: number
-  irr?: number
-  investmentType?: 'DIRECT' | 'ENTITY'
-  dealStatus?: 'STABILIZED' | 'UNDER_CONSTRUCTION' | 'UNDER_CONTRACT' | 'SOLD'
-  fundingStatus?: 'FUNDED' | 'FUNDING'
-  estimatedCurrentDebt?: number
-  estimatedMonthlyDebtService?: number
+  name: string
+  stage?: { id: string; name: string; color?: string }
+  property?: { name: string; address?: string }
+  estimatedCloseDate?: string | null
+  estimatedValue?: number | null
 }
 
-interface Stats {
-  totalInvested: number
-  currentValue: number
-  projectedValue: number
-  totalDistributions: number
-  averageIRR: number
-  activeDeals: number
-  totalProperties: number
-}
-
-export default function PipelineTrackerDashboard() {
-  const router = useRouter()
-  const [investments, setInvestments] = useState<Investment[]>([])
-  const [stats, setStats] = useState<Stats>({
-    totalInvested: 0,
-    currentValue: 0,
-    projectedValue: 0,
-    totalDistributions: 0,
-    averageIRR: 0,
-    activeDeals: 0,
-    totalProperties: 0,
-  })
+export default function PipelineTrackerOverviewPage() {
+  const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
-  const [showPipeline, setShowPipeline] = useState(false)
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || localStorage.getItem('token')
-        
-        const response = await fetch('/api/investors/properties', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setInvestments(data)
-          
-          // Calculate stats
-          const totalInvested = data.reduce((sum: number, inv: Investment) => sum + (inv.investmentAmount || 0), 0)
-          const currentValue = data.reduce((sum: number, inv: Investment) => sum + (inv.currentValue || inv.investmentAmount || 0), 0)
-          const totalDistributions = data.reduce((sum: number, inv: Investment) => sum + (inv.totalReturn || 0), 0)
-          const irrs = data.filter((inv: Investment) => inv.irr !== undefined && inv.irr !== null).map((inv: Investment) => inv.irr || 0)
-          const averageIRR = irrs.length > 0 ? irrs.reduce((sum: number, irr: number) => sum + irr, 0) / irrs.length : 0
-          const activeDeals = data.filter((inv: Investment) => inv.status === 'ACTIVE' || inv.fundingStatus === 'FUNDING').length
-          const totalProperties = new Set(data.map((inv: Investment) => inv.propertyName)).size
-
-          setStats({
-            totalInvested,
-            currentValue,
-            projectedValue: currentValue, // Can be enhanced with pipeline deals
-            totalDistributions,
-            averageIRR,
-            activeDeals,
-            totalProperties,
-          })
-        }
-      } catch (error) {
-        console.error('Error fetching investments:', error)
-      } finally {
-        setLoading(false)
-      }
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('authToken') || sessionStorage.getItem('token') : ''
+    if (!token) {
+      setLoading(false)
+      return
     }
-
-    fetchData()
+    fetch('/api/investors/crm/deals', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setDeals(Array.isArray(data) ? data : []))
+      .catch(() => setDeals([]))
+      .finally(() => setLoading(false))
   }, [])
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
-  }
+  const byStage = deals.reduce<Record<string, Deal[]>>((acc, d) => {
+    const stageName = d.stage?.name ?? 'No stage'
+    if (!acc[stageName]) acc[stageName] = []
+    acc[stageName].push(d)
+    return acc
+  }, {})
+  const stageNames = Object.keys(byStage).sort()
 
-  const formatPercentage = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`
-  }
+  const now = new Date()
+  const in90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
+  const upcomingDates = deals
+    .filter((d) => d.estimatedCloseDate)
+    .map((d) => ({ ...d, date: new Date(d.estimatedCloseDate!) }))
+    .filter((d) => d.date >= now && d.date <= in90)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 10)
+
+  const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      <div className="flex justify-center py-16">
+        <div className="h-10 w-10 rounded-full border-2 border-gray-200 border-t-accent animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pipeline Tracker Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">Overview of your deal pipeline and key metrics</p>
+    <div className="space-y-8" style={{ fontFamily: 'var(--font-sans)' }}>
+      {/* Summary cards */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Summary</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+            className="border-l-4 border-accent"
+          >
+            <p className="text-sm font-medium text-gray-500">Total Deals</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">{deals.length}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-gray-500">Stages</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">{stageNames.length}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-gray-500">Upcoming (90 days)</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">{upcomingDates.length}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-gray-500">With close date</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">
+              {deals.filter((d) => d.estimatedCloseDate).length}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Deals by stage */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Deals by stage</h2>
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+          <ul className="divide-y divide-gray-100">
+            {stageNames.length === 0 ? (
+              <li className="px-5 py-6 text-center text-gray-500 text-sm">No deals yet</li>
+            ) : (
+              stageNames.map((stageName) => {
+                const list = byStage[stageName]
+                const stageColor = list[0]?.stage?.color ?? '#54AAB1'
+                return (
+                  <li key={stageName} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
+                    <span
+                      className="inline-block w-3 h-3 rounded-full flex-shrink-0 mr-3"
+                      style={{ backgroundColor: stageColor }}
+                    />
+                    <span className="font-medium text-gray-900 flex-1">{stageName}</span>
+                    <span className="text-gray-500 text-sm">{list.length} deal{list.length !== 1 ? 's' : ''}</span>
+                  </li>
+                )
+              })
+            )}
+          </ul>
+        </div>
+      </section>
+
+      {/* Upcoming dates */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+          Upcoming dates (next 90 days)
+        </h2>
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+          {upcomingDates.length === 0 ? (
+            <div className="px-5 py-8 text-center text-gray-500 text-sm">
+              No upcoming close dates in the next 90 days
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {upcomingDates.map((deal) => (
+                <li key={deal.id} className="hover:bg-gray-50">
+                  <Link
+                    href={`/investors/pipeline-tracker/deals/${deal.id}`}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-left"
+                  >
+                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                      {formatDate(deal.date)}
+                    </span>
+                    <span className="text-gray-700 flex-1 min-w-0 truncate">{deal.name}</span>
+                    {deal.property?.name && (
+                      <span className="text-gray-500 text-sm truncate">{deal.property.name}</span>
+                    )}
+                    <ArrowRightIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <div className="flex justify-center pt-4">
+        <Link
+          href="/investors/pipeline-tracker/deals"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity"
+          className="bg-accent text-white"
+        >
+          <BuildingOfficeIcon className="h-5 w-5" />
+          View all deals
+        </Link>
       </div>
-
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {/* Total Invested */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-500 hover:-translate-y-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <CurrencyDollarIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Invested</p>
-              <div className="flex items-center mt-1">
-                <ArrowTrendingUpIcon className="h-3 w-3 text-accent mr-1" />
-                <span className="text-xs text-accent font-medium">Growing</span>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.totalInvested)}</h3>
-          <div className="h-1 bg-gradient-to-r from-accent to-primary rounded-full"></div>
-        </div>
-
-        {/* Current Value */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-primary to-secondary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <ChartBarIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Value</p>
-              <div className="flex items-center mt-1">
-                <SparklesIcon className="h-3 w-3 text-primary mr-1" />
-                <span className="text-xs text-primary font-medium">Appreciating</span>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatCurrency(stats.currentValue)}</h3>
-          <div className="h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
-        </div>
-
-        {/* Active Deals */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-secondary/10 transition-all duration-500 hover:-translate-y-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-secondary to-primary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <BuildingOfficeIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Deals</p>
-              <div className="flex items-center mt-1">
-                <SparklesIcon className="h-3 w-3 text-secondary mr-1" />
-                <span className="text-xs text-secondary font-medium">In Pipeline</span>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{stats.activeDeals}</h3>
-          <div className="h-1 bg-gradient-to-r from-secondary to-primary rounded-full"></div>
-        </div>
-
-        {/* Average IRR */}
-        <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-500 hover:-translate-y-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-gradient-to-br from-accent via-primary to-secondary rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average IRR</p>
-              <div className="flex items-center mt-1">
-                <ChartBarIcon className="h-3 w-3 text-accent mr-1" />
-                <span className="text-xs text-accent font-medium">Performance</span>
-              </div>
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{formatPercentage(stats.averageIRR)}</h3>
-          <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary rounded-full"></div>
-        </div>
-      </div>
-
-      {/* Removed "Show Deal Pipeline" button - deals are now accessible via the Deals tab */}
     </div>
   )
 }
