@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { loadDataFromCache, isCacheValid } from '@/utils/serverCache'
 import { getOptimizedImageUrl } from '@/utils/clientApi'
+import { resolveSiteUrl } from '@/utils/siteUrl'
 
 type Props = {
   params: { id: string }
@@ -114,7 +115,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://campusrentalsllc.com'
+    const siteUrl = resolveSiteUrl()
     const propertyUrl = `${siteUrl}/properties/${propertyId}`
     const description = propertyDescription || `${bedrooms} bed, ${bathrooms} bath property in ${propertyAddress} - $${price}/month`
 

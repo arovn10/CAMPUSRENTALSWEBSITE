@@ -4,8 +4,10 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Script from 'next/script';
+import { resolveMetadataBase } from '@/utils/siteUrl';
 
 const inter = Inter({ subsets: ['latin'] });
+const metadataBase = resolveMetadataBase();
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +50,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://campusrentalsllc.com'),
+  metadataBase,
   alternates: {
     canonical: '/',
   },
