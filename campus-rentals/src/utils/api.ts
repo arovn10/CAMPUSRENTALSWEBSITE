@@ -1,8 +1,4 @@
-/**
- * Property/photo/amenity API using the same Abode backend logic as abodingo-website.
- * All calls go through abodeClient (same paths, error handling, and response parsing).
- */
-import { abodeApi } from '@/lib/abodeClient';
+import { ABODE_API_BASE_URL } from '@/lib/apiConfig';
 
 export interface Photo {
   propertyKey: number;
@@ -46,8 +42,13 @@ export interface PropertyAmenities {
 
 export async function fetchProperties(): Promise<Property[]> {
   try {
-    const data = await abodeApi.properties.getByUsername('campusrentalsnola');
-    return Array.isArray(data) ? (data as Property[]) : [];
+    const response = await fetch(`${ABODE_API_BASE_URL}/property/campusrentalsnola`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch properties');
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching properties:', error);
     return [];
@@ -56,8 +57,13 @@ export async function fetchProperties(): Promise<Property[]> {
 
 export async function fetchPropertyPhotos(propertyId: number): Promise<Photo[]> {
   try {
-    const data = await abodeApi.photos.get(propertyId);
-    return Array.isArray(data) ? (data as Photo[]) : [];
+    const response = await fetch(`${ABODE_API_BASE_URL}/photos/get/${propertyId}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch property photos');
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching property photos:', error);
     return [];
@@ -66,8 +72,13 @@ export async function fetchPropertyPhotos(propertyId: number): Promise<Photo[]> 
 
 export async function fetchPropertyAmenities(propertyId: number): Promise<PropertyAmenities | null> {
   try {
-    const data = await abodeApi.amenities.getByPropertyId(propertyId);
-    return data && typeof data === 'object' && !Array.isArray(data) ? (data as PropertyAmenities) : null;
+    const response = await fetch(`${ABODE_API_BASE_URL}/amenities/${propertyId}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch property amenities');
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching property amenities:', error);
     return null;
