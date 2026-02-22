@@ -85,6 +85,7 @@ model User {
   dealNotes                  DealNote[] // Notes created by this user
   dealRelationships          DealRelationship[] // Relationships for deals
   dueDiligenceItems          DueDiligenceItem[]          @relation("DueDiligenceAssignedTo") // Due diligence items assigned to this user
+  pipelineDealFiles          PipelineDealFile[]
 
   @@map("users")
 }
@@ -422,12 +423,14 @@ model Notification {
 }
 
 model Entity {
-  id            String     @id @default(cuid())
-  name          String
-  type          EntityType
-  address       String?
-  taxId         String?
-  contactPerson String?
+  id                 String     @id @default(cuid())
+  name               String
+  type               EntityType
+  address            String?
+  taxId              String?
+  stateOfFormation   String?
+  formationDate      DateTime?
+  contactPerson      String?
   contactEmail  String?
   contactPhone  String?
   isActive      Boolean    @default(true)
@@ -1098,6 +1101,7 @@ model Deal {
   dueDiligenceItems   DueDiligenceItem[]
   assetMetrics        AssetMetric[]
   vendorRelationships VendorRelationship[]
+  pipelineDealFiles   PipelineDealFile[]
 
   @@index([pipelineId])
   @@index([stageId])
@@ -1105,6 +1109,27 @@ model Deal {
   @@index([assignedToId])
   @@index([section])
   @@map("deals")
+}
+
+model PipelineDealFile {
+  id           String   @id @default(cuid())
+  dealId       String
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  description  String?
+  uploadedById String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deal       Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([dealId])
+  @@index([uploadedById])
+  @@map("pipeline_deal_files")
 }
 
 model DealTask {
