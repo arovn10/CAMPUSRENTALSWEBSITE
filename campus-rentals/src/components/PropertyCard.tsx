@@ -19,11 +19,53 @@ function formatAvailableDate(leaseTerms: string | null): string {
   return leaseTerms;
 }
 
+function formatNumberRange(min: number | null | undefined, max: number | null | undefined, suffix: string): string {
+  if (min == null && max == null) return 'Contact for details';
+  if (min != null && max != null) {
+    if (min === max) return `${min} ${suffix}`;
+    return `${min}-${max} ${suffix}`;
+  }
+  if (min != null) return `${min}+ ${suffix}`;
+  return `${max} ${suffix}`;
+}
+
+function formatPriceRange(min: number | null | undefined, max: number | null | undefined, fallback?: number): string {
+  const format = (value: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+  const rangeMin = min ?? fallback ?? null;
+  const rangeMax = max ?? fallback ?? null;
+  if (rangeMin == null && rangeMax == null) return 'Contact for pricing';
+  if (rangeMin != null && rangeMax != null) {
+    if (rangeMin === rangeMax) return `${format(rangeMin)}/month`;
+    return `${format(rangeMin)} - ${format(rangeMax)}/month`;
+  }
+  if (rangeMin != null) return `${format(rangeMin)}+/month`;
+  return `${format(rangeMax)}/month`;
+}
+
 export default function PropertyCard({ property }: PropertyCardProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const isBuilding =
+    property.isBuildingGroup || property.isBuilding || property.propertyTypeCategory === 'MultiUnit';
+  const title = isBuilding
+    ? property.buildingName || property.name || property.address
+    : property.address;
+  const subtitle = isBuilding ? property.buildingAddress || property.address : property.name;
+  const bedsLabel = isBuilding
+    ? formatNumberRange(property.minBeds ?? property.bedrooms, property.maxBeds ?? property.bedrooms, 'beds')
+    : `${property.bedrooms} beds`;
+  const bathsLabel = isBuilding
+    ? formatNumberRange(property.minBaths ?? property.bathrooms, property.maxBaths ?? property.bathrooms, 'baths')
+    : `${property.bathrooms} baths`;
+  const priceLabel = isBuilding
+    ? formatPriceRange(property.minRent, property.maxRent, property.price)
+    : `$${property.price}/month`;
+  const availabilityText = isBuilding
+    ? 'Contact for availability'
+    : formatAvailableDate(property.leaseTerms);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -108,7 +150,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           ) : thumbnail ? (
             <Image
               src={thumbnail || ''}
-              alt={property.address}
+              alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -131,22 +173,31 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
         
         <div className="p-4 sm:p-6 bg-gradient-to-b from-white to-secondary/5">
+          {isBuilding && (
+            <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-1 text-xs font-medium text-accent">
+              Building
+              {property.unitCount ? ` · ${property.unitCount} units` : ''}
+            </div>
+          )}
           <h3 className="text-lg sm:text-xl font-bold text-text mb-2 group-hover:text-accent transition-colors duration-300 line-clamp-1">
-            {property.address}
+            {title}
           </h3>
+          {subtitle && subtitle !== title && (
+            <p className="text-xs sm:text-sm text-text/70 mb-2 line-clamp-1">{subtitle}</p>
+          )}
           
           <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 flex-wrap">
             <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              {property.bedrooms} beds
+              {bedsLabel}
             </div>
             <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              {property.bathrooms} baths
+              {bathsLabel}
             </div>
             {property.squareFeet && (
               <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
@@ -164,7 +215,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           
           <div className="flex items-center justify-between mb-2">
             <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-              ${property.price}/month
+              {priceLabel}
             </span>
             {!isMobile && (
               <span className="text-secondary font-medium transition-colors duration-300 flex items-center gap-1 group/link">
@@ -211,7 +262,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               {thumbnail ? (
                 <Image
                   src={thumbnail}
-                  alt={property.address}
+                  alt={title}
                   fill
                   className="object-cover"
                 />
@@ -231,20 +282,20 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
             
             <div className="p-6">
-              <h3 className="text-xl font-bold text-text mb-3">{property.address}</h3>
+              <h3 className="text-xl font-bold text-text mb-3">{title}</h3>
               
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
                   <svg className="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
-                  {property.bedrooms} beds
+                  {bedsLabel}
                 </div>
                 <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
                   <svg className="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {property.bathrooms} baths
+                  {bathsLabel}
                 </div>
                 {property.squareFeet && (
                   <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
@@ -257,15 +308,15 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               </div>
               
               <p className="text-text/80 mb-4 text-sm">
-                {property.description || 'Beautiful property in a prime location near campus.'}
+                {property.description || (isBuilding ? 'Explore available units in this building.' : 'Beautiful property in a prime location near campus.')}
               </p>
               
               <div className="mb-4">
                 <span className="text-2xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  ${property.price}/month
+                  {priceLabel}
                 </span>
                 <p className="text-sm text-gray-500 mt-1">
-                  Available From: {formatAvailableDate(property.leaseTerms)}
+                  Available From: {availabilityText}
                 </p>
               </div>
               

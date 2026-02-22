@@ -1,6 +1,7 @@
 import { Property } from '@/types';
 import { s3ToCloudFrontUrl } from './api';
 import apiService from '../services/api';
+import { normalizeProperties } from '@/utils/propertyNormalization';
 
 // Enhanced Photo interface with cached path
 export interface CachedPhoto {
@@ -45,8 +46,9 @@ export async function fetchProperties(): Promise<Property[]> {
     console.log('Cache empty, fetching from external API...');
     const external = await apiService.property.getProperties();
     if (external && external.length > 0) {
-      propertiesCache = { data: external, timestamp: Date.now() };
-      return external;
+      const normalized = normalizeProperties(external);
+      propertiesCache = { data: normalized, timestamp: Date.now() };
+      return normalized;
     }
 
     // Final fallback to bundled test data (ensures map/cards still work)
@@ -58,8 +60,9 @@ export async function fetchProperties(): Promise<Property[]> {
       // Fallback to external API
       const external = await apiService.property.getProperties();
       if (external && external.length > 0) {
-        propertiesCache = { data: external, timestamp: Date.now() };
-        return external;
+        const normalized = normalizeProperties(external);
+        propertiesCache = { data: normalized, timestamp: Date.now() };
+        return normalized;
       }
       const testData = await import('@/app/api/properties/test-data.json');
       return testData.default as Property[];

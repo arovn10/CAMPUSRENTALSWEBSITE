@@ -29,6 +29,18 @@ export async function GET(
           // Get photos and amenities from cache
           const photos = cachedData.photos[propertyId] || [];
           const amenities = cachedData.amenities[propertyId] || null;
+          const isBuilding =
+            property.isBuildingGroup ||
+            property.isBuilding ||
+            property.propertyTypeCategory === 'MultiUnit';
+          const relatedUnits = isBuilding
+            ? cachedData.properties.filter((p) => {
+                if (property.unitIds && property.unitIds.length > 0) {
+                  return property.unitIds.includes(p.property_id);
+                }
+                return p.buildingId === property.property_id && p.property_id !== property.property_id;
+              })
+            : [];
           
           // Calculate ETag for cache validation
           const etag = `"property-${propertyId}-${cachedData.metadata.timestamp}"`;
@@ -42,6 +54,7 @@ export async function GET(
             property,
             photos,
             amenities,
+            units: relatedUnits,
           }, {
             headers: {
               'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',

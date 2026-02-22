@@ -181,6 +181,23 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
       markersLayerRef.current.clearLayers();
       const list = [...propertiesWithCoords, ...geocodedProps];
       list.forEach((property) => {
+        const isBuilding =
+          property.isBuildingGroup || property.isBuilding || property.propertyTypeCategory === 'MultiUnit';
+        const displayName = property.buildingName || property.name;
+        const displayAddress = property.buildingAddress || property.address;
+        const formatPriceRange = (min: number | null | undefined, max: number | null | undefined, fallback?: number) => {
+          const format = (value: number) =>
+            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+          const rangeMin = min ?? fallback ?? null;
+          const rangeMax = max ?? fallback ?? null;
+          if (rangeMin == null && rangeMax == null) return 'Contact for pricing';
+          if (rangeMin != null && rangeMax != null) {
+            if (rangeMin === rangeMax) return `${format(rangeMin)}/mo`;
+            return `${format(rangeMin)} - ${format(rangeMax)}/mo`;
+          }
+          if (rangeMin != null) return `${format(rangeMin)}+/mo`;
+          return `${format(rangeMax)}/mo`;
+        };
         const customIcon = L.divIcon({
           className: 'custom-marker',
           html: `<div style="background-color: #10b981; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div><div style=\"position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 12px; height: 12px; background-color: white; border-radius: 50%;\"></div>`,
@@ -189,11 +206,14 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
         });
         const marker = L.marker([property.latitude as number, property.longitude as number], { icon: customIcon }).addTo(markersLayerRef.current);
         const formatPrice = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
+        const priceLabel = isBuilding
+          ? formatPriceRange(property.minRent, property.maxRent, property.price)
+          : formatPrice(property.price);
         const content = `
           <div style="max-width: 200px">
-            <h3 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px">${property.name}</h3>
-            <p style="margin: 0 0 4px 0; font-size: 0.9em; color: #666">${property.address}</p>
-            <p style="margin: 0; font-size: 0.85em; color: #10b981; font-weight: 600">${formatPrice(property.price)}</p>
+            <h3 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px">${displayName}</h3>
+            <p style="margin: 0 0 4px 0; font-size: 0.9em; color: #666">${displayAddress}</p>
+            <p style="margin: 0; font-size: 0.85em; color: #10b981; font-weight: 600">${priceLabel}</p>
           </div>
         `;
         marker.bindPopup(content);

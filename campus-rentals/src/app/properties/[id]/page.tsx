@@ -27,6 +27,7 @@ export default function PropertyDetailsPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [photos, setPhotos] = useState<CachedPhoto[]>([]);
   const [amenities, setAmenities] = useState<PropertyAmenities | null>(null);
+  const [relatedUnits, setRelatedUnits] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -65,6 +66,7 @@ export default function PropertyDetailsPage() {
         const loadedPhotos = data.photos || [];
         setPhotos(loadedPhotos);
         setAmenities(data.amenities || null);
+        setRelatedUnits(Array.isArray(data.units) ? data.units : []);
         setSelectedPhoto(loadedPhotos[0]?.photoLink || null);
         setError(null);
         
@@ -128,7 +130,7 @@ export default function PropertyDetailsPage() {
 
   useEffect(() => {
     if (property) {
-      setContactFormData((prev) => ({ ...prev, subject: `${property.name} interest` }));
+      setContactFormData((prev) => ({ ...prev, subject: `${displayName} interest` }));
     }
   }, [property]);
 
@@ -213,6 +215,28 @@ export default function PropertyDetailsPage() {
     return leaseTerms;
   }
 
+  function formatNumberRange(min: number | null | undefined, max: number | null | undefined, suffix: string): string {
+    if (min == null && max == null) return 'Contact for details';
+    if (min != null && max != null) {
+      if (min === max) return `${min} ${suffix}`;
+      return `${min}-${max} ${suffix}`;
+    }
+    if (min != null) return `${min}+ ${suffix}`;
+    return `${max} ${suffix}`;
+  }
+
+  function formatPriceRange(min: number | null | undefined, max: number | null | undefined): string {
+    if (min == null && max == null) return 'Contact for pricing';
+    const format = (value: number) =>
+      new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+    if (min != null && max != null) {
+      if (min === max) return `${format(min)}/month`;
+      return `${format(min)} - ${format(max)}/month`;
+    }
+    if (min != null) return `${format(min)}+/month`;
+    return `${format(max)}/month`;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center">
@@ -238,6 +262,38 @@ export default function PropertyDetailsPage() {
     );
   }
 
+  const isBuilding =
+    property?.isBuildingGroup ||
+    property?.isBuilding ||
+    property?.propertyTypeCategory === 'MultiUnit';
+  const displayName = property ? (property.buildingName || property.name) : '';
+  const displayAddress = property ? (property.buildingAddress || property.address) : '';
+  const priceLabel = property
+    ? isBuilding
+      ? formatPriceRange(property.minRent ?? property.price, property.maxRent ?? property.price)
+      : `$${property.price}/month`
+    : '';
+  const bedsLabel = property
+    ? isBuilding
+      ? formatNumberRange(property.minBeds ?? property.bedrooms, property.maxBeds ?? property.bedrooms, 'beds')
+      : `${property.bedrooms}`
+    : '';
+  const bathsLabel = property
+    ? isBuilding
+      ? formatNumberRange(property.minBaths ?? property.bathrooms, property.maxBaths ?? property.bathrooms, 'baths')
+      : `${property.bathrooms}`
+    : '';
+  const squareFeetLabel = property
+    ? isBuilding
+      ? formatNumberRange(property.squareFeet || null, property.squareFeet || null, 'sq ft')
+      : `${property.squareFeet}`
+    : '';
+  const availabilityLabel = property
+    ? isBuilding
+      ? 'Contact for availability'
+      : formatAvailableDate(property.leaseTerms)
+    : '';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       {/* Hero Section */}
@@ -248,7 +304,7 @@ export default function PropertyDetailsPage() {
             <Image
               key={photos[heroPhotoIndex]?.photoId || photos[0]?.photoId}
               src={getOptimizedImageUrl(photos[heroPhotoIndex] || photos[0])}
-              alt={property.name}
+              alt={displayName}
               fill
               sizes="100vw"
               className="object-cover"
@@ -265,9 +321,9 @@ export default function PropertyDetailsPage() {
         )}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-end pb-12 z-20 pointer-events-none">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent pointer-events-auto">
-            {property.name}
+            {displayName}
           </h1>
-          <p className="text-xl text-gray-300 pointer-events-auto">{property.address}</p>
+          <p className="text-xl text-gray-300 pointer-events-auto">{displayAddress}</p>
         </div>
       </div>
 
@@ -279,9 +335,11 @@ export default function PropertyDetailsPage() {
             {/* Description */}
             <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
               <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                About This Property
+                {isBuilding ? 'About This Building' : 'About This Property'}
               </h2>
-              <p className="text-gray-300">{property.description}</p>
+              <p className="text-gray-300">
+                {property.description || (isBuilding ? 'Explore available units in this building.' : '')}
+              </p>
             </div>
 
             {/* Photo Gallery */}
@@ -305,7 +363,7 @@ export default function PropertyDetailsPage() {
                         <Image
                           key={`photo-${selectedPhotoIndex}-${currentPhoto.photoId || currentPhoto.photoLink || Date.now()}`}
                           src={photoUrl}
-                          alt={`${property.name} - Photo ${selectedPhotoIndex + 1}`}
+                          alt={`${displayName} - Photo ${selectedPhotoIndex + 1}`}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
@@ -319,7 +377,7 @@ export default function PropertyDetailsPage() {
                             if (target && target.parentElement) {
                               const img = document.createElement('img');
                               img.src = photoUrl;
-                              img.alt = `${property.name} - Photo ${selectedPhotoIndex + 1}`;
+                              img.alt = `${displayName} - Photo ${selectedPhotoIndex + 1}`;
                               img.className = 'w-full h-full object-cover';
                               target.parentElement.replaceChild(img, target);
                             }
@@ -372,6 +430,42 @@ export default function PropertyDetailsPage() {
                 </div>
               )}
             </div>
+
+            {isBuilding && (
+              <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
+                <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                  Units In This Building
+                </h2>
+                {relatedUnits.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {relatedUnits.map((unit) => (
+                      <Link
+                        key={unit.property_id}
+                        href={`/properties/${unit.property_id}`}
+                        className="block rounded-lg border border-gray-700 bg-gray-900/40 p-4 hover:border-accent/60 hover:bg-gray-900/60 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-lg font-semibold text-white">
+                              {unit.name || unit.address}
+                            </p>
+                            <p className="text-sm text-gray-400">{unit.address}</p>
+                          </div>
+                          <span className="text-accent font-semibold">
+                            ${unit.price}/month
+                          </span>
+                        </div>
+                        <div className="mt-2 text-sm text-gray-400">
+                          {unit.bedrooms} bd · {unit.bathrooms} ba · {unit.squareFeet} sq ft
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400">Contact us for current unit availability.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -379,28 +473,28 @@ export default function PropertyDetailsPage() {
             {/* Quick Info */}
             <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
               <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Property Details
+                {isBuilding ? 'Building Details' : 'Property Details'}
               </h2>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Price</span>
-                  <span className="text-xl font-bold text-accent">${property.price}/month</span>
+                  <span className="text-xl font-bold text-accent">{priceLabel}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Bedrooms</span>
-                  <span className="text-xl font-bold">{property.bedrooms}</span>
+                  <span className="text-xl font-bold">{bedsLabel}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Bathrooms</span>
-                  <span className="text-xl font-bold">{property.bathrooms}</span>
+                  <span className="text-xl font-bold">{bathsLabel}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Square Feet</span>
-                  <span className="text-xl font-bold">{property.squareFeet}</span>
+                  <span className="text-xl font-bold">{squareFeetLabel}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Available From</span>
-                  <span className="text-xl font-bold">{formatAvailableDate(property.leaseTerms)}</span>
+                  <span className="text-xl font-bold">{availabilityLabel}</span>
                 </div>
               </div>
             </div>
