@@ -8,8 +8,15 @@ export async function PUT(
 ) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    // This handler rewrites investment AND property financials — admin/manager only.
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
     const body = await request.json()
-    
+
     console.log('Investment Update Debug:', {
       investmentId: params.id,
       userId: user.id,
@@ -174,7 +181,13 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
+
     // Delete investment from database
     await prisma.investment.delete({
       where: { id: params.id }
