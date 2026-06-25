@@ -5,7 +5,14 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    // Lists every entity investment across all investors — admin/manager only.
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
+
     // Get all entity investments with full details
     const entityInvestments = await prisma.entityInvestment.findMany({
       include: {

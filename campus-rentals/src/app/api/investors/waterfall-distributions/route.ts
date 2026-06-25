@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { canAccessProperty } from '@/lib/access'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const propertyId = searchParams.get('propertyId')
-    
+
     if (!propertyId) {
       return NextResponse.json(
         { error: 'Property ID is required' },
         { status: 400 }
       )
     }
-    
-    
+
+    // Only return distributions for a property the caller can access.
+    if (!(await canAccessProperty(user, propertyId))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+
     // Get all waterfall distributions for the property
     const distributions = await prisma.waterfallDistribution.findMany({
       where: {

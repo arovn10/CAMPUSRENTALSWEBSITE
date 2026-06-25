@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { canAccessProperty } from '@/lib/access'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
@@ -14,7 +15,14 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    if (!(await canAccessProperty(user, propertyId))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Get waterfall structures for the property
     const waterfallStructures = await prisma.waterfallStructure.findMany({
       where: { 

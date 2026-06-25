@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { canAccessProperty } from '@/lib/access'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     // Check if user has permission to view distributions
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
       return NextResponse.json(
@@ -63,7 +67,15 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       )
     }
-    
+
+    // Restrict to a property the caller can access. Global structures (no propertyId)
+    // are admin/manager only.
+    const propertyId = waterfallDistribution.waterfallStructure?.propertyId
+    const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER'
+    if (!isAdmin && !(propertyId && (await canAccessProperty(user, propertyId)))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Group breakdown by tier and recipient type
     const breakdownByTier: { [key: string]: any } = {}
     const entityBreakdown: any[] = []

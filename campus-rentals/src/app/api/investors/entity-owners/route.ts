@@ -5,7 +5,14 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    // Exposes all entity owners + their percentages — admin/manager only.
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
+
     // Get all entity owners with full details
     const entityOwners = await prisma.entityOwner.findMany({
       include: {

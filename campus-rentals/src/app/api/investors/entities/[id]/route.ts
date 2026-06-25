@@ -11,6 +11,10 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
+    // Entity + ownership detail — admin/manager only (consistent with entity mutations).
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
 
     const entityId = params.id
 
