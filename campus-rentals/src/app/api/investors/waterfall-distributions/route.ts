@@ -505,69 +505,74 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // STEP 6: Create the main waterfall distribution record
-    const waterfallDistribution = await prisma.waterfallDistribution.create({
-      data: {
-        waterfallStructureId: waterfallStructure.id,
-        totalAmount: totalDistributionAmount,
-        distributionDate: new Date(body.distributionDate),
-        distributionType: body.distributionType,
-        description: body.description,
-        isProcessed: true
-      }
-    })
-
-    // STEP 6.1: Save all tier distributions to the database
-    if (allTierDistributions.length > 0) {
-      await prisma.waterfallTierDistribution.createMany({
-        data: allTierDistributions
-      })
-      console.log(`Created ${allTierDistributions.length} tier distributions for waterfall distribution ${waterfallDistribution.id}`)
+    // STEP 6: Persist the distribution ATOMICALLY. The main record, all tier rows, any
+    // refinance closing fees, and the property debt update must all commit together or all
+    // roll back — otherwise a mid-way failure leaves a partially-applied distribution whose
+    // tier amounts / property debt no longer reconcile. (The DELETE handler below is already
+    // transactional; this makes create match it.)
+    const oldDebtInfo = {
+      amount: property.debtAmount || 0,
+      details: property.debtDetails || 'No previous debt details'
     }
-
-    // If refinance with closing fee items, persist them
-    if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
-      await prisma.refinanceClosingFee.createMany({
-        data: body.closingFeesItems.map((i: any) => ({
-          waterfallDistributionId: waterfallDistribution.id,
-          category: String(i.category || ''),
-          amount: Number(i.amount || 0)
-        }))
-      })
-    }
-
-    // STEP 6.5: Update property debt for refinancing distributions
-    if (isRefinancing && body.newDebtAmount && property) {
-      try {
-        const newDebtDetails = body.newDebtDetails || 
-          `Refinanced debt - ${body.newLender || 'New lender'} - ${body.newInterestRate ? body.newInterestRate + '%' : 'Rate TBD'} - ${body.newTerm ? body.newTerm + ' year term' : 'Term TBD'}`
-        
-        // Save old debt information in the distribution record for potential rollback
-        const oldDebtInfo = {
-          amount: property.debtAmount || 0,
-          details: property.debtDetails || 'No previous debt details'
+    const waterfallDistribution = await prisma.$transaction(async (tx) => {
+      // Main waterfall distribution record
+      const created = await tx.waterfallDistribution.create({
+        data: {
+          waterfallStructureId: waterfallStructure.id,
+          totalAmount: totalDistributionAmount,
+          distributionDate: new Date(body.distributionDate),
+          distributionType: body.distributionType,
+          description: body.description,
+          isProcessed: true
         }
-        
-        await prisma.property.update({
+      })
+
+      // All tier distributions
+      if (allTierDistributions.length > 0) {
+        await tx.waterfallTierDistribution.createMany({
+          data: allTierDistributions
+        })
+        console.log(`Created ${allTierDistributions.length} tier distributions for waterfall distribution ${created.id}`)
+      }
+
+      // Refinance closing fee items
+      if (body.distributionType === 'REFINANCE' && Array.isArray(body.closingFeesItems) && body.closingFeesItems.length > 0) {
+        await tx.refinanceClosingFee.createMany({
+          data: body.closingFeesItems.map((i: any) => ({
+            waterfallDistributionId: created.id,
+            category: String(i.category || ''),
+            amount: Number(i.amount || 0)
+          }))
+        })
+      }
+
+      // Property debt update for refinancing distributions — now atomic with the
+      // distribution (previously swallowed errors, which could leave debt and the
+      // distribution inconsistent). A failure here rolls back the whole distribution.
+      if (isRefinancing && body.newDebtAmount && property) {
+        const newDebtDetails = body.newDebtDetails ||
+          `Refinanced debt - ${body.newLender || 'New lender'} - ${body.newInterestRate ? body.newInterestRate + '%' : 'Rate TBD'} - ${body.newTerm ? body.newTerm + ' year term' : 'Term TBD'}`
+
+        await tx.property.update({
           where: { id: property.id },
           data: {
             debtAmount: parseFloat(body.newDebtAmount),
             debtDetails: newDebtDetails
           }
         })
-        
-        // Update the distribution record with old debt info for rollback capability
-        await prisma.waterfallDistribution.update({
-          where: { id: waterfallDistribution.id },
+
+        // Record old debt info on the distribution for rollback capability
+        await tx.waterfallDistribution.update({
+          where: { id: created.id },
           data: {
             oldDebtAmount: oldDebtInfo.amount,
             oldDebtDetails: oldDebtInfo.details
           }
         })
-      } catch (error) {
-        // Don't fail the entire distribution if debt update fails
       }
-    }
+
+      return created
+    })
 
     // STEP 7: Get detailed breakdown for response
     const detailedBreakdown = await prisma.waterfallTierDistribution.findMany({

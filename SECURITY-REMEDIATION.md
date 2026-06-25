@@ -39,10 +39,10 @@ Tracking doc for the P0/P1/P2 hardening pass. Check items off as completed.
 ---
 
 ## P1 — Data integrity & resilience
-- [ ] Money columns `Float` → `Decimal(15,2)` in `prisma/schema.prisma` (price, investmentAmount, distributions, loan amounts).
-- [ ] Add `@@index` on hot FK columns (`Investment.userId/propertyId`, `Distribution.userId`, `EntityInvestment.entityId`, `WaterfallTierDistribution.waterfallTierId`).
-- [ ] Wrap waterfall distribution multi-writes in `prisma.$transaction`.
-- [ ] Batch the N+1 loan query in the investor-properties route (`where propertyId in [...]`).
+- [x] Add `@@index` on hot FK columns — done in `schema.prisma` + migration `prisma/migrations/010_add_fk_indexes.sql` (investments, fund_investments, distributions, waterfall_*, entity_*, property_loans). **Apply the migration** against the DB to take effect.
+- [x] Wrap waterfall distribution multi-writes in `prisma.$transaction` — POST `waterfall-distributions` now creates the record + tier rows + closing fees + property debt update atomically (the debt update is no longer a swallowed best-effort write).
+- [x] Batch the N+1 loan query in `investors/properties` route — single `where propertyId in [...]` + in-memory grouping instead of one query per property.
+- [ ] **Money columns `Float` → `Decimal`** — HELD BACK intentionally. In Prisma, `Decimal` returns a `Prisma.Decimal` object at runtime (not a JS `number`), so every `+`/`*`/`reduce` on these fields (heavy in the waterfall math) breaks silently — and `ignoreBuildErrors: true` means the compiler won't catch it. This needs: (1) a code sweep converting money arithmetic to Decimal ops or `.toNumber()`, (2) a tested `ALTER TABLE ... TYPE numeric(15,2)` migration with correct precision (money `(15,2)`, rates/percentages a different scale). Best done together with the Supabase migration. Do NOT flip the schema alone.
 - [ ] `abodeClient.ts`: AbortController timeout + exponential-backoff retry + last-good cache fallback for Render cold starts.
 - [ ] Add IDOR ownership checks to investor-scoped routes (e.g. `PUT /api/investors/properties/[id]`).
 - [ ] Whitelist updatable fields on profile/update routes (no `role`/ownership self-assignment).

@@ -763,12 +763,27 @@ export async function GET(request: NextRequest) {
       return Math.max(balance, 0)
     }
 
-    // Fetch loans and compute estimated debt/debt service per property
+    // Batch-fetch all active loans for every property in ONE query, then group by
+    // propertyId. Avoids the previous N+1 (one findMany per property in the loop).
+    const loanPropertyIds = Array.from(
+      new Set(uniqueInvestments.map((inv: any) => inv.propertyId).filter(Boolean))
+    )
+    const allLoans = loanPropertyIds.length
+      ? await prisma.propertyLoan.findMany({
+          where: { propertyId: { in: loanPropertyIds }, isActive: true }
+        })
+      : []
+    const loansByProperty = new Map<string, typeof allLoans>()
+    for (const loan of allLoans) {
+      const list = loansByProperty.get(loan.propertyId) || []
+      list.push(loan)
+      loansByProperty.set(loan.propertyId, list)
+    }
+
+    // Compute estimated debt/debt service per property from the grouped loans
     const withDebtEstimates = await Promise.all(uniqueInvestments.map(async (inv: any) => {
       try {
-        const loans = await prisma.propertyLoan.findMany({
-          where: { propertyId: inv.propertyId, isActive: true }
-        })
+        const loans = loansByProperty.get(inv.propertyId) || []
 
         let estimatedCurrentDebt = 0
         let totalOriginalDebt = 0

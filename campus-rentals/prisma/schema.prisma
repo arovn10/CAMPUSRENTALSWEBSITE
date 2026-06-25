@@ -197,6 +197,8 @@ model Investment {
   property      Property       @relation(fields: [propertyId], references: [id])
   distributions Distribution[]
 
+  @@index([userId])
+  @@index([propertyId])
   @@map("investments")
 }
 
@@ -215,6 +217,8 @@ model FundInvestment {
   user User @relation(fields: [userId], references: [id])
   fund Fund @relation(fields: [fundId], references: [id])
 
+  @@index([userId])
+  @@index([fundId])
   @@map("fund_investments")
 }
 
@@ -233,6 +237,8 @@ model Distribution {
   investment Investment @relation(fields: [investmentId], references: [id])
   user       User       @relation(fields: [userId], references: [id])
 
+  @@index([investmentId])
+  @@index([userId])
   @@map("distributions")
 }
 
@@ -251,6 +257,7 @@ model WaterfallStructure {
   waterfallTiers         WaterfallTier[]
   waterfallDistributions WaterfallDistribution[]
 
+  @@index([propertyId])
   @@map("waterfall_structures")
 }
 
@@ -272,6 +279,7 @@ model WaterfallTier {
   waterfallStructure WaterfallStructure          @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
   tierDistributions  WaterfallTierDistribution[]
 
+  @@index([waterfallStructureId])
   @@map("waterfall_tiers")
 }
 
@@ -292,6 +300,9 @@ model WaterfallTierDistribution {
   entityInvestment EntityInvestment? @relation(fields: [entityInvestmentId], references: [id])
   user             User?             @relation(fields: [userId], references: [id])
 
+  @@index([waterfallTierId])
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("waterfall_tier_distributions")
 }
 
@@ -466,6 +477,8 @@ model EntityInvestment {
   waterfallTierDistributions WaterfallTierDistribution[]
   entityInvestmentOwners     EntityInvestmentOwner[]
 
+  @@index([entityId])
+  @@index([propertyId])
   @@map("entity_investments")
 }
 
@@ -486,6 +499,8 @@ model EntityOwner {
   user           User?   @relation(fields: [userId], references: [id])
   investorEntity Entity? @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
 
+  @@index([entityId])
+  @@index([userId])
   @@map("entity_owners")
 }
 
@@ -506,6 +521,8 @@ model EntityInvestmentOwner {
   user             User?            @relation(fields: [userId], references: [id])
   investorEntity   Entity?          @relation("EntityToEntityInvestmentOwner", fields: [investorEntityId], references: [id])
 
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("entity_investment_owners")
 }
 
@@ -548,6 +565,8 @@ model EntityDistribution {
   entityInvestment EntityInvestment @relation(fields: [entityInvestmentId], references: [id])
   user             User             @relation(fields: [userId], references: [id])
 
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("entity_distributions")
 }
 
@@ -612,6 +631,7 @@ model PropertyLoan {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
+  @@index([propertyId])
   @@map("property_loans")
 }
 
