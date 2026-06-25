@@ -262,7 +262,7 @@ export async function POST() {
     return NextResponse.json({
       success: false,
       error: 'Comprehensive force refresh failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

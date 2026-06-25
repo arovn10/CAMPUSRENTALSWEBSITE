@@ -87,7 +87,7 @@ export async function GET() {
       }
     } catch (error) {
       console.error('❌ Backend API error:', error);
-      originalAPIError = error instanceof Error ? error.message : 'Unknown error';
+      originalAPIError = process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined;
       originalAPIData = {
         working: false,
         error: originalAPIError
@@ -173,7 +173,7 @@ export async function GET() {
     console.error('❌ Debug endpoint error:', error);
     return NextResponse.json({
       error: 'Debug endpoint failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

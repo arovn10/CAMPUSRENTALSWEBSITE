@@ -190,7 +190,7 @@ export async function POST(
     } catch (error) {
       console.error('Error converting file to buffer:', error);
       return NextResponse.json(
-        { error: 'Failed to process file', details: error instanceof Error ? error.message : 'Unknown error' },
+        { error: 'Failed to process file', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
         { status: 500 }
       );
     }
@@ -257,7 +257,7 @@ export async function POST(
     } catch (error) {
       console.error('Error saving file record to database:', error);
       return NextResponse.json(
-        { error: 'Failed to save file record', details: error instanceof Error ? error.message : 'Unknown error' },
+        { error: 'Failed to save file record', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
         { status: 500 }
       );
     }
@@ -265,7 +265,7 @@ export async function POST(
     return NextResponse.json({ file: dealFile }, { status: 201 });
   } catch (error) {
     console.error('Error uploading file:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined;
     const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error details:', { errorMessage, errorStack });
     return NextResponse.json(

@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error exporting CSV:', error)
     return NextResponse.json(
-      { error: 'Failed to export CSV', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to export CSV', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

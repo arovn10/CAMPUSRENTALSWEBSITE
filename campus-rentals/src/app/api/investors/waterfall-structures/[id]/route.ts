@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Error updating waterfall structure:', error)
     return NextResponse.json(
-      { error: 'Failed to update waterfall structure', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update waterfall structure', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
@@ -150,7 +150,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   } catch (error) {
     console.error('Error deleting waterfall structure:', error)
     return NextResponse.json(
-      { error: 'Failed to delete waterfall structure', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to delete waterfall structure', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

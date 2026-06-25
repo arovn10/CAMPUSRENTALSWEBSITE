@@ -107,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Error updating property:', error)
     return NextResponse.json(
-      { error: 'Failed to update property', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update property', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

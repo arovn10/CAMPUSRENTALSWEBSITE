@@ -74,7 +74,7 @@ export async function POST() {
         } catch (error) {
           console.error(`Error caching image for property ${propertyId}, photo ${photo.photoId}:`, error);
           results.failed++;
-          results.errors.push(`Property ${propertyId}, Photo ${photo.photoId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          results.errors.push(`Property ${propertyId}, Photo ${photo.photoId}: ${process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined}`);
         }
       }));
       
@@ -96,7 +96,7 @@ export async function POST() {
     return NextResponse.json({
       success: false,
       error: 'Manual image caching failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

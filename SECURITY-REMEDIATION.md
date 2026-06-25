@@ -48,8 +48,8 @@ Tracking doc for the P0/P1/P2 hardening pass. Check items off as completed.
 - [x] **IDOR sweep** of all ~60 investor-scoped mutation routes. Found + fixed: `investments/[id]` PUT & DELETE (no role/null check — also rewrote property financials → now ADMIN/MANAGER only) and `entity-investments/[id]` PUT (allowed INVESTOR to rewrite any entity's ownership → now ADMIN/MANAGER only, consistent with its create/delete). All other CRM/entity/deal/document/waterfall mutations were already correctly admin-gated.
 - [x] Whitelist updatable fields on the admin `PUT /api/investors/users` (was spreading raw `req.body` via `updateUser`); confirmed `/api/investors/profile` already uses an allowlist with no `role`/`email`/`password`.
 - [x] Enforce rate limiting on `/api/auth/login` — new `src/lib/rateLimit.ts` (in-memory, single-instance) wired with the `RATE_LIMIT_*` env values; 10/window/IP on login, on top of the existing per-account lockout.
-- [ ] Require the GitHub webhook signature (fail closed on missing header/secret).
-- [ ] Generic client error responses + server-side logging (add Sentry).
+- [x] Require the GitHub webhook signature — `/api/webhook/github` now fails closed when `GITHUB_WEBHOOK_SECRET` is unset or the `x-hub-signature-256` header is absent (previously a missing header skipped verification → unauthenticated deploy/RCE), uses `crypto.timingSafeEqual`, and no longer echoes deploy stdout/stderr to the caller.
+- [x] Generic client error responses — gated the leaked `details: error.message` behind `NODE_ENV` across 36 API route files (dev keeps detail; prod returns `undefined`, dropped from JSON); server-side `console.error` retained. **Remaining:** a handful of routes still put raw `error.message` in the user-facing `error` field (auth/route, login, files, users) — some of those messages (e.g. "Account is deactivated") are intentionally user-facing, so they need a careful per-route pass, not a blanket change. Adding Sentry for structured server-side error capture is still open.
 - [ ] Add `zod` validation to all POST/PUT bodies.
 
 ---

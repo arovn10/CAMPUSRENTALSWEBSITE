@@ -44,7 +44,7 @@ export async function GET() {
     console.error('Error checking cache status:', error);
     return NextResponse.json({
       error: 'Failed to check cache status',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 }

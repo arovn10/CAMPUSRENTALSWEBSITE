@@ -750,12 +750,12 @@ export async function POST(request: NextRequest) {
     console.error('Error processing waterfall distribution:', error)
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined,
       name: error instanceof Error ? error.name : 'Unknown',
       code: (error as any)?.code || 'No code'
     })
     return NextResponse.json(
-      { error: 'Failed to process distribution', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to process distribution', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
@@ -793,7 +793,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error updating waterfall distribution:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
@@ -878,7 +878,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Error deleting waterfall distribution:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
