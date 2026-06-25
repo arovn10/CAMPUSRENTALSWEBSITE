@@ -34,8 +34,8 @@ export function rateLimit(
   key: string,
   opts?: { windowMs?: number; max?: number }
 ): RateLimitResult {
-  const windowMs = opts?.windowMs ?? Number(process.env.RATE_LIMIT_WINDOW_MS) || 900_000
-  const max = opts?.max ?? Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100
+  const windowMs = opts?.windowMs ?? (Number(process.env.RATE_LIMIT_WINDOW_MS) || 900_000)
+  const max = opts?.max ?? (Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100)
   const now = Date.now()
 
   const existing = buckets.get(key)
