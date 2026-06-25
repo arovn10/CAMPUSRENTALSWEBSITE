@@ -32,8 +32,8 @@ class FileService {
   constructor() {
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
     // Use S3 if AWS credentials are configured
-    this.useS3 = !!(process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID && 
-                     (process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY))
+    this.useS3 = !!((process.env.AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID) &&
+                     process.env.AWS_SECRET_ACCESS_KEY)
     if (!this.useS3) {
       this.initializeDirectories()
     }

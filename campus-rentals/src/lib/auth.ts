@@ -4,9 +4,18 @@ import crypto from 'crypto'
 import { NextRequest } from 'next/server'
 import { prisma } from './prisma'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 const JWT_EXPIRES_IN = '7d'
 const BCRYPT_ROUNDS = 12
+
+// Resolve the JWT secret at call time and fail hard if it is missing.
+// No insecure literal fallback — an unset secret must never silently sign/verify tokens.
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not set')
+  }
+  return secret
+}
 
 export interface AuthUser {
   id: string
@@ -59,14 +68,14 @@ export function generateToken(user: AuthUser): string {
       role: user.role,
       emailVerified: user.emailVerified 
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: JWT_EXPIRES_IN }
   )
 }
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
+    const decoded = jwt.verify(token, getJwtSecret()) as any
     return {
       id: decoded.id,
       email: decoded.email,

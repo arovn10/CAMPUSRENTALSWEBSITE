@@ -1,0 +1,22 @@
+# Secrets — NEVER commit (this root .gitignore was missing, which is how
+# the prod SSH key and env files got tracked in the first place)
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+*.csv
+*accessKeys*
+*access_key*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Dependencies / build (app lives in campus-rentals/)
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
