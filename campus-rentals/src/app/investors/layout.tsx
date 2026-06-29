@@ -43,6 +43,7 @@ const sectionNavBase: NavItem[] = [
   { id: 'signatures', label: 'Documents to Sign', icon: PencilSquareIcon, path: '/investors/signatures', flag: 'IMS_V2' },
   { id: 'updates', label: 'Updates', icon: BellIcon, path: '/investors/updates' },
   { id: 'performance', label: 'Performance', icon: ChartBarIcon, path: '/investors/performance' },
+  { id: 'analytics', label: 'Analytics', icon: ChartPieIcon, path: '/investors/analytics', flag: 'IMS_V2' },
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
 ]
 

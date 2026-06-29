@@ -92,6 +92,7 @@ model User {
   documentViews              DocumentView[]
   documentAccessGrants       DocumentAccess[]
   signatureRequests          SignatureRequest[]
+  announcements              Announcement[]
 
   @@map("users")
 }
@@ -1595,4 +1596,23 @@ enum SignatureStatus {
   PENDING
   SIGNED
   DECLINED
+}
+
+// ── IMS Phase 5: admin announcement broadcasts ──
+// An announcement is the source record; delivery fans out to per-user
+// Notification rows (and optionally email). Additive.
+
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  propertyId  String?   // null = broadcast to all investors; set = per-deal
+  createdBy    String
+  recipientCount Int     @default(0)
+  createdAt   DateTime  @default(now())
+
+  author User @relation(fields: [createdBy], references: [id])
+
+  @@index([propertyId])
+  @@map("announcements")
 }
