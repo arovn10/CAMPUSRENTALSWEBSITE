@@ -18,6 +18,7 @@ import {
   BellIcon,
   ChartBarIcon,
   ClockIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline'
 
 type NavItem = {
@@ -26,9 +27,12 @@ type NavItem = {
   icon: ComponentType<{ className?: string }>
   path: string
   adminOnly?: boolean
+  /** When set, the item only appears if the matching NEXT_PUBLIC flag is enabled. */
+  flag?: 'IMS_V2'
 }
 const sectionNavBase: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: HomeIcon, path: '/investors/dashboard' },
+  { id: 'capital-account', label: 'Capital Account', icon: CurrencyDollarIcon, path: '/investors/capital-account', flag: 'IMS_V2' },
   { id: 'banking', label: 'Banking', icon: BanknotesIcon, path: '/investors/banking' },
   { id: 'pipeline', label: 'Deal Pipeline', icon: FolderIcon, path: '/investors/pipeline-tracker' },
   { id: 'properties', label: 'Properties', icon: BuildingOffice2Icon, path: '/investors/properties' },
@@ -130,7 +134,11 @@ export default function InvestorsLayout({
     return <>{children}</>
   }
 
-  const sectionNav = sectionNavBase.filter((item) => !item.adminOnly || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')
+  const sectionNav = sectionNavBase.filter((item) => {
+    const roleOk = !item.adminOnly || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'
+    const flagOk = !item.flag || process.env.NEXT_PUBLIC_IMS_V2 === '1'
+    return roleOk && flagOk
+  })
   const currentSection = sectionNav.find(
     (s) => s.path === pathname || (pathname?.startsWith(s.path + '/') && s.path !== '/investors/dashboard')
   )?.id ?? 'overview'
