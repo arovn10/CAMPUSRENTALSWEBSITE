@@ -1,0 +1,48 @@
+name: PR Build Check
+
+# Gates every PR into main with a type-checked production build, so a change that
+# would break the live site can't be merged. Pairs with auto-merge.yml + branch
+# protection (require this check) to keep main deployable at all times.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: campus-rentals
+    env:
+      # Placeholder values — the build only type-checks and bundles; dynamic API
+      # routes connect to the real DB lazily at runtime, not during the build.
+      DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
+      DIRECT_DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
+      JWT_SECRET: ci-placeholder-not-used-at-build-time
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: campus-rentals/package-lock.json
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Validate Prisma schema
+        run: npx prisma validate
+      - name: Type check (no ignoreBuildErrors)
+        run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build
