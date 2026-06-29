@@ -259,6 +259,3 @@ async function runMigrationAsync(jobId: string, databaseUrl: string) {
   }
 }
 
-// Export job storage for status endpoint
-export { migrationJobs };
-

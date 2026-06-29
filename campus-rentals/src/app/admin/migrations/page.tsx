@@ -174,7 +174,7 @@ export default function MigrationsPage() {
               const data = await response.json()
               if (data.token) {
                 token = data.token
-                sessionStorage.setItem('authToken', token)
+                sessionStorage.setItem('authToken', token as string)
               }
             }
           } catch (err) {

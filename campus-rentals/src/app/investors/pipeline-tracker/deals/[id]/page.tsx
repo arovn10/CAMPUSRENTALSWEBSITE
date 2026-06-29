@@ -240,12 +240,12 @@ export default function DealDetailPage() {
 
       if (response.ok) {
         setFunded(newFundingStatus === 'FUNDED')
-        setDeal({ 
-          ...deal, 
-          property: { 
-            ...deal.property, 
-            fundingStatus: newFundingStatus 
-          } 
+        setDeal({
+          ...deal,
+          property: {
+            ...deal.property,
+            fundingStatus: newFundingStatus
+          } as any
         })
       } else {
         const error = await response.json()

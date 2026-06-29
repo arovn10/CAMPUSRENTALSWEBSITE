@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         irr: Math.round(irr * 100) / 100,
         ownershipPercentage: investment.ownershipPercentage || 100,
         status: investment.status,
-        investmentDate: investment.investmentDate.toISOString(),
+        investmentDate: investment.investmentDate?.toISOString() ?? null,
         distributions: investment.distributions.map(dist => ({
           id: dist.id,
           amount: dist.amount,

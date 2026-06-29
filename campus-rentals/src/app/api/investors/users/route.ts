@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
       email,
       firstName,
       lastName,
-      role,
+      password,
       company,
       phone
-    }, password)
+    })
 
     return NextResponse.json(newUser, { status: 201 })
   } catch (error) {
