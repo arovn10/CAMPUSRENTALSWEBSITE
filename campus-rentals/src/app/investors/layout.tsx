@@ -143,7 +143,8 @@ export default function InvestorsLayout({
 
   const sectionNav = sectionNavBase.filter((item) => {
     const roleOk = !item.adminOnly || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'
-    const flagOk = !item.flag || process.env.NEXT_PUBLIC_IMS_V2 === '1'
+    // IMS v2 is ON by default; set NEXT_PUBLIC_IMS_V2=0 to hide the v2 nav (kill-switch).
+    const flagOk = !item.flag || process.env.NEXT_PUBLIC_IMS_V2 !== '0'
     return roleOk && flagOk
   })
   const currentSection = sectionNav.find(
