@@ -134,6 +134,8 @@ const data = Object.fromEntries(ALLOWED.filter(k => k in body).map(k => [k, body
 - **Data rooms + e-sign + audit:** `canAccessDocument()` (owned-property OR explicit `DocumentAccess` grant = per-investor routing) · download logs an immutable `DocumentView` · lightweight in-house e-sign (`SignatureRequest`, **Documents to Sign** page) · `/api/investors/data-room`.
 - **Charts + broadcasts:** zero-dep SVG charts (`src/components/ims/charts.tsx`) on the **Analytics** page · admin `Announcement` broadcasts (`/api/investors/announcements`) fan out to notifications.
 - **Self-service password reset:** `/investors/reset-password` + emailed token (`src/lib/email.ts`, Resend).
+- **Admin IMS console** (`/investors/admin`, admin-only + flagged): tabbed UI to send invites, record commitments, issue capital calls (per-investor allocations), broadcast announcements, and the **K-1 workflow** — `GET /api/investors/k1/allocations?year=` pre-computes each LP's distribution allocation for the CPA; `POST /api/investors/k1/deliver` uploads a finalized K-1 PDF and routes it to that one investor via a `DocumentAccess` grant + email.
+- **httpOnly-cookie auth (backward-compatible):** login/accept-invite set an httpOnly `cr_auth` cookie alongside the JSON token; `requireAuth` reads Bearer header **then** cookie; logout clears it. Scoped `/investors` middleware adds security headers. Hard cookie-gating redirect is deferred (would lock out existing `sessionStorage` sessions) — see `src/middleware.ts`.
 
 **Env vars for IMS v2:** `NEXT_PUBLIC_IMS_V2=1` (nav/flag) · `EMAIL_FROM` (verified Resend sender) · `CRON_SECRET` (quarterly statements auth) · `NEXT_PUBLIC_SITE_URL` (links in emails). `RESEND_API_KEY` already exists.
 
