@@ -84,8 +84,17 @@ jobs:
             echo ""
             echo "🔄 Step 2: Pulling latest changes from Git..."
             git fetch origin
-            git pull origin main
-            echo "✅ Git pull completed"
+            # The repo untracked campus-rentals/.env (+ root .env.local) during the
+            # security pass. The server still holds the real secret files with local
+            # edits, which blocks a normal `git pull`. Preserve them, hard-sync the
+            # tracked tree to origin/main, then restore. No `git clean` — untracked
+            # data (e.g. uploads/) is left untouched.
+            cp -f .env /tmp/cr-env.bak 2>/dev/null || true
+            cp -f ../.env.local /tmp/cr-envlocal.bak 2>/dev/null || true
+            git reset --hard origin/main
+            cp -f /tmp/cr-env.bak .env 2>/dev/null || true
+            cp -f /tmp/cr-envlocal.bak ../.env.local 2>/dev/null || true
+            echo "✅ Synced working tree to origin/main (env files preserved)"
             
             echo ""
             echo "🔧 Step 3: Installing/updating dependencies..."

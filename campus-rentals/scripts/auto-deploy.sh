@@ -22,12 +22,21 @@ log "🚀 Starting auto-deployment..."
 cd /home/bitnami/CAMPUSRENTALSWEBSITE/campus-rentals
 
 # Step 1: Pull latest changes
-log "📥 Pulling latest changes from Git..."
-git pull origin main
+# The repo untracked campus-rentals/.env (+ root .env.local) during the security
+# pass, so a plain `git pull` aborts on the server's real secret files. Preserve
+# them, hard-sync tracked files to origin/main, then restore. No `git clean` — so
+# untracked data (uploads/, etc.) is left untouched.
+log "📥 Syncing to origin/main (preserving env files)..."
+git fetch origin
+cp -f .env /tmp/cr-env.bak 2>/dev/null || true
+cp -f ../.env.local /tmp/cr-envlocal.bak 2>/dev/null || true
+git reset --hard origin/main
+cp -f /tmp/cr-env.bak .env 2>/dev/null || true
+cp -f /tmp/cr-envlocal.bak ../.env.local 2>/dev/null || true
 
 # Step 2: Install dependencies
 log "📦 Installing dependencies..."
-npm install
+npm install --legacy-peer-deps
 
 # Step 3: Build the application
 log "🔨 Building application..."
