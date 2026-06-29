@@ -561,15 +561,34 @@ export async function logoutUser(userId: string): Promise<void> {
   })
 }
 
+/** Name of the httpOnly auth cookie (defense-in-depth alongside the Bearer header). */
+export const AUTH_COOKIE = 'cr_auth'
+
 // Middleware functions for API routes
 export async function requireAuth(request: NextRequest): Promise<AuthUser | null> {
+  // 1) Bearer header (current sessionStorage clients) — keeps every existing call working.
   const authHeader = request.headers.get('authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const user = verifyToken(authHeader.substring(7))
+    if (user) return user
   }
+  // 2) httpOnly cookie fallback (set on login/accept-invite) — XSS-resistant path.
+  const cookieToken = request.cookies.get(AUTH_COOKIE)?.value
+  if (cookieToken) {
+    return verifyToken(cookieToken)
+  }
+  return null
+}
 
-  const token = authHeader.substring(7)
-  return verifyToken(token)
+/** Cookie options for the auth cookie: httpOnly, Secure in prod, 7-day, SameSite=Lax. */
+export function authCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60, // matches JWT_EXPIRES_IN
+  }
 }
 
 export async function requireAuthOrThrow(request: NextRequest): Promise<AuthUser> {

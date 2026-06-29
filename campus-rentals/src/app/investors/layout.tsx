@@ -45,6 +45,7 @@ const sectionNavBase: NavItem[] = [
   { id: 'performance', label: 'Performance', icon: ChartBarIcon, path: '/investors/performance' },
   { id: 'analytics', label: 'Analytics', icon: ChartPieIcon, path: '/investors/analytics', flag: 'IMS_V2' },
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
+  { id: 'admin', label: 'Investor Mgmt', icon: ShieldCheckIcon, path: '/investors/admin', adminOnly: true, flag: 'IMS_V2' },
 ]
 
 const publicPaths = ['/investors/login', '/investors/reset-password', '/investors/accept-invite']
@@ -123,6 +124,8 @@ export default function InvestorsLayout({
     sessionStorage.removeItem('authToken')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('currentUser')
+    // Best-effort: clear the httpOnly auth cookie server-side too.
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     router.push('/investors/login')
   }
 

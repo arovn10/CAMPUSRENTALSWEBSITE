@@ -130,6 +130,23 @@ export async function sendInviteEmail(
   return { ok: res.ok }
 }
 
+/** Notify an investor that their K-1 (or other tax document) is available. */
+export async function sendK1ReadyEmail(
+  to: string,
+  opts: { investorName?: string; year: number }
+): Promise<{ ok: boolean }> {
+  const html = brandedEmail({
+    heading: `Your ${opts.year} K-1 is ready`,
+    bodyHtml:
+      `${opts.investorName ? `Hello ${opts.investorName},<br><br>` : ''}` +
+      `Your Schedule K-1 for tax year <strong>${opts.year}</strong> has been posted to your ` +
+      `investor portal. It is available only to you. Please consult your tax advisor with any questions.`,
+    cta: { label: 'View my documents', url: `${siteUrl()}/investors/documents` },
+  })
+  const res = await sendEmail({ to, subject: `Your ${opts.year} Campus Rentals K-1 is available`, html })
+  return { ok: res.ok }
+}
+
 /** Notify an investor that a capital call has been issued for one of their deals. */
 export async function sendCapitalCallEmail(
   to: string,

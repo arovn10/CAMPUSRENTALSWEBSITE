@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById, acceptInvite, getValidInvite } from '@/lib/auth'
+import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById, acceptInvite, getValidInvite, AUTH_COOKIE, authCookieOptions } from '@/lib/auth'
 import { sendPasswordResetEmail } from '@/lib/email'
 import { rateLimit, getClientIp } from '@/lib/rateLimit'
 
@@ -66,11 +66,11 @@ async function handleLogin(data: { email: string; password: string }) {
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      user: result.user,
-      token: result.token
-    })
+    // Return token in JSON (existing sessionStorage clients) AND set an httpOnly
+    // cookie (defense-in-depth; survives XSS that can read sessionStorage).
+    const res = NextResponse.json({ success: true, user: result.user, token: result.token })
+    res.cookies.set(AUTH_COOKIE, result.token, authCookieOptions())
+    return res
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Login failed' },
@@ -200,7 +200,9 @@ async function handleChangePassword(data: {
 async function handleAcceptInvite(data: { token: string; password: string; firstName?: string; lastName?: string; phone?: string }) {
   try {
     const result = await acceptInvite(data)
-    return NextResponse.json({ success: true, user: result.user, token: result.token })
+    const res = NextResponse.json({ success: true, user: result.user, token: result.token })
+    res.cookies.set(AUTH_COOKIE, result.token, authCookieOptions())
+    return res
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Could not accept invitation' },
