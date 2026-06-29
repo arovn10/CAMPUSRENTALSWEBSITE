@@ -28,6 +28,10 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
+    // CRM deal files — admin/manager only (consistent with the rest of /crm/deals).
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
 
     const deal = await queryOne<{ id: string }>('SELECT id FROM deals WHERE id = $1', [params.id])
     if (!deal) {

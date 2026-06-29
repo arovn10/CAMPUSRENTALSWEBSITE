@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateWithPassword } from '@/lib/auth'
+import { rateLimit, getClientIp } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Per-IP throttle on login to blunt credential brute-force / spraying.
+    // (auth.ts also enforces per-account lockout after 5 failures; this is the IP layer.)
+    const ip = getClientIp(request)
+    const limit = rateLimit(`login:${ip}`, { max: 10 })
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } }
+      )
+    }
+
     const { email, password } = await request.json()
 
     if (!email || !password) {

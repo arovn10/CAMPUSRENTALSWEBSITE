@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Cache refresh failed',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
       },
       { status: 500 }
     );
@@ -284,7 +284,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Cache refresh failed',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
       },
       { status: 500 }
     );

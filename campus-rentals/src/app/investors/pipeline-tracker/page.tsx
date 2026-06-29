@@ -67,8 +67,7 @@ export default function PipelineTrackerOverviewPage() {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
-            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-            className="border-l-4 border-accent"
+            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm border-l-4 border-accent"
           >
             <p className="text-sm font-medium text-gray-500">Total Deals</p>
             <p className="mt-1 text-2xl font-bold text-gray-900">{deals.length}</p>
@@ -154,8 +153,7 @@ export default function PipelineTrackerOverviewPage() {
       <div className="flex justify-center pt-4">
         <Link
           href="/investors/pipeline-tracker/deals"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity"
-          className="bg-accent text-white"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity bg-accent text-white"
         >
           <BuildingOfficeIcon className="h-5 w-5" />
           View all deals

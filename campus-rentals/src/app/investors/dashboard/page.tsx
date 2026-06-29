@@ -55,6 +55,7 @@ interface Investment {
     totalCost?: number
     acquisitionPrice?: number
     constructionCost?: number
+    currentValue?: number
   }
   totalOriginalDebt?: number
   totalProjectCost?: number

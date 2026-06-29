@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById } from '@/lib/auth'
+import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById, acceptInvite, getValidInvite, AUTH_COOKIE, authCookieOptions } from '@/lib/auth'
+import { sendPasswordResetEmail } from '@/lib/email'
+import { rateLimit, getClientIp } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,11 +14,13 @@ export async function POST(request: NextRequest) {
       case 'register':
         return await handleRegister(data)
       case 'request-password-reset':
-        return await handleRequestPasswordReset(data)
+        return await handleRequestPasswordReset(data, request)
       case 'reset-password':
         return await handleResetPassword(data)
       case 'change-password':
         return await handleChangePassword(data, request)
+      case 'accept-invite':
+        return await handleAcceptInvite(data)
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -37,6 +41,8 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'me':
         return await handleGetMe(request)
+      case 'invite-info':
+        return await handleInviteInfo(searchParams.get('token'))
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -60,11 +66,11 @@ async function handleLogin(data: { email: string; password: string }) {
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      user: result.user,
-      token: result.token
-    })
+    // Return token in JSON (existing sessionStorage clients) AND set an httpOnly
+    // cookie (defense-in-depth; survives XSS that can read sessionStorage).
+    const res = NextResponse.json({ success: true, user: result.user, token: result.token })
+    res.cookies.set(AUTH_COOKIE, result.token, authCookieOptions())
+    return res
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Login failed' },
@@ -98,22 +104,41 @@ async function handleRegister(data: {
   }
 }
 
-async function handleRequestPasswordReset(data: { email: string }) {
+async function handleRequestPasswordReset(data: { email: string }, request: NextRequest) {
+  // Always return the same generic success response so we never reveal whether an
+  // account exists (enumeration). Rate-limit per IP to blunt abuse / email bombing.
+  const generic = NextResponse.json({
+    success: true,
+    message: 'If an account exists for that email, a password reset link is on its way.',
+  })
+
   try {
+    const ip = getClientIp(request)
+    const limited = rateLimit(`pwreset:${ip}`, { windowMs: 15 * 60 * 1000, max: 5 })
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(limited.retryAfterMs / 1000)) } }
+      )
+    }
+
+    if (!data?.email || typeof data.email !== 'string') {
+      return generic
+    }
+
+    // requestPasswordReset returns a token whether or not the user exists; it only
+    // persists a real token when the account is found.
     const result = await requestPasswordReset(data)
-
-    // Password reset tokens are generated but emails are not sent
-    // Admin must manually reset passwords through admin panel
-
-    return NextResponse.json({
-      success: true,
-      message: 'Password reset functionality requires admin assistance. Please contact your administrator.'
-    })
+    const user = await getUserByEmail(data.email)
+    if (user && result?.token) {
+      // Fire the email but never surface its outcome to the caller.
+      await sendPasswordResetEmail(user.email, result.token)
+    }
+    return generic
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Password reset request failed' },
-      { status: 400 }
-    )
+    // Even on internal failure, don't leak details — log and return the generic message.
+    console.error('Password reset request failed:', error)
+    return generic
   }
 }
 
@@ -170,6 +195,37 @@ async function handleChangePassword(data: {
       { status: 400 }
     )
   }
+}
+
+async function handleAcceptInvite(data: { token: string; password: string; firstName?: string; lastName?: string; phone?: string }) {
+  try {
+    const result = await acceptInvite(data)
+    const res = NextResponse.json({ success: true, user: result.user, token: result.token })
+    res.cookies.set(AUTH_COOKIE, result.token, authCookieOptions())
+    return res
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Could not accept invitation' },
+      { status: 400 }
+    )
+  }
+}
+
+async function handleInviteInfo(token: string | null) {
+  if (!token) {
+    return NextResponse.json({ valid: false }, { status: 400 })
+  }
+  const invite = await getValidInvite(token)
+  if (!invite) {
+    return NextResponse.json({ valid: false })
+  }
+  // Only surface non-sensitive fields needed to prefill the accept form.
+  return NextResponse.json({
+    valid: true,
+    email: invite.email,
+    firstName: invite.firstName,
+    lastName: invite.lastName,
+  })
 }
 
 async function handleGetMe(request: NextRequest) {

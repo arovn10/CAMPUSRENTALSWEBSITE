@@ -5,11 +5,16 @@ import { prisma } from '@/lib/prisma'
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     console.log('Entity investment update attempt by:', user.email, 'Role:', user.role, 'Entity ID:', params.id)
-    
-    // Allow admins, managers, and investors to update entity investments
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
+
+    // This handler rewrites entity ownership + property financials — admin/manager only,
+    // consistent with the create (POST) and delete (DELETE) on this resource. Letting an
+    // INVESTOR edit by id was an IDOR (any investor could rewrite any entity's ownership).
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       console.log('Unauthorized entity investment update attempt by:', user.email, 'Role:', user.role)
       return NextResponse.json(
         { error: 'Insufficient permissions' },
@@ -232,7 +237,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             entityOwners.push(entityOwner)
             console.log('Created entity owner:', {
               id: entityOwner.id,
-              entityId: entityOwner.entityId,
+              entityInvestmentId: entityOwner.entityInvestmentId,
               userId: entityOwner.userId,
               ownershipPercentage: entityOwner.ownershipPercentage,
               investmentAmount: entityOwner.investmentAmount,
@@ -288,7 +293,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Error updating entity investment:', error)
     return NextResponse.json(
-      { error: 'Failed to update entity investment', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update entity investment', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
@@ -297,6 +302,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user has permission to delete entity investments
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
@@ -337,7 +345,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   } catch (error) {
     console.error('Error deleting entity investment:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

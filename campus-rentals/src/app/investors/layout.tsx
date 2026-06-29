@@ -18,6 +18,8 @@ import {
   BellIcon,
   ChartBarIcon,
   ClockIcon,
+  CurrencyDollarIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline'
 
 type NavItem = {
@@ -26,20 +28,27 @@ type NavItem = {
   icon: ComponentType<{ className?: string }>
   path: string
   adminOnly?: boolean
+  /** When set, the item only appears if the matching NEXT_PUBLIC flag is enabled. */
+  flag?: 'IMS_V2'
 }
 const sectionNavBase: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: HomeIcon, path: '/investors/dashboard' },
+  { id: 'capital-account', label: 'Capital Account', icon: CurrencyDollarIcon, path: '/investors/capital-account', flag: 'IMS_V2' },
+  { id: 'capital-calls', label: 'Capital Calls', icon: ClockIcon, path: '/investors/capital-calls', flag: 'IMS_V2' },
   { id: 'banking', label: 'Banking', icon: BanknotesIcon, path: '/investors/banking' },
   { id: 'pipeline', label: 'Deal Pipeline', icon: FolderIcon, path: '/investors/pipeline-tracker' },
   { id: 'properties', label: 'Properties', icon: BuildingOffice2Icon, path: '/investors/properties' },
   { id: 'portfolio', label: 'Portfolio', icon: ChartPieIcon, path: '/investors/portfolio' },
   { id: 'documents', label: 'Documents', icon: DocumentTextIcon, path: '/investors/documents' },
+  { id: 'signatures', label: 'Documents to Sign', icon: PencilSquareIcon, path: '/investors/signatures', flag: 'IMS_V2' },
   { id: 'updates', label: 'Updates', icon: BellIcon, path: '/investors/updates' },
   { id: 'performance', label: 'Performance', icon: ChartBarIcon, path: '/investors/performance' },
+  { id: 'analytics', label: 'Analytics', icon: ChartPieIcon, path: '/investors/analytics', flag: 'IMS_V2' },
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
+  { id: 'admin', label: 'Investor Mgmt', icon: ShieldCheckIcon, path: '/investors/admin', adminOnly: true, flag: 'IMS_V2' },
 ]
 
-const publicPaths = ['/investors/login']
+const publicPaths = ['/investors/login', '/investors/reset-password', '/investors/accept-invite']
 
 function RoleBadge({ role }: { role: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -115,6 +124,8 @@ export default function InvestorsLayout({
     sessionStorage.removeItem('authToken')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('currentUser')
+    // Best-effort: clear the httpOnly auth cookie server-side too.
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     router.push('/investors/login')
   }
 
@@ -130,7 +141,11 @@ export default function InvestorsLayout({
     return <>{children}</>
   }
 
-  const sectionNav = sectionNavBase.filter((item) => !item.adminOnly || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER')
+  const sectionNav = sectionNavBase.filter((item) => {
+    const roleOk = !item.adminOnly || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'
+    const flagOk = !item.flag || process.env.NEXT_PUBLIC_IMS_V2 === '1'
+    return roleOk && flagOk
+  })
   const currentSection = sectionNav.find(
     (s) => s.path === pathname || (pathname?.startsWith(s.path + '/') && s.path !== '/investors/dashboard')
   )?.id ?? 'overview'

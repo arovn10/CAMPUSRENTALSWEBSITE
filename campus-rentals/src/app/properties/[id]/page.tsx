@@ -234,7 +234,8 @@ export default function PropertyDetailsPage() {
       return `${format(min)} - ${format(max)}/month`;
     }
     if (min != null) return `${format(min)}+/month`;
-    return `${format(max)}/month`;
+    if (max != null) return `${format(max)}/month`;
+    return 'Contact for pricing';
   }
 
   if (loading) {

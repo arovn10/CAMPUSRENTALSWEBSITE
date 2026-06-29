@@ -6,6 +6,9 @@ import bcrypt from 'bcryptjs'
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user has admin permissions
     if (user.role !== 'ADMIN') {

@@ -86,6 +86,13 @@ model User {
   dealRelationships          DealRelationship[] // Relationships for deals
   dueDiligenceItems          DueDiligenceItem[]          @relation("DueDiligenceAssignedTo") // Due diligence items assigned to this user
   pipelineDealFiles          PipelineDealFile[]
+  commitments                Commitment[]
+  capitalCallResponses       CapitalCallResponse[]
+  invitesSent                InvestorInvite[]            @relation("InvitesSent")
+  documentViews              DocumentView[]
+  documentAccessGrants       DocumentAccess[]
+  signatureRequests          SignatureRequest[]
+  announcements              Announcement[]
 
   @@map("users")
 }
@@ -98,22 +105,22 @@ model Property {
   description                String?
   bedrooms                   Int
   bathrooms                  Int
-  price                      Float
+  price                      Decimal @db.Decimal(15, 2)
   squareFeet                 Int?
   propertyType               PropertyType  @default(SINGLE_FAMILY)
   acquisitionDate            DateTime?
   constructionCompletionDate DateTime?
   stabilizationDate          DateTime?
-  acquisitionPrice           Float?
-  constructionCost           Float?
-  totalCost                  Float?
-  debtAmount                 Float?
+  acquisitionPrice           Decimal? @db.Decimal(15, 2)
+  constructionCost           Decimal? @db.Decimal(15, 2)
+  totalCost                  Decimal? @db.Decimal(15, 2)
+  debtAmount                 Decimal? @db.Decimal(15, 2)
   debtDetails                String?
-  currentValue               Float?
+  currentValue               Decimal? @db.Decimal(15, 2)
   occupancyRate              Float?
-  monthlyRent                Float?
-  otherIncome                Float?
-  annualExpenses             Float?
+  monthlyRent                Decimal? @db.Decimal(15, 2)
+  otherIncome                Decimal? @db.Decimal(15, 2)
+  annualExpenses             Decimal? @db.Decimal(15, 2)
   capRate                    Float?
   dealStatus                 DealStatus    @default(STABILIZED)
   fundingStatus              FundingStatus @default(FUNDED)
@@ -135,6 +142,9 @@ model Property {
   dealFiles           DealFile[] // Files associated with this deal
   dealFolders         DealFolder[] // Folders for organizing deal files
   deals               Deal[] // CRM deals linked to this property
+  commitments         Commitment[]
+  capitalCalls        CapitalCall[]
+  investorInvites     InvestorInvite[]
 
   @@map("properties")
 }
@@ -158,8 +168,8 @@ model Fund {
   name        String
   description String?
   fundType    FundType @default(REAL_ESTATE)
-  targetSize  Float?
-  currentSize Float    @default(0)
+  targetSize  Decimal? @db.Decimal(15, 2)
+  currentSize Decimal @db.Decimal(15, 2)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -176,7 +186,7 @@ model Investment {
   id                          String           @id @default(cuid())
   userId                      String
   propertyId                  String
-  investmentAmount            Float? // Optional for SPECTATOR type
+  investmentAmount            Decimal? @db.Decimal(15, 2)  // Optional for SPECTATOR type
   ownershipPercentage         Float? // Optional for SPECTATOR type
   investmentType              InvestmentType   @default(INVESTOR)
   status                      InvestmentStatus @default(ACTIVE)
@@ -197,6 +207,8 @@ model Investment {
   property      Property       @relation(fields: [propertyId], references: [id])
   distributions Distribution[]
 
+  @@index([userId])
+  @@index([propertyId])
   @@map("investments")
 }
 
@@ -204,7 +216,7 @@ model FundInvestment {
   id                  String           @id @default(cuid())
   userId              String
   fundId              String
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   ownershipPercentage Float?
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -215,6 +227,8 @@ model FundInvestment {
   user User @relation(fields: [userId], references: [id])
   fund Fund @relation(fields: [fundId], references: [id])
 
+  @@index([userId])
+  @@index([fundId])
   @@map("fund_investments")
 }
 
@@ -222,7 +236,7 @@ model Distribution {
   id               String           @id @default(cuid())
   investmentId     String
   userId           String
-  amount           Float
+  amount           Decimal @db.Decimal(15, 2)
   distributionDate DateTime
   distributionType DistributionType @default(RENTAL_INCOME)
   description      String?
@@ -233,6 +247,8 @@ model Distribution {
   investment Investment @relation(fields: [investmentId], references: [id])
   user       User       @relation(fields: [userId], references: [id])
 
+  @@index([investmentId])
+  @@index([userId])
   @@map("distributions")
 }
 
@@ -251,6 +267,7 @@ model WaterfallStructure {
   waterfallTiers         WaterfallTier[]
   waterfallDistributions WaterfallDistribution[]
 
+  @@index([propertyId])
   @@map("waterfall_structures")
 }
 
@@ -272,6 +289,7 @@ model WaterfallTier {
   waterfallStructure WaterfallStructure          @relation(fields: [waterfallStructureId], references: [id], onDelete: Cascade)
   tierDistributions  WaterfallTierDistribution[]
 
+  @@index([waterfallStructureId])
   @@map("waterfall_tiers")
 }
 
@@ -280,7 +298,7 @@ model WaterfallTierDistribution {
   waterfallTierId    String
   entityInvestmentId String?
   userId             String?
-  distributionAmount Float
+  distributionAmount Decimal @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   WaterfallDistributionType
   description        String?
@@ -292,18 +310,21 @@ model WaterfallTierDistribution {
   entityInvestment EntityInvestment? @relation(fields: [entityInvestmentId], references: [id])
   user             User?             @relation(fields: [userId], references: [id])
 
+  @@index([waterfallTierId])
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("waterfall_tier_distributions")
 }
 
 model WaterfallDistribution {
   id                   String                    @id @default(cuid())
   waterfallStructureId String
-  totalAmount          Float
+  totalAmount          Decimal @db.Decimal(15, 2)
   distributionDate     DateTime
   distributionType     WaterfallDistributionType
   description          String?
   isProcessed          Boolean                   @default(false)
-  oldDebtAmount        Float? // For refinancing distributions - stores old debt amount
+  oldDebtAmount        Decimal? @db.Decimal(15, 2)  // For refinancing distributions - stores old debt amount
   oldDebtDetails       String? // For refinancing distributions - stores old debt details
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
@@ -386,7 +407,10 @@ model Document {
   updatedAt         DateTime     @updatedAt
 
   // Relations
-  user User @relation(fields: [uploadedBy], references: [id])
+  user              User               @relation(fields: [uploadedBy], references: [id])
+  views             DocumentView[]
+  accessGrants      DocumentAccess[]
+  signatureRequests SignatureRequest[]
 
   @@map("documents")
 }
@@ -444,6 +468,8 @@ model Entity {
   entityOwners                   EntityOwner[]
   entityInvestmentOwnerInvestors EntityInvestmentOwner[] @relation("EntityToEntityInvestmentOwner")
   investmentsAsEntityInvestor    EntityOwner[]           @relation("EntityToEntityInvestor")
+  commitments                    Commitment[]
+  capitalCalls                   CapitalCall[]
 
   @@map("entities")
 }
@@ -452,7 +478,7 @@ model EntityInvestment {
   id                  String           @id @default(cuid())
   entityId            String
   propertyId          String
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   ownershipPercentage Float
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -466,6 +492,8 @@ model EntityInvestment {
   waterfallTierDistributions WaterfallTierDistribution[]
   entityInvestmentOwners     EntityInvestmentOwner[]
 
+  @@index([entityId])
+  @@index([propertyId])
   @@map("entity_investments")
 }
 
@@ -475,7 +503,7 @@ model EntityOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   breakdown           Json? // Breakdown of entity member investments for this specific deal
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
@@ -486,6 +514,8 @@ model EntityOwner {
   user           User?   @relation(fields: [userId], references: [id])
   investorEntity Entity? @relation("EntityToEntityInvestor", fields: [investorEntityId], references: [id])
 
+  @@index([entityId])
+  @@index([userId])
   @@map("entity_owners")
 }
 
@@ -496,7 +526,7 @@ model EntityInvestmentOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   breakdown           Json?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -506,6 +536,8 @@ model EntityInvestmentOwner {
   user             User?            @relation(fields: [userId], references: [id])
   investorEntity   Entity?          @relation("EntityToEntityInvestmentOwner", fields: [investorEntityId], references: [id])
 
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("entity_investment_owners")
 }
 
@@ -537,7 +569,7 @@ model EntityDistribution {
   id                 String           @id @default(cuid())
   entityInvestmentId String
   userId             String
-  amount             Float
+  amount             Decimal @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   DistributionType @default(RENTAL_INCOME)
   description        String?
@@ -548,6 +580,8 @@ model EntityDistribution {
   entityInvestment EntityInvestment @relation(fields: [entityInvestmentId], references: [id])
   user             User             @relation(fields: [userId], references: [id])
 
+  @@index([entityInvestmentId])
+  @@index([userId])
   @@map("entity_distributions")
 }
 
@@ -556,10 +590,14 @@ model Insurance {
   propertyId     String
   provider       String
   policyNumber   String
-  annualPremium  Float
-  coverageAmount Float
+  annualPremium  Decimal @db.Decimal(15, 2)
+  coverageAmount Decimal @db.Decimal(15, 2)
   renewalDate    DateTime
   notes          String?
+  // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
+  documentUrl      String?
+  documentFileName String?
+  documentS3Key    String?
   createdBy      String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -575,8 +613,12 @@ model PropertyTax {
   id                String   @id @default(cuid())
   propertyId        String
   taxYear           Int
-  annualPropertyTax Float
+  annualPropertyTax Decimal @db.Decimal(15, 2)
   notes             String?
+  // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
+  documentUrl      String?
+  documentFileName String?
+  documentS3Key    String?
   createdBy         String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -593,12 +635,12 @@ model PropertyLoan {
   propertyId        String
   lenderName        String // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
   accountNumber     String? // Account number or loan identifier
-  originalAmount    Float // Original loan amount when first taken
-  currentBalance    Float // Current outstanding balance
+  originalAmount    Decimal @db.Decimal(15, 2)  // Original loan amount when first taken
+  currentBalance    Decimal @db.Decimal(15, 2)  // Current outstanding balance
   interestRate      Float? // Annual interest rate (e.g., 5.5 for 5.5%)
   loanDate          DateTime? // Date loan was originated
   maturityDate      DateTime? // Loan maturity date
-  monthlyPayment    Float? // Monthly payment amount
+  monthlyPayment    Decimal? @db.Decimal(15, 2)  // Monthly payment amount
   loanType          String? // e.g., "Mortgage", "Construction Loan", "Line of Credit"
   paymentType       PaymentType @default(AMORTIZING) // Interest-Only vs Amortizing
   amortizationYears Int? // Amortization term in years when amortizing
@@ -612,6 +654,7 @@ model PropertyLoan {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
+  @@index([propertyId])
   @@map("property_loans")
 }
 
@@ -1065,7 +1108,7 @@ model Deal {
   propertyId         String? // Link to existing property if applicable
   description        String?
   // location field removed - not in database
-  estimatedValue     Float?
+  estimatedValue     Decimal? @db.Decimal(15, 2)
   estimatedCloseDate DateTime?
   actualCloseDate    DateTime?
   source             String? // Where the deal came from
@@ -1076,12 +1119,12 @@ model Deal {
   section            String?      @default("ACQUISITION") // ACQUISITION, DEVELOPMENT, ASSET_MANAGEMENT
   underwritingData   Json? // Underwriting calculations and data
   dueDiligenceStatus String?      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
-  budgetedCost       Float?
-  actualCost         Float?
+  budgetedCost       Decimal? @db.Decimal(15, 2)
+  actualCost         Decimal? @db.Decimal(15, 2)
   startDate          DateTime?
   completionDate     DateTime?
   occupancyRate      Float?
-  noi                Float?
+  noi                Decimal? @db.Decimal(15, 2)
   capRate            Float?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
@@ -1264,9 +1307,9 @@ model BudgetLineItem {
   dealId         String
   category       String   // e.g., "Construction", "Legal", "Marketing"
   description    String
-  budgetedAmount Float
-  actualAmount   Float?
-  variance       Float?   // Calculated: actualAmount - budgetedAmount
+  budgetedAmount Decimal @db.Decimal(15, 2)
+  actualAmount   Decimal? @db.Decimal(15, 2)
+  variance       Decimal? @db.Decimal(15, 2)  // Calculated: actualAmount - budgetedAmount
   status         String   @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1282,15 +1325,15 @@ model UnderwritingData {
   id                 String   @id @default(cuid())
   dealId             String
   propertyType       String?
-  purchasePrice      Float?
-  loanAmount         Float?
+  purchasePrice      Decimal? @db.Decimal(15, 2)
+  loanAmount         Decimal? @db.Decimal(15, 2)
   loanRate           Float?
   loanTerm           Int?
-  downPayment        Float?
-  grossRent          Float?
+  downPayment        Decimal? @db.Decimal(15, 2)
+  grossRent          Decimal? @db.Decimal(15, 2)
   vacancyRate        Float?
-  operatingExpenses  Float?
-  noi                Float?
+  operatingExpenses  Decimal? @db.Decimal(15, 2)
+  noi                Decimal? @db.Decimal(15, 2)
   capRate            Float?
   irr                Float?
   cashOnCash         Float?
@@ -1333,12 +1376,12 @@ model AssetMetric {
   dealId          String
   metricDate      DateTime
   occupancyRate   Float?
-  revenue         Float?
-  expenses        Float?
-  noi             Float?
+  revenue         Decimal? @db.Decimal(15, 2)
+  expenses        Decimal? @db.Decimal(15, 2)
+  noi             Decimal? @db.Decimal(15, 2)
   capRate         Float?
-  debtService     Float?
-  cashFlow        Float?
+  debtService     Decimal? @db.Decimal(15, 2)
+  cashFlow        Decimal? @db.Decimal(15, 2)
   additionalMetrics Json?  // Flexible field for other operational metrics
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1372,4 +1415,204 @@ model VendorRelationship {
   @@index([dealId])
   @@index([contactId])
   @@map("vendor_relationships")
+}
+
+// ── IMS Phase 3: onboarding invites + commitment & capital-call tracking ──
+// Additive, record-only (the portal is the book of record; money moves outside it).
+
+model InvestorInvite {
+  id         String       @id @default(cuid())
+  email      String
+  firstName  String?
+  lastName   String?
+  token      String       @unique
+  role       UserRole     @default(INVESTOR)
+  propertyId String?
+  invitedBy  String?
+  status     InviteStatus @default(PENDING)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  property Property? @relation(fields: [propertyId], references: [id])
+  inviter  User?     @relation("InvitesSent", fields: [invitedBy], references: [id])
+
+  @@index([email])
+  @@index([token])
+  @@index([propertyId])
+  @@map("investor_invites")
+}
+
+model Commitment {
+  id          String           @id @default(cuid())
+  userId      String
+  propertyId  String?
+  entityId    String?
+  amount      Decimal          @db.Decimal(15, 2)
+  committedAt DateTime         @default(now())
+  status      CommitmentStatus @default(ACTIVE)
+  note        String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  property Property? @relation(fields: [propertyId], references: [id])
+  entity   Entity?   @relation(fields: [entityId], references: [id])
+
+  @@index([userId])
+  @@index([propertyId])
+  @@index([entityId])
+  @@map("commitments")
+}
+
+model CapitalCall {
+  id          String            @id @default(cuid())
+  propertyId  String?
+  entityId    String?
+  callNumber  Int?
+  totalAmount Decimal           @db.Decimal(15, 2)
+  description String?
+  dueDate     DateTime?
+  issuedAt    DateTime          @default(now())
+  status      CapitalCallStatus @default(OPEN)
+  createdBy   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  property  Property?             @relation(fields: [propertyId], references: [id])
+  entity    Entity?               @relation(fields: [entityId], references: [id])
+  responses CapitalCallResponse[]
+
+  @@index([propertyId])
+  @@index([entityId])
+  @@map("capital_calls")
+}
+
+model CapitalCallResponse {
+  id             String                    @id @default(cuid())
+  capitalCallId  String
+  userId         String
+  amountCalled   Decimal                   @db.Decimal(15, 2)
+  status         CapitalCallResponseStatus @default(PENDING)
+  acknowledgedAt DateTime?
+  fundedAt       DateTime?
+  note           String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  capitalCall CapitalCall @relation(fields: [capitalCallId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([capitalCallId, userId])
+  @@index([userId])
+  @@map("capital_call_responses")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum CommitmentStatus {
+  ACTIVE
+  FULFILLED
+  CANCELLED
+}
+
+enum CapitalCallStatus {
+  OPEN
+  PARTIALLY_FUNDED
+  FUNDED
+  CLOSED
+  CANCELLED
+}
+
+enum CapitalCallResponseStatus {
+  PENDING
+  ACKNOWLEDGED
+  FUNDED
+  DECLINED
+}
+
+// ── IMS Phase 4: data rooms, per-investor doc routing, view audit, e-sign ──
+// All additive. Documents stay the system of record; these add access grants,
+// an immutable view trail, and a lightweight in-house signature record.
+
+model DocumentView {
+  id         String   @id @default(cuid())
+  documentId String
+  userId     String
+  ipAddress  String?
+  viewedAt   DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("document_views")
+}
+
+model DocumentAccess {
+  id         String   @id @default(cuid())
+  documentId String
+  userId     String
+  grantedBy  String?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@map("document_access")
+}
+
+model SignatureRequest {
+  id          String          @id @default(cuid())
+  documentId  String
+  userId      String
+  status      SignatureStatus @default(PENDING)
+  signerName  String?
+  signatureText String?
+  signedAt    DateTime?
+  ipAddress   String?
+  createdBy   String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("signature_requests")
+}
+
+enum SignatureStatus {
+  PENDING
+  SIGNED
+  DECLINED
+}
+
+// ── IMS Phase 5: admin announcement broadcasts ──
+// An announcement is the source record; delivery fans out to per-user
+// Notification rows (and optionally email). Additive.
+
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  propertyId  String?   // null = broadcast to all investors; set = per-deal
+  createdBy    String
+  recipientCount Int     @default(0)
+  createdAt   DateTime  @default(now())
+
+  author User @relation(fields: [createdBy], references: [id])
+
+  @@index([propertyId])
+  @@map("announcements")
 }

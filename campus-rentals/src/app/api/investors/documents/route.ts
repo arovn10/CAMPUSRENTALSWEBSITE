@@ -25,20 +25,35 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' }
       })
     } else {
-      const investments = await prisma.investment.findMany({
-        where: { userId: user.id },
-        select: { propertyId: true }
-      })
+      const [investments, grants] = await Promise.all([
+        prisma.investment.findMany({
+          where: { userId: user.id },
+          select: { propertyId: true }
+        }),
+        // Documents explicitly routed to this investor (e.g. their K-1) — Phase 4 grants.
+        prisma.documentAccess.findMany({
+          where: { userId: user.id },
+          select: { documentId: true }
+        }),
+      ])
       const propertyIds = [...new Set(investments.map((i) => i.propertyId).filter(Boolean))]
+      const grantedIds = grants.map((g) => g.documentId)
       documents = await prisma.document.findMany({
         where: {
-          isPublic: true,
-          visibleToInvestor: true,
           OR: [
-            { uploadedBy: user.id },
-            ...(propertyIds.length > 0
-              ? [{ entityType: 'PROPERTY' as const, entityId: { in: propertyIds } }]
-              : [])
+            // Broadly-visible docs the investor owns or that belong to their deals.
+            {
+              isPublic: true,
+              visibleToInvestor: true,
+              OR: [
+                { uploadedBy: user.id },
+                ...(propertyIds.length > 0
+                  ? [{ entityType: 'PROPERTY' as const, entityId: { in: propertyIds } }]
+                  : [])
+              ]
+            },
+            // Per-investor routed docs (grant is the routing decision).
+            ...(grantedIds.length > 0 ? [{ id: { in: grantedIds } }] : []),
           ]
         },
         orderBy: { createdAt: 'desc' }
@@ -185,7 +200,7 @@ export async function POST(request: NextRequest) {
         filePath: filePathForDb || `documents/${fileName || 'doc'}`,
         fileSize: fileSize || 0,
         mimeType: mimeType || 'application/pdf',
-        documentType: safeDocumentType,
+        documentType: safeDocumentType as any,
         entityType: validEntityType as any,
         entityId: entityId,
         isPublic: true,
@@ -202,7 +217,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating document:', error)
     return NextResponse.json({ 
       error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 })
   }
 } 

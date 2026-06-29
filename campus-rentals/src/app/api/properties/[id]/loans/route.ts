@@ -43,11 +43,11 @@ export async function GET(
     // Calculate totals
     const totalCurrentDebt = loans
       .filter(loan => loan.isActive)
-      .reduce((sum, loan) => sum + loan.currentBalance, 0)
-    
+      .reduce((sum, loan) => sum + Number(loan.currentBalance), 0)
+
     const totalOriginalAmount = loans
       .filter(loan => loan.isActive)
-      .reduce((sum, loan) => sum + loan.originalAmount, 0)
+      .reduce((sum, loan) => sum + Number(loan.originalAmount), 0)
 
     return NextResponse.json({
       loans,
@@ -142,7 +142,7 @@ export async function POST(
       }
     })
 
-    const totalDebt = activeLoans.reduce((sum, loan) => sum + loan.currentBalance, 0)
+    const totalDebt = activeLoans.reduce((sum, loan) => sum + Number(loan.currentBalance), 0)
 
     await prisma.property.update({
       where: { id: propertyId },

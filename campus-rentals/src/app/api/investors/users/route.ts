@@ -4,6 +4,9 @@ import { requireAuth, getAllUsers, createUser, updateUser, deleteUser, hasPermis
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Admins and managers can access user list (for adding followers)
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
@@ -22,6 +25,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Only admins can create users
     if (!hasPermission(user, 'ADMIN')) {
@@ -40,10 +46,10 @@ export async function POST(request: NextRequest) {
       email,
       firstName,
       lastName,
-      role,
+      password,
       company,
       phone
-    }, password)
+    })
 
     return NextResponse.json(newUser, { status: 201 })
   } catch (error) {
@@ -55,17 +61,30 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     // Only admins can update users
-    if (!hasPermission(user, 'ADMIN')) {
+    if (!user || !hasPermission(user, 'ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { id, ...updates } = body
+    const { id } = body
 
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Whitelist updatable columns — never spread raw req.body into Prisma.
+    // Password has its own endpoint; id / loginAttempts / tokens are not settable here.
+    const ALLOWED_FIELDS = [
+      'email', 'firstName', 'lastName', 'role', 'company', 'phone', 'isActive', 'emailVerified',
+    ] as const
+    const updates: Record<string, unknown> = {}
+    for (const field of ALLOWED_FIELDS) {
+      if (field in body) updates[field] = body[field]
     }
 
     const updatedUser = await updateUser(id, updates)
@@ -83,6 +102,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Only admins can delete users
     if (!hasPermission(user, 'ADMIN')) {

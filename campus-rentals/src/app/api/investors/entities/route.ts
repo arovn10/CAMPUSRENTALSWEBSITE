@@ -5,7 +5,14 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    // Lists every entity + ownership structure — admin/manager only (mutations here are too).
+    if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
+
     // Get all entities with owners (users and investor entities)
     const entities = await prisma.entity.findMany({
       orderBy: { createdAt: 'desc' },
@@ -32,6 +39,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user has permission to create entities
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {

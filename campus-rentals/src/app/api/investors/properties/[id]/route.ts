@@ -5,31 +5,55 @@ import { prisma } from '@/lib/prisma'
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER'
+
     // Check if user has permission to update properties
-    if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'INVESTOR') {
+    if (!isAdmin && user.role !== 'INVESTOR') {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       )
     }
-    
+
     const body = await request.json()
-    
+
     console.log('Property update request body:', body)
     console.log('Other income value:', body.otherIncome, 'Type:', typeof body.otherIncome)
-    
+
     // Find the property
     const existingProperty = await prisma.property.findUnique({
       where: { id: params.id }
     })
-    
+
     if (!existingProperty) {
       console.log('Property not found:', params.id)
       return NextResponse.json(
         { error: 'Property not found' },
         { status: 404 }
       )
+    }
+
+    // IDOR guard: a non-admin (INVESTOR) may only update a property they actually
+    // have a stake in — either a direct investment or explicit property access.
+    // Without this, any logged-in investor could mutate ANY property by id.
+    if (!isAdmin) {
+      const [ownInvestment, propertyAccess] = await Promise.all([
+        prisma.investment.findFirst({
+          where: { userId: user.id, propertyId: params.id },
+          select: { id: true },
+        }),
+        prisma.userPropertyAccess.findFirst({
+          where: { userId: user.id, propertyId: params.id },
+          select: { id: true },
+        }),
+      ])
+      if (!ownInvestment && !propertyAccess) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
     
     console.log('Found existing property:', {
@@ -83,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Error updating property:', error)
     return NextResponse.json(
-      { error: 'Failed to update property', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update property', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

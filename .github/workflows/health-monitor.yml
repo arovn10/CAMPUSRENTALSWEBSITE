@@ -1,0 +1,54 @@
+name: Site Health Monitor
+
+# Pings the live site every ~15 minutes. On failure it opens (or reuses) a single
+# "site down" issue so the team is alerted; it auto-closes the issue on recovery.
+# Override the URL with a repo variable HEALTH_URL (Settings → Variables).
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *' # every 15 min, off the :00 mark
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe health endpoint
+        id: probe
+        run: |
+          URL="${{ vars.HEALTH_URL || 'https://campusrentalsllc.com/api/health' }}"
+          code=$(curl -s -o /tmp/body -w "%{http_code}" --max-time 25 "$URL" || echo 000)
+          echo "Probed $URL -> HTTP $code"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Alert on failure
+        if: steps.probe.outputs.code != '200'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🚨 Site health check failing"
+          existing=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' || echo "")
+          BODY="Health probe of ${{ steps.probe.outputs.url }} returned HTTP ${{ steps.probe.outputs.code }} at $(date -u). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label "incident" || gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Resolve on recovery
+        if: steps.probe.outputs.code == '200'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🚨 Site health check failing"
+          existing=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' || echo "")
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "✅ Recovered: health probe returned 200 at $(date -u)."
+            gh issue close "$existing"
+          fi

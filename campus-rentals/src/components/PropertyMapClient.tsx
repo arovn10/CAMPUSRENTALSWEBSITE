@@ -196,7 +196,8 @@ export default function PropertyMapClient({ properties, center, zoom = 14 }: Pro
             return `${format(rangeMin)} - ${format(rangeMax)}/mo`;
           }
           if (rangeMin != null) return `${format(rangeMin)}+/mo`;
-          return `${format(rangeMax)}/mo`;
+          if (rangeMax != null) return `${format(rangeMax)}/mo`;
+          return 'Contact for pricing';
         };
         const customIcon = L.divIcon({
           className: 'custom-marker',

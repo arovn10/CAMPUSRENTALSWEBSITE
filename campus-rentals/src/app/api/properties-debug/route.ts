@@ -65,7 +65,7 @@ export async function GET() {
     console.error('Properties debug error:', error);
     return NextResponse.json({
       error: 'Debug failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 } 

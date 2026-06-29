@@ -74,7 +74,8 @@ export default function InvestorPerformancePage() {
             const currVal = inv.property?.currentValue ?? inv.investmentAmount
             const invested = inv.investmentAmount ?? 0
             const totalReturn = currVal + totalDist - invested
-            const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
+            // Use the true XIRR computed server-side; fall back to the API's number if present.
+            const irr = inv.irr ?? 0
             return {
               id: inv.id,
               propertyName: inv.property?.name ?? 'Unknown',

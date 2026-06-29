@@ -159,7 +159,7 @@ async function setupDealsPipeline() {
 
     // Step 3: Get all investments with properties
     console.log('📊 Step 2: Fetching investments...');
-    const investments = await query<any>(`
+    const investments = await query(`
       SELECT 
         i.id,
         i."userId",

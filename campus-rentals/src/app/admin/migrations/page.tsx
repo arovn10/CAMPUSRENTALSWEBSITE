@@ -174,7 +174,7 @@ export default function MigrationsPage() {
               const data = await response.json()
               if (data.token) {
                 token = data.token
-                sessionStorage.setItem('authToken', token)
+                sessionStorage.setItem('authToken', token as string)
               }
             }
           } catch (err) {
@@ -235,6 +235,72 @@ export default function MigrationsPage() {
       console.error('Migration error:', err)
       setError(err.message || 'Failed to start migration. Check your connection and try again.')
       setRunning(false)
+    }
+  }
+
+  const runInsuranceTaxDocsMigration = async () => {
+    setDocsRunning(true)
+    setDocsResult(null)
+    setDocsError(null)
+    setDocsProgress(0)
+    setDocsStatusMessage('Starting migration...')
+
+    try {
+      let token = sessionStorage.getItem('authToken') ||
+                  sessionStorage.getItem('token') ||
+                  localStorage.getItem('authToken') ||
+                  localStorage.getItem('token')
+
+      if (!token) {
+        setDocsError('No authentication token found. Please log in at /investors/login and try again.')
+        setDocsRunning(false)
+        return
+      }
+
+      if (user && user.role !== 'ADMIN') {
+        setDocsError('Admin access required. You must be logged in as an ADMIN user.')
+        setDocsRunning(false)
+        return
+      }
+
+      // Start migration (returns immediately with job ID)
+      const response = await fetch('/api/admin/migrate/insurance-tax-docs/start', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response:', text.substring(0, 200))
+        setDocsError(`Server error (${response.status}): The server returned an unexpected response.`)
+        setDocsRunning(false)
+        return
+      }
+
+      const data = await response.json()
+
+      if (response.ok && data.jobId) {
+        setDocsJobId(data.jobId)
+        setDocsStatusMessage('Migration started. Monitoring progress...')
+        // Status polling is handled by useEffect
+      } else {
+        if (response.status === 401) {
+          setDocsError('Authentication failed. Please log out and log back in.')
+        } else if (response.status === 403) {
+          setDocsError('Admin access required. You must be logged in as an ADMIN user.')
+        } else {
+          setDocsError(data.error || data.message || data.details || 'Failed to start migration')
+        }
+        setDocsRunning(false)
+      }
+    } catch (err: any) {
+      console.error('Insurance/tax docs migration error:', err)
+      setDocsError(err.message || 'Failed to start migration. Check your connection and try again.')
+      setDocsRunning(false)
     }
   }
 

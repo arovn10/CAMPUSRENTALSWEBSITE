@@ -197,7 +197,8 @@ async function handleUpdateUser(data: {
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: updateData,
+      // role arrives as a validated string from the admin-gated caller; cast to the enum input
+      data: updateData as any,
       select: {
         id: true,
         email: true,

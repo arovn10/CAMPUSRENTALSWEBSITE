@@ -37,6 +37,7 @@ interface Deal {
   source?: string
   assignedToId?: string
   tags: string[]
+  published?: boolean
   pipeline?: {
     id: string
     name: string

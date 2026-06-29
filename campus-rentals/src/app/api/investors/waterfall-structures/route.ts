@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
+import { canAccessProperty } from '@/lib/access'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const propertyId = searchParams.get('propertyId')
     
@@ -14,7 +18,14 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    if (!(await canAccessProperty(user, propertyId))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Get waterfall structures for the property
     const waterfallStructures = await prisma.waterfallStructure.findMany({
       where: { 
@@ -58,6 +69,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user has permission to create waterfall structures
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
@@ -107,7 +121,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating waterfall structure:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

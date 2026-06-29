@@ -1687,7 +1687,8 @@ export default function InvestmentDetailPage() {
       originationFees: '',
       closingFees: '',
       closingFeesItems: [],
-      prepaymentPenalty: ''
+      prepaymentPenalty: '',
+      cashToBorrower: ''
     })
     setShowEditDistributionModal(true)
   }
@@ -1724,7 +1725,8 @@ export default function InvestmentDetailPage() {
           originationFees: '',
           closingFees: '',
           closingFeesItems: [],
-          prepaymentPenalty: ''
+          prepaymentPenalty: '',
+          cashToBorrower: ''
         })
         await fetchWaterfallStructures()
         alert('Distribution updated successfully!')
@@ -2003,7 +2005,8 @@ export default function InvestmentDetailPage() {
           originationFees: '',
           closingFees: '',
           closingFeesItems: [],
-          prepaymentPenalty: ''
+          prepaymentPenalty: '',
+          cashToBorrower: ''
         })
         await fetchWaterfallStructures()
         await fetchDistributions()
@@ -2372,10 +2375,10 @@ export default function InvestmentDetailPage() {
                       0
                     )
                     // Calculate total cost from acquisition price + construction cost
-                    const acquisitionPrice = parseFloat(investment.property.acquisitionPrice || 0)
-                    const constructionCost = parseFloat(investment.property.constructionCost || 0)
-                    const totalCost = investment.property.totalCost 
-                      ? parseFloat(investment.property.totalCost) 
+                    const acquisitionPrice = Number(investment.property.acquisitionPrice || 0)
+                    const constructionCost = Number(investment.property.constructionCost || 0)
+                    const totalCost = investment.property.totalCost
+                      ? Number(investment.property.totalCost)
                       : (acquisitionPrice + constructionCost)
                     const equityToCostAmount = totalInvestmentFromEntities
                     const equityToCostPercentage = totalCost > 0 ? (totalInvestmentFromEntities / totalCost) * 100 : 0
@@ -2565,132 +2568,6 @@ export default function InvestmentDetailPage() {
                 </div>
               )}
 
-              {/* All Investors Summary (hidden to avoid redundancy with section above) */}
-              {false && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">All Investors Summary</h3>
-                
-                {/* Direct Investors */}
-                {investment.investmentType !== 'ENTITY' && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Direct Investors</h4>
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-medium text-sm">
-                              {investment.investorName ? 
-                                investment.investorName.split(' ').map((n: string) => n.charAt(0)).join('') : 
-                                'DI'
-                              }
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{investment.investorName || 'Direct Investment'}</p>
-                            <p className="text-xs text-gray-600">{investment.investorEmail || 'N/A'}</p>
-                          </div>
-                        </div>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          {formatPercentage(investment.ownershipPercentage)} of property
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500">Investment Amount</p>
-                          <p className="font-semibold text-gray-900">{formatCurrency(investment.investmentAmount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Investment Date</p>
-                          <p className="font-semibold text-gray-900">{formatDate(investment.investmentDate)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Entity Investors Summary */}
-                {propertyEntityInvestments.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Entity Investors</h4>
-                    <div className="space-y-3">
-                      {propertyEntityInvestments.map((entityInvestment) => (
-                        <div key={entityInvestment.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <span className="text-green-600 font-medium text-sm">
-                                  {entityInvestment.entity.name.split(' ').map((n: string) => n.charAt(0)).join('').substring(0, 2)}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">{entityInvestment.entity.name}</p>
-                                <p className="text-xs text-gray-600">{entityInvestment.entity.type} • {formatPercentage(entityInvestment.ownershipPercentage)} of property</p>
-                              </div>
-                            </div>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              {entityInvestment.entity.entityOwners?.length || 0} investors
-                            </span>
-                          </div>
-                          
-                          {/* Individual investors within entity */}
-                          {entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0 && (
-                            <div className="space-y-2">
-                              {entityInvestment.entity.entityOwners.map((owner: any) => (
-                                <div key={owner.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-100">
-                                  <div className="flex items-center space-x-2">
-                                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                      <span className="text-gray-600 font-medium text-xs">
-                                        {(owner.user?.firstName || '').charAt(0)}{(owner.user?.lastName || '').charAt(0)}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">{owner.user?.firstName || ''} {owner.user?.lastName || ''}</p>
-                                      <p className="text-xs text-gray-600">{owner.user?.email || ''}</p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-sm font-medium text-gray-900">{formatCurrency(owner.investmentAmount)}</p>
-                                    <p className="text-xs text-gray-600">
-                                      {formatPercentage(owner.ownershipPercentage)} of entity • {formatPercentage((owner.ownershipPercentage / 100) * entityInvestment.ownershipPercentage)} of property
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Total Investment Summary */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-500">Total Investment Amount</p>
-                      <p className="font-semibold text-gray-900">
-                        {formatCurrency(
-                          (investment.investmentType !== 'ENTITY' ? investment.investmentAmount : 0) +
-                          propertyEntityInvestments.reduce((sum, ei) => sum + ei.investmentAmount, 0)
-                        )}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-500">Total Investors</p>
-                      <p className="font-semibold text-gray-900">
-                        {(investment.investmentType !== 'ENTITY' ? 1 : 0) +
-                        propertyEntityInvestments.reduce((sum, ei) => sum + (ei.entity.entityOwners?.length || 0), 0)}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-500">Total Entities</p>
-                      <p className="font-semibold text-gray-900">{propertyEntityInvestments.length}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              )}
 
               {/* Property Timeline */}
               <div className="mt-6 pt-6 border-t border-gray-200">
@@ -3083,7 +2960,6 @@ export default function InvestmentDetailPage() {
                   >
                     Update NOI Calculations
                   </button>
-                )}
                 )}
               </div>
             </div>
@@ -3946,7 +3822,6 @@ export default function InvestmentDetailPage() {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            )}
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Select from Existing Entities</h4>
@@ -4565,7 +4440,7 @@ export default function InvestmentDetailPage() {
                               // Only recalculate if no breakdown exists
                               if (!owner.showBreakdown || !Array.isArray(owner.breakdown) || owner.breakdown.length === 0) {
                                 const ownershipPct = parseFloat(owner.ownershipPercentage || 0)
-                                const calculatedAmount = (parseFloat(newTotal || 0) * ownershipPct) / 100
+                                const calculatedAmount = (Number(newTotal || 0) * ownershipPct) / 100
                                 return { ...owner, investmentAmount: calculatedAmount }
                               }
                               return owner // Keep existing amount if breakdown exists

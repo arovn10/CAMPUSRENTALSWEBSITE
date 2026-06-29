@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     const entityRollups = entities.map((e) => {
-      const totalInvested = e.entityInvestments.reduce((s, i) => s + (i.investmentAmount ?? 0), 0)
+      const totalInvested = e.entityInvestments.reduce((s, i) => s + Number(i.investmentAmount ?? 0), 0)
       return {
         id: e.id,
         name: e.name,
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
           where: { userId: u.id },
           _sum: { investmentAmount: true },
         })
-        const directInvested = invTotal._sum.investmentAmount ?? 0
+        const directInvested = Number(invTotal._sum.investmentAmount ?? 0)
         return {
           id: u.id,
           email: u.email,

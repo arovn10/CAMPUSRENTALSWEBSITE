@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { positionIrrPercent } from '@/lib/ims/metrics'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     const body = await request.json()
     
     const investmentType = body.investmentType || 'INVESTOR'
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating investment:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }
@@ -62,6 +66,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     try {
       console.log('[INVESTORS/INVESTMENTS] Request start', JSON.stringify({ role: user.role, userId: user.id, email: (user as any).email || null }))
     } catch {}
@@ -76,17 +83,29 @@ export async function GET(request: NextRequest) {
     })
 
     try {
-      const totalAmount = investments.reduce((s, i) => s + (i.investmentAmount || 0), 0)
+      const totalAmount = investments.reduce((s, i) => s + Number(i.investmentAmount || 0), 0)
       console.log('[INVESTORS/INVESTMENTS] Direct investments', JSON.stringify({ count: investments.length, totalAmount }))
     } catch {}
 
+    const asOf = new Date()
     // Transform the data to match the expected format
     const formattedInvestments = investments.map(investment => {
-      const totalDistributions = investment.distributions.reduce((sum, dist) => sum + dist.amount, 0)
-      const currentValue = investment.property?.currentValue ?? investment.investmentAmount ?? 0
-      const invested = investment.investmentAmount ?? 0
+      const totalDistributions = investment.distributions.reduce((sum, dist) => sum + Number(dist.amount), 0)
+      const currentValue = Number(investment.property?.currentValue ?? investment.investmentAmount ?? 0)
+      const invested = Number(investment.investmentAmount ?? 0)
       const totalReturn = currentValue - invested + totalDistributions
-      const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
+      // True annualized XIRR over dated cash flows (contribution → distributions → terminal value).
+      const irr = positionIrrPercent({
+        contributions: invested > 0
+          ? [{ amount: invested, date: investment.investmentDate ?? investment.createdAt }]
+          : [],
+        distributions: investment.distributions.map(dist => ({
+          amount: Number(dist.amount),
+          date: dist.distributionDate,
+        })),
+        currentValue,
+        asOf,
+      })
 
       return {
         id: investment.id,
@@ -99,7 +118,7 @@ export async function GET(request: NextRequest) {
         irr: Math.round(irr * 100) / 100,
         ownershipPercentage: investment.ownershipPercentage || 100,
         status: investment.status,
-        investmentDate: investment.investmentDate.toISOString(),
+        investmentDate: investment.investmentDate?.toISOString() ?? null,
         distributions: investment.distributions.map(dist => ({
           id: dist.id,
           amount: dist.amount,
@@ -117,7 +136,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching investments:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
       { status: 500 }
     )
   }

@@ -32,8 +32,8 @@ class FileService {
   constructor() {
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
     // Use S3 if AWS credentials are configured
-    this.useS3 = !!(process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID && 
-                     (process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY))
+    this.useS3 = !!((process.env.AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID) &&
+                     process.env.AWS_SECRET_ACCESS_KEY)
     if (!this.useS3) {
       this.initializeDirectories()
     }
@@ -308,15 +308,19 @@ class FileService {
       where: {
         shareToken,
         expiresAt: { gt: new Date() }
-      },
-      include: { fileUpload: true }
+      }
     })
 
     if (!fileShare) {
       return null
     }
 
-    const file = fileShare.fileUpload
+    // FileShare.fileId has no Prisma relation defined, so fetch the upload directly.
+    const file = await prisma.fileUpload.findUnique({ where: { id: fileShare.fileId } })
+
+    if (!file) {
+      return null
+    }
 
     // If using S3, check if URL is valid; otherwise check local disk
     if (this.useS3 && file.filePath.startsWith('http')) {
@@ -484,7 +488,7 @@ class FileService {
         'application/vnd.ms-powerpoint',
         'application/vnd.openxmlformats-officedocument.presentationml.presentation'
       ],
-      OTHER: []
+      OTHER: [] as string[]
     }
 
     const allowedMimeTypes = allowedTypes[category]

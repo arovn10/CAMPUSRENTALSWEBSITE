@@ -84,8 +84,8 @@ export default function PipelineTasks() {
     dealId: '',
     title: '',
     description: '',
-    status: 'TODO' as const,
-    priority: 'MEDIUM' as const,
+    status: 'TODO' as 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED' | 'CANCELLED',
+    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
     dueDate: '',
     assignedToId: '',
   })
