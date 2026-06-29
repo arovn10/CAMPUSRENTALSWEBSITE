@@ -111,6 +111,46 @@ export async function sendPasswordResetEmail(to: string, token: string): Promise
 const usd0 = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 
+/** Invite a new investor to set up their portal account. */
+export async function sendInviteEmail(
+  to: string,
+  opts: { token: string; firstName?: string; inviterName?: string }
+): Promise<{ ok: boolean }> {
+  const url = `${siteUrl()}/investors/accept-invite?token=${encodeURIComponent(opts.token)}`
+  const html = brandedEmail({
+    heading: 'You’re invited to the Campus Rentals investor portal',
+    bodyHtml:
+      `${opts.firstName ? `Hello ${opts.firstName},<br><br>` : ''}` +
+      `${opts.inviterName ? `${opts.inviterName} has invited you` : 'You have been invited'} to the ` +
+      `Campus Rentals investor portal, where you can view your capital account, distributions, ` +
+      `statements, and documents. Click below to set your password and get started. This invite expires in 7 days.`,
+    cta: { label: 'Accept invitation', url },
+  })
+  const res = await sendEmail({ to, subject: 'Your Campus Rentals investor portal invitation', html })
+  return { ok: res.ok }
+}
+
+/** Notify an investor that a capital call has been issued for one of their deals. */
+export async function sendCapitalCallEmail(
+  to: string,
+  opts: { investorName?: string; dealName: string; amountCalled: number; dueDate?: Date | string | null }
+): Promise<{ ok: boolean }> {
+  const due = opts.dueDate
+    ? new Date(opts.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null
+  const html = brandedEmail({
+    heading: 'A capital call has been issued',
+    bodyHtml:
+      `${opts.investorName ? `Hello ${opts.investorName},<br><br>` : ''}` +
+      `A capital call of <strong>${usd0(opts.amountCalled)}</strong> has been issued for ` +
+      `<strong>${opts.dealName}</strong>${due ? `, due by ${due}` : ''}. ` +
+      `Please review and acknowledge it in your portal.`,
+    cta: { label: 'Review capital call', url: `${siteUrl()}/investors/capital-calls` },
+  })
+  const res = await sendEmail({ to, subject: `Capital call — ${opts.dealName}`, html })
+  return { ok: res.ok }
+}
+
 /** Notify an investor that a distribution has been recorded for one of their deals. */
 export async function sendDistributionNoticeEmail(
   to: string,

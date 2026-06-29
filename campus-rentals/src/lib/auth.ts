@@ -327,6 +327,106 @@ export async function resetPassword(data: PasswordUpdateData): Promise<boolean> 
   return true
 }
 
+// ── Investor onboarding invites ──
+
+/** Returns a usable invite (PENDING, unexpired) for a token, or null. */
+export async function getValidInvite(token: string) {
+  const invite = await prisma.investorInvite.findUnique({ where: { token } })
+  if (!invite) return null
+  if (invite.status !== 'PENDING') return null
+  if (invite.expiresAt <= new Date()) return null
+  return invite
+}
+
+export interface AcceptInviteData {
+  token: string
+  password: string
+  firstName?: string
+  lastName?: string
+  phone?: string
+}
+
+/**
+ * Accept an invite: create (or reactivate) the investor account, grant property
+ * access if the invite was scoped to a deal, mark the invite accepted, and return
+ * an auth session. Idempotency: a single-use token (status flips to ACCEPTED).
+ */
+export async function acceptInvite(data: AcceptInviteData): Promise<{ user: AuthUser; token: string }> {
+  const invite = await getValidInvite(data.token)
+  if (!invite) {
+    throw new Error('This invitation is invalid or has expired')
+  }
+  if (!data.password || data.password.length < 8) {
+    throw new Error('Password must be at least 8 characters')
+  }
+
+  const hashedPassword = await hashPassword(data.password)
+  const email = invite.email.toLowerCase()
+  const existing = await prisma.user.findUnique({ where: { email } })
+
+  const user = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          password: hashedPassword,
+          isActive: true,
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+          ...(data.firstName ? { firstName: data.firstName } : {}),
+          ...(data.lastName ? { lastName: data.lastName } : {}),
+          ...(data.phone ? { phone: data.phone } : {}),
+        },
+      })
+    : await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName: data.firstName ?? invite.firstName ?? '',
+          lastName: data.lastName ?? invite.lastName ?? '',
+          phone: data.phone,
+          role: invite.role,
+          isActive: true,
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+        },
+      })
+
+  // Grant deal-scoped access if the invite targeted a property.
+  if (invite.propertyId) {
+    await prisma.userPropertyAccess.upsert({
+      where: { userId_propertyId: { userId: user.id, propertyId: invite.propertyId } },
+      update: {},
+      create: { userId: user.id, propertyId: invite.propertyId },
+    })
+  }
+
+  await prisma.investorInvite.update({
+    where: { id: invite.id },
+    data: { status: 'ACCEPTED', acceptedAt: new Date() },
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      action: 'CREATE',
+      resource: 'USER',
+      resourceId: user.id,
+      details: { email: user.email, via: 'INVITE', inviteId: invite.id },
+    },
+  })
+
+  const authUser: AuthUser = {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    isActive: user.isActive,
+    emailVerified: true,
+  }
+  return { user: authUser, token: generateToken(authUser) }
+}
+
 // Email verification removed - users are automatically verified when created by admin
 
 export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {

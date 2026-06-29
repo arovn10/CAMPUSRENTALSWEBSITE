@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById } from '@/lib/auth'
+import { authenticateUser, registerUser, requestPasswordReset, resetPassword, changePassword, getUserById, acceptInvite, getValidInvite } from '@/lib/auth'
 import { sendPasswordResetEmail } from '@/lib/email'
 import { rateLimit, getClientIp } from '@/lib/rateLimit'
 
@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
         return await handleResetPassword(data)
       case 'change-password':
         return await handleChangePassword(data, request)
+      case 'accept-invite':
+        return await handleAcceptInvite(data)
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -39,6 +41,8 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'me':
         return await handleGetMe(request)
+      case 'invite-info':
+        return await handleInviteInfo(searchParams.get('token'))
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
@@ -191,6 +195,35 @@ async function handleChangePassword(data: {
       { status: 400 }
     )
   }
+}
+
+async function handleAcceptInvite(data: { token: string; password: string; firstName?: string; lastName?: string; phone?: string }) {
+  try {
+    const result = await acceptInvite(data)
+    return NextResponse.json({ success: true, user: result.user, token: result.token })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Could not accept invitation' },
+      { status: 400 }
+    )
+  }
+}
+
+async function handleInviteInfo(token: string | null) {
+  if (!token) {
+    return NextResponse.json({ valid: false }, { status: 400 })
+  }
+  const invite = await getValidInvite(token)
+  if (!invite) {
+    return NextResponse.json({ valid: false })
+  }
+  // Only surface non-sensitive fields needed to prefill the accept form.
+  return NextResponse.json({
+    valid: true,
+    email: invite.email,
+    firstName: invite.firstName,
+    lastName: invite.lastName,
+  })
 }
 
 async function handleGetMe(request: NextRequest) {

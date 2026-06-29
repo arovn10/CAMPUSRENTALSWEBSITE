@@ -33,6 +33,7 @@ type NavItem = {
 const sectionNavBase: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: HomeIcon, path: '/investors/dashboard' },
   { id: 'capital-account', label: 'Capital Account', icon: CurrencyDollarIcon, path: '/investors/capital-account', flag: 'IMS_V2' },
+  { id: 'capital-calls', label: 'Capital Calls', icon: ClockIcon, path: '/investors/capital-calls', flag: 'IMS_V2' },
   { id: 'banking', label: 'Banking', icon: BanknotesIcon, path: '/investors/banking' },
   { id: 'pipeline', label: 'Deal Pipeline', icon: FolderIcon, path: '/investors/pipeline-tracker' },
   { id: 'properties', label: 'Properties', icon: BuildingOffice2Icon, path: '/investors/properties' },
@@ -43,7 +44,7 @@ const sectionNavBase: NavItem[] = [
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
 ]
 
-const publicPaths = ['/investors/login', '/investors/reset-password']
+const publicPaths = ['/investors/login', '/investors/reset-password', '/investors/accept-invite']
 
 function RoleBadge({ role }: { role: string }) {
   const config: Record<string, { label: string; className: string }> = {
