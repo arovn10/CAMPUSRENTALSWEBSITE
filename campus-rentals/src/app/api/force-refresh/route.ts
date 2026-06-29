@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { 
-  saveDataToCache, 
-  createCacheMetadata, 
+import {
+  saveDataToCache,
+  loadDataFromCache,
+  createCacheMetadata,
   cleanOldCache,
   ensureCacheDirectories,
   downloadAndCacheImage,
@@ -209,6 +210,8 @@ export async function POST() {
       properties,
       photos,
       amenities,
+      // Preserve existing geocoded coordinates across a refresh (avoids re-geocoding).
+      coordinates: loadDataFromCache()?.coordinates ?? {},
       metadata: createCacheMetadata()
     };
     
