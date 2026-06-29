@@ -84,7 +84,7 @@ async function testDealsAPI() {
 
     // Test 2: Check if pipeline has stages
     console.log('\n📋 Test 2: Checking pipeline stages...');
-    const stages = await query<{ id: string; name: string; order: number }>(`
+    const stages = await query(`
       SELECT id, name, "order" 
       FROM deal_pipeline_stages 
       WHERE "pipelineId" = $1 

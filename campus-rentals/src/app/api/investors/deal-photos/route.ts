@@ -242,68 +242,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify user has access to this property
-    if (user.role === 'INVESTOR') {
-      const hasDirectAccess = await prisma.investment.findFirst({
-        where: {
-          propertyId: targetPropertyId,
-          userId: user.id
-        }
-      })
-
-      if (!hasDirectAccess) {
-        const entityInvestments = await prisma.entityInvestment.findMany({
-          where: { propertyId: targetPropertyId },
-          include: {
-            entityInvestmentOwners: true,
-            entity: {
-              include: {
-                entityOwners: true
-              }
-            }
-          }
-        })
-
-        const hasEntityAccess = entityInvestments.some((ei: any) => {
-          return (
-            ei.entityInvestmentOwners.some((owner: any) => owner.userId === user.id) ||
-            ei.entity?.entityOwners.some((owner: any) => owner.userId === user.id) ||
-            ei.entityInvestmentOwners.some((owner: any) => {
-              if (owner.breakdown && Array.isArray(owner.breakdown)) {
-                return owner.breakdown.some((item: any) => {
-                  const itemId = item.id || null
-                  const itemLabel = (item.label || '').trim().toLowerCase()
-                  const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase()
-                  return (
-                    (itemId && String(itemId) === String(user.id)) ||
-                    (itemLabel === userName)
-                  )
-                })
-              }
-              return false
-            })
-          )
-        })
-
-        if (!hasEntityAccess) {
-          return NextResponse.json(
-            { error: 'Property not found or access denied' },
-            { status: 403 }
-          )
-        }
-      }
-    } else {
-      // For admins/managers, verify property exists
-      const property = await prisma.property.findUnique({
-        where: { id: targetPropertyId }
-      })
-
-      if (!property) {
-        return NextResponse.json(
-          { error: 'Property not found' },
-          { status: 404 }
-        )
-      }
+    // This route is admin/manager only (gated above); just confirm the property exists.
+    const property = await prisma.property.findUnique({
+      where: { id: targetPropertyId }
+    })
+    if (!property) {
+      return NextResponse.json(
+        { error: 'Property not found' },
+        { status: 404 }
+      )
     }
 
     // Convert file to buffer

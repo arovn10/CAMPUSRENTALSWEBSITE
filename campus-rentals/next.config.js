@@ -28,10 +28,6 @@ module.exports = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  typescript: {
-    // Temporarily ignore type errors during production builds to restore site availability
-    ignoreBuildErrors: true,
-  },
   // Enable compression
   compress: true,
   // Optimize production builds

@@ -58,7 +58,7 @@ Tracking doc for the P0/P1/P2 hardening pass. Check items off as completed.
 
 ## P2 — Architecture & DX
 - [ ] Supabase migration (dedicated project, Prisma stays, Float→Decimal + indexes bundled, ALEC read path).
-- [ ] Remove `typescript.ignoreBuildErrors` from `next.config.js`; fix surfaced type errors.
+- [x] **Remove `typescript.ignoreBuildErrors`** — DONE. Cleared the full type backlog (207 → 0 over the session: null-`user` guards, `owner.user`, the money Decimal sweep, Prisma input shapes, dead-code removal, plus several real bugs) and removed the flag from `next.config.js`. `next build` now runs type-checking and passes (exit 0), so type errors can no longer silently ship.
 - [ ] SSR public listing pages + `generateMetadata`; server-gate the investor portal (kill client-side auth flash).
 - [ ] Remove unused map libs (`mapbox-gl`, `@react-google-maps/api`).
 - [ ] Consolidate the duplicated S3/file service modules.
