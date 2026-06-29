@@ -24,7 +24,7 @@ export async function GET(
           include: {
             investments: { where: { userId: user.id } },
             entityInvestments: {
-              include: { entityOwners: { where: { userId: user.id } } },
+              include: { entity: { include: { entityOwners: { where: { userId: user.id } } } } },
             },
             followers: {
               where: {
@@ -47,7 +47,7 @@ export async function GET(
       user.role === 'ADMIN' ||
       user.role === 'MANAGER' ||
       file.property.investments.length > 0 ||
-      file.property.entityInvestments.some((ei: any) => ei.entityOwners.length > 0) ||
+      file.property.entityInvestments.some((ei: any) => ei.entity.entityOwners.length > 0) ||
       file.property.followers.length > 0
 
     if (!hasAccess) {
