@@ -3084,7 +3084,6 @@ export default function InvestmentDetailPage() {
                     Update NOI Calculations
                   </button>
                 )}
-                )}
               </div>
             </div>
             )}
@@ -3946,7 +3945,6 @@ export default function InvestmentDetailPage() {
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            )}
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Select from Existing Entities</h4>
