@@ -62,43 +62,73 @@ Schema: `campus-rentals/prisma/schema.prisma` (~88 models). It is an **investor 
 ## Non-Negotiables
 
 - **`npm run build` before every push** — a broken build wastes 20–30 min on Lightsail.
-- **`npx prisma generate` after schema edits**, and create a migration — never hand-edit the DB.
-- **Money is `Decimal`, never `Float`.** New monetary columns must be `Decimal`. (Existing `Float` money columns are tech debt — see below.)
-- **Every protected API route must verify BOTH the JWT and ownership.** Role check alone is not enough — investor-scoped routes must confirm the caller actually owns the investment/entity/deal (avoid IDOR). Use `user_property_access` / `Investment(userId, propertyId)` checks.
+- **Type-checking is ON.** `typescript.ignoreBuildErrors` has been **removed** from `next.config.js` and the type backlog is at **0**. `npm run build` now type-checks. **Do not re-add `ignoreBuildErrors`** — fix the type error instead. The PR Build Check enforces this.
+- **`npx prisma generate` after schema edits**, and add a numbered migration in `prisma/migrations/` — never hand-edit the DB. Deploy runs `npm run migrate:pending` (data-preserving).
+- **Money is `Decimal`, never `Float`** — and this is now **enforced in the schema** (45 money columns are `Decimal(15,2)`; rates/percentages stay `Float`). Prisma returns `Decimal` objects: wrap money reads used in arithmetic with `Number(...)` (or use Decimal ops). New monetary columns must be `Decimal`.
+- **Every protected API route must verify BOTH the JWT and ownership.** Use `canAccessProperty()` from `src/lib/access.ts` (admin/manager OR investment / entity-owner / property-access / follower). Null-check `requireAuth()` (`if (!user) return 401`).
 - **Never trust `req.body` fields directly into Prisma** — whitelist updatable fields (no mass-assignment; `role` must never be self-settable).
 - **No secrets with the `NEXT_PUBLIC_` prefix.** That prefix bundles the value into the browser. AWS/Resend/JWT secrets are **server-only**.
+- **Don't leak error internals** — gate `details: error.message` behind `NODE_ENV === 'development'`; return generic messages in prod.
 - **Deploy platform is Lightsail** — not Vercel/Netlify.
 
 ---
 
-## Known Security Debt (treat as P0 — do not add to it)
+## Security Status (hardening pass complete; see `SECURITY-REMEDIATION.md`)
 
-These are real and currently live. When touching adjacent code, fix rather than extend:
+**Fixed in-code (committed):** root `.gitignore` added + committed secrets untracked · `NEXT_PUBLIC_` AWS secret fallbacks removed · hardcoded Resend key + JWT fallback removed · GitHub webhook now requires a valid HMAC signature · IDOR closed on all investor mutation **and** read routes (`canAccessProperty` / role gates) · login rate limiting (`src/lib/rateLimit.ts`) · admin user-update field whitelist · error-detail leakage gated by `NODE_ENV` · `Float`→`Decimal` money migration · FK indexes.
 
-1. **Secrets committed to git:** `LightsailDefaultKey-us-east-1.pem` (prod SSH key), `campus-rentals/.env`, and root `.env.local` are tracked. There is **no root `.gitignore`** (the only one is in `campus-rentals/`). These need rotation + history purge + a root `.gitignore`.
-2. **Client-exposed credentials:** AWS keys and other secrets are referenced via `NEXT_PUBLIC_*` (e.g. `src/lib/s3Service.ts`, `src/lib/investorS3Service.ts`) — they leak into the client bundle. Move server-side.
-3. **Hardcoded secrets in source:** JWT secret fallback in `src/lib/auth.ts`; Resend key literal in `src/app/api/send-email/route.ts`.
-4. **`next.config.js` sets `typescript.ignoreBuildErrors: true`** — type errors ship silently. Goal: remove it and fix the errors.
-5. **GitHub webhook** (`/api/webhook/github`) skips signature verification when the header is absent — require it.
-6. **IDOR:** `PUT /api/investors/properties/[id]` updates any property by id with no ownership check.
-7. **No body validation** (no zod/joi) and **rate-limit settings exist in `.env` but are unenforced.**
+**STILL REQUIRES MANUAL ACTION (cannot be done from code):**
+1. **Rotate every exposed credential** (Lightsail SSH key, Prisma DB creds, JWT secret, AWS keys, Resend key, GitHub webhook secret) — they are in git history; assume compromised.
+2. **Purge git history** of `LightsailDefaultKey-us-east-1.pem`, `.env.local`, `campus-rentals/.env` (`git filter-repo`), then force-push.
+3. **Apply migrations** `010_add_fk_indexes.sql` + `011_money_to_decimal.sql` and **verify a real waterfall distribution in staging** before relying on the Decimal change.
+
+Still open (lower priority): httpOnly-cookie auth (currently `sessionStorage`), `zod` body validation, MFA, self-service password reset.
 
 ---
 
 ## Patterns to Apply
 
 ```ts
-// Money: always Decimal in Prisma, parse carefully in TS.
-// Auth: verify token AND ownership before any investor-scoped mutation.
+// Auth: null-check, then verify ownership before any investor-scoped read/mutation.
+const user = await requireAuth(request)
+if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+if (!(await canAccessProperty(user, propertyId)))   // src/lib/access.ts
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+// Money: Prisma returns Decimal objects — wrap reads used in arithmetic.
+const total = rows.reduce((s, r) => s + Number(r.amount), 0)
+
 // Field whitelisting on updates (never spread req.body into Prisma):
 const ALLOWED = ['firstName','lastName','phone','mailingAddress'] as const;
 const data = Object.fromEntries(ALLOWED.filter(k => k in body).map(k => [k, body[k]]));
 // (role, taxId, ownership % are NOT self-updatable)
 ```
 
+- **Ownership checks:** `src/lib/access.ts` (`canAccessProperty`). **Rate limiting:** `src/lib/rateLimit.ts`.
 - **API base for listings:** `src/lib/apiConfig.ts` → `src/lib/abodeClient.ts`. Don't raw-`fetch` the Abodingo backend from pages.
 - **Auth token:** held client-side (`sessionStorage`/`LoginContext`). Migrating to httpOnly cookies is desired.
 - **Maps:** only **Leaflet** is actually used; `mapbox-gl` and `@react-google-maps/api` are dead deps slated for removal.
+
+---
+
+## CI / Site health (`.github/workflows/`)
+
+- **`pr-check.yml`** — every PR to `main` runs install + `prisma generate/validate` + `tsc --noEmit` + `next build`. This is the gate that keeps `main` deployable.
+- **`auto-merge.yml`** — PRs labelled **`automerge`** use GitHub native auto-merge (merges only AFTER required checks pass). One-time setup: enable "Allow auto-merge" + branch protection on `main` requiring "PR Build Check".
+- **`health-monitor.yml`** — pings prod `/api/health` (`SELECT 1` DB probe) every ~15 min; opens/closes an incident issue.
+- **`main.yml`** — existing deploy: on push to `main`, SSH to Lightsail → pull, build, `migrate:pending`, PM2 restart.
+
+---
+
+## Investor Portal / IMS (the product focus)
+
+`/investors/*` is the private **Investment Management System**. Shell: left sidebar (desktop) / drawer (mobile), Heroicons, Tailwind, no chart lib yet. Nav: Overview · Banking · Deal Pipeline · Properties · Portfolio · Documents · Updates · Performance · Profile.
+
+**Today (functional foundation):** dashboard KPIs · portfolio holdings table · distributions/banking view · document vault (categorised, admin-upload) · in-app notifications · profile with K-1 tax fields · deep deal-pipeline/CRM (deals, stages, tasks, notes, contacts, files, underwriting, due-diligence) · entity/ownership + waterfall **schema** (admin-only UI) · investment detail with loans/photos/refinance.
+
+**The goal: a best-in-class IMS** benchmarked against RealPage IMS, Juniper Square, Yardi Investment Manager, AppFolio IM, Agora, InvestNext. Known gaps (see the design quiz / roadmap): investor **capital-account statements**, **K-1 generation/e-delivery**, **true IRR/MOIC/cash-on-cash** (current IRR is a simple approximation), **waterfall visualization**, **PDF investor statements**, **distribution/ACH payment processing**, **commitment & capital-call tracking**, **e-signature** (PPM/subscription docs), **branded email comms**, **MFA**. Charts/PDF libs are not yet added.
+
+> Rule for IMS work: it's a **system of record** for investor money — money is `Decimal`, every read is ownership-scoped, and all changes go through data-preserving migrations.
 
 ---
 
