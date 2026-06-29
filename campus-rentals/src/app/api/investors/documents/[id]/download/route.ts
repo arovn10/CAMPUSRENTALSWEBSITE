@@ -4,6 +4,8 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { canAccessDocument } from '@/lib/access'
+import { getClientIp } from '@/lib/rateLimit'
 import {
   documentFileExists,
   createDocumentReadStream,
@@ -34,24 +36,18 @@ export async function GET(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    if (!doc.isPublic || !doc.visibleToInvestor) {
+    // Ownership-scoped: staff, uploader, owned-property attachment, or explicit grant.
+    if (!(await canAccessDocument(user, doc))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    // Admins and managers can always see
-    const isStaff = user.role === 'ADMIN' || user.role === 'MANAGER'
-    if (!isStaff) {
-      const investments = await prisma.investment.findMany({
-        where: { userId: user.id },
-        select: { propertyId: true },
+    // Audit trail: record who opened this document and when (best-effort).
+    try {
+      await prisma.documentView.create({
+        data: { documentId: doc.id, userId: user.id, ipAddress: getClientIp(request) },
       })
-      const propertyIds = [...new Set(investments.map((i) => i.propertyId).filter(Boolean))]
-      const canAccess =
-        doc.uploadedBy === user.id ||
-        (doc.entityType === 'PROPERTY' && propertyIds.includes(doc.entityId))
-      if (!canAccess) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-      }
+    } catch (e) {
+      console.error('[document view] log failed:', e)
     }
 
     const filePath = doc.filePath

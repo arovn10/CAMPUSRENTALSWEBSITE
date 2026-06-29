@@ -89,6 +89,9 @@ model User {
   commitments                Commitment[]
   capitalCallResponses       CapitalCallResponse[]
   invitesSent                InvestorInvite[]            @relation("InvitesSent")
+  documentViews              DocumentView[]
+  documentAccessGrants       DocumentAccess[]
+  signatureRequests          SignatureRequest[]
 
   @@map("users")
 }
@@ -403,7 +406,10 @@ model Document {
   updatedAt         DateTime     @updatedAt
 
   // Relations
-  user User @relation(fields: [uploadedBy], references: [id])
+  user              User               @relation(fields: [uploadedBy], references: [id])
+  views             DocumentView[]
+  accessGrants      DocumentAccess[]
+  signatureRequests SignatureRequest[]
 
   @@map("documents")
 }
@@ -1527,5 +1533,66 @@ enum CapitalCallResponseStatus {
   PENDING
   ACKNOWLEDGED
   FUNDED
+  DECLINED
+}
+
+// ── IMS Phase 4: data rooms, per-investor doc routing, view audit, e-sign ──
+// All additive. Documents stay the system of record; these add access grants,
+// an immutable view trail, and a lightweight in-house signature record.
+
+model DocumentView {
+  id         String   @id @default(cuid())
+  documentId String
+  userId     String
+  ipAddress  String?
+  viewedAt   DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("document_views")
+}
+
+model DocumentAccess {
+  id         String   @id @default(cuid())
+  documentId String
+  userId     String
+  grantedBy  String?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@map("document_access")
+}
+
+model SignatureRequest {
+  id          String          @id @default(cuid())
+  documentId  String
+  userId      String
+  status      SignatureStatus @default(PENDING)
+  signerName  String?
+  signatureText String?
+  signedAt    DateTime?
+  ipAddress   String?
+  createdBy   String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("signature_requests")
+}
+
+enum SignatureStatus {
+  PENDING
+  SIGNED
   DECLINED
 }

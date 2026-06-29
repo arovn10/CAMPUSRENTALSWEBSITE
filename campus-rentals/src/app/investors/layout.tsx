@@ -19,6 +19,7 @@ import {
   ChartBarIcon,
   ClockIcon,
   CurrencyDollarIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline'
 
 type NavItem = {
@@ -39,6 +40,7 @@ const sectionNavBase: NavItem[] = [
   { id: 'properties', label: 'Properties', icon: BuildingOffice2Icon, path: '/investors/properties' },
   { id: 'portfolio', label: 'Portfolio', icon: ChartPieIcon, path: '/investors/portfolio' },
   { id: 'documents', label: 'Documents', icon: DocumentTextIcon, path: '/investors/documents' },
+  { id: 'signatures', label: 'Documents to Sign', icon: PencilSquareIcon, path: '/investors/signatures', flag: 'IMS_V2' },
   { id: 'updates', label: 'Updates', icon: BellIcon, path: '/investors/updates' },
   { id: 'performance', label: 'Performance', icon: ChartBarIcon, path: '/investors/performance' },
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
