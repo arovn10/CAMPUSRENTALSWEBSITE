@@ -100,7 +100,12 @@ jobs:
             echo "🔧 Step 3: Installing/updating dependencies..."
             npm install --legacy-peer-deps
             echo "✅ Dependencies installed"
-            
+
+            echo ""
+            echo "🧩 Step 3b: Regenerating Prisma client (npm install skips it when @prisma/client is already present)..."
+            npx prisma generate
+            echo "✅ Prisma client generated"
+
             echo ""
             echo "🏗️  Step 4: Rebuilding the application..."
             npm run build
