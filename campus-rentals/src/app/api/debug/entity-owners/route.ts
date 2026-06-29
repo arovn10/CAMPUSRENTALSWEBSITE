@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       entityOwners: entityOwners.map(owner => ({
         id: owner.id,
         entityName: owner.entity.name,
-        userName: `${owner.user.firstName} ${owner.user.lastName}`,
-        userEmail: owner.user.email,
+        userName: `${owner.user?.firstName ?? ''} ${owner.user?.lastName ?? ''}`.trim(),
+        userEmail: owner.user?.email ?? '',
         ownershipPercentage: owner.ownershipPercentage,
         investmentAmount: owner.investmentAmount,
         isActive: owner.isActive
@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
         investmentAmount: inv.investmentAmount,
         ownershipPercentage: inv.ownershipPercentage,
         owners: inv.entity.entityOwners.map(owner => ({
-          userName: `${owner.user.firstName} ${owner.user.lastName}`,
-          userEmail: owner.user.email,
+          userName: `${owner.user?.firstName ?? ''} ${owner.user?.lastName ?? ''}`.trim(),
+          userEmail: owner.user?.email ?? '',
           ownershipPercentage: owner.ownershipPercentage,
           investmentAmount: owner.investmentAmount
         }))

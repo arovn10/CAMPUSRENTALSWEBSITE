@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
         if (existing.directInvestment > 0) {
           console.log('Investor has both direct and entity investments - using entity investment only:', {
             userId: key,
-            userName: owner.user.firstName,
+            userName: owner.user?.firstName,
             directInvestment: existing.directInvestment,
             entityShare: individualShareOfEntity
           })
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
         console.log('Entity ownership calculation:', {
           entityName: entityInvestment.entity.name,
           entityOwnership: entityInvestment.ownershipPercentage,
-          ownerName: owner.user.firstName,
+          ownerName: owner.user?.firstName,
           ownerEntityPercentage: owner.ownershipPercentage,
           calculatedShare: individualShareOfEntity,
           totalOwnershipAfter: existing.totalOwnership
@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
         const actualContribution = owner.investmentAmount || 0
         
         console.log('Entity owner details:', {
-          ownerName: owner.user.firstName + ' ' + owner.user.lastName,
+          ownerName: owner.user?.firstName + ' ' + owner.user?.lastName,
           ownerId: owner.userId,
           ownershipPercentage: owner.ownershipPercentage,
           investmentAmount: owner.investmentAmount,
@@ -309,7 +309,7 @@ export async function POST(request: NextRequest) {
         investorMap.set(key, existing)
         console.log('Added entity investor:', { 
           userId: key, 
-          userName: owner.user.firstName, 
+          userName: owner.user?.firstName, 
           ownership: existing.totalOwnership,
           entityShare: individualShareOfEntity,
           investment: entityInvestment.investmentAmount * (owner.ownershipPercentage / 100)
