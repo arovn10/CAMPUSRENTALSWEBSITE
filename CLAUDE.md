@@ -122,13 +122,26 @@ const data = Object.fromEntries(ALLOWED.filter(k => k in body).map(k => [k, body
 
 ## Investor Portal / IMS (the product focus)
 
-`/investors/*` is the private **Investment Management System**. Shell: left sidebar (desktop) / drawer (mobile), Heroicons, Tailwind, no chart lib yet. Nav: Overview · Banking · Deal Pipeline · Properties · Portfolio · Documents · Updates · Performance · Profile.
+`/investors/*` is the private **Investment Management System**, benchmarked against RealPage IMS, Juniper Square, Yardi, AppFolio IM, Agora, InvestNext. Full design spec: `docs/INVESTOR-IMS-SPEC.md`. Shell: left sidebar (desktop) / drawer (mobile), Heroicons, Tailwind.
 
-**Today (functional foundation):** dashboard KPIs · portfolio holdings table · distributions/banking view · document vault (categorised, admin-upload) · in-app notifications · profile with K-1 tax fields · deep deal-pipeline/CRM (deals, stages, tasks, notes, contacts, files, underwriting, due-diligence) · entity/ownership + waterfall **schema** (admin-only UI) · investment detail with loans/photos/refinance.
+**Foundation (always on):** dashboard KPIs · portfolio holdings · distributions/banking · document vault · in-app notifications · K-1 tax profile · deep deal-pipeline/CRM · entity/ownership + waterfall schema · investment detail with loans/photos/refinance.
 
-**The goal: a best-in-class IMS** benchmarked against RealPage IMS, Juniper Square, Yardi Investment Manager, AppFolio IM, Agora, InvestNext. Known gaps (see the design quiz / roadmap): investor **capital-account statements**, **K-1 generation/e-delivery**, **true IRR/MOIC/cash-on-cash** (current IRR is a simple approximation), **waterfall visualization**, **PDF investor statements**, **distribution/ACH payment processing**, **commitment & capital-call tracking**, **e-signature** (PPM/subscription docs), **branded email comms**, **MFA**. Charts/PDF libs are not yet added.
+**IMS v2 — built, behind `NEXT_PUBLIC_IMS_V2=1` (Phases 1–5 complete on the feature branch):**
+- **Capital-account engine** (`src/lib/ims/metrics.ts`): true **XIRR** (Newton+bisection) + MOIC/TVPI/DPI/RVPI/cash-on-cash. Pure, fixture-tested. `positionIrrPercent()` replaced the old `(return/invested)×100` approximation in the **investments / stats / reports** APIs (so dashboard "Average IRR" is now real).
+- **Derivation** (`src/lib/ims/capitalAccount.ts`): `buildCapitalAccount(userId)` derives per-deal + consolidated accounts live from the book of record (direct investments, entity ownership, distributions) — **no materialized tables**. Feeds both the screen and the PDF. New nav: **Capital Account** (`/investors/capital-account`).
+- **PDF statements** (`src/lib/ims/statement.tsx`, `@react-pdf/renderer`): branded, served by `GET /api/investors/statements/download`; quarterly auto-delivery via `POST /api/cron/quarterly-statements` (CRON_SECRET) + `.github/workflows/quarterly-statements.yml`. Distribution notices: `POST /api/investors/statements/notify-distribution`.
+- **Onboarding + capital calls:** self-service invite (`/investors/accept-invite`, `/api/investors/invites`, auth actions `accept-invite`/`invite-info`) · `Commitment` / `CapitalCall` / `CapitalCallResponse` + **Capital Calls** page (acknowledge/fund).
+- **Data rooms + e-sign + audit:** `canAccessDocument()` (owned-property OR explicit `DocumentAccess` grant = per-investor routing) · download logs an immutable `DocumentView` · lightweight in-house e-sign (`SignatureRequest`, **Documents to Sign** page) · `/api/investors/data-room`.
+- **Charts + broadcasts:** zero-dep SVG charts (`src/components/ims/charts.tsx`) on the **Analytics** page · admin `Announcement` broadcasts (`/api/investors/announcements`) fan out to notifications.
+- **Self-service password reset:** `/investors/reset-password` + emailed token (`src/lib/email.ts`, Resend).
 
-> Rule for IMS work: it's a **system of record** for investor money — money is `Decimal`, every read is ownership-scoped, and all changes go through data-preserving migrations.
+**Env vars for IMS v2:** `NEXT_PUBLIC_IMS_V2=1` (nav/flag) · `EMAIL_FROM` (verified Resend sender) · `CRON_SECRET` (quarterly statements auth) · `NEXT_PUBLIC_SITE_URL` (links in emails). `RESEND_API_KEY` already exists.
+
+**Additive migrations (idempotent, in `scripts/`, applied by `migrate:pending`):** `add-ims-phase3-onboarding-commitments-capital-calls.sql` · `add-ims-phase4-datarooms-esign-audit.sql` · `add-ims-phase5-announcements.sql`. All `CREATE … IF NOT EXISTS` + guarded enum/FK — safe to re-run, no existing table touched.
+
+> **Go-live gating (not auto-merged to prod):** flip `NEXT_PUBLIC_IMS_V2` per-cohort only after (1) the Phase 3–5 migrations are applied + verified in staging, (2) a real distribution/statement is spot-checked, and (3) the still-pending manual security items (credential rotation, history purge) are done. Build + push to the branch is automated; the production cutover is a human decision.
+
+> Rule for IMS work: it's a **system of record** for investor money — money is `Decimal`, every read is ownership-scoped (`canAccessProperty`/`canAccessDocument`), and all changes go through data-preserving additive migrations behind the flag.
 
 ---
 
