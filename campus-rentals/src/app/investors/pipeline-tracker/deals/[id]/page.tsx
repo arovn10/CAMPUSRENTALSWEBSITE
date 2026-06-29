@@ -56,6 +56,7 @@ interface Deal {
     name: string
     address: string
     photos?: Array<{ photoUrl: string }>
+    fundingStatus?: string
   }
   assignedTo?: {
     id: string

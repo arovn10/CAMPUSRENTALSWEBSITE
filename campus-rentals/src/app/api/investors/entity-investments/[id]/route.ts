@@ -237,7 +237,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             entityOwners.push(entityOwner)
             console.log('Created entity owner:', {
               id: entityOwner.id,
-              entityId: entityOwner.entityId,
+              entityInvestmentId: entityOwner.entityInvestmentId,
               userId: entityOwner.userId,
               ownershipPercentage: entityOwner.ownershipPercentage,
               investmentAmount: entityOwner.investmentAmount,

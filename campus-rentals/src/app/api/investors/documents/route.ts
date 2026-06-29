@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
         filePath: filePathForDb || `documents/${fileName || 'doc'}`,
         fileSize: fileSize || 0,
         mimeType: mimeType || 'application/pdf',
-        documentType: safeDocumentType,
+        documentType: safeDocumentType as any,
         entityType: validEntityType as any,
         entityId: entityId,
         isPublic: true,

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { loadDataFromCache, isCacheValid } from '@/utils/serverCache'
-import { getOptimizedImageUrl } from '@/utils/clientApi'
+import { getOptimizedImageUrl, fetchPropertyPhotos } from '@/utils/clientApi'
 
 type Props = {
   params: { id: string }

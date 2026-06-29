@@ -579,6 +579,10 @@ model Insurance {
   coverageAmount Float
   renewalDate    DateTime
   notes          String?
+  // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
+  documentUrl      String?
+  documentFileName String?
+  documentS3Key    String?
   createdBy      String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -596,6 +600,10 @@ model PropertyTax {
   taxYear           Int
   annualPropertyTax Float
   notes             String?
+  // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
+  documentUrl      String?
+  documentFileName String?
+  documentS3Key    String?
   createdBy         String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
