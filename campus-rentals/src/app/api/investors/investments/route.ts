@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { positionIrrPercent } from '@/lib/ims/metrics'
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,13 +87,25 @@ export async function GET(request: NextRequest) {
       console.log('[INVESTORS/INVESTMENTS] Direct investments', JSON.stringify({ count: investments.length, totalAmount }))
     } catch {}
 
+    const asOf = new Date()
     // Transform the data to match the expected format
     const formattedInvestments = investments.map(investment => {
       const totalDistributions = investment.distributions.reduce((sum, dist) => sum + Number(dist.amount), 0)
       const currentValue = Number(investment.property?.currentValue ?? investment.investmentAmount ?? 0)
       const invested = Number(investment.investmentAmount ?? 0)
       const totalReturn = currentValue - invested + totalDistributions
-      const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
+      // True annualized XIRR over dated cash flows (contribution → distributions → terminal value).
+      const irr = positionIrrPercent({
+        contributions: invested > 0
+          ? [{ amount: invested, date: investment.investmentDate ?? investment.createdAt }]
+          : [],
+        distributions: investment.distributions.map(dist => ({
+          amount: Number(dist.amount),
+          date: dist.distributionDate,
+        })),
+        currentValue,
+        asOf,
+      })
 
       return {
         id: investment.id,

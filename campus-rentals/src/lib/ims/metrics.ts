@@ -147,6 +147,26 @@ export function computeAccountMetrics(a: AccountFlows): AccountMetrics {
   }
 }
 
+/**
+ * Convenience for existing endpoints: the annualized **XIRR for one position**,
+ * expressed as a percentage (14.2 means 14.2%). This is the correctness fix that
+ * replaces the legacy `(totalReturn / invested) * 100` approximation — that number
+ * was a lifetime return ratio, never annualized.
+ *
+ * Falls back to the legacy total-return ratio ONLY when XIRR can't be solved
+ * (e.g. a single same-day cash flow, or no terminal value), so a caller always
+ * gets a usable, non-worse figure. Returns 0 when there is no contributed capital.
+ */
+export function positionIrrPercent(a: AccountFlows): number {
+  const m = computeAccountMetrics(a)
+  if (m.irr != null) return Math.round(m.irr * 100 * 100) / 100
+  if (m.totalContributed > 0) {
+    const ratio = (m.totalDistributed + m.currentValue - m.totalContributed) / m.totalContributed
+    return Math.round(ratio * 100 * 100) / 100
+  }
+  return 0
+}
+
 /** Roll up several accounts' metrics into a consolidated view (sum + re-derive). */
 export function consolidate(accounts: AccountFlows[]): AccountMetrics {
   return computeAccountMetrics({

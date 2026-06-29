@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+import { positionIrrPercent, type CashFlow } from '@/lib/ims/metrics'
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,20 +87,38 @@ async function generatePortfolioSummary(user: any, startDate: Date, endDate: Dat
     },
   })
 
-  // Calculate portfolio metrics
-  const totalInvested = investments.reduce((sum: number, inv: any) => sum + inv.investmentAmount, 0) +
-    fundInvestments.reduce((sum: number, inv: any) => sum + inv.investmentAmount, 0)
+  // Calculate portfolio metrics (money columns are Decimal — wrap reads in Number()).
+  const totalInvested = investments.reduce((sum: number, inv: any) => sum + Number(inv.investmentAmount ?? 0), 0) +
+    fundInvestments.reduce((sum: number, inv: any) => sum + Number(inv.investmentAmount ?? 0), 0)
 
-  const totalDistributions = investments.reduce((sum: number, inv: any) => 
-    sum + inv.distributions.reduce((distSum: number, dist: any) => distSum + dist.amount, 0), 0
+  const totalDistributions = investments.reduce((sum: number, inv: any) =>
+    sum + inv.distributions.reduce((distSum: number, dist: any) => distSum + Number(dist.amount ?? 0), 0), 0
   )
 
-  const currentValue = investments.reduce((sum: number, inv: any) => 
-    sum + (inv.property.currentValue || inv.property.price), 0
-  ) + fundInvestments.reduce((sum: number, inv: any) => sum + inv.investmentAmount, 0)
+  const currentValue = investments.reduce((sum: number, inv: any) =>
+    sum + Number(inv.property.currentValue ?? inv.property.price ?? 0), 0
+  ) + fundInvestments.reduce((sum: number, inv: any) => sum + Number(inv.investmentAmount ?? 0), 0)
 
   const totalReturn = currentValue + totalDistributions - totalInvested
-  const totalIrr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0
+  // True consolidated XIRR (%) — replaces the (totalReturn / invested) * 100 ratio.
+  const asOf = new Date()
+  const summaryContributions: CashFlow[] = [
+    ...investments
+      .filter((inv: any) => Number(inv.investmentAmount ?? 0) > 0)
+      .map((inv: any) => ({ amount: Number(inv.investmentAmount), date: inv.investmentDate ?? inv.createdAt })),
+    ...fundInvestments
+      .filter((inv: any) => Number(inv.investmentAmount ?? 0) > 0)
+      .map((inv: any) => ({ amount: Number(inv.investmentAmount), date: inv.investmentDate ?? inv.createdAt })),
+  ]
+  const summaryDistributions: CashFlow[] = investments.flatMap((inv: any) =>
+    inv.distributions.map((d: any) => ({ amount: Number(d.amount ?? 0), date: d.distributionDate }))
+  )
+  const totalIrr = positionIrrPercent({
+    contributions: summaryContributions,
+    distributions: summaryDistributions,
+    currentValue,
+    asOf,
+  })
 
   // Property breakdown
   const propertyBreakdown = investments.map((inv: any) => ({
@@ -166,11 +185,18 @@ async function generatePropertyPerformance(user: any, startDate: Date, endDate: 
     },
   })
 
+  const asOf = new Date()
   const performanceData = investments.map((inv: any) => {
-    const totalDistributions = inv.distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0)
-    const currentValue = inv.property.currentValue || inv.property.price
-    const totalReturn = currentValue + totalDistributions - inv.investmentAmount
-    const irr = inv.investmentAmount > 0 ? ((totalReturn / inv.investmentAmount) * 100) : 0
+    const totalDistributions = inv.distributions.reduce((sum: number, dist: any) => sum + Number(dist.amount ?? 0), 0)
+    const currentValue = Number(inv.property.currentValue ?? inv.property.price ?? 0)
+    const invested = Number(inv.investmentAmount ?? 0)
+    const totalReturn = currentValue + totalDistributions - invested
+    const irr = positionIrrPercent({
+      contributions: invested > 0 ? [{ amount: invested, date: inv.investmentDate ?? inv.createdAt }] : [],
+      distributions: inv.distributions.map((d: any) => ({ amount: Number(d.amount ?? 0), date: d.distributionDate })),
+      currentValue,
+      asOf,
+    })
 
     return {
       propertyId: inv.propertyId,
@@ -240,11 +266,18 @@ async function generateFundPerformance(user: any, startDate: Date, endDate: Date
         },
       })
 
-      const totalContributions = contributions.reduce((sum, contrib) => sum + contrib.amount, 0)
+      const totalContributions = contributions.reduce((sum, contrib) => sum + Number(contrib.amount ?? 0), 0)
       const totalDistributions = distributions.reduce((sum, dist) => sum + Number(dist.amount), 0)
       const currentValue = Number(inv.investmentAmount) // Simplified for now
       const totalReturn = currentValue + totalDistributions - totalContributions
-      const irr = totalContributions > 0 ? ((totalReturn / totalContributions) * 100) : 0
+      const irr = positionIrrPercent({
+        contributions: contributions.length > 0
+          ? contributions.map(c => ({ amount: Number(c.amount ?? 0), date: c.contributionDate }))
+          : (totalContributions > 0 ? [{ amount: totalContributions, date: inv.investmentDate ?? inv.createdAt }] : []),
+        distributions: distributions.map(d => ({ amount: Number(d.amount ?? 0), date: d.distributionDate })),
+        currentValue,
+        asOf: new Date(),
+      })
 
       return {
         fundId: inv.fundId,

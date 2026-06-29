@@ -43,7 +43,7 @@ const sectionNavBase: NavItem[] = [
   { id: 'profile', label: 'Profile', icon: UserCircleIcon, path: '/investors/profile' },
 ]
 
-const publicPaths = ['/investors/login']
+const publicPaths = ['/investors/login', '/investors/reset-password']
 
 function RoleBadge({ role }: { role: string }) {
   const config: Record<string, { label: string; className: string }> = {

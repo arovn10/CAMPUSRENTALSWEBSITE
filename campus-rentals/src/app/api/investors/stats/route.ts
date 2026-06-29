@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { positionIrrPercent, type CashFlow } from '@/lib/ims/metrics'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,8 +27,16 @@ export async function GET(request: NextRequest) {
     const totalDistributions = investments.reduce((sum, inv) => sum + inv.distributions.reduce((dSum, dist) => dSum + Number(dist.amount), 0), 0)
     // Total return = (current value + distributions received) - invested (consistent with reports & investments API)
     const totalReturn = totalCurrentValue - totalInvested + totalDistributions
-    // Simple ROI % including distributions (same formula as reports/investments)
-    const totalIrr = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0
+    // True consolidated XIRR (%) over every dated contribution/distribution + terminal value,
+    // replacing the legacy (totalReturn / invested) * 100 ratio.
+    const asOf = new Date()
+    const contributions: CashFlow[] = investments
+      .filter(inv => Number(inv.investmentAmount ?? 0) > 0)
+      .map(inv => ({ amount: Number(inv.investmentAmount), date: inv.investmentDate ?? inv.createdAt }))
+    const distributions: CashFlow[] = investments.flatMap(inv =>
+      inv.distributions.map(d => ({ amount: Number(d.amount), date: d.distributionDate }))
+    )
+    const totalIrr = positionIrrPercent({ contributions, distributions, currentValue: totalCurrentValue, asOf })
     const activeInvestments = investments.filter(inv => inv.status === 'ACTIVE').length
 
     // Pending distributions (estimated from monthly rent)
