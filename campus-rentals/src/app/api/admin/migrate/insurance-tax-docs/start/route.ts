@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
   console.log('[Insurance/Tax Docs Migration Start] Route called');
   try {
     const user = await requireAuth(request);
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },

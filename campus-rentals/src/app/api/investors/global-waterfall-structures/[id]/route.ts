@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user has permission to update global waterfall structures
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {

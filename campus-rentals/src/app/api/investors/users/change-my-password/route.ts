@@ -6,6 +6,9 @@ import bcrypt from 'bcryptjs'
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     const { currentPassword, newPassword, confirmPassword } = await request.json()
     

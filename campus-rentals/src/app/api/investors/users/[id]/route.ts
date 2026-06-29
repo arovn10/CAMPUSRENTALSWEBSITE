@@ -8,6 +8,9 @@ export async function PUT(
 ) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     const body = await request.json()
     
     // Check if user has permission to update users
@@ -57,6 +60,9 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Check if user is trying to delete themselves
     if (user.id === params.id) {

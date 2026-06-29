@@ -4,6 +4,9 @@ import { requireAuth, getAllUsers, createUser, updateUser, deleteUser, hasPermis
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Admins and managers can access user list (for adding followers)
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
@@ -22,6 +25,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Only admins can create users
     if (!hasPermission(user, 'ADMIN')) {
@@ -55,6 +61,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     // Only admins can update users
     if (!user || !hasPermission(user, 'ADMIN')) {
@@ -93,6 +102,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     
     // Only admins can delete users
     if (!hasPermission(user, 'ADMIN')) {

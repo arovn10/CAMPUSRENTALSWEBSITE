@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
     console.log('Investor stats API called')
     
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     console.log('User authenticated:', user.email, user.role)
 
     // Get real data from database

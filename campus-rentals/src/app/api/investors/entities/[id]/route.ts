@@ -60,6 +60,9 @@ export async function GET(
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
@@ -118,6 +121,9 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
       return NextResponse.json(
