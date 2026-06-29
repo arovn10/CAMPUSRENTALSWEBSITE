@@ -17,11 +17,17 @@ function fromAddress(): string {
   return process.env.EMAIL_FROM || 'Campus Rentals <noreply@campusrentalsllc.com>'
 }
 
+export interface EmailAttachment {
+  filename: string
+  content: Buffer | Uint8Array
+}
+
 export interface SendEmailArgs {
   to: string
   subject: string
   html: string
   replyTo?: string
+  attachments?: EmailAttachment[]
 }
 
 /**
@@ -29,7 +35,7 @@ export interface SendEmailArgs {
  * If RESEND_API_KEY is unset, logs and returns ok:false (callers should not leak
  * this to the client — a password-reset request must always look successful).
  */
-export async function sendEmail({ to, subject, html, replyTo }: SendEmailArgs): Promise<{
+export async function sendEmail({ to, subject, html, replyTo, attachments }: SendEmailArgs): Promise<{
   ok: boolean
   id?: string
   error?: string
@@ -47,6 +53,9 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailArgs): 
       subject,
       html,
       ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(attachments && attachments.length
+        ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content) })) }
+        : {}),
     })
     if (error) {
       console.error('[email] Resend error:', error)
@@ -96,5 +105,51 @@ export async function sendPasswordResetEmail(to: string, token: string): Promise
     cta: { label: 'Reset password', url },
   })
   const res = await sendEmail({ to, subject: 'Reset your Campus Rentals password', html })
+  return { ok: res.ok }
+}
+
+const usd0 = (n: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+
+/** Notify an investor that a distribution has been recorded for one of their deals. */
+export async function sendDistributionNoticeEmail(
+  to: string,
+  opts: { investorName?: string; propertyName: string; amount: number; date: Date | string; note?: string }
+): Promise<{ ok: boolean }> {
+  const when = new Date(opts.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const html = brandedEmail({
+    heading: 'A distribution has been recorded',
+    bodyHtml:
+      `${opts.investorName ? `Hello ${opts.investorName},<br><br>` : ''}` +
+      `A distribution of <strong>${usd0(opts.amount)}</strong> has been recorded for ` +
+      `<strong>${opts.propertyName}</strong>, dated ${when}.` +
+      `${opts.note ? `<br><br>${opts.note}` : ''}` +
+      `<br><br>You can review the detail in your capital account at any time.`,
+    cta: { label: 'View my capital account', url: `${siteUrl()}/investors/capital-account` },
+  })
+  const res = await sendEmail({ to, subject: `Distribution recorded — ${opts.propertyName}`, html })
+  return { ok: res.ok }
+}
+
+/** Deliver a quarterly capital-account statement (branded email + attached PDF). */
+export async function sendStatementEmail(
+  to: string,
+  opts: { investorName?: string; periodLabel: string; pdf: Buffer | Uint8Array }
+): Promise<{ ok: boolean }> {
+  const html = brandedEmail({
+    heading: `Your ${opts.periodLabel} capital account statement`,
+    bodyHtml:
+      `${opts.investorName ? `Hello ${opts.investorName},<br><br>` : ''}` +
+      `Your capital account statement for <strong>${opts.periodLabel}</strong> is attached as a PDF. ` +
+      `You can also view your live position any time in the investor portal.`,
+    cta: { label: 'Open the investor portal', url: `${siteUrl()}/investors/capital-account` },
+  })
+  const filename = `campus-rentals-statement-${opts.periodLabel.replace(/\s+/g, '-').toLowerCase()}.pdf`
+  const res = await sendEmail({
+    to,
+    subject: `Campus Rentals — ${opts.periodLabel} statement`,
+    html,
+    attachments: [{ filename, content: opts.pdf }],
+  })
   return { ok: res.ok }
 }

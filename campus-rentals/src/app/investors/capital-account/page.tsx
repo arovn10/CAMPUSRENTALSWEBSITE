@@ -63,6 +63,25 @@ export default function CapitalAccountPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
+
+  const downloadStatement = async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch('/api/investors/statements/download', {
+        headers: { Authorization: `Bearer ${token()}` },
+      })
+      if (!res.ok) throw new Error(`Statement failed (${res.status})`)
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      window.open(objectUrl, '_blank')
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not generate statement')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -103,9 +122,19 @@ export default function CapitalAccountPage() {
   const c = data.consolidated
   return (
     <div className="mx-auto max-w-6xl p-6 lg:p-8">
-      <div className="mb-6 flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">My Capital Account</h1>
-        <span className="text-xs text-gray-400">as of {dateFmt(data.asOf)}</span>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Capital Account</h1>
+          <span className="text-xs text-gray-400">as of {dateFmt(data.asOf)}</span>
+        </div>
+        <button
+          onClick={downloadStatement}
+          disabled={downloading}
+          className="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+          style={{ backgroundColor: ACCENT }}
+        >
+          {downloading ? 'Generating…' : 'Download statement (PDF)'}
+        </button>
       </div>
 
       {/* Consolidated summary */}

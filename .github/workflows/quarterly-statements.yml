@@ -1,0 +1,50 @@
+name: Quarterly Investor Statements
+
+# Generates + emails PDF capital-account statements to every investor for the most
+# recently completed quarter. Runs on the 1st of Jan / Apr / Jul / Oct, and can be
+# triggered manually (with an optional dry run).
+#
+# Requires:
+#   secret  CRON_SECRET   — must match the app's CRON_SECRET env var
+#   var     APP_BASE_URL  — optional; defaults to https://campusrentalsllc.com
+#
+# The endpoint (/api/cron/quarterly-statements) is idempotent-safe to re-run; a
+# dry run builds every PDF without sending, so you can verify before the real send.
+
+on:
+  schedule:
+    - cron: '0 13 1 1,4,7,10 *' # 13:00 UTC on the 1st of each quarter
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Build statements without emailing'
+        type: boolean
+        default: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger statement run
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE_URL: ${{ vars.APP_BASE_URL || 'https://campusrentalsllc.com' }}
+          DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET secret is not set — aborting."
+            exit 1
+          fi
+          echo "Triggering quarterly statements at $BASE_URL (dryRun=$DRY_RUN)"
+          code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 280 \
+            -X POST "$BASE_URL/api/cron/quarterly-statements" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "{\"dryRun\": $DRY_RUN}" || echo 000)
+          echo "HTTP $code"
+          cat /tmp/out
+          echo ""
+          if [ "$code" != "200" ]; then
+            echo "::error::Statement run returned HTTP $code"
+            exit 1
+          fi

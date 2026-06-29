@@ -29,6 +29,7 @@
     "@prisma/client": "^5.22.0",
     "@prisma/extension-accelerate": "^0.6.0",
     "@react-google-maps/api": "^2.20.6",
+    "@react-pdf/renderer": "^3.4.5",
     "@types/leaflet": "^1.9.21",
     "@types/pg": "^8.15.6",
     "bcryptjs": "^2.4.3",
