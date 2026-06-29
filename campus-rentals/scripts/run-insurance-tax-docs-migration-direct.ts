@@ -10,11 +10,11 @@ async function runMigration() {
 
   // Direct database connection credentials
   // These should be set as environment variables or from DATABASE_URL
-  let dbHost: string
-  let dbUser: string
-  let dbPassword: string
-  let dbName: string
-  let dbPort: number
+  let dbHost = ''
+  let dbUser = ''
+  let dbPassword = ''
+  let dbName = ''
+  let dbPort = 0
 
   // Try to get from DATABASE_URL first (for server deployments)
   const databaseUrl = process.env.DATABASE_URL
