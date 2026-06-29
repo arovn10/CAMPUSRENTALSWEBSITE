@@ -38,6 +38,12 @@ cp -f /tmp/cr-envlocal.bak ../.env.local 2>/dev/null || true
 log "📦 Installing dependencies..."
 npm install --legacy-peer-deps
 
+# Step 2b: Regenerate the Prisma client.
+# `npm install` skips @prisma/client's postinstall when the package is already
+# present, leaving a stale client missing newly-added models — so generate explicitly.
+log "🧩 Generating Prisma client..."
+npx prisma generate
+
 # Step 3: Build the application
 log "🔨 Building application..."
 npm run build
