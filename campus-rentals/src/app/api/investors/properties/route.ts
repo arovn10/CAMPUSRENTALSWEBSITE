@@ -792,11 +792,11 @@ export async function GET(request: NextRequest) {
         let earliestLoanDate: Date | null = null
 
         for (const loan of loans) {
-          totalOriginalDebt += loan.originalAmount || 0
+          totalOriginalDebt += Number(loan.originalAmount || 0)
           const paymentType = (loan as any).paymentType || 'AMORTIZING'
           const amortYears = (loan as any).amortizationYears || null
           const rate = loan.interestRate || 0
-          const principal = loan.currentBalance ?? loan.originalAmount
+          const principal = Number(loan.currentBalance ?? loan.originalAmount)
           const start = loan.loanDate ? new Date(loan.loanDate) : null
           
           // Track earliest loan closing date for IRR calculation
@@ -809,17 +809,17 @@ export async function GET(request: NextRequest) {
           if (paymentType === 'IO') {
             // Interest-only: assume principal unchanged
             estimatedCurrentDebt += principal
-            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : (loan.monthlyPayment || 0)
+            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : Number(loan.monthlyPayment || 0)
           } else if (amortYears) {
             // Amortizing: estimate remaining balance and monthly payment
             const remaining = calcRemainingBalance(principal, rate || 0, amortYears, monthsElapsed)
             estimatedCurrentDebt += remaining
-            const pmt = loan.monthlyPayment || calcMonthlyPayment(principal, rate || 0, amortYears)
+            const pmt = Number(loan.monthlyPayment) || calcMonthlyPayment(principal, rate || 0, amortYears)
             estimatedMonthlyDebtService += pmt
           } else {
             // Fallback: treat as interest-only if no amort term
             estimatedCurrentDebt += principal
-            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : (loan.monthlyPayment || 0)
+            estimatedMonthlyDebtService += rate > 0 ? (principal * (rate / 100)) / 12 : Number(loan.monthlyPayment || 0)
           }
         }
 

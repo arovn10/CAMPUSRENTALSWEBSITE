@@ -241,8 +241,8 @@ async function generateFundPerformance(user: any, startDate: Date, endDate: Date
       })
 
       const totalContributions = contributions.reduce((sum, contrib) => sum + contrib.amount, 0)
-      const totalDistributions = distributions.reduce((sum, dist) => sum + dist.amount, 0)
-      const currentValue = inv.investmentAmount // Simplified for now
+      const totalDistributions = distributions.reduce((sum, dist) => sum + Number(dist.amount), 0)
+      const currentValue = Number(inv.investmentAmount) // Simplified for now
       const totalReturn = currentValue + totalDistributions - totalContributions
       const irr = totalContributions > 0 ? ((totalReturn / totalContributions) * 100) : 0
 
@@ -359,9 +359,9 @@ async function generateCashFlowReport(user: any, startDate: Date, endDate: Date)
     period: { startDate, endDate },
     cashFlowData,
     summary: {
-      totalPropertyDistributions: propertyDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+      totalPropertyDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
       totalFundDistributions: fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
-      totalDistributions: propertyDistributions.reduce((sum, dist) => sum + dist.amount, 0) +
+      totalDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0) +
         fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
     },
   })
@@ -403,15 +403,15 @@ async function generateTaxSummary(user: any, startDate: Date, endDate: Date) {
   const taxSummary = {
     rentalIncome: propertyDistributions
       .filter(dist => dist.distributionType === 'RENTAL_INCOME')
-      .reduce((sum, dist) => sum + dist.amount, 0),
+      .reduce((sum, dist) => sum + Number(dist.amount), 0),
     saleProceeds: propertyDistributions
       .filter(dist => dist.distributionType === 'SALE_PROCEEDS')
-      .reduce((sum, dist) => sum + dist.amount, 0),
+      .reduce((sum, dist) => sum + Number(dist.amount), 0),
     refinance: propertyDistributions
       .filter(dist => dist.distributionType === 'REFINANCE')
-      .reduce((sum, dist) => sum + dist.amount, 0),
+      .reduce((sum, dist) => sum + Number(dist.amount), 0),
     fundDistributions: fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
-    totalDistributions: propertyDistributions.reduce((sum, dist) => sum + dist.amount, 0) +
+    totalDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0) +
       fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
   }
 
@@ -479,9 +479,9 @@ async function generateDistributionHistory(user: any, startDate: Date, endDate: 
     distributions: allDistributions,
     summary: {
       totalDistributions: allDistributions.length,
-      totalAmount: allDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+      totalAmount: allDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
       averageAmount: allDistributions.length > 0 
-        ? allDistributions.reduce((sum, dist) => sum + dist.amount, 0) / allDistributions.length 
+        ? allDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0) / allDistributions.length 
         : 0,
     },
   })

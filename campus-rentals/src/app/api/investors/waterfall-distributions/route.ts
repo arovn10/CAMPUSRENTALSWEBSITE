@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     // If refinance, compute distribution based on explicit "cash to borrower" amount
     let totalDistributionAmount = body.totalAmount
-    let debtAmount = property.debtAmount || 0
+    let debtAmount = Number(Number(property.debtAmount) || 0)
     let isRefinancing = false
 
     if (body.distributionType === 'REFINANCE') {
@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
           userName: owner.user?.firstName, 
           ownership: existing.totalOwnership,
           entityShare: individualShareOfEntity,
-          investment: entityInvestment.investmentAmount * (owner.ownershipPercentage / 100)
+          investment: Number(entityInvestment.investmentAmount) * (owner.ownershipPercentage / 100)
         })
       }
     }
@@ -410,7 +410,7 @@ export async function POST(request: NextRequest) {
 
     let remainingAmount = availableForDistribution
     const distributionResults = []
-    const allTierDistributions = []
+    const allTierDistributions: any[] = []
 
     // STEP 4: Process each tier in priority order
     for (const tier of waterfallStructure.waterfallTiers) {
@@ -720,8 +720,8 @@ export async function POST(request: NextRequest) {
             amortization: body.newAmortization || null
           } : null,
           debtChange: isRefinancing ? {
-            amountChange: parseFloat(body.newDebtAmount || '0') - (property.debtAmount || 0),
-            percentageChange: property.debtAmount ? ((parseFloat(body.newDebtAmount || '0') - (property.debtAmount || 0)) / (property.debtAmount || 0)) * 100 : 0
+            amountChange: parseFloat(body.newDebtAmount || '0') - (Number(property.debtAmount) || 0),
+            percentageChange: property.debtAmount ? ((parseFloat(body.newDebtAmount || '0') - (Number(property.debtAmount) || 0)) / (Number(property.debtAmount) || 0)) * 100 : 0
           } : null,
           rollbackInfo: isRefinancing ? {
             canRollback: true,
@@ -741,7 +741,7 @@ export async function POST(request: NextRequest) {
         })),
         previousDistributions: {
           count: previousDistributions.length,
-          totalAmount: previousDistributions.reduce((sum, dist) => sum + dist.totalAmount, 0),
+          totalAmount: previousDistributions.reduce((sum, dist) => sum + Number(dist.totalAmount), 0),
           distributions: previousDistributions.map(dist => ({
             id: dist.id,
             totalAmount: dist.totalAmount,

@@ -72,7 +72,7 @@ export async function PUT(
       }
     })
 
-    const totalDebt = activeLoans.reduce((sum, loan) => sum + loan.currentBalance, 0)
+    const totalDebt = activeLoans.reduce((sum, loan) => sum + Number(loan.currentBalance), 0)
 
     await prisma.property.update({
       where: { id: propertyId },
@@ -154,7 +154,7 @@ export async function DELETE(
       }
     })
 
-    const totalDebt = activeLoans.reduce((sum, loan) => sum + loan.currentBalance, 0)
+    const totalDebt = activeLoans.reduce((sum, loan) => sum + Number(loan.currentBalance), 0)
 
     await prisma.property.update({
       where: { id: propertyId },

@@ -98,22 +98,22 @@ model Property {
   description                String?
   bedrooms                   Int
   bathrooms                  Int
-  price                      Float
+  price                      Decimal @db.Decimal(15, 2)
   squareFeet                 Int?
   propertyType               PropertyType  @default(SINGLE_FAMILY)
   acquisitionDate            DateTime?
   constructionCompletionDate DateTime?
   stabilizationDate          DateTime?
-  acquisitionPrice           Float?
-  constructionCost           Float?
-  totalCost                  Float?
-  debtAmount                 Float?
+  acquisitionPrice           Decimal? @db.Decimal(15, 2)
+  constructionCost           Decimal? @db.Decimal(15, 2)
+  totalCost                  Decimal? @db.Decimal(15, 2)
+  debtAmount                 Decimal? @db.Decimal(15, 2)
   debtDetails                String?
-  currentValue               Float?
+  currentValue               Decimal? @db.Decimal(15, 2)
   occupancyRate              Float?
-  monthlyRent                Float?
-  otherIncome                Float?
-  annualExpenses             Float?
+  monthlyRent                Decimal? @db.Decimal(15, 2)
+  otherIncome                Decimal? @db.Decimal(15, 2)
+  annualExpenses             Decimal? @db.Decimal(15, 2)
   capRate                    Float?
   dealStatus                 DealStatus    @default(STABILIZED)
   fundingStatus              FundingStatus @default(FUNDED)
@@ -158,8 +158,8 @@ model Fund {
   name        String
   description String?
   fundType    FundType @default(REAL_ESTATE)
-  targetSize  Float?
-  currentSize Float    @default(0)
+  targetSize  Decimal? @db.Decimal(15, 2)
+  currentSize Decimal @db.Decimal(15, 2)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -176,7 +176,7 @@ model Investment {
   id                          String           @id @default(cuid())
   userId                      String
   propertyId                  String
-  investmentAmount            Float? // Optional for SPECTATOR type
+  investmentAmount            Decimal? @db.Decimal(15, 2)  // Optional for SPECTATOR type
   ownershipPercentage         Float? // Optional for SPECTATOR type
   investmentType              InvestmentType   @default(INVESTOR)
   status                      InvestmentStatus @default(ACTIVE)
@@ -206,7 +206,7 @@ model FundInvestment {
   id                  String           @id @default(cuid())
   userId              String
   fundId              String
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   ownershipPercentage Float?
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -226,7 +226,7 @@ model Distribution {
   id               String           @id @default(cuid())
   investmentId     String
   userId           String
-  amount           Float
+  amount           Decimal @db.Decimal(15, 2)
   distributionDate DateTime
   distributionType DistributionType @default(RENTAL_INCOME)
   description      String?
@@ -288,7 +288,7 @@ model WaterfallTierDistribution {
   waterfallTierId    String
   entityInvestmentId String?
   userId             String?
-  distributionAmount Float
+  distributionAmount Decimal @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   WaterfallDistributionType
   description        String?
@@ -309,12 +309,12 @@ model WaterfallTierDistribution {
 model WaterfallDistribution {
   id                   String                    @id @default(cuid())
   waterfallStructureId String
-  totalAmount          Float
+  totalAmount          Decimal @db.Decimal(15, 2)
   distributionDate     DateTime
   distributionType     WaterfallDistributionType
   description          String?
   isProcessed          Boolean                   @default(false)
-  oldDebtAmount        Float? // For refinancing distributions - stores old debt amount
+  oldDebtAmount        Decimal? @db.Decimal(15, 2)  // For refinancing distributions - stores old debt amount
   oldDebtDetails       String? // For refinancing distributions - stores old debt details
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
@@ -463,7 +463,7 @@ model EntityInvestment {
   id                  String           @id @default(cuid())
   entityId            String
   propertyId          String
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   ownershipPercentage Float
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -488,7 +488,7 @@ model EntityOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   breakdown           Json? // Breakdown of entity member investments for this specific deal
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
@@ -511,7 +511,7 @@ model EntityInvestmentOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Float
+  investmentAmount    Decimal @db.Decimal(15, 2)
   breakdown           Json?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -554,7 +554,7 @@ model EntityDistribution {
   id                 String           @id @default(cuid())
   entityInvestmentId String
   userId             String
-  amount             Float
+  amount             Decimal @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   DistributionType @default(RENTAL_INCOME)
   description        String?
@@ -575,8 +575,8 @@ model Insurance {
   propertyId     String
   provider       String
   policyNumber   String
-  annualPremium  Float
-  coverageAmount Float
+  annualPremium  Decimal @db.Decimal(15, 2)
+  coverageAmount Decimal @db.Decimal(15, 2)
   renewalDate    DateTime
   notes          String?
   // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
@@ -598,7 +598,7 @@ model PropertyTax {
   id                String   @id @default(cuid())
   propertyId        String
   taxYear           Int
-  annualPropertyTax Float
+  annualPropertyTax Decimal @db.Decimal(15, 2)
   notes             String?
   // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
   documentUrl      String?
@@ -620,12 +620,12 @@ model PropertyLoan {
   propertyId        String
   lenderName        String // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
   accountNumber     String? // Account number or loan identifier
-  originalAmount    Float // Original loan amount when first taken
-  currentBalance    Float // Current outstanding balance
+  originalAmount    Decimal @db.Decimal(15, 2)  // Original loan amount when first taken
+  currentBalance    Decimal @db.Decimal(15, 2)  // Current outstanding balance
   interestRate      Float? // Annual interest rate (e.g., 5.5 for 5.5%)
   loanDate          DateTime? // Date loan was originated
   maturityDate      DateTime? // Loan maturity date
-  monthlyPayment    Float? // Monthly payment amount
+  monthlyPayment    Decimal? @db.Decimal(15, 2)  // Monthly payment amount
   loanType          String? // e.g., "Mortgage", "Construction Loan", "Line of Credit"
   paymentType       PaymentType @default(AMORTIZING) // Interest-Only vs Amortizing
   amortizationYears Int? // Amortization term in years when amortizing
@@ -1093,7 +1093,7 @@ model Deal {
   propertyId         String? // Link to existing property if applicable
   description        String?
   // location field removed - not in database
-  estimatedValue     Float?
+  estimatedValue     Decimal? @db.Decimal(15, 2)
   estimatedCloseDate DateTime?
   actualCloseDate    DateTime?
   source             String? // Where the deal came from
@@ -1104,12 +1104,12 @@ model Deal {
   section            String?      @default("ACQUISITION") // ACQUISITION, DEVELOPMENT, ASSET_MANAGEMENT
   underwritingData   Json? // Underwriting calculations and data
   dueDiligenceStatus String?      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
-  budgetedCost       Float?
-  actualCost         Float?
+  budgetedCost       Decimal? @db.Decimal(15, 2)
+  actualCost         Decimal? @db.Decimal(15, 2)
   startDate          DateTime?
   completionDate     DateTime?
   occupancyRate      Float?
-  noi                Float?
+  noi                Decimal? @db.Decimal(15, 2)
   capRate            Float?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
@@ -1292,9 +1292,9 @@ model BudgetLineItem {
   dealId         String
   category       String   // e.g., "Construction", "Legal", "Marketing"
   description    String
-  budgetedAmount Float
-  actualAmount   Float?
-  variance       Float?   // Calculated: actualAmount - budgetedAmount
+  budgetedAmount Decimal @db.Decimal(15, 2)
+  actualAmount   Decimal? @db.Decimal(15, 2)
+  variance       Decimal? @db.Decimal(15, 2)  // Calculated: actualAmount - budgetedAmount
   status         String   @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1310,15 +1310,15 @@ model UnderwritingData {
   id                 String   @id @default(cuid())
   dealId             String
   propertyType       String?
-  purchasePrice      Float?
-  loanAmount         Float?
+  purchasePrice      Decimal? @db.Decimal(15, 2)
+  loanAmount         Decimal? @db.Decimal(15, 2)
   loanRate           Float?
   loanTerm           Int?
-  downPayment        Float?
-  grossRent          Float?
+  downPayment        Decimal? @db.Decimal(15, 2)
+  grossRent          Decimal? @db.Decimal(15, 2)
   vacancyRate        Float?
-  operatingExpenses  Float?
-  noi                Float?
+  operatingExpenses  Decimal? @db.Decimal(15, 2)
+  noi                Decimal? @db.Decimal(15, 2)
   capRate            Float?
   irr                Float?
   cashOnCash         Float?
@@ -1361,12 +1361,12 @@ model AssetMetric {
   dealId          String
   metricDate      DateTime
   occupancyRate   Float?
-  revenue         Float?
-  expenses        Float?
-  noi             Float?
+  revenue         Decimal? @db.Decimal(15, 2)
+  expenses        Decimal? @db.Decimal(15, 2)
+  noi             Decimal? @db.Decimal(15, 2)
   capRate         Float?
-  debtService     Float?
-  cashFlow        Float?
+  debtService     Decimal? @db.Decimal(15, 2)
+  cashFlow        Decimal? @db.Decimal(15, 2)
   additionalMetrics Json?  // Flexible field for other operational metrics
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

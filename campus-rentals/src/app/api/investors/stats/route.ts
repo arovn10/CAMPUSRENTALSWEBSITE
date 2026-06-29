@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const totalInvested = investments.reduce((sum, inv) => sum + (inv.investmentAmount ?? 0), 0)
-    const totalCurrentValue = investments.reduce((sum, inv) => sum + (inv.property?.currentValue ?? inv.investmentAmount ?? 0), 0)
-    const totalDistributions = investments.reduce((sum, inv) => sum + inv.distributions.reduce((dSum, dist) => dSum + dist.amount, 0), 0)
+    const totalInvested = investments.reduce((sum, inv) => sum + Number(inv.investmentAmount ?? 0), 0)
+    const totalCurrentValue = investments.reduce((sum, inv) => sum + Number(inv.property?.currentValue ?? inv.investmentAmount ?? 0), 0)
+    const totalDistributions = investments.reduce((sum, inv) => sum + inv.distributions.reduce((dSum, dist) => dSum + Number(dist.amount), 0), 0)
     // Total return = (current value + distributions received) - invested (consistent with reports & investments API)
     const totalReturn = totalCurrentValue - totalInvested + totalDistributions
     // Simple ROI % including distributions (same formula as reports/investments)
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Pending distributions (estimated from monthly rent)
     const pendingDistributions = investments.reduce((sum, inv) => {
-      const monthlyRent = inv.property?.monthlyRent ?? 0
+      const monthlyRent = Number(inv.property?.monthlyRent ?? 0)
       return sum + (monthlyRent * 0.8) // 80% of monthly rent as distribution
     }, 0)
 

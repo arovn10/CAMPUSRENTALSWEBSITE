@@ -82,15 +82,15 @@ export async function GET(request: NextRequest) {
     })
 
     try {
-      const totalAmount = investments.reduce((s, i) => s + (i.investmentAmount || 0), 0)
+      const totalAmount = investments.reduce((s, i) => s + Number(i.investmentAmount || 0), 0)
       console.log('[INVESTORS/INVESTMENTS] Direct investments', JSON.stringify({ count: investments.length, totalAmount }))
     } catch {}
 
     // Transform the data to match the expected format
     const formattedInvestments = investments.map(investment => {
-      const totalDistributions = investment.distributions.reduce((sum, dist) => sum + dist.amount, 0)
-      const currentValue = investment.property?.currentValue ?? investment.investmentAmount ?? 0
-      const invested = investment.investmentAmount ?? 0
+      const totalDistributions = investment.distributions.reduce((sum, dist) => sum + Number(dist.amount), 0)
+      const currentValue = Number(investment.property?.currentValue ?? investment.investmentAmount ?? 0)
+      const invested = Number(investment.investmentAmount ?? 0)
       const totalReturn = currentValue - invested + totalDistributions
       const irr = invested > 0 ? (totalReturn / invested) * 100 : 0
 
