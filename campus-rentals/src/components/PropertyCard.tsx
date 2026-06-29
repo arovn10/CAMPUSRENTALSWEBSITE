@@ -40,7 +40,8 @@ function formatPriceRange(min: number | null | undefined, max: number | null | u
     return `${format(rangeMin)} - ${format(rangeMax)}/month`;
   }
   if (rangeMin != null) return `${format(rangeMin)}+/month`;
-  return `${format(rangeMax)}/month`;
+  if (rangeMax != null) return `${format(rangeMax)}/month`;
+  return 'Contact for pricing';
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
