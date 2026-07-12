@@ -77,6 +77,17 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Lock page scroll while the preview modal is open — otherwise touch scroll
+  // moves the page behind the fixed modal and the bottom buttons are unreachable.
+  useEffect(() => {
+    if (!showPreview) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showPreview]);
+
   useEffect(() => {
     const loadThumbnail = async () => {
       try {
@@ -236,9 +247,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
       {/* Mobile Preview Modal */}
       {showPreview && isMobile && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[90vh] overflow-hidden shadow-2xl">
-            <div className="relative h-48">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={handlePreviewClose}>
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto overscroll-contain shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="relative h-48 shrink-0">
               {thumbnail ? (
                 <Image
                   src={thumbnail}
