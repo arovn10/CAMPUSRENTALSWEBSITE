@@ -51,9 +51,10 @@ export async function fetchProperties(): Promise<Property[]> {
       return normalized;
     }
 
-    // Final fallback to bundled test data (ensures map/cards still work)
-    const testData = await import('@/app/api/properties/test-data.json');
-    return testData.default as Property[];
+    // FAIL LOUD (INC-2026-07-12): never render bundled test data as real listings.
+    // Empty result lets pages show their "no properties available" state.
+    console.error('🚨 No property data available from cache API or external API');
+    return [];
   } catch (error) {
     console.error('Error fetching properties from cache, trying external API:', error);
     try {
@@ -64,13 +65,11 @@ export async function fetchProperties(): Promise<Property[]> {
         propertiesCache = { data: normalized, timestamp: Date.now() };
         return normalized;
       }
-      const testData = await import('@/app/api/properties/test-data.json');
-      return testData.default as Property[];
     } catch (externalError) {
       console.error('Error fetching properties from external API:', externalError);
-      const testData = await import('@/app/api/properties/test-data.json');
-      return testData.default as Property[];
     }
+    console.error('🚨 No property data available from any source');
+    return [];
   }
 }
 

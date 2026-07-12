@@ -5,6 +5,25 @@ Owner: Alec Rovner. The actual app lives in the **`campus-rentals/`** subdirecto
 
 > Org/operations context for the wider ecosystem (ALEC, Abodingo) lives in `~/abodingo-claude-context/`.
 > **Abodingo is reference-only here** — never edit Abodingo repos as part of a Campus Rentals task.
+> One exception: restoring the public listing endpoints this site depends on (wiki hard rule 13).
+
+---
+
+## Continuous Context (wiki/) — Session Protocol
+
+This repo carries its own knowledge base in **`wiki/`**. It is the durable memory across sessions for every Campus Rentals repo.
+
+1. **Always read** `wiki/rules/hard-rules.md` — the non-negotiables (build, money, security, the Abodingo boundary).
+2. **Route by task** via `wiki/agents.md` — do NOT load every page; read the one or two pages the task table points to.
+3. **Write back what you learn** — incidents go in `wiki/operations/incident-playbook.md` (there's a log at the bottom), architecture/ops discoveries go in the matching page. Commit with a `wiki:` prefix. A session that discovers something durable and doesn't write it down has lost it.
+
+| Quick links | |
+|---|---|
+| Hard rules (every session) | `wiki/rules/hard-rules.md` |
+| Task → page routing | `wiki/agents.md` |
+| Abodingo data dependency (4-endpoint contract) | `wiki/architecture/data-sources.md` |
+| Incident playbook + log | `wiki/operations/incident-playbook.md` |
+| Deploy runbook | `wiki/operations/deployment-runbook.md` |
 
 ---
 
