@@ -18,6 +18,7 @@ import {
   HeartIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import LeadCapture from '@/components/LeadCapture';
 
 export default function PropertyDetailsPage() {
   const params = useParams();
@@ -31,14 +32,6 @@ export default function PropertyDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [contactFormData, setContactFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-    subject: '',
-  });
-  const [contactStatus, setContactStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
 
@@ -128,12 +121,6 @@ export default function PropertyDetailsPage() {
     }
   }, [photos]);
 
-  useEffect(() => {
-    if (property) {
-      setContactFormData((prev) => ({ ...prev, subject: `${displayName} interest` }));
-    }
-  }, [property]);
-
   // Preload all photos in document head for browser caching
   useEffect(() => {
     if (photos.length > 0 && typeof document !== 'undefined') {
@@ -165,46 +152,6 @@ export default function PropertyDetailsPage() {
       }
     };
   }, [photos]);
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setContactStatus('submitting');
-
-    try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: 'rovnerproperties@gmail.com',
-          from: contactFormData.email,
-          subject: contactFormData.subject || `New Contact Form Submission from ${contactFormData.name}`,
-          text: `\nName: ${contactFormData.name}\nEmail: ${contactFormData.email}\nPhone: ${contactFormData.phone}\nMessage: ${contactFormData.message}`
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      setContactStatus('success');
-      setContactFormData({
-        name: '',
-        email: '',
-        phone: '',
-        message: '',
-        subject: '',
-      });
-    } catch (error) {
-      setContactStatus('error');
-    }
-  };
-
-  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setContactFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   function formatAvailableDate(leaseTerms: string | null): string {
     if (!leaseTerms) return 'Contact for details';
@@ -585,14 +532,17 @@ export default function PropertyDetailsPage() {
               </div>
             </div>
 
-            {/* Contact */}
+            {/* Schedule a tour / ask a question */}
+            <LeadCapture propertyId={property.property_id} propertyName={displayName} />
+
+            {/* Direct contact */}
             <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
               <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Contact Us
+                Prefer to reach out directly?
               </h2>
               <div className="space-y-4">
-                <a 
-                  href="tel:5043834552" 
+                <a
+                  href="tel:5043834552"
                   className="flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -600,8 +550,8 @@ export default function PropertyDetailsPage() {
                   </svg>
                   (504) 383-4552
                 </a>
-                <a 
-                  href="mailto:rovnerproperties@gmail.com" 
+                <a
+                  href="mailto:rovnerproperties@gmail.com"
                   className="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors duration-300"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -609,95 +559,6 @@ export default function PropertyDetailsPage() {
                   </svg>
                   rovnerproperties@gmail.com
                 </a>
-                {/* Contact Form */}
-                <form onSubmit={handleContactSubmit} className="space-y-4 mt-6">
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                      Subject
-                    </label>
-                    <input
-                      type="text"
-                      id="subject"
-                      name="subject"
-                      value={contactFormData.subject}
-                      onChange={handleContactChange}
-                      required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={contactFormData.name}
-                      onChange={handleContactChange}
-                      required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={contactFormData.email}
-                      onChange={handleContactChange}
-                      required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={contactFormData.phone}
-                      onChange={handleContactChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                      Message
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      value={contactFormData.message}
-                      onChange={handleContactChange}
-                      required
-                      rows={4}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={contactStatus === 'submitting'}
-                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                  >
-                    {contactStatus === 'submitting' ? 'Sending...' : 'Send Message'}
-                  </button>
-                  {contactStatus === 'success' && (
-                    <div className="rounded-md bg-green-50 p-4">
-                      <p className="text-sm text-green-700">Message sent successfully!</p>
-                    </div>
-                  )}
-                  {contactStatus === 'error' && (
-                    <div className="rounded-md bg-red-50 p-4">
-                      <p className="text-sm text-red-700">Failed to send message. Please try again.</p>
-                    </div>
-                  )}
-                </form>
               </div>
             </div>
           </div>

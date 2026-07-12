@@ -189,9 +189,63 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function PropertyLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: { id: string }
 }) {
-  return <>{children}</>
+  // schema.org Apartment + Offer so listings qualify for rich results.
+  // Pulled from the server cache only (cheap); silently omitted when unavailable.
+  let jsonLd: object | null = null
+  try {
+    const propertyId = Number(params.id)
+    const cached = isCacheValid() ? loadDataFromCache() : null
+    const property = cached?.properties.find(p => p.property_id === propertyId)
+    if (property) {
+      const photos = cached?.photos?.[propertyId] ?? []
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://campusrentalsllc.com'
+      jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Apartment',
+        name: property.name || property.address,
+        description: property.description || undefined,
+        url: `${siteUrl}/properties/${propertyId}`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: property.address,
+          addressCountry: 'US',
+        },
+        numberOfBedrooms: property.bedrooms || undefined,
+        numberOfBathroomsTotal: property.bathrooms || undefined,
+        floorSize: property.squareFeet
+          ? { '@type': 'QuantitativeValue', value: property.squareFeet, unitCode: 'FTK' }
+          : undefined,
+        image: photos.slice(0, 5).map(p => p.photoLink).filter(Boolean),
+        offers: property.price
+          ? {
+              '@type': 'Offer',
+              price: property.price,
+              priceCurrency: 'USD',
+              availability: 'https://schema.org/InStock',
+              url: `${siteUrl}/properties/${propertyId}`,
+            }
+          : undefined,
+      }
+    }
+  } catch {
+    // structured data is best-effort
+  }
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {children}
+    </>
+  )
 }
 
