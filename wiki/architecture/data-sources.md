@@ -14,7 +14,7 @@ Campus Rentals data lives in two systems that do **not** sync live. Knowing whic
 
 Public listings (`/properties`, `/tulane-housing`, `/fau-housing`, home page) are pulled **live and unauthenticated** from the Abodingo backend at `https://abodingo-backend.onrender.com/api` under landlord account **`campusrentalsnola`**.
 
-### The four-endpoint contract
+### The endpoint contract (reads + lead writes)
 
 | Endpoint | Used for | Client code |
 |---|---|---|
@@ -22,8 +22,14 @@ Public listings (`/properties`, `/tulane-housing`, `/fau-housing`, home page) ar
 | `GET /api/photos/get/{propertyId}` | photo galleries | `fetchPropertyPhotos()` |
 | `GET /api/amenities/{propertyId}` | amenity flags | `fetchPropertyAmenities()` |
 | `GET /api/propertyfromID/{id}` | property detail | `src/lib/abodeClient.ts` `abodeApi.properties.getById()` |
+| `POST /api/property-inquiries/create` | "Ask a question" leads (2026-07-12) | `src/app/api/leads/route.ts` proxy ← `LeadCapture.tsx` |
+| `POST /api/property-tours/create` | "Schedule a tour" leads (2026-07-12) | same proxy |
 
-**These must stay `[AllowAnonymous]` in AbodeBackend** (its auth default is deny — a `FallbackPolicy` requires a JWT on everything not explicitly opted out). They are registered in AbodeBackend's `Abode.Tests/AllowAnonymousAllowlistTests.cs`, which fails their CI if someone removes the attribute. History: the 2026-06-20 hardening missed three of the four and the site silently served fake data for weeks — see the incident log.
+Lead payloads: inquiry `{propertyId, inquirerName, inquirerEmail, inquirerPhone?, message?}`;
+tour `{propertyId, scheduledDate(ISO, future), tourGuestName, tourGuestEmail, tourGuestPhone?, notes?}`.
+Leads land in Abodingo as PropertyInquiry/PropertyTour rows and notify the landlord.
+
+**These must stay `[AllowAnonymous]` in AbodeBackend** (the lead-write endpoints already were, as public prospect flows) (its auth default is deny — a `FallbackPolicy` requires a JWT on everything not explicitly opted out). They are registered in AbodeBackend's `Abode.Tests/AllowAnonymousAllowlistTests.cs`, which fails their CI if someone removes the attribute. History: the 2026-06-20 hardening missed three of the four and the site silently served fake data for weeks — see the incident log.
 
 ### Failure mode & fallback chain
 

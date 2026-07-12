@@ -31,6 +31,6 @@ npx prisma generate    # after schema changes
 ## Key env vars
 
 Server-only (Lightsail): `DATABASE_URL`, `DIRECT_DATABASE_URL`, `JWT_SECRET`, AWS keys, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`, `GITHUB_WEBHOOK_SECRET`.
-Public: `NEXT_PUBLIC_ABODE_API_BASE_URL` (defaults to the Abodingo prod backend), `NEXT_PUBLIC_ABODINGO_WEBSITE_URL`, `NEXT_PUBLIC_IMS_V2` (kill-switch, on by default), `NEXT_PUBLIC_SITE_URL`.
+Public: `NEXT_PUBLIC_ABODE_API_BASE_URL` (defaults to the Abodingo prod backend), `NEXT_PUBLIC_ABODINGO_WEBSITE_URL`, `NEXT_PUBLIC_IMS_V2` (kill-switch, on by default), `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GA_ID` (GA4 measurement id — analytics + lead conversion events are dormant until this is set on Lightsail).
 
 > Never put a secret behind `NEXT_PUBLIC_` — that prefix ships it to the browser (hard rule 9).
