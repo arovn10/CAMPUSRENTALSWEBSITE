@@ -40,6 +40,7 @@ export default function Header() {
   };
 
   return (
+    <>
     <header className="glass-nav sticky top-0 z-50">
       <div className="section-shell">
         <div className="flex items-center justify-between py-3.5">
@@ -128,15 +129,18 @@ export default function Header() {
           </div>
         </div>
       </div>
+    </header>
 
-      {/* Mobile Menu */}
+    {/* Mobile menu lives OUTSIDE the header: the glass nav's backdrop-filter makes
+        the header the containing block for fixed descendants, which collapses the
+        drawer to the header's height (transparent-menu bug, 2026-07-12). */}
       <div
-        className={`fixed inset-0 z-40 bg-ink-950/40 backdrop-blur-sm transition-opacity duration-300 ${mobileMenuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-[60] bg-ink-950/40 backdrop-blur-sm transition-opacity duration-300 ${mobileMenuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
         onClick={() => setMobileMenuOpen(false)}
         aria-hidden={!mobileMenuOpen}
       />
       <nav
-        className={`fixed right-0 top-0 z-50 h-full w-72 transform bg-white shadow-lift transition-transform duration-300 ease-out-expo ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-[70] h-full w-72 transform bg-white shadow-lift transition-transform duration-300 ease-out-expo ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
         aria-label="Mobile menu"
       >
         <div className="flex flex-col space-y-5 p-8 pt-10">
@@ -163,6 +167,6 @@ export default function Header() {
           </a>
         </div>
       </nav>
-    </header>
+    </>
   )
 }
