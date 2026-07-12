@@ -139,14 +139,14 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   return (
     <>
-      <div 
-        className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
+      <div
+        className="group card-premium cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
         onClick={handleCardClick}
       >
-        <div className="relative h-48 sm:h-64 md:h-72 overflow-hidden">
+        <div className="relative h-56 overflow-hidden sm:h-64 md:h-72">
           {loading ? (
-            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-              <div className="h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+            <div className="flex h-full w-full items-center justify-center bg-ink-100">
+              <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-accent border-t-transparent"></div>
             </div>
           ) : thumbnail ? (
             <Image
@@ -154,101 +154,80 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
+              className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-105"
               placeholder="blur"
               blurDataURL="/placeholder.png"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-              <span className="text-text text-sm sm:text-base">No image available</span>
+            <div className="flex h-full w-full items-center justify-center bg-ink-100">
+              <span className="text-sm text-ink-400">No image available</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          {/* Mobile preview indicator */}
+          {/* Price badge */}
+          <div className="absolute bottom-3 left-3 rounded-full bg-ink-950/75 px-3.5 py-1.5 text-sm font-semibold text-white backdrop-blur-md">
+            {priceLabel}
+          </div>
+          {isBuilding && (
+            <div className="absolute top-3 left-3 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-ink-700 backdrop-blur-md">
+              Building{property.unitCount ? ` · ${property.unitCount} units` : ''}
+            </div>
+          )}
           {isMobile && !showPreview && (
-            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-medium text-gray-700">
+            <div className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-xs font-medium text-ink-600 backdrop-blur-md">
               Tap to preview
             </div>
           )}
         </div>
-        
-        <div className="p-4 sm:p-6 bg-gradient-to-b from-white to-secondary/5">
-          {isBuilding && (
-            <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-1 text-xs font-medium text-accent">
-              Building
-              {property.unitCount ? ` · ${property.unitCount} units` : ''}
-            </div>
-          )}
-          <h3 className="text-lg sm:text-xl font-bold text-text mb-2 group-hover:text-accent transition-colors duration-300 line-clamp-1">
+
+        <div className="p-5 sm:p-6">
+          <h3 className="mb-0.5 line-clamp-1 text-lg font-semibold tracking-tight text-ink-900 transition-colors duration-300 group-hover:text-accent">
             {title}
           </h3>
           {subtitle && subtitle !== title && (
-            <p className="text-xs sm:text-sm text-text/70 mb-2 line-clamp-1">{subtitle}</p>
+            <p className="mb-2 line-clamp-1 text-sm text-ink-400">{subtitle}</p>
           )}
-          
-          <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4 flex-wrap">
-            <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              {bedsLabel}
-            </div>
-            <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {bathsLabel}
-            </div>
-            {property.squareFeet && (
-              <div className="flex items-center text-text bg-secondary/10 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                {property.squareFeet} sq ft
-              </div>
-            )}
+
+          <div className="mb-4 mt-3 flex flex-wrap items-center gap-2">
+            <span className="chip">{bedsLabel}</span>
+            <span className="chip">{bathsLabel}</span>
+            {property.squareFeet && <span className="chip">{property.squareFeet} sq ft</span>}
           </div>
-          
-          <p className="text-text/80 mb-3 sm:mb-4 line-clamp-2 text-sm sm:text-base">
+
+          <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-ink-500">
             {property.description || 'Beautiful property in a prime location near campus.'}
           </p>
-          
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-              {priceLabel}
-            </span>
+
+          <div className="flex items-center justify-between border-t border-ink-100 pt-4">
+            <p className="text-xs font-medium text-ink-400">
+              Available {formatAvailableDate(property.leaseTerms)}
+            </p>
             {!isMobile && (
-              <span className="text-secondary font-medium transition-colors duration-300 flex items-center gap-1 group/link">
-                View Details
-                <span className="transform transition-transform duration-300 group-hover/link:translate-x-1">→</span>
+              <span className="group/link flex items-center gap-1 text-sm font-semibold text-accent">
+                Details
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </span>
             )}
           </div>
-          
-          <p className="text-xs sm:text-sm text-gray-500">
-            Available From: {formatAvailableDate(property.leaseTerms)}
-          </p>
-          
+
           {isMobile && (
-            <div className="mt-3 flex gap-2">
-              <button 
+            <div className="mt-4 flex gap-2">
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowPreview(true);
                 }}
-                className="flex-1 bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+                className="flex-1 rounded-xl bg-ink-100 px-4 py-2.5 text-sm font-semibold text-ink-700 transition-colors hover:bg-ink-200"
               >
-                Quick Preview
+                Preview
               </button>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleViewDetails();
                 }}
-                className="flex-1 bg-secondary text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4b9ba2]"
               >
-                View Details
+                View details
               </button>
             </div>
           )}

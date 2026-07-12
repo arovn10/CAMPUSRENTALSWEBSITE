@@ -1,231 +1,199 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Property } from '@/types';
 import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
 import Link from 'next/link';
 
+const VIDEO_URL = 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/ArchitecturalAnimation.MP4';
+
 export default function HomePage() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [propertyCount, setPropertyCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoError, setVideoError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const videoUrl = "https://abodebucket.s3.us-east-2.amazonaws.com/uploads/ArchitecturalAnimation.MP4";
 
   useEffect(() => {
     const loadProperties = async () => {
       try {
         setLoading(true);
         const data = await fetchProperties();
-        console.log('Fetched properties:', data);
-        // Shuffle the properties array
+        setPropertyCount(data.length);
         const shuffled = [...data].sort(() => Math.random() - 0.5);
         setProperties(shuffled.slice(0, 3));
-        console.log('Properties set in state:', shuffled.slice(0, 3));
       } catch (error) {
         console.error('Error loading properties:', error);
       } finally {
         setLoading(false);
       }
     };
-
     loadProperties();
   }, []);
 
-  useEffect(() => {
-    if (!videoRef.current) return;
-
-    const video = videoRef.current;
-    
-    // Set up event listeners
-    const handleError = (e: Event) => {
-      console.error('Video error:', e);
-      setVideoError(true);
-      setIsLoading(false);
-    };
-
-    const handleLoadedData = () => {
-      console.log('Video loaded successfully');
-      setIsLoading(false);
-    };
-
-    const handleLoadStart = () => {
-      console.log('Video loading started');
-    };
-
-    const handleStalled = () => {
-      console.error('Video stalled while loading');
-    };
-
-    video.addEventListener('error', handleError);
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('loadstart', handleLoadStart);
-    video.addEventListener('stalled', handleStalled);
-
-    // Set source and attempt to play
-    video.src = videoUrl;
-    video.load();
-
-    video.play().catch(error => {
-      console.error('Video playback failed:', error);
-      setVideoError(true);
-      setIsLoading(false);
-    });
-
-    // Cleanup
-    return () => {
-      video.removeEventListener('error', handleError);
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('loadstart', handleLoadStart);
-      video.removeEventListener('stalled', handleStalled);
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="relative w-full min-h-[500px] flex items-center justify-center overflow-hidden">
-        {/* Background Video */}
+    <div className="min-h-screen bg-ink-50">
+      {/* ============ HERO ============ */}
+      <section className="relative flex min-h-[88vh] items-center overflow-hidden bg-ink-950">
         <video
-          className="absolute inset-0 w-full h-full object-cover opacity-40 z-0"
-          src="https://abodebucket.s3.us-east-2.amazonaws.com/uploads/ArchitecturalAnimation.MP4"
+          className="absolute inset-0 h-full w-full object-cover opacity-50"
+          src={VIDEO_URL}
           autoPlay
           loop
           muted
           playsInline
         />
-        {/* Overlay for better text contrast */}
-        <div className="absolute inset-0 bg-black/60 z-10" />
-        {/* Hero Text Content */}
-        <div className="relative z-20 flex flex-col justify-center items-start py-20 px-4 md:px-0 max-w-4xl mx-auto w-full">
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Luxury Student Living
-          </h1>
-          <p className="text-2xl text-gray-300 mb-8 max-w-2xl">
-            Experience premium off-campus housing designed for student success
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link 
-              href="/tulane-housing" 
-              className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
-            >
-              View Properties
-            </Link>
-            <Link 
-              href="/contact" 
-              className="px-8 py-4 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition-colors duration-300 text-lg font-medium"
-            >
-              Contact Us
-            </Link>
-          </div>
-        </div>
-      </div>
+        {/* Cinematic gradient — dark at edges, readable center-left */}
+        <div className="absolute inset-0 bg-gradient-to-r from-ink-950/90 via-ink-950/55 to-ink-950/20" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink-950 to-transparent" />
 
-      {/* Features Section */}
-      <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Why Choose Campus Rentals?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
-              <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Premium Locations</h3>
-              <p className="text-gray-400">Prime locations near top universities with easy access to campus and city amenities.</p>
+        <div className="section-shell relative z-10">
+          <div className="max-w-2xl py-24 stagger">
+            <span className="eyebrow">New Orleans &middot; Boca Raton</span>
+            <h1 className="text-display-xl font-semibold text-white">
+              Student housing,
+              <br />
+              <span className="bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
+                done properly.
+              </span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70 sm:text-xl">
+              Homes steps from Tulane and FAU — renovated, professionally managed,
+              and owned by people who answer the phone.
+            </p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <Link href="/tulane-housing" className="btn-hero">
+                Browse Tulane homes
+              </Link>
+              <Link href="/fau-housing" className="btn-ghost">
+                FAU residences
+              </Link>
             </div>
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
-              <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+
+            {/* Stat band */}
+            <dl className="mt-14 flex flex-wrap gap-x-12 gap-y-6 border-t border-white/10 pt-8">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">Homes</dt>
+                <dd className="mt-1 text-3xl font-semibold tracking-tight text-white">
+                  {propertyCount ? propertyCount : '—'}
+                </dd>
               </div>
-              <h3 className="text-xl font-bold mb-2">Secure & Safe</h3>
-              <p className="text-gray-400">24/7 security and modern safety features for your peace of mind.</p>
-            </div>
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
-              <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">Campuses</dt>
+                <dd className="mt-1 text-3xl font-semibold tracking-tight text-white">2</dd>
               </div>
-              <h3 className="text-xl font-bold mb-2">Modern Amenities</h3>
-              <p className="text-gray-400">State-of-the-art facilities and amenities designed for student comfort.</p>
-            </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">Managed</dt>
+                <dd className="mt-1 text-3xl font-semibold tracking-tight text-white">Locally</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
 
+      {/* ============ WHY US ============ */}
+      <section className="py-24 sm:py-32">
+        <div className="section-shell">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="eyebrow">Why Campus Rentals</span>
+            <h2 className="text-display font-semibold text-ink-900">
+              The details make the difference.
+            </h2>
+          </div>
 
-      {/* Featured Properties */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Featured Properties
-          </h2>
-          {loading ? (
-            <div className="flex justify-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent"></div>
+          <div className="mt-16 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: 'Walk to class',
+                body: 'Every home sits within blocks of campus — Zimple, Freret, Audubon, Burthe. Skip the commute, sleep the extra twenty minutes.',
+                icon: (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                ),
+              },
+              {
+                title: 'Actually maintained',
+                body: 'Renovated kitchens, central air, in-unit laundry — and a local team that fixes things fast instead of a 1-800 number.',
+                icon: (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
+                ),
+              },
+              {
+                title: 'Straightforward leasing',
+                body: 'Transparent pricing, online payments through Abodingo, and a real person on the other end from tour to move-out.',
+                icon: (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ),
+              },
+            ].map((f) => (
+              <div key={f.title} className="card-premium p-8">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+                  <svg className="h-6 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    {f.icon}
+                  </svg>
+                </div>
+                <h3 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">{f.title}</h3>
+                <p className="text-[15px] leading-relaxed text-ink-500">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ FEATURED ============ */}
+      <section className="bg-white py-24 sm:py-32">
+        <div className="section-shell">
+          <div className="mb-14 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+            <div>
+              <span className="eyebrow">Featured</span>
+              <h2 className="text-display font-semibold text-ink-900">This week&apos;s picks</h2>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-8">
+            <Link
+              href="/tulane-housing"
+              className="group inline-flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-[#3E8A91]"
+            >
+              View all properties
+              <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-accent border-t-transparent"></div>
+            </div>
+          ) : properties.length > 0 ? (
+            <div className="grid gap-8 md:grid-cols-3 stagger">
               {properties.map((property) => (
                 <PropertyCard key={property.property_id} property={property} />
               ))}
             </div>
+          ) : (
+            <p className="py-16 text-center text-ink-400">
+              Listings are temporarily unavailable — please check back shortly or{' '}
+              <Link href="/contact" className="font-medium text-accent">contact us</Link>.
+            </p>
           )}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Ready to Find Your Perfect Home?
+      {/* ============ CTA ============ */}
+      <section className="relative overflow-hidden bg-ink-950 py-24 sm:py-32">
+        <div
+          className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, #54AAB1, transparent)' }}
+        />
+        <div className="section-shell relative text-center">
+          <h2 className="mx-auto max-w-2xl text-display font-semibold text-white">
+            Your next place is a 20-minute tour away.
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Browse our properties or contact us to schedule a viewing today.
+          <p className="mx-auto mt-5 max-w-xl text-lg text-white/60">
+            Fall semesters fill fast. See the homes everyone asks about before they&apos;re gone.
           </p>
-          <div className="flex justify-center gap-4">
-            <Link 
-              href="/tulane-housing" 
-              className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
-            >
-              Tulane / Loyola Housing
-            </Link>
-            <Link 
-              href="/fau-housing" 
-              className="px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
-            >
-              FAU Housing
-            </Link>
-            <Link 
-              href="/contact" 
-              className="px-8 py-4 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition-colors duration-300 text-lg font-medium"
-            >
-              Get in Touch
-            </Link>
+          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link href="/tulane-housing" className="btn-hero">Tulane / Loyola</Link>
+            <Link href="/fau-housing" className="btn-ghost">FAU</Link>
+            <Link href="/contact" className="btn-ghost">Talk to us</Link>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 bg-gray-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-400 mb-2">
-              Powered by Abode Student Listing Service
-            </p>
-            <p className="text-gray-500 text-sm">
-              © {new Date().getFullYear()} Campus Rentals. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
-} 
+}

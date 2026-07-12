@@ -98,7 +98,7 @@ export default function FAUHousingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+    <div className="min-h-screen bg-ink-950 text-white">
       {/* Hero Section */}
       <div className="relative w-full min-h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-green-900/80 z-10" />
@@ -117,13 +117,13 @@ export default function FAUHousingPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
               href="#properties" 
-              className="px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+              className="px-8 py-4 bg-yellow-500 text-black rounded-2xl hover:bg-yellow-400 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
             >
               View Properties Near FAU
             </Link>
             <Link 
               href="/contact" 
-              className="px-8 py-4 bg-green-500 text-white rounded-xl hover:bg-green-400 transition-colors duration-300 text-lg font-medium"
+              className="px-8 py-4 bg-green-500 text-white rounded-2xl hover:bg-green-400 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
             >
               Schedule Tour
             </Link>
@@ -139,7 +139,7 @@ export default function FAUHousingPage() {
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
+              <div key={index} className="bg-gray-900/50 p-8 rounded-2xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
                 <div className="w-16 h-16 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4 text-yellow-400">
                   {feature.icon}
                 </div>
@@ -177,7 +177,7 @@ export default function FAUHousingPage() {
                 <div className="text-center mt-12">
                   <button
                     onClick={handleShowMore}
-                    className="px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+                    className="px-8 py-4 bg-yellow-500 text-black rounded-2xl hover:bg-yellow-400 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
                   >
                     Show More ({allProperties.length - displayedCount} remaining)
                   </button>
@@ -225,7 +225,7 @@ export default function FAUHousingPage() {
                 </li>
               </ul>
             </div>
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
+            <div className="bg-gray-900/50 p-8 rounded-2xl backdrop-blur-sm">
               <h4 className="text-xl font-bold mb-4 text-green-400">Student Discounts</h4>
               <p className="text-gray-300 mb-4">
                 Special rates and incentives available for students, including:
@@ -254,7 +254,7 @@ export default function FAUHousingPage() {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link 
               href="/contact" 
-              className="px-8 py-4 bg-yellow-500 text-black rounded-xl hover:bg-yellow-400 transition-colors duration-300 text-lg font-medium"
+              className="px-8 py-4 bg-yellow-500 text-black rounded-2xl hover:bg-yellow-400 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
             >
               Schedule a Tour
             </Link>

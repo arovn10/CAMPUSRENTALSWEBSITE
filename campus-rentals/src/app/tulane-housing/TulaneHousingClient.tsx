@@ -209,16 +209,16 @@ export default function TulaneHousingClient() {
         }}
       />
 
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+      <div className="min-h-screen bg-ink-950 text-white">
         {/* Hero Section - SEO Optimized */}
         <div className="relative w-full min-h-[600px] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 to-blue-900/80 z-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink-950/85 to-ink-900/60 z-10" />
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1533750500601-7c30f2298999?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40" />
           
           <div className="relative z-20 flex flex-col justify-center items-center py-20 px-4 text-center max-w-4xl mx-auto">
             <div className="flex items-center mb-6">
-              <AcademicCapIcon className="w-12 h-12 text-emerald-400 mr-4" />
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+              <AcademicCapIcon className="w-12 h-12 text-accent mr-4" />
+              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
                 Tulane Off Campus Housing
               </h1>
             </div>
@@ -231,13 +231,13 @@ export default function TulaneHousingClient() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
                 href="#properties" 
-                className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
+                className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
               >
                 View Tulane Off Campus Housing
               </Link>
               <Link 
                 href="/contact" 
-                className="px-8 py-4 bg-blue-500 text-white rounded-xl hover:bg-blue-400 transition-colors duration-300 text-lg font-medium"
+                className="px-8 py-4 border border-white/25 bg-white/10 text-white backdrop-blur-md rounded-2xl hover:bg-white/20 hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
               >
                 Schedule Tour
               </Link>
@@ -264,23 +264,23 @@ export default function TulaneHousingClient() {
               </h3>
               <ul className="text-gray-300 mb-6 space-y-3 text-lg">
                 <li className="flex items-start">
-                  <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                  <CheckCircleIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                   <span><strong>Prime Uptown Location:</strong> Our <strong>off campus housing near Tulane</strong> is located in the heart of Uptown New Orleans, just blocks from the Tulane University campus. Easy walking or biking distance to classes, libraries, and campus events.</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                  <CheckCircleIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                   <span><strong>Fully Furnished:</strong> All our <strong>student apartments near Tulane</strong> come fully furnished with modern furniture, appliances, and everything you need for comfortable student living.</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                  <CheckCircleIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                   <span><strong>Luxury Living:</strong> Our <strong>off campus housing near Tulane</strong> features premium finishes, modern amenities, and high-end furnishings for a luxury student living experience.</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                  <CheckCircleIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                   <span><strong>Student-Friendly Amenities:</strong> High-speed internet, parking, laundry facilities, and more included in our <strong>off campus housing properties near Tulane</strong>.</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                  <CheckCircleIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                   <span><strong>Flexible Lease Terms:</strong> Our <strong>off campus rentals near Tulane</strong> offer lease terms that align with the academic calendar, perfect for students.</span>
                 </li>
               </ul>
@@ -301,16 +301,16 @@ export default function TulaneHousingClient() {
         {/* Why Choose Section */}
         <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
               Why Choose Our Tulane Off Campus Housing?
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
-                  <div className="w-16 h-16 bg-emerald-500/20 rounded-lg flex items-center justify-center mb-4 text-emerald-400">
+                <div key={index} className="bg-gray-900/50 p-8 rounded-2xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors duration-300">
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-lg flex items-center justify-center mb-4 text-accent">
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-emerald-400">{feature.title}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-accent">{feature.title}</h3>
                   <p className="text-gray-400">{feature.description}</p>
                 </div>
               ))}
@@ -321,7 +321,7 @@ export default function TulaneHousingClient() {
         {/* Properties Section */}
         <section id="properties" className="py-20">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
               Available Tulane Off Campus Housing
             </h2>
             <p className="text-center text-gray-300 mb-12 text-lg">
@@ -344,7 +344,7 @@ export default function TulaneHousingClient() {
                   <div className="text-center mt-12">
                     <button
                       onClick={handleShowMore}
-                      className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
+                      className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
                     >
                       Show More ({allProperties.length - displayedCount} remaining)
                     </button>
@@ -362,37 +362,37 @@ export default function TulaneHousingClient() {
         {/* Campus Benefits */}
         <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
               Benefits of Living Near Tulane University
             </h2>
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
-                <h3 className="text-2xl font-bold mb-6 text-emerald-400">Perfect for Students in the Tulane Area</h3>
+                <h3 className="text-2xl font-bold mb-6 text-accent">Perfect for Students in the Tulane Area</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start">
-                    <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                    <StarIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                     <span className="text-gray-300">Close to Audubon, Freret, the Boot, and Maple St - perfect for studying and socializing</span>
                   </li>
                   <li className="flex items-start">
-                    <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                    <StarIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                     <span className="text-gray-300">Short commute to classes and campus events - save time and money on transportation</span>
                   </li>
                   <li className="flex items-start">
-                    <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                    <StarIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                     <span className="text-gray-300">Walkable neighborhoods with local coffee shops, restaurants, and grocery stores</span>
                   </li>
                   <li className="flex items-start">
-                    <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                    <StarIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                     <span className="text-gray-300">Great options for groups and housemates - find the perfect off campus housing near Tulane for your needs</span>
                   </li>
                   <li className="flex items-start">
-                    <StarIcon className="w-6 h-6 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
+                    <StarIcon className="w-6 h-6 text-accent mr-3 mt-1 flex-shrink-0" />
                     <span className="text-gray-300">Safe, student-friendly neighborhoods with active community and campus security nearby</span>
                   </li>
                 </ul>
               </div>
-              <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
-                <h4 className="text-xl font-bold mb-4 text-blue-400">Student-Friendly Perks</h4>
+              <div className="bg-gray-900/50 p-8 rounded-2xl backdrop-blur-sm">
+                <h4 className="text-xl font-bold mb-4 text-accent">Student-Friendly Perks</h4>
                 <p className="text-gray-300 mb-4">Our off campus housing near Tulane is tailored specifically for students:</p>
                 <ul className="space-y-2 text-gray-300">
                   <li>• Lease terms aligned to academic calendar (fall/spring/summer)</li>
@@ -410,24 +410,24 @@ export default function TulaneHousingClient() {
         {/* FAQ Section for SEO */}
         <section className="py-20">
           <div className="container mx-auto px-4 max-w-4xl">
-            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-12 text-center bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
               Frequently Asked Questions About Tulane Off Campus Housing
             </h2>
             <div className="space-y-6">
-              <div className="bg-gray-900/50 p-6 rounded-xl">
-                <h3 className="text-xl font-bold mb-3 text-emerald-400">What is the best area for off campus housing near Tulane?</h3>
+              <div className="bg-gray-900/50 p-6 rounded-2xl">
+                <h3 className="text-xl font-bold mb-3 text-accent">What is the best area for off campus housing near Tulane?</h3>
                 <p className="text-gray-300">The Uptown area near Tulane University is the most popular choice for off campus housing. Our properties are located within walking distance of the campus, close to Audubon Park, and in safe, student-friendly neighborhoods.</p>
               </div>
-              <div className="bg-gray-900/50 p-6 rounded-xl">
-                <h3 className="text-xl font-bold mb-3 text-emerald-400">How far are your off campus apartments from Tulane?</h3>
+              <div className="bg-gray-900/50 p-6 rounded-2xl">
+                <h3 className="text-xl font-bold mb-3 text-accent">How far are your off campus apartments from Tulane?</h3>
                 <p className="text-gray-300">Most of our properties are within 0.5 miles of the Tulane University campus, making them easily walkable or bikeable. This proximity saves you time and money on transportation while keeping you close to campus life.</p>
               </div>
-              <div className="bg-gray-900/50 p-6 rounded-xl">
-                <h3 className="text-xl font-bold mb-3 text-emerald-400">Are your off campus rentals near Tulane furnished?</h3>
+              <div className="bg-gray-900/50 p-6 rounded-2xl">
+                <h3 className="text-xl font-bold mb-3 text-accent">Are your off campus rentals near Tulane furnished?</h3>
                 <p className="text-gray-300">Yes! All our off campus housing properties near Tulane come fully furnished with modern furniture, appliances, and everything you need for comfortable student living. Just bring your personal items and move in.</p>
               </div>
-              <div className="bg-gray-900/50 p-6 rounded-xl">
-                <h3 className="text-xl font-bold mb-3 text-emerald-400">Do you offer group housing for students attending Tulane?</h3>
+              <div className="bg-gray-900/50 p-6 rounded-2xl">
+                <h3 className="text-xl font-bold mb-3 text-accent">Do you offer group housing for students attending Tulane?</h3>
                 <p className="text-gray-300">Absolutely! We have spacious houses perfect for groups of friends or roommates. Our group housing options make it easy to live with your friends while attending school in the Tulane area.</p>
               </div>
             </div>
@@ -437,7 +437,7 @@ export default function TulaneHousingClient() {
         {/* CTA Section */}
         <section className="py-20 bg-gray-800/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent to-[#8ed0d6] bg-clip-text text-transparent">
               Ready to Find Your Tulane Off Campus Housing?
             </h2>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
@@ -446,7 +446,7 @@ export default function TulaneHousingClient() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link 
                 href="/contact" 
-                className="px-8 py-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-colors duration-300 text-lg font-medium"
+                className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
               >
                 Schedule a Tour
               </Link>
