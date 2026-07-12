@@ -2,8 +2,58 @@
 
 import { useEffect, useState } from 'react';
 import { trackEvent } from '@/utils/analytics';
+import { ABODINGO_WEBSITE_URL } from '@/lib/apiConfig';
 
 type Mode = 'tour' | 'inquiry';
+
+/**
+ * Tours are scheduled and managed in Abodingo (also the rent platform once
+ * they lease) — so the tour tab funnels people into an Abodingo account and
+ * deep-links to the property's tour flow. A guest fallback keeps the lead
+ * if they refuse to sign up. Inquiries stay account-free.
+ */
+function AbodingoTourFunnel({ propertyId, onGuestFallback }: { propertyId: number | string; onGuestFallback: () => void }) {
+  const target = encodeURIComponent(`/student/properties/${propertyId}?tour=1`);
+  const signupUrl = `${ABODINGO_WEBSITE_URL}/signup?accountType=Student&redirect=${target}`;
+  const loginUrl = `${ABODINGO_WEBSITE_URL}/login?redirect=${target}`;
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl bg-ink-50 p-4">
+        <p className="text-sm leading-relaxed text-ink-600">
+          Tours are scheduled through <span className="font-semibold text-ink-900">Abodingo</span> —
+          the platform where we manage tours, applications, and (once you move in) rent.
+          Create a free account to request your tour and track it end to end.
+        </p>
+      </div>
+      <a
+        href={signupUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackEvent('lead_tour_signup_redirect', { property_id: String(propertyId) })}
+        className="block w-full rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#4b9ba2]"
+      >
+        Create a free account &amp; request tour
+      </a>
+      <a
+        href={loginUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackEvent('lead_tour_login_redirect', { property_id: String(propertyId) })}
+        className="block w-full rounded-xl bg-ink-900 px-6 py-3.5 text-center text-sm font-semibold text-white transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-ink-800"
+      >
+        I already have an Abodingo account
+      </a>
+      <button
+        type="button"
+        onClick={onGuestFallback}
+        className="w-full bg-transparent py-1 text-center text-xs font-medium text-ink-400 underline-offset-2 transition-colors hover:text-ink-600 hover:underline"
+      >
+        Continue without an account
+      </button>
+    </div>
+  );
+}
 
 interface LeadCaptureProps {
   propertyId: number | string;
@@ -17,6 +67,7 @@ const inputCls =
 
 function LeadForm({ propertyId, propertyName, onDone }: { propertyId: number | string; propertyName: string; onDone?: () => void }) {
   const [mode, setMode] = useState<Mode>('tour');
+  const [guestTour, setGuestTour] = useState(false); // tour tab shows the Abodingo funnel unless the guest opts out
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', scheduledDate: '', company: '' });
@@ -73,23 +124,36 @@ function LeadForm({ propertyId, propertyName, onDone }: { propertyId: number | s
 
   const minDate = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16);
 
+  const segmented = (
+    <div className="mb-4 grid grid-cols-2 rounded-xl bg-ink-100 p-1">
+      {(['tour', 'inquiry'] as Mode[]).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => { setMode(m); if (m === 'tour') setGuestTour(false); }}
+          className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+            mode === m ? 'bg-white text-ink-900 shadow-soft' : 'bg-transparent text-ink-500 hover:text-ink-700'
+          }`}
+        >
+          {m === 'tour' ? 'Schedule a tour' : 'Ask a question'}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Tour tab: Abodingo account funnel first; direct guest form only on explicit opt-out.
+  if (mode === 'tour' && !guestTour) {
+    return (
+      <div>
+        {segmented}
+        <AbodingoTourFunnel propertyId={propertyId} onGuestFallback={() => setGuestTour(true)} />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={submit} className="space-y-3">
-      {/* Segmented control */}
-      <div className="mb-4 grid grid-cols-2 rounded-xl bg-ink-100 p-1">
-        {(['tour', 'inquiry'] as Mode[]).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
-              mode === m ? 'bg-white text-ink-900 shadow-soft' : 'bg-transparent text-ink-500 hover:text-ink-700'
-            }`}
-          >
-            {m === 'tour' ? 'Schedule a tour' : 'Ask a question'}
-          </button>
-        ))}
-      </div>
+      {segmented}
 
       <input required placeholder="Full name" value={form.name} onChange={set('name')} className={inputCls} autoComplete="name" />
       <input required type="email" placeholder="Email" value={form.email} onChange={set('email')} className={inputCls} autoComplete="email" />
