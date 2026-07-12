@@ -26,8 +26,20 @@ Public listings (`/properties`, `/tulane-housing`, `/fau-housing`, home page) ar
 | `POST /api/property-tours/create` | "Schedule a tour" leads (2026-07-12) | same proxy |
 
 Lead payloads: inquiry `{propertyId, inquirerName, inquirerEmail, inquirerPhone?, message?}`;
-tour `{propertyId, scheduledDate(ISO, future), tourGuestName, tourGuestEmail, tourGuestPhone?, notes?}`.
-Leads land in Abodingo as PropertyInquiry/PropertyTour rows and notify the landlord.
+tour `{propertyId, scheduledDate(naive wall-clock "YYYY-MM-DDTHH:mm:00" — NEVER convert to UTC; the backend/landlord UI treat it as property-local time), tourGuestName, tourGuestEmail, tourGuestPhone?, notes?}`.
+
+### Tour funnel (2026-07-12)
+
+The tour tab in `LeadCapture.tsx` is an **Abodingo account funnel**, not a direct form:
+primary CTA → `abodingo.com/signup?accountType=Student&redirect=/student/properties/{id}?tour=1`
+(signup/login both honor same-origin `?redirect=`; `?tour=1` auto-opens the tour modal on the
+Abodingo student property page). "Continue without an account" reveals the direct guest form
+(posts to `/api/leads` → `property-tours/create`) so the lead is never lost. Inquiries stay account-free.
+
+Tour lifecycle notifications (AbodeBackend `PropertyToursRouting`): create → landlord + teammates
+emailed + guest acknowledgment; landlord flips status to `confirmed` (web/mobile tours page dropdown)
+→ guest gets "Tour Confirmed" + landlord copy; `cancelled` → guest notified. GA events:
+`lead_tour_signup_redirect`, `lead_tour_login_redirect`, `lead_tour_request`, `lead_inquiry`.
 
 **These must stay `[AllowAnonymous]` in AbodeBackend** (the lead-write endpoints already were, as public prospect flows) (its auth default is deny — a `FallbackPolicy` requires a JWT on everything not explicitly opted out). They are registered in AbodeBackend's `Abode.Tests/AllowAnonymousAllowlistTests.cs`, which fails their CI if someone removes the attribute. History: the 2026-06-20 hardening missed three of the four and the site silently served fake data for weeks — see the incident log.
 

@@ -57,8 +57,18 @@ export async function POST(request: NextRequest) {
   let payload: Record<string, unknown>;
 
   if (type === 'tour') {
-    const scheduled = body.scheduledDate ? new Date(body.scheduledDate) : null;
-    if (!scheduled || isNaN(scheduled.getTime()) || scheduled.getTime() < Date.now()) {
+    // The form sends a naive datetime-local string (no timezone). That is the
+    // guest's wall-clock intent for the PROPERTY's local time — do NOT convert
+    // to UTC (this server runs UTC; converting shifted tours by 5-6 hours).
+    // Validate leniently (±14h skew) and pass the wall-clock string through.
+    const raw = (body.scheduledDate ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) || isNaN(new Date(raw).getTime())) {
+      return NextResponse.json(
+        { error: 'Please pick a date and time for your tour.' },
+        { status: 400 }
+      );
+    }
+    if (new Date(raw).getTime() < Date.now() - 14 * 60 * 60 * 1000) {
       return NextResponse.json(
         { error: 'Please pick a future date and time for your tour.' },
         { status: 400 }
@@ -67,7 +77,7 @@ export async function POST(request: NextRequest) {
     url = `${base}/property-tours/create`;
     payload = {
       propertyId,
-      scheduledDate: scheduled.toISOString(),
+      scheduledDate: raw.length === 16 ? `${raw}:00` : raw,
       tourGuestName: name,
       tourGuestEmail: email,
       tourGuestPhone: phone,
