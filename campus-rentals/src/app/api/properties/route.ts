@@ -264,43 +264,23 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error in properties API:', error);
-    // Fallback to original API
-    try {
-      const properties = await originalFetchProperties();
-      
-      // If external API fails, return test data with coordinates
-      if (!properties || properties.length === 0) {
-        console.log('External API failed, returning test data with coordinates...');
-        const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600', // Shorter cache for fallback
-          },
-        });
-      }
-      
-      return NextResponse.json(properties, {
+    // FAIL LOUD (INC-2026-07-12): never serve bundled test data as if it were real
+    // listings. Prefer stale-but-real cached data; otherwise return 503 so pages show
+    // their empty state and monitoring can see the failure.
+    console.error('🚨 PROPERTIES API DEGRADED — backend fetch failed:', error);
+    const stale = loadDataFromCache();
+    if (stale?.properties && stale.properties.length > 0) {
+      console.warn(`⚠️ Serving ${stale.properties.length} STALE cached properties (backend unavailable)`);
+      return NextResponse.json(stale.properties, {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+          'X-Data-Staleness': 'stale',
         },
       });
-    } catch (fallbackError) {
-      console.error('Fallback API also failed, using test data:', fallbackError);
-      try {
-        const testData = await import('./test-data.json');
-        return NextResponse.json(testData.default, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
-          },
-        });
-      } catch (testDataError) {
-        console.error('Test data also failed:', testDataError);
-        return NextResponse.json(
-          { error: 'Failed to fetch properties' },
-          { status: 500 }
-        );
-      }
     }
+    return NextResponse.json(
+      { error: 'Property listings are temporarily unavailable' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 } 
