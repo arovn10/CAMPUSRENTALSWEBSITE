@@ -36,9 +36,13 @@ primary CTA → `abodingo.com/signup?accountType=Student&redirect=/student/prope
 Abodingo student property page). "Continue without an account" reveals the direct guest form
 (posts to `/api/leads` → `property-tours/create`) so the lead is never lost. Inquiries stay account-free.
 
-Tour lifecycle notifications (AbodeBackend `PropertyToursRouting`): create → landlord + teammates
-emailed + guest acknowledgment; landlord flips status to `confirmed` (web/mobile tours page dropdown)
-→ guest gets "Tour Confirmed" + landlord copy; `cancelled` → guest notified. GA events:
+Tour lifecycle (AbodeBackend `PropertyToursRouting`): inbound tours default to status **`requested`**
+(landlord-authored ones pass `scheduled`). Create → landlord + teammates emailed + guest acknowledgment;
+landlord flips status to `confirmed` (web/mobile tours page) → guest gets "Tour Confirmed" + landlord copy;
+`cancelled` → guest notified; guest self-cancel → landlord notified. All emails go through the durable
+NotificationOutbox (never fire-and-forget Task.Run — request-scoped DbContext dies after the response).
+Logged-in requesters are account-linked (`PropertyTour.UserId`): students get "My Tours" + self-cancel on
+the Abodingo dashboard (`GET property-tours/my`, `PUT property-tours/{id}/cancel`). GA events:
 `lead_tour_signup_redirect`, `lead_tour_login_redirect`, `lead_tour_request`, `lead_inquiry`.
 
 **These must stay `[AllowAnonymous]` in AbodeBackend** (the lead-write endpoints already were, as public prospect flows) (its auth default is deny — a `FallbackPolicy` requires a JWT on everything not explicitly opted out). They are registered in AbodeBackend's `Abode.Tests/AllowAnonymousAllowlistTests.cs`, which fails their CI if someone removes the attribute. History: the 2026-06-20 hardening missed three of the four and the site silently served fake data for weeks — see the incident log.
