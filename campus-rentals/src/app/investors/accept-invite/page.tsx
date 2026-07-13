@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LockClosedIcon, UserIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 
-const ACCENT = '#54AAB1'
-
 function AcceptInviteInner() {
   const router = useRouter()
   const params = useSearchParams()

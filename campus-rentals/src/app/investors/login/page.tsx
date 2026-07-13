@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -89,32 +89,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
+    <div className="relative min-h-screen overflow-hidden bg-ink-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Ambient accent glow */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-48 left-1/2 h-[36rem] w-[56rem] -translate-x-1/2 rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+      </div>
+
+      <div className="relative max-w-md w-full">
+        {/* Brand block */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center">
-            <ArrowRightOnRectangleIcon className="h-8 w-8 text-white" />
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-ink-900 ring-1 ring-white/10 shadow-glow flex items-center justify-center">
+            <BuildingOffice2Icon className="h-7 w-7 text-accent" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
-            Campus Rentals LLC
+          <p className="mt-6 text-xs font-medium uppercase tracking-[0.2em] text-accent">
+            Investor Portal
+          </p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+            Campus Rentals
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Sign in to your investment portal
+          <p className="mt-2 text-sm text-ink-300">
+            {showForgotPassword ? 'Request a link to reset your password' : 'Sign in to your investment portal'}
           </p>
         </div>
 
+        {/* Card */}
+        <div className="mt-8 rounded-2xl bg-white p-6 sm:p-8 shadow-lift ring-1 ring-white/10">
         {/* Login Form */}
         {!showForgotPassword ? (
-          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-ink-700 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <EnvelopeIcon className="h-5 w-5 text-slate-400" />
+                    <EnvelopeIcon className="h-5 w-5 text-ink-400" />
                   </div>
                   <input
                     id="email"
@@ -124,19 +135,19 @@ export default function LoginPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white/80 backdrop-blur-sm"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-ink-200 placeholder-ink-400 text-ink-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent focus:z-10 sm:text-sm bg-white"
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-ink-700 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <LockClosedIcon className="h-5 w-5 text-slate-400" />
+                    <LockClosedIcon className="h-5 w-5 text-ink-400" />
                   </div>
                   <input
                     id="password"
@@ -146,13 +157,13 @@ export default function LoginPage() {
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white/80 backdrop-blur-sm"
+                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-ink-200 placeholder-ink-400 text-ink-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent focus:z-10 sm:text-sm bg-white"
                     placeholder="Enter your password"
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <button
                       type="button"
-                      className="text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1"
+                      className="text-ink-400 hover:text-ink-600 transition-colors duration-200 p-1"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -177,7 +188,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
+                  className="font-medium text-accent hover:text-[#4b9ba2] transition-colors duration-200"
                 >
                   Forgot your password?
                 </button>
@@ -188,7 +199,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-500/25"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
               >
                 {loading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
@@ -199,12 +210,12 @@ export default function LoginPage() {
             </div>
 
             <div className="text-center">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-ink-500">
                 Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => router.push('/register')}
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 underline"
+                  className="font-medium text-accent hover:text-[#4b9ba2] transition-colors duration-200"
                 >
                   Contact us to get started
                 </button>
@@ -213,14 +224,14 @@ export default function LoginPage() {
           </form>
         ) : (
           /* Forgot Password Form */
-          <form className="mt-8 space-y-6" onSubmit={handleForgotPassword}>
+          <form className="space-y-6" onSubmit={handleForgotPassword}>
             <div>
-              <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="forgot-email" className="block text-sm font-medium text-ink-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <EnvelopeIcon className="h-5 w-5 text-slate-400" />
+                  <EnvelopeIcon className="h-5 w-5 text-ink-400" />
                 </div>
                 <input
                   id="forgot-email"
@@ -230,7 +241,7 @@ export default function LoginPage() {
                   required
                   value={forgotPasswordEmail}
                   onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-slate-300 placeholder-slate-500 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-white/80 backdrop-blur-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-ink-200 placeholder-ink-400 text-ink-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent focus:z-10 sm:text-sm bg-white"
                   placeholder="Enter your email"
                 />
               </div>
@@ -238,13 +249,13 @@ export default function LoginPage() {
 
             {forgotPasswordMessage && (
               <div className={`border rounded-xl p-4 ${
-                forgotPasswordMessage.includes('sent') 
-                  ? 'bg-green-50 border-green-200' 
+                forgotPasswordMessage.includes('sent')
+                  ? 'bg-green-50 border-green-200'
                   : 'bg-red-50 border-red-200'
               }`}>
                 <p className={`text-sm ${
-                  forgotPasswordMessage.includes('sent') 
-                    ? 'text-green-600' 
+                  forgotPasswordMessage.includes('sent')
+                    ? 'text-green-600'
                     : 'text-red-600'
                 }`}>
                   {forgotPasswordMessage}
@@ -260,14 +271,14 @@ export default function LoginPage() {
                   setForgotPasswordMessage('')
                   setForgotPasswordEmail('')
                 }}
-                className="flex-1 py-3 px-4 border border-slate-300 text-sm font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl text-ink-700 bg-ink-100 hover:bg-ink-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-colors duration-200"
               >
                 Back to Login
               </button>
               <button
                 type="submit"
                 disabled={forgotPasswordLoading}
-                className="flex-1 py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-500/25"
+                className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
               >
                 {forgotPasswordLoading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto"></div>
@@ -278,24 +289,14 @@ export default function LoginPage() {
             </div>
           </form>
         )}
+        </div>
 
         {/* Security Notice */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <LockClosedIcon className="h-5 w-5 text-blue-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Secure Login
-              </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>
-                  Your connection is encrypted and secure. We use industry-standard security measures to protect your account.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-8 flex items-start justify-center gap-2 text-ink-400">
+          <LockClosedIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <p className="text-xs leading-relaxed text-center max-w-xs">
+            Your connection is encrypted and secure. We use industry-standard security measures to protect your account.
+          </p>
         </div>
       </div>
     </div>

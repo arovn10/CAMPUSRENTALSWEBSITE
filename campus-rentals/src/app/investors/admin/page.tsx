@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const ACCENT = '#54AAB1'
-
 type Investor = { id: string; name: string; email: string; role: string }
 type PropertyOpt = { id: string; name: string; address: string | null }
 
@@ -59,7 +57,7 @@ export default function AdminIMSPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
-  if (allowed === null) return <div className="p-8 text-gray-500">Loading…</div>
+  if (allowed === null) return <div className="p-8 text-ink-500">Loading…</div>
   if (!allowed) return null
 
   const tabs: { id: Tab; label: string }[] = [
@@ -72,20 +70,19 @@ export default function AdminIMSPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6 lg:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Investor Management</h1>
-      <p className="mt-1 text-sm text-gray-500">Onboard investors, record commitments, issue capital calls, and broadcast updates.</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink-900">Investor Management</h1>
+      <p className="mt-1 text-sm text-ink-500">Onboard investors, record commitments, issue capital calls, and broadcast updates.</p>
 
       {toast && (
         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{toast}</div>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-2 border-b border-gray-200">
+      <div className="mt-6 flex flex-wrap gap-2 border-b border-ink-200">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-semibold ${tab === t.id ? 'border-b-2 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-            style={tab === t.id ? { borderColor: ACCENT } : undefined}
+            className={`rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${tab === t.id ? 'border-b-2 border-accent text-ink-900' : 'text-ink-500 hover:text-ink-700'}`}
           >
             {t.label}
           </button>
@@ -103,14 +100,13 @@ export default function AdminIMSPage() {
   )
 }
 
-const inputCls = 'w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2'
-const ring = { ['--tw-ring-color' as any]: ACCENT }
-const btn = 'rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60'
+const inputCls = 'w-full rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-900 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
+const btn = 'rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{title}</h2>
+    <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-400">{title}</h2>
       {children}
     </div>
   )
@@ -158,38 +154,38 @@ function InvitesTab({ properties, onDone }: { properties: PropertyOpt[]; onDone:
     <div className="space-y-6">
       <Section title="Invite an investor">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <input className={inputCls} style={ring} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <select className={inputCls} style={ring} value={role} onChange={(e) => setRole(e.target.value)}>
+          <input className={inputCls} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="INVESTOR">Investor</option>
             <option value="MANAGER">Manager</option>
           </select>
-          <input className={inputCls} style={ring} placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          <input className={inputCls} style={ring} placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          <select className={inputCls} style={ring} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+          <input className={inputCls} placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <input className={inputCls} placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <select className={inputCls} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
             <option value="">Grant deal access (optional)…</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
-        <button onClick={submit} disabled={busy || !email} className={`mt-4 ${btn}`} style={{ backgroundColor: ACCENT }}>
+        <button onClick={submit} disabled={busy || !email} className={`mt-4 ${btn}`}>
           {busy ? 'Sending…' : 'Send invite'}
         </button>
       </Section>
 
       <Section title={`Invites (${invites.length})`}>
-        {invites.length === 0 ? <p className="text-sm text-gray-400">No invites yet.</p> : (
+        {invites.length === 0 ? <p className="text-sm text-ink-400">No invites yet.</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-gray-500">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
                 <tr><th className="py-2 pr-4">Email</th><th className="py-2 pr-4">Role</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Expires</th></tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-ink-100">
                 {invites.map((i) => (
-                  <tr key={i.id}>
-                    <td className="py-2 pr-4 text-gray-800">{i.email}</td>
-                    <td className="py-2 pr-4 text-gray-600">{i.role}</td>
-                    <td className="py-2 pr-4"><span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">{i.status}</span></td>
-                    <td className="py-2 pr-4 text-gray-500">{dateFmt(i.expiresAt)}</td>
+                  <tr key={i.id} className="hover:bg-ink-50">
+                    <td className="py-2 pr-4 text-ink-800">{i.email}</td>
+                    <td className="py-2 pr-4 text-ink-600">{i.role}</td>
+                    <td className="py-2 pr-4"><span className="rounded-md bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-600">{i.status}</span></td>
+                    <td className="py-2 pr-4 text-ink-500">{dateFmt(i.expiresAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -237,36 +233,36 @@ function CommitmentsTab({ investors, properties, onDone }: { investors: Investor
     <div className="space-y-6">
       <Section title="Record a commitment">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <select className={inputCls} style={ring} value={userId} onChange={(e) => setUserId(e.target.value)}>
+          <select className={inputCls} value={userId} onChange={(e) => setUserId(e.target.value)}>
             <option value="">Select investor…</option>
             {investors.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.email})</option>)}
           </select>
-          <input className={inputCls} style={ring} type="number" placeholder="Amount (USD)" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <select className={inputCls} style={ring} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+          <input className={inputCls} type="number" placeholder="Amount (USD)" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <select className={inputCls} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
             <option value="">Deal (optional)…</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <input className={inputCls} style={ring} placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <input className={inputCls} placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <button onClick={submit} disabled={busy || !userId || !amount} className={`mt-4 ${btn}`} style={{ backgroundColor: ACCENT }}>
+        <button onClick={submit} disabled={busy || !userId || !amount} className={`mt-4 ${btn}`}>
           {busy ? 'Saving…' : 'Record commitment'}
         </button>
       </Section>
 
       <Section title={`All commitments (${rows.length})`}>
-        {rows.length === 0 ? <p className="text-sm text-gray-400">None yet.</p> : (
+        {rows.length === 0 ? <p className="text-sm text-ink-400">None yet.</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-gray-500">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
                 <tr><th className="py-2 pr-4">Deal</th><th className="py-2 pr-4 text-right">Amount</th><th className="py-2 pr-4">Date</th><th className="py-2 pr-4">Status</th></tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-ink-100">
                 {rows.map((r) => (
-                  <tr key={r.id}>
-                    <td className="py-2 pr-4 text-gray-800">{r.dealName ?? '—'}</td>
-                    <td className="py-2 pr-4 text-right text-gray-700">{usd(r.amount)}</td>
-                    <td className="py-2 pr-4 text-gray-500">{dateFmt(r.committedAt)}</td>
-                    <td className="py-2 pr-4 text-gray-600">{r.status}</td>
+                  <tr key={r.id} className="hover:bg-ink-50">
+                    <td className="py-2 pr-4 text-ink-800">{r.dealName ?? '—'}</td>
+                    <td className="py-2 pr-4 text-right text-ink-700">{usd(r.amount)}</td>
+                    <td className="py-2 pr-4 text-ink-500">{dateFmt(r.committedAt)}</td>
+                    <td className="py-2 pr-4 text-ink-600">{r.status}</td>
                   </tr>
                 ))}
               </tbody>
@@ -319,62 +315,62 @@ function CallsTab({ investors, properties, onDone }: { investors: Investor[]; pr
     <div className="space-y-6">
       <Section title="Issue a capital call">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <select className={inputCls} style={ring} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+          <select className={inputCls} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
             <option value="">Deal (optional)…</option>
             {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <input className={inputCls} style={ring} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          <input className={inputCls} style={ring} placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <input className={inputCls} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          <input className={inputCls} placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
-        <p className="mt-4 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Per-investor allocations</p>
+        <p className="mt-4 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Per-investor allocations</p>
         <div className="space-y-2">
           {allocs.map((a, idx) => (
             <div key={idx} className="flex gap-2">
               <select
-                className={inputCls} style={ring} value={a.userId}
+                className={inputCls} value={a.userId}
                 onChange={(e) => setAllocs((p) => p.map((x, i) => (i === idx ? { ...x, userId: e.target.value } : x)))}
               >
                 <option value="">Select investor…</option>
                 {investors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
               <input
-                className={inputCls} style={ring} type="number" placeholder="Amount"
+                className={inputCls} type="number" placeholder="Amount"
                 value={a.amountCalled}
                 onChange={(e) => setAllocs((p) => p.map((x, i) => (i === idx ? { ...x, amountCalled: e.target.value } : x)))}
               />
               <button
                 onClick={() => setAllocs((p) => p.filter((_, i) => i !== idx))}
-                className="rounded-xl border border-gray-300 px-3 text-sm text-gray-500 hover:bg-gray-50"
+                className="rounded-xl border border-ink-200 px-3 text-sm text-ink-500 hover:bg-ink-50"
               >✕</button>
             </div>
           ))}
         </div>
-        <button onClick={() => setAllocs((p) => [...p, { userId: '', amountCalled: '' }])} className="mt-2 text-sm font-semibold" style={{ color: ACCENT }}>
+        <button onClick={() => setAllocs((p) => [...p, { userId: '', amountCalled: '' }])} className="mt-2 text-sm font-semibold text-accent hover:text-[#4b9ba2]">
           + Add investor
         </button>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-sm text-gray-600">Total: <strong>{usd(total)}</strong></span>
-          <button onClick={submit} disabled={busy || total <= 0} className={btn} style={{ backgroundColor: ACCENT }}>
+          <span className="text-sm text-ink-600">Total: <strong>{usd(total)}</strong></span>
+          <button onClick={submit} disabled={busy || total <= 0} className={btn}>
             {busy ? 'Issuing…' : 'Issue capital call'}
           </button>
         </div>
       </Section>
 
       <Section title={`Capital calls (${calls.length})`}>
-        {calls.length === 0 ? <p className="text-sm text-gray-400">None yet.</p> : (
+        {calls.length === 0 ? <p className="text-sm text-ink-400">None yet.</p> : (
           <div className="space-y-3">
             {calls.map((c) => (
-              <div key={c.id} className="rounded-xl border border-gray-200 p-4">
+              <div key={c.id} className="rounded-xl border border-ink-200 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-gray-900">{c.dealName ?? 'Investment'} — {usd(c.totalAmount)}</span>
-                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">{c.status}</span>
+                  <span className="font-semibold text-ink-900">{c.dealName ?? 'Investment'} — {usd(c.totalAmount)}</span>
+                  <span className="rounded-md bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-600">{c.status}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-400">Issued {dateFmt(c.issuedAt)} · due {dateFmt(c.dueDate)}</p>
+                <p className="mt-1 text-xs text-ink-400">Issued {dateFmt(c.issuedAt)} · due {dateFmt(c.dueDate)}</p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {c.responses?.map((r: any) => (
-                    <li key={r.id} className="flex justify-between text-gray-600">
+                    <li key={r.id} className="flex justify-between text-ink-600">
                       <span>{r.investor}</span>
                       <span>{usd(r.amountCalled)} · <span className="font-medium">{r.status}</span></span>
                     </li>
@@ -424,28 +420,28 @@ function AnnouncementsTab({ properties, onDone }: { properties: PropertyOpt[]; o
     <div className="space-y-6">
       <Section title="Broadcast an announcement">
         <div className="space-y-3">
-          <input className={inputCls} style={ring} placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <textarea className={inputCls} style={ring} rows={4} placeholder="Message" value={body} onChange={(e) => setBody(e.target.value)} />
-          <select className={inputCls} style={ring} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+          <input className={inputCls} placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <textarea className={inputCls} rows={4} placeholder="Message" value={body} onChange={(e) => setBody(e.target.value)} />
+          <select className={inputCls} value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
             <option value="">All investors</option>
             {properties.map((p) => <option key={p.id} value={p.id}>Only investors in {p.name}</option>)}
           </select>
         </div>
-        <button onClick={submit} disabled={busy || !title || !body} className={`mt-4 ${btn}`} style={{ backgroundColor: ACCENT }}>
+        <button onClick={submit} disabled={busy || !title || !body} className={`mt-4 ${btn}`}>
           {busy ? 'Sending…' : 'Broadcast'}
         </button>
       </Section>
 
       <Section title={`Sent (${rows.length})`}>
-        {rows.length === 0 ? <p className="text-sm text-gray-400">No announcements yet.</p> : (
+        {rows.length === 0 ? <p className="text-sm text-ink-400">No announcements yet.</p> : (
           <ul className="space-y-2 text-sm">
             {rows.map((r) => (
-              <li key={r.id} className="rounded-xl border border-gray-100 p-3">
+              <li key={r.id} className="rounded-xl border border-ink-100 p-3">
                 <div className="flex justify-between">
-                  <span className="font-semibold text-gray-900">{r.title}</span>
-                  <span className="text-xs text-gray-400">{dateFmt(r.createdAt)} · {r.recipientCount} sent</span>
+                  <span className="font-semibold text-ink-900">{r.title}</span>
+                  <span className="text-xs text-ink-400">{dateFmt(r.createdAt)} · {r.recipientCount} sent</span>
                 </div>
-                <p className="mt-1 text-gray-600">{r.body}</p>
+                <p className="mt-1 text-ink-600">{r.body}</p>
               </li>
             ))}
           </ul>
@@ -509,10 +505,10 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
       <Section title="Pre-compute K-1 allocations (CPA worksheet)">
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Tax year</label>
-            <input className={`${inputCls} w-32`} style={ring} type="number" value={year} onChange={(e) => setYear(e.target.value)} />
+            <label className="mb-1 block text-xs font-medium text-ink-500">Tax year</label>
+            <input className={`${inputCls} w-32`} type="number" value={year} onChange={(e) => setYear(e.target.value)} />
           </div>
-          <button onClick={compute} disabled={loading} className={btn} style={{ backgroundColor: ACCENT }}>
+          <button onClick={compute} disabled={loading} className={btn}>
             {loading ? 'Computing…' : 'Compute allocations'}
           </button>
         </div>
@@ -520,10 +516,10 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
         {allocations && (
           <div className="mt-4 overflow-x-auto">
             {allocations.length === 0 ? (
-              <p className="text-sm text-gray-400">No distributions recorded for {year}.</p>
+              <p className="text-sm text-ink-400">No distributions recorded for {year}.</p>
             ) : (
               <table className="min-w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wider text-gray-500">
+                <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
                   <tr>
                     <th className="py-2 pr-4">Investor</th>
                     <th className="py-2 pr-4 text-right">Rental income</th>
@@ -533,21 +529,21 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
                     <th className="py-2 pr-4 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-ink-100">
                   {allocations.map((a) => (
-                    <tr key={a.userId}>
-                      <td className="py-2 pr-4 text-gray-800">{a.investorName}</td>
-                      <td className="py-2 pr-4 text-right text-gray-600">{usd(a.rentalIncome)}</td>
-                      <td className="py-2 pr-4 text-right text-gray-600">{usd(a.saleProceeds)}</td>
-                      <td className="py-2 pr-4 text-right text-gray-600">{usd(a.refinance)}</td>
-                      <td className="py-2 pr-4 text-right text-gray-600">{usd(a.other)}</td>
-                      <td className="py-2 pr-4 text-right font-semibold text-gray-900">{usd(a.total)}</td>
+                    <tr key={a.userId} className="hover:bg-ink-50">
+                      <td className="py-2 pr-4 text-ink-800">{a.investorName}</td>
+                      <td className="py-2 pr-4 text-right text-ink-600">{usd(a.rentalIncome)}</td>
+                      <td className="py-2 pr-4 text-right text-ink-600">{usd(a.saleProceeds)}</td>
+                      <td className="py-2 pr-4 text-right text-ink-600">{usd(a.refinance)}</td>
+                      <td className="py-2 pr-4 text-right text-ink-600">{usd(a.other)}</td>
+                      <td className="py-2 pr-4 text-right font-semibold text-ink-900">{usd(a.total)}</td>
                     </tr>
                   ))}
                 </tbody>
                 {totals && (
                   <tfoot>
-                    <tr className="border-t-2 border-gray-200 font-semibold text-gray-900">
+                    <tr className="border-t-2 border-ink-200 font-semibold text-ink-900">
                       <td className="py-2 pr-4">Total</td>
                       <td className="py-2 pr-4 text-right">{usd(totals.rentalIncome)}</td>
                       <td className="py-2 pr-4 text-right">{usd(totals.saleProceeds)}</td>
@@ -564,17 +560,17 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
       </Section>
 
       <Section title="Deliver a finalized K-1 PDF to an investor">
-        <p className="mb-3 text-xs text-gray-400">
+        <p className="mb-3 text-xs text-ink-400">
           The PDF is routed to the selected investor only and emailed to them. It appears in their Documents.
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <select className={inputCls} style={ring} value={uploadUserId} onChange={(e) => setUploadUserId(e.target.value)}>
+          <select className={inputCls} value={uploadUserId} onChange={(e) => setUploadUserId(e.target.value)}>
             <option value="">Select investor…</option>
             {investors.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.email})</option>)}
           </select>
-          <input className={inputCls} style={ring} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <input className={inputCls} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         </div>
-        <button onClick={deliver} disabled={uploading || !uploadUserId || !file} className={`mt-4 ${btn}`} style={{ backgroundColor: ACCENT }}>
+        <button onClick={deliver} disabled={uploading || !uploadUserId || !file} className={`mt-4 ${btn}`}>
           {uploading ? 'Delivering…' : 'Upload & deliver K-1'}
         </button>
       </Section>

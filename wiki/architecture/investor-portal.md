@@ -2,6 +2,19 @@
 
 `/investors/*` is a **system of record for investor money**. Every change here follows hard rules 5–7 (Decimal money, additive migrations, ownership-scoped reads).
 
+## UI
+
+The portal shares the CR design system — see [`design-system.md`](design-system.md) (portal recipe: ink-50 canvas, white shadow-soft cards, accent actions, semantic-only green/red/amber). The shell (sidebar + mobile chrome) is `src/app/investors/layout.tsx`; every page follows the recipe as of the 2026-07 overhaul. Restyles must never touch handlers, data flow, or money math (design-system hard rules).
+
+## Investor journey (workflow map)
+
+1. **Invite** — admin console sends invite → `/investors/accept-invite` (token) → account + httpOnly cookie.
+2. **Overview** — dashboard KPIs (real XIRR via `lib/ims/metrics.ts`) → drill into portfolio / capital account.
+3. **Money in** — capital calls page (acknowledge → fund); commitments recorded by admin.
+4. **Money out** — distributions land in banking/capital-account; quarterly PDF statements auto-deliver (cron) or download on demand.
+5. **Paper** — document vault + data rooms (per-investor `DocumentAccess` grants), e-sign queue under Documents to Sign, K-1s delivered per-investor by the admin K-1 workflow.
+6. **Stay informed** — announcements fan out to notifications/updates; analytics page charts the book.
+
 ## Status
 
 IMS v2 is **LIVE in prod** (Phases 1–5, PR #4). Nav on by default; `NEXT_PUBLIC_IMS_V2=0` is the instant kill-switch.

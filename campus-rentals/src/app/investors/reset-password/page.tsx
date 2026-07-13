@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LockClosedIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 
-const ACCENT = '#54AAB1'
-
 function ResetPasswordInner() {
   const router = useRouter()
   const params = useSearchParams()
@@ -58,30 +56,39 @@ function ResetPasswordInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="relative min-h-screen overflow-hidden bg-ink-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Ambient accent glow */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-48 left-1/2 h-[36rem] w-[56rem] -translate-x-1/2 rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+      </div>
+
+      <div className="relative max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-900">Set a new password</h2>
-          <p className="mt-2 text-sm text-slate-600">Choose a new password for your investor account.</p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
+            Investor Portal
+          </p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">Set a new password</h2>
+          <p className="mt-2 text-sm text-ink-300">Choose a new password for your investor account.</p>
         </div>
 
         {done ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-            <CheckCircleIcon className="w-12 h-12 mx-auto" style={{ color: ACCENT }} />
-            <p className="mt-4 text-slate-800 font-semibold">Your password has been reset.</p>
-            <p className="mt-1 text-sm text-slate-500">Redirecting you to sign in…</p>
-            <Link href="/investors/login" className="mt-4 inline-block text-sm font-semibold" style={{ color: ACCENT }}>
+          <div className="bg-white rounded-2xl shadow-lift ring-1 ring-white/10 p-8 text-center">
+            <CheckCircleIcon className="w-12 h-12 mx-auto text-accent" />
+            <p className="mt-4 text-ink-800 font-semibold">Your password has been reset.</p>
+            <p className="mt-1 text-sm text-ink-500">Redirecting you to sign in…</p>
+            <Link href="/investors/login" className="mt-4 inline-block text-sm font-semibold text-accent hover:text-[#4b9ba2] transition-colors">
               Go to sign in
             </Link>
           </div>
         ) : (
-          <form className="mt-8 space-y-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-8" onSubmit={submit}>
+          <form className="mt-8 space-y-5 bg-white rounded-2xl shadow-lift ring-1 ring-white/10 p-8" onSubmit={submit}>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-ink-700 mb-2">
                 New password
               </label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="password"
                   name="password"
@@ -90,14 +97,13 @@ function ResetPasswordInner() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2"
-                  style={{ ['--tw-ring-color' as any]: ACCENT }}
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-ink-200 placeholder-ink-400 text-ink-900 bg-white focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   placeholder="At least 8 characters"
                 />
                 <button
                   type="button"
                   onClick={() => setShow((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 transition-colors"
                   aria-label={show ? 'Hide password' : 'Show password'}
                 >
                   {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -106,11 +112,11 @@ function ResetPasswordInner() {
             </div>
 
             <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="confirm" className="block text-sm font-medium text-ink-700 mb-2">
                 Confirm new password
               </label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="confirm"
                   name="confirm"
@@ -119,8 +125,7 @@ function ResetPasswordInner() {
                   required
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2"
-                  style={{ ['--tw-ring-color' as any]: ACCENT }}
+                  className="w-full pl-10 pr-3 py-3 rounded-xl border border-ink-200 placeholder-ink-400 text-ink-900 bg-white focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   placeholder="Re-enter your password"
                 />
               </div>
@@ -131,14 +136,13 @@ function ResetPasswordInner() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white font-semibold disabled:opacity-60"
-              style={{ backgroundColor: ACCENT }}
+              className="w-full py-3 rounded-xl text-white text-sm font-semibold bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-glow"
             >
               {loading ? 'Resetting…' : 'Reset password'}
             </button>
 
-            <p className="text-center text-sm text-slate-500">
-              <Link href="/investors/login" className="font-semibold" style={{ color: ACCENT }}>
+            <p className="text-center text-sm text-ink-500">
+              <Link href="/investors/login" className="font-semibold text-accent hover:text-[#4b9ba2] transition-colors">
                 Back to sign in
               </Link>
             </p>
@@ -151,7 +155,7 @@ function ResetPasswordInner() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-ink-500">Loading…</div>}>
       <ResetPasswordInner />
     </Suspense>
   )
