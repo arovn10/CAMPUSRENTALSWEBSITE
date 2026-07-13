@@ -20,6 +20,13 @@ Add an entry below (newest first), then update any wiki page whose wrong/missing
 
 ## Incident log
 
+### INC-2026-07-13 — Deploy migrations silently never ran (months of drift)
+
+- **Symptom:** IMS phase 3-5 features (capital calls, documents/data rooms, e-sign) 500'd in prod; found during test-admin E2E.
+- **Root causes (two, stacked):** (1) `migrate:pending` ran in a bare SSH shell without `DATABASE_URL` — every deploy printed "non-critical" and skipped ALL migrations; (2) the runner's statement splitter skipped any statement *beginning* with a `--` comment — which is every `CREATE TABLE` in the legacy files — so even manual runs executed almost nothing ("✅ Executed 0 statements" still logs the file as applied!).
+- **Fix:** runner now loads `campus-rentals/.env(.local)` itself, prefers `DIRECT_DATABASE_URL` (raw pg can't use the Accelerate `prisma://` URL), and only skips statements with no executable SQL. The 14-file backlog then applied cleanly; capital-calls/documents/signatures/announcements verified 200.
+- **Lessons:** "✅ completed successfully" from this runner previously meant nothing — check "Executed N statements" ≥ 1; deploy-log migration failures are NOT non-critical.
+
 ### INC-2026-07-12 — Listings replaced by fake test data (weeks-long, silent)
 
 - **Symptom:** campusrentalsllc.com showed placeholder listings ("1234 Magazine St", "5678 St. Charles Ave"); FAU/Tulane pages empty.
