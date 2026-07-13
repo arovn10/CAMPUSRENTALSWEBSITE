@@ -87,7 +87,17 @@ async function runMigration(client: Client, filePath: string, fileName: string):
     let executedCount = 0
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i]
-      if (!statement || statement.trim().length === 0 || statement.trim().startsWith('--')) {
+      // Skip only statements with NO executable SQL. The old check skipped any
+      // statement that merely BEGAN with a comment line — which silently dropped
+      // most CREATE TABLE statements in these files (they all have '--' headers),
+      // leaving later statements to fail on missing relations.
+      const hasSql = statement
+        .split('\n')
+        .some((l) => {
+          const t = l.trim()
+          return t.length > 0 && !t.startsWith('--')
+        })
+      if (!hasSql) {
         continue
       }
       
