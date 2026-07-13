@@ -6,6 +6,13 @@
 
 The portal shares the CR design system — see [`design-system.md`](design-system.md) (portal recipe: ink-50 canvas, white shadow-soft cards, accent actions, semantic-only green/red/amber). The shell (sidebar + mobile chrome) is `src/app/investors/layout.tsx`; every page follows the recipe as of the 2026-07 overhaul. Restyles must never touch handlers, data flow, or money math (design-system hard rules).
 
+## Banking & self-service layer (2026-07-13)
+
+- **Banking page** is a banking-dashboard: KPI balance strip (contributed / distributed / net position / current value + DPI), a flattened **transactions ledger** across all deals with running balance, type/deal filters, client CSV export, and PDF statement download. Data: `GET /api/investors/capital-account` (ownership-scoped) — no new API surface.
+- **Dashboard** carries a Recent Activity feed (latest ledger entries → banking page).
+- **Profile** is a full self-service editor (contact, primary + mailing address with "same as primary", tax/K-1 profile) against the whitelisted `PUT /api/investors/profile`, plus a self-service password form (`POST /api/investors/users/change-my-password` — NOT the admin-only PasswordManagement endpoints).
+- **Admin console → Investors tab**: searchable directory + edit modal over `PUT /api/admin/users/[id]` (14 whitelisted contact/address fields; role/email never editable). The users GET now uses an explicit Prisma `select` — it previously returned every column including password hashes.
+
 ## Investor journey (workflow map)
 
 1. **Invite** — admin console sends invite → `/investors/accept-invite` (token) → account + httpOnly cookie.

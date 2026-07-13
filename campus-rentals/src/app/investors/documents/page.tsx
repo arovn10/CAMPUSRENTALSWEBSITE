@@ -280,7 +280,7 @@ export default function InvestorDocumentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-slate-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-accent border-t-transparent" />
       </div>
     )
   }
@@ -288,8 +288,8 @@ export default function InvestorDocumentsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8" style={{ fontFamily: 'var(--font-sans)' }}>
       <div>
-        <h1 className="text-[28px] font-semibold text-slate-900 tracking-tight">Documents & receipts</h1>
-        <p className="text-[15px] text-slate-600 mt-1">
+        <h1 className="text-[28px] font-semibold text-ink-900 tracking-tight">Documents & receipts</h1>
+        <p className="text-[15px] text-ink-600 mt-1">
           Upload receipts, tax docs, and deal files. Everything in one place.
         </p>
       </div>
@@ -311,9 +311,9 @@ export default function InvestorDocumentsPage() {
       )}
 
       {isAdmin && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-[18px] font-semibold text-slate-900">Upload</h2>
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 overflow-hidden">
+          <div className="px-6 py-4 border-b border-ink-100 flex flex-wrap items-center justify-between gap-4">
+            <h2 className="text-[18px] font-semibold text-ink-900">Upload</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -322,7 +322,7 @@ export default function InvestorDocumentsPage() {
                   setQuickReceipt(true)
                   setUploadForm((f) => ({ ...f, documentType: 'RECEIPT', entityId: 'company', title: '', file: null }))
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
               >
                 <ReceiptRefundIcon className="w-5 h-5" />
                 Upload receipt
@@ -333,7 +333,7 @@ export default function InvestorDocumentsPage() {
                   setShowUpload(!showUpload)
                   if (!showUpload) setQuickReceipt(false)
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ink-100 text-ink-700 text-sm font-semibold hover:bg-ink-200 transition-colors"
               >
                 <PlusIcon className="w-5 h-5" />
                 {showUpload ? 'Cancel' : 'Upload document'}
@@ -342,14 +342,14 @@ export default function InvestorDocumentsPage() {
           </div>
 
           {showUpload && (
-            <form onSubmit={handleUpload} className="p-6 space-y-4 border-t border-slate-100">
+            <form onSubmit={handleUpload} className="p-6 space-y-4 border-t border-ink-100">
               <div
                 onDragEnter={onDrag}
                 onDragLeave={onDrag}
                 onDragOver={onDrag}
                 onDrop={onDrop}
                 className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${
-                  dragActive ? 'border-slate-400 bg-slate-50' : 'border-slate-200 bg-slate-50/50'
+                  dragActive ? 'border-accent bg-accent/5' : 'border-ink-200 bg-ink-50/50'
                 }`}
               >
                 <input
@@ -360,35 +360,35 @@ export default function InvestorDocumentsPage() {
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
                 <label htmlFor="doc-file" className="cursor-pointer block">
-                  <ArrowUpTrayIcon className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                  <p className="text-slate-700 font-medium">
+                  <ArrowUpTrayIcon className="w-12 h-12 text-ink-400 mx-auto mb-2" />
+                  <p className="text-ink-700 font-medium">
                     {uploadForm.file ? (
                       <span className="text-emerald-600">{uploadForm.file.name}</span>
                     ) : (
                       'Drop a file here or click to choose'
                     )}
                   </p>
-                  <p className="text-slate-500 text-sm mt-1">PDF, Word, Excel, images (JPG, PNG, HEIC). Max {MAX_MB}MB.</p>
+                  <p className="text-ink-500 text-sm mt-1">PDF, Word, Excel, images (JPG, PNG, HEIC). Max {MAX_MB}MB.</p>
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-ink-700 mb-1">Title</label>
                   <input
                     type="text"
                     value={uploadForm.title}
                     onChange={(e) => setUploadForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="e.g. Office supplies receipt"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400"
+                    className="w-full px-3 py-2 border border-ink-200 rounded-xl text-ink-900 placeholder-ink-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-ink-700 mb-1">Type</label>
                   <select
                     value={uploadForm.documentType}
                     onChange={(e) => setUploadForm((f) => ({ ...f, documentType: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900"
+                    className="w-full px-3 py-2 border border-ink-200 rounded-xl text-ink-900 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                   >
                     {DOCUMENT_TYPE_OPTIONS.map((t) => (
                       <option key={t} value={t}>{typeLabel(t)}</option>
@@ -398,18 +398,18 @@ export default function InvestorDocumentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Save to</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Save to</label>
                 <select
                   value={uploadForm.entityId}
                   onChange={(e) => setUploadForm((f) => ({ ...f, entityId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900"
+                  className="w-full px-3 py-2 border border-ink-200 rounded-xl text-ink-900 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                 >
                   <option value="company">Company / General (receipts & expenses)</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   {uploadForm.entityId === 'company'
                     ? 'Only you and other admins see this.'
                     : 'Investors in this property will see this document.'}
@@ -417,20 +417,20 @@ export default function InvestorDocumentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Note (optional)</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Note (optional)</label>
                 <input
                   type="text"
                   value={uploadForm.description}
                   onChange={(e) => setUploadForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="e.g. March 2025"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400"
+                  className="w-full px-3 py-2 border border-ink-200 rounded-xl text-ink-900 placeholder-ink-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={uploading || !uploadForm.file}
-                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? 'Uploading…' : 'Save document'}
               </button>
@@ -440,16 +440,16 @@ export default function InvestorDocumentsPage() {
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <FunnelIcon className="w-5 h-5 text-slate-500" />
-        <span className="text-sm font-medium text-slate-600">Category:</span>
+        <FunnelIcon className="w-5 h-5 text-ink-500" />
+        <span className="text-sm font-medium text-ink-600">Category:</span>
         {CATEGORY_FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               filter === f
-                ? 'bg-slate-900 text-white'
-                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                ? 'bg-ink-900 text-white'
+                : 'bg-white border border-ink-200 text-ink-700 hover:bg-ink-50'
             }`}
           >
             {f === 'all' ? 'All' : categoryLabel(f)}
@@ -473,25 +473,25 @@ export default function InvestorDocumentsPage() {
                   : DocumentDuplicateIcon
 
         return (
-          <div key={cat} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200/80 flex items-center gap-2">
-              <Icon className="w-5 h-5 text-slate-600" />
-              <h2 className="text-[18px] font-semibold text-slate-900">{categoryLabel(cat)}</h2>
+          <div key={cat} className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 overflow-hidden">
+            <div className="px-6 py-4 border-b border-ink-100 flex items-center gap-2">
+              <Icon className="w-5 h-5 text-ink-600" />
+              <h2 className="text-[18px] font-semibold text-ink-900">{categoryLabel(cat)}</h2>
             </div>
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-ink-100">
               {sectionDocs.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50/80">
+                <li key={doc.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-ink-50">
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-ink-100 flex items-center justify-center">
                       {(doc.mimeType || '').startsWith('image/') ? (
-                        <PhotoIcon className="w-5 h-5 text-slate-600" />
+                        <PhotoIcon className="w-5 h-5 text-ink-600" />
                       ) : (
-                        <DocumentTextIcon className="w-5 h-5 text-slate-600" />
+                        <DocumentTextIcon className="w-5 h-5 text-ink-600" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900 truncate">{doc.title}</p>
-                      <div className="flex items-center gap-3 mt-0.5 text-[13px] text-slate-500 flex-wrap">
+                      <p className="font-medium text-ink-900 truncate">{doc.title}</p>
+                      <div className="flex items-center gap-3 mt-0.5 text-[13px] text-ink-500 flex-wrap">
                         <span>{typeLabel(doc.documentType)}</span>
                         <span className="flex items-center gap-1">
                           <CalendarIcon className="w-4 h-4" />
@@ -505,7 +505,7 @@ export default function InvestorDocumentsPage() {
                     <button
                       type="button"
                       onClick={() => handleDownload(doc)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
                     >
                       <ArrowDownTrayIcon className="w-4 h-4" />
                       Download
@@ -514,7 +514,7 @@ export default function InvestorDocumentsPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(doc.id)}
-                        className="p-2 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        className="p-2 rounded-xl text-ink-500 hover:bg-red-50 hover:text-red-600"
                         title="Delete"
                       >
                         <TrashIcon className="w-5 h-5" />
@@ -529,10 +529,10 @@ export default function InvestorDocumentsPage() {
       })}
 
       {filtered.length === 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center">
-          <FolderIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium">No documents yet</p>
-          <p className="text-slate-500 text-sm mt-1">
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-12 text-center">
+          <FolderIcon className="w-12 h-12 text-ink-300 mx-auto mb-4" />
+          <p className="text-ink-600 font-medium">No documents yet</p>
+          <p className="text-ink-500 text-sm mt-1">
             {isAdmin
               ? 'Upload receipts, tax docs, or deal files using the buttons above.'
               : 'Documents and statements will appear here when they’re shared with you.'}

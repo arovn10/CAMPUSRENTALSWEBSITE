@@ -10,9 +10,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Explicit select — findMany without one returned every scalar column to the
+    // client, including the bcrypt password hash and tax IDs (admin-gated, but
+    // still an unnecessary exposure). Only what the console actually renders/edits.
     const users = await prisma.user.findMany({
-      include: {
-        propertyAccess: true
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        company: true,
+        role: true,
+        createdAt: true,
+        address: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        country: true,
+        mailingAddress: true,
+        mailingCity: true,
+        mailingState: true,
+        mailingZipCode: true,
+        mailingCountry: true,
+        propertyAccess: true,
       },
       orderBy: { createdAt: 'desc' }
     })

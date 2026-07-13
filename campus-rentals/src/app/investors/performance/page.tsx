@@ -137,7 +137,7 @@ export default function InvestorPerformancePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-slate-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-accent border-t-transparent" />
       </div>
     )
   }
@@ -146,12 +146,12 @@ export default function InvestorPerformancePage() {
     <div className="max-w-6xl mx-auto space-y-8" style={{ fontFamily: 'var(--font-sans)' }}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold text-slate-900 tracking-tight">Performance</h1>
-          <p className="text-[15px] text-slate-600 mt-1">Returns by property and export for your records</p>
+          <h1 className="text-[28px] font-semibold text-ink-900 tracking-tight">Performance</h1>
+          <p className="text-[15px] text-ink-600 mt-1">Returns by property and export for your records</p>
         </div>
         <button
           onClick={exportCsv}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
         >
           <ArrowDownTrayIcon className="w-5 h-5" />
           Export CSV
@@ -166,40 +166,40 @@ export default function InvestorPerformancePage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="flex items-center gap-2 text-slate-600 text-[13px] font-semibold uppercase tracking-wider">
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-semibold uppercase tracking-wider">
             <CurrencyDollarIcon className="w-5 h-5" />
             Total invested
           </div>
-          <p className="mt-3 text-[28px] font-semibold text-slate-900 tracking-tight">
+          <p className="mt-3 text-[28px] font-semibold text-ink-900 tracking-tight">
             {stats ? formatCurrency(stats.totalInvested) : '—'}
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="text-slate-600 text-[13px] font-semibold uppercase tracking-wider">Current value</div>
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+          <div className="text-ink-400 text-[13px] font-semibold uppercase tracking-wider">Current value</div>
           <p className="mt-3 text-[28px] font-semibold text-emerald-600 tracking-tight">
             {stats ? formatCurrency(stats.currentValue) : '—'}
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="flex items-center gap-2 text-slate-600 text-[13px] font-semibold uppercase tracking-wider">
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-semibold uppercase tracking-wider">
             <ArrowTrendingUpIcon className="w-5 h-5" />
             Total return
           </div>
-          <p className="mt-3 text-[28px] font-semibold text-slate-900 tracking-tight">
+          <p className="mt-3 text-[28px] font-semibold text-ink-900 tracking-tight">
             {stats ? formatCurrency(stats.totalReturn) : '—'}
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="text-slate-600 text-[13px] font-semibold uppercase tracking-wider">IRR</div>
-          <p className="mt-3 text-[28px] font-semibold text-amber-600 tracking-tight">
+        <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+          <div className="text-ink-400 text-[13px] font-semibold uppercase tracking-wider">IRR</div>
+          <p className="mt-3 text-[28px] font-semibold text-accent tracking-tight">
             {stats != null ? `${stats.totalIrr.toFixed(1)}%` : '—'}
           </p>
         </div>
       </div>
 
       {/* YTD note */}
-      <div className="flex items-center gap-2 text-slate-600 text-sm">
+      <div className="flex items-center gap-2 text-ink-600 text-sm">
         <CalendarIcon className="w-5 h-5" />
         <span>
           YTD distributions ({currentYear}): {formatCurrency(ytdDistributions)}
@@ -207,20 +207,20 @@ export default function InvestorPerformancePage() {
       </div>
 
       {/* By property */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200/80 flex items-center gap-2">
-          <BuildingOffice2Icon className="w-5 h-5 text-slate-600" />
-          <h2 className="text-[22px] font-semibold text-slate-900 tracking-tight">By property</h2>
+      <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 overflow-hidden">
+        <div className="px-6 py-4 border-b border-ink-100 flex items-center gap-2">
+          <BuildingOffice2Icon className="w-5 h-5 text-ink-600" />
+          <h2 className="text-[22px] font-semibold text-ink-900 tracking-tight">By property</h2>
         </div>
         <div className="overflow-x-auto">
           {investments.length === 0 ? (
-            <div className="px-6 py-12 text-center text-slate-600 text-[15px]">
+            <div className="px-6 py-12 text-center text-ink-600 text-[15px]">
               No investments. Performance will appear here once you have holdings.
             </div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-[13px] text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200/80">
+                <tr className="text-left text-[13px] text-ink-400 font-semibold uppercase tracking-wider border-b border-ink-100">
                   <th className="px-6 py-4">Property</th>
                   <th className="px-6 py-4 text-right">Invested</th>
                   <th className="px-6 py-4 text-right">Current value</th>
@@ -231,25 +231,25 @@ export default function InvestorPerformancePage() {
               </thead>
               <tbody>
                 {investments.map((inv) => (
-                  <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                  <tr key={inv.id} className="border-b border-ink-100 hover:bg-ink-50">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900 text-[15px]">{inv.propertyName}</p>
-                      {inv.address && <p className="text-[13px] text-slate-500 mt-0.5">{inv.address}</p>}
+                      <p className="font-medium text-ink-900 text-[15px]">{inv.propertyName}</p>
+                      {inv.address && <p className="text-[13px] text-ink-500 mt-0.5">{inv.address}</p>}
                     </td>
-                    <td className="px-6 py-4 text-right text-slate-700 text-[15px]">{formatCurrency(inv.investmentAmount)}</td>
+                    <td className="px-6 py-4 text-right text-ink-700 text-[15px]">{formatCurrency(inv.investmentAmount)}</td>
                     <td className="px-6 py-4 text-right font-medium text-emerald-600 text-[15px]">
                       {inv.currentValue != null ? formatCurrency(inv.currentValue) : '—'}
                     </td>
-                    <td className="px-6 py-4 text-right font-medium text-slate-900 text-[15px]">
+                    <td className="px-6 py-4 text-right font-medium text-ink-900 text-[15px]">
                       {inv.totalReturn != null ? formatCurrency(inv.totalReturn) : '—'}
                     </td>
-                    <td className="px-6 py-4 text-right text-amber-600 text-[15px]">
+                    <td className="px-6 py-4 text-right font-medium text-accent text-[15px]">
                       {inv.irr != null ? `${inv.irr.toFixed(1)}%` : '—'}
                     </td>
                     <td className="px-6 py-4">
                       <Link
                         href={`/investors/investments/${inv.id}`}
-                        className="inline-flex items-center text-slate-500 hover:text-slate-900"
+                        className="inline-flex items-center text-ink-500 hover:text-ink-900"
                       >
                         <ChevronRightIcon className="w-5 h-5" />
                       </Link>

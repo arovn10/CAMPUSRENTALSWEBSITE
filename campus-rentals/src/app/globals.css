@@ -26,8 +26,11 @@
   a {
     @apply text-text hover:text-accent transition-colors duration-200;
   }
+  /* NOTE: buttons style themselves explicitly. A global bg-accent default here
+     painted every unstyled <button> solid teal — link-style buttons rendered as
+     colored bars with invisible text (2026-07-13 IMS login bug). */
   button {
-    @apply bg-accent text-white hover:bg-primary transition-colors duration-200 font-semibold;
+    @apply transition-colors duration-200 font-semibold;
   }
 }
 

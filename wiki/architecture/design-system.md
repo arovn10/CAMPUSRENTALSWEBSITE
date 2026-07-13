@@ -37,3 +37,4 @@ Green = positive money/success, red = negative/error, amber = warning/pending (e
 3. Money rendering keeps existing `Number(...)`/Decimal handling untouched.
 4. Every fullscreen modal: body scroll-lock + `overflow-y-auto` panel (see UI gotchas in `website.md`).
 5. `backdrop-filter` ancestors break `position:fixed` children — overlays render as siblings.
+6. **No global element-level color defaults.** A legacy `@layer base` rule painted every unstyled `<button>` `bg-accent` — link-style buttons rendered as solid teal bars with invisible text (2026-07-13 IMS login bug). Buttons style themselves explicitly; the base layer sets only font/transition.

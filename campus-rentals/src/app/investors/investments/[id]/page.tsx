@@ -2107,17 +2107,17 @@ export default function InvestmentDetailPage() {
     switch (status) {
       case 'ACTIVE': return 'bg-green-100 text-green-800'
       case 'PENDING': return 'bg-yellow-100 text-yellow-800'
-      case 'COMPLETED': return 'bg-blue-100 text-blue-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'COMPLETED': return 'bg-accent/10 text-ink-800'
+      default: return 'bg-ink-100 text-ink-800'
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading investment details...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-ink-600">Loading investment details...</p>
         </div>
       </div>
     )
@@ -2125,16 +2125,16 @@ export default function InvestmentDetailPage() {
 
   if (!investment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Investment not found</p>
+          <p className="text-ink-600">Investment not found</p>
           <button
             onClick={() => {
               // Navigate back to dashboard, preserving the active tab
               const savedTab = sessionStorage.getItem('investorDashboardActiveTab') || 'overview'
               router.push(`/investors/dashboard`)
             }}
-            className="mt-4 text-blue-600 hover:text-blue-700"
+            className="mt-4 text-accent hover:text-[#4b9ba2]"
           >
             Go back
           </button>
@@ -2143,7 +2143,7 @@ export default function InvestmentDetailPage() {
     )
   }
   return (
-    <div className="min-h-screen bg-gray-50 pt-4 pb-8 overflow-x-hidden">
+    <div className="min-h-screen bg-ink-50 pt-4 pb-8 overflow-x-hidden">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2155,21 +2155,21 @@ export default function InvestmentDetailPage() {
                   const savedTab = sessionStorage.getItem('investorDashboardActiveTab') || 'overview'
                   router.push(`/investors/dashboard`)
                 }}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-600 hover:text-ink-900 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{investment.propertyName}</h1>
-                <p className="text-sm text-gray-600">{investment.propertyAddress}</p>
+                <h1 className="text-2xl font-bold text-ink-900">{investment.propertyName}</h1>
+                <p className="text-sm text-ink-600">{investment.propertyAddress}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               {/* Edit button removed - investment detail page is view-only */}
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-ink-800">
                 {currentUser?.role}
               </span>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-ink-600">
                 {currentUser?.firstName} {currentUser?.lastName}
               </span>
             </div>
@@ -2182,8 +2182,8 @@ export default function InvestmentDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Investment Overview */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Investment Overview</h2>
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+              <h2 className="text-xl font-semibold text-ink-900 mb-6">Investment Overview</h2>
               {(() => {
                 // Always show total investment amount (same as admin view) - investors see the same data
                 // Calculate total investment from individual investor amounts
@@ -2203,42 +2203,42 @@ export default function InvestmentDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                        <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                        <CurrencyDollarIcon className="h-5 w-5 text-ink-400" />
                         <div>
-                          <p className="text-sm text-gray-600">Investment Amount</p>
-                          <p className="text-lg font-semibold text-gray-900">
+                          <p className="text-sm text-ink-600">Investment Amount</p>
+                          <p className="text-lg font-semibold text-ink-900">
                             {formatCurrency(displayInvestmentAmount)}
                           </p>
                         </div>
                       </div>
                   <div className="flex items-center space-x-3">
-                    <ChartBarIcon className="h-5 w-5 text-gray-400" />
+                    <ChartBarIcon className="h-5 w-5 text-ink-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Ownership Percentage</p>
-                      <p className="text-lg font-semibold text-gray-900">{formatPercentage(investment.ownershipPercentage)}</p>
+                      <p className="text-sm text-ink-600">Ownership Percentage</p>
+                      <p className="text-lg font-semibold text-ink-900">{formatPercentage(investment.ownershipPercentage)}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <CalendarIcon className="h-5 w-5 text-gray-400" />
+                    <CalendarIcon className="h-5 w-5 text-ink-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Investment Date</p>
-                      <p className="text-lg font-semibold text-gray-900">{formatDate(investment.investmentDate)}</p>
+                      <p className="text-sm text-ink-600">Investment Date</p>
+                      <p className="text-lg font-semibold text-ink-900">{formatDate(investment.investmentDate)}</p>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
-                    <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                    <BuildingOfficeIcon className="h-5 w-5 text-ink-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Property Type</p>
-                      <p className="text-lg font-semibold text-gray-900">{investment.property.propertyType}</p>
+                      <p className="text-sm text-ink-600">Property Type</p>
+                      <p className="text-lg font-semibold text-ink-900">{investment.property.propertyType}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <HomeIcon className="h-5 w-5 text-gray-400" />
+                    <HomeIcon className="h-5 w-5 text-ink-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Property Details</p>
-                      <p className="text-lg font-semibold text-gray-900">{investment.property.bedrooms} bed, {investment.property.bathrooms} bath</p>
+                      <p className="text-sm text-ink-600">Property Details</p>
+                      <p className="text-lg font-semibold text-ink-900">{investment.property.bedrooms} bed, {investment.property.bathrooms} bath</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -2247,10 +2247,10 @@ export default function InvestmentDetailPage() {
                     </span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <BanknotesIcon className="h-5 w-5 text-gray-400" />
+                    <BanknotesIcon className="h-5 w-5 text-ink-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Debt Amount</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-sm text-ink-600">Debt Amount</p>
+                      <p className="text-lg font-semibold text-ink-900">
                         {investment.property.debtAmount ? formatCurrency(investment.property.debtAmount) : 'No debt recorded'}
                       </p>
                     </div>
@@ -2262,29 +2262,29 @@ export default function InvestmentDetailPage() {
             </div>
 
             {/* Property Details */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Property Details</h2>
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+              <h2 className="text-xl font-semibold text-ink-900 mb-6">Property Details</h2>
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">{investment.property.name}</h3>
-                  <p className="text-gray-600">{investment.property.address}</p>
+                  <h3 className="text-lg font-medium text-ink-900">{investment.property.name}</h3>
+                  <p className="text-ink-600">{investment.property.address}</p>
                 </div>
-                <p className="text-gray-700">{investment.property.description}</p>
+                <p className="text-ink-700">{investment.property.description}</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                   <div>
-                    <p className="text-sm text-gray-600">Square Feet</p>
+                    <p className="text-sm text-ink-600">Square Feet</p>
                     <p className="font-medium">{investment.property.squareFeet.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Monthly Rent</p>
+                    <p className="text-sm text-ink-600">Monthly Rent</p>
                     <p className="font-medium">{formatCurrency(investment.property.monthlyRent)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Cap Rate</p>
+                    <p className="text-sm text-ink-600">Cap Rate</p>
                     <p className="font-medium">{formatPercentage(investment.property.capRate)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Occupancy</p>
+                    <p className="text-sm text-ink-600">Occupancy</p>
                     <p className="font-medium">{formatPercentage(investment.property.occupancyRate)}</p>
                   </div>
                 </div>
@@ -2293,7 +2293,7 @@ export default function InvestmentDetailPage() {
 
             {/* Deal Photos */}
             {investment && investment.property && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
                 <DealPhotoManager 
                   propertyId={investment.property.id}
                   investmentId={investment.id} // Fallback for backward compatibility
@@ -2312,16 +2312,16 @@ export default function InvestmentDetailPage() {
             )}
 
             {/* Financial Breakdown */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Financial Breakdown</h2>
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+              <h2 className="text-xl font-semibold text-ink-900 mb-6">Financial Breakdown</h2>
               <div className="space-y-6">
                 {/* Cost Structure */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Cost Structure</h3>
+                  <h3 className="text-lg font-medium text-ink-900 mb-4">Cost Structure</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-600 font-medium">Acquisition Price</p>
-                      <p className="text-xl font-bold text-blue-900">
+                    <div className="p-4 bg-accent/5 rounded-lg">
+                      <p className="text-sm text-accent font-medium">Acquisition Price</p>
+                      <p className="text-xl font-bold text-ink-900">
                         {formatCurrency(investment.property.acquisitionPrice || 0)}
                       </p>
                     </div>
@@ -2331,9 +2331,9 @@ export default function InvestmentDetailPage() {
                         {formatCurrency(investment.property.constructionCost || 0)}
                       </p>
                     </div>
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-purple-600 font-medium">Total Cost</p>
-                      <p className="text-xl font-bold text-purple-900">
+                    <div className="p-4 bg-accent/5 rounded-lg">
+                      <p className="text-sm text-accent font-medium">Total Cost</p>
+                      <p className="text-xl font-bold text-ink-900">
                         {formatCurrency(investment.property.totalCost || 0)}
                       </p>
                     </div>
@@ -2342,7 +2342,7 @@ export default function InvestmentDetailPage() {
 
                 {/* Debt & Value */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Debt & Value</h3>
+                  <h3 className="text-lg font-medium text-ink-900 mb-4">Debt & Value</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-red-50 rounded-lg">
                       <p className="text-sm text-red-600 font-medium">Total Debt</p>
@@ -2367,7 +2367,7 @@ export default function InvestmentDetailPage() {
 
                 {/* Equity Analysis */}
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Equity Analysis</h3>
+                  <h3 className="text-lg font-medium text-ink-900 mb-4">Equity Analysis</h3>
                   {(() => {
                     // Calculate total investment from entity investments
                     const totalInvestmentFromEntities = propertyEntityInvestments.reduce(
@@ -2388,18 +2388,18 @@ export default function InvestmentDetailPage() {
                     
                     return (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600 font-medium">Total Investment</p>
-                          <p className="text-xl font-bold text-gray-900">
+                        <div className="p-4 bg-ink-50 rounded-lg">
+                          <p className="text-sm text-ink-600 font-medium">Total Investment</p>
+                          <p className="text-xl font-bold text-ink-900">
                             {formatCurrency(totalInvestmentFromEntities)}
                           </p>
                         </div>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-600 font-medium">Equity to Cost</p>
-                          <p className="text-xl font-bold text-blue-900">
+                        <div className="p-4 bg-accent/5 rounded-lg">
+                          <p className="text-sm text-accent font-medium">Equity to Cost</p>
+                          <p className="text-xl font-bold text-ink-900">
                             {formatCurrency(equityToCostAmount)}
                           </p>
-                          <p className="text-sm text-blue-700 mt-1">
+                          <p className="text-sm text-accent mt-1">
                             {formatPercentage(equityToCostPercentage)} of total cost
                           </p>
                         </div>
@@ -2430,8 +2430,8 @@ export default function InvestmentDetailPage() {
 
 
             {/* Investor Details and Entity Structure */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Investor Details & Entity Structure</h2>
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+              <h2 className="text-xl font-semibold text-ink-900 mb-6">Investor Details & Entity Structure</h2>
               
 
 
@@ -2439,12 +2439,12 @@ export default function InvestmentDetailPage() {
               {propertyEntityInvestments.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">Entity Investments</h3>
+                    <h3 className="text-lg font-medium text-ink-900">Entity Investments</h3>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-ink-600">
                         {propertyEntityInvestments.length} entit{propertyEntityInvestments.length !== 1 ? 'ies' : 'y'}
                       </span>
-                      <span className="text-sm text-blue-600 font-medium">
+                      <span className="text-sm text-accent font-medium">
                         {propertyEntityInvestments.reduce((total: number, ei: any) => 
                           total + (ei.entity.entityOwners?.length || 0), 0
                         )} total individual investors
@@ -2452,27 +2452,27 @@ export default function InvestmentDetailPage() {
                     </div>
                   </div>
                   {propertyEntityInvestments.map((entityInvestment) => (
-                    <div key={entityInvestment.id} className="p-4 bg-gray-50 rounded-lg">
+                    <div key={entityInvestment.id} className="p-4 bg-ink-50 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <h4 className="font-medium text-gray-900">{entityInvestment.entity.name}</h4>
-                          <p className="text-sm text-gray-600">{entityInvestment.entity.type}</p>
+                          <h4 className="font-medium text-ink-900">{entityInvestment.entity.name}</h4>
+                          <p className="text-sm text-ink-600">{entityInvestment.entity.type}</p>
                         </div>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
-                          <p className="text-sm text-gray-600">Total Investment</p>
-                          <p className="font-medium text-gray-900">{formatCurrency(entityInvestment.investmentAmount)}</p>
+                          <p className="text-sm text-ink-600">Total Investment</p>
+                          <p className="font-medium text-ink-900">{formatCurrency(entityInvestment.investmentAmount)}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Ownership %</p>
-                          <p className="font-medium text-gray-900">{formatPercentage(entityInvestment.ownershipPercentage)}</p>
+                          <p className="text-sm text-ink-600">Ownership %</p>
+                          <p className="font-medium text-ink-900">{formatPercentage(entityInvestment.ownershipPercentage)}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Investment Date</p>
-                          <p className="font-medium text-gray-900">{formatDate(entityInvestment.investmentDate)}</p>
+                          <p className="text-sm text-ink-600">Investment Date</p>
+                          <p className="font-medium text-ink-900">{formatDate(entityInvestment.investmentDate)}</p>
                         </div>
                       </div>
 
@@ -2488,40 +2488,40 @@ export default function InvestmentDetailPage() {
                         return (
                           <div className="mt-4">
                             <div className="flex items-center justify-between mb-3">
-                              <h5 className="text-sm font-medium text-gray-700">Individual Investors ({ownersToDisplay.length})</h5>
+                              <h5 className="text-sm font-medium text-ink-700">Individual Investors ({ownersToDisplay.length})</h5>
                               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                 {ownersToDisplay.length} investor{ownersToDisplay.length !== 1 ? 's' : ''}
                               </span>
                             </div>
                             <div className="space-y-3">
                               {ownersToDisplay.map((owner: any) => (
-                              <div key={owner.id} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                              <div key={owner.id} className="p-4 bg-white rounded-lg shadow-soft ring-1 ring-ink-900/5 hover:shadow-md transition-shadow duration-200">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                                      <span className="text-blue-700 font-semibold text-sm">
+                                    <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
+                                      <span className="text-accent font-semibold text-sm">
                                         {owner.user?.firstName || owner.user?.lastName ? `${(owner.user?.firstName || '').charAt(0)}${(owner.user?.lastName || '').charAt(0)}` : '🏢'}
                                       </span>
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-gray-900">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</p>
-                                      <p className="text-sm text-gray-600">{owner.user?.email || (owner.investorEntity?.name ? 'Entity investor' : '')}</p>
+                                      <p className="font-semibold text-ink-900">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</p>
+                                      <p className="text-sm text-ink-600">{owner.user?.email || (owner.investorEntity?.name ? 'Entity investor' : '')}</p>
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                                    <span className="text-sm bg-accent/10 text-ink-800 px-3 py-1 rounded-full font-medium">
                                       {formatPercentage(owner.ownershipPercentage)} of entity
                                     </span>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <div className="bg-gray-50 p-3 rounded-lg">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Investment Amount</p>
-                                    <p className="font-bold text-gray-900 text-lg">{formatCurrency(owner.investmentAmount)}</p>
+                                  <div className="bg-ink-50 p-3 rounded-lg">
+                                    <p className="text-xs text-ink-500 font-medium uppercase tracking-wide">Investment Amount</p>
+                                    <p className="font-bold text-ink-900 text-lg">{formatCurrency(owner.investmentAmount)}</p>
                                   </div>
-                                  <div className="bg-blue-50 p-3 rounded-lg">
-                                    <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Entity Ownership</p>
-                                    <p className="font-bold text-blue-700 text-lg">{formatPercentage(owner.ownershipPercentage)}</p>
+                                  <div className="bg-accent/5 p-3 rounded-lg">
+                                    <p className="text-xs text-accent font-medium uppercase tracking-wide">Entity Ownership</p>
+                                    <p className="font-bold text-accent text-lg">{formatPercentage(owner.ownershipPercentage)}</p>
                                   </div>
                                   <div className="bg-green-50 p-3 rounded-lg">
                                     <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Property Ownership</p>
@@ -2531,18 +2531,18 @@ export default function InvestmentDetailPage() {
                                   </div>
                                 </div>
                                 {Array.isArray(owner.breakdown) && owner.breakdown.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t border-gray-100">
+                                  <div className="mt-3 pt-3 border-t border-ink-100">
                                     <button
                                       type="button"
                                       onClick={() => setOpenOwnerBreakdownId(openOwnerBreakdownId === owner.id ? null : owner.id)}
-                                      className="text-xs text-blue-600 hover:text-blue-700"
+                                      className="text-xs text-accent hover:text-[#4b9ba2]"
                                     >
                                       {openOwnerBreakdownId === owner.id ? 'Hide entity investment breakdown' : 'View entity investment breakdown'}
                                     </button>
                                     {openOwnerBreakdownId === owner.id && (
                                       <div className="mt-2 space-y-1">
                                         {owner.breakdown.map((row: any) => (
-                                          <div key={row.id} className="flex justify-between text-xs text-gray-700">
+                                          <div key={row.id} className="flex justify-between text-xs text-ink-700">
                                             <span>{row.label}</span>
                                             <span className="font-medium">{formatCurrency(parseFloat(row.amount || 0))}</span>
                                           </div>
@@ -2551,8 +2551,8 @@ export default function InvestmentDetailPage() {
                                     )}
                                   </div>
                                 )}
-                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                  <div className="flex justify-between text-xs text-gray-500">
+                                <div className="mt-3 pt-3 border-t border-ink-100">
+                                  <div className="flex justify-between text-xs text-ink-500">
                                     <span className="font-medium">Entity: {entityInvestment.entity.name}</span>
                                     <span className="font-medium">Type: {entityInvestment.entity.type}</span>
                                   </div>
@@ -2570,16 +2570,16 @@ export default function InvestmentDetailPage() {
 
 
               {/* Property Timeline */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Property Timeline</h3>
+              <div className="mt-6 pt-6 border-t border-ink-200">
+                <h3 className="text-lg font-medium text-ink-900 mb-3">Property Timeline</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Acquisition Date</p>
-                    <p className="font-medium text-gray-900">{investment.property.acquisitionDate ? formatDate(investment.property.acquisitionDate) : 'N/A'}</p>
+                    <p className="text-sm text-ink-600">Acquisition Date</p>
+                    <p className="font-medium text-ink-900">{investment.property.acquisitionDate ? formatDate(investment.property.acquisitionDate) : 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Time Held</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-ink-600">Time Held</p>
+                    <p className="font-medium text-ink-900">
                       {investment.property.acquisitionDate ? 
                         `${Math.floor((new Date().getTime() - new Date(investment.property.acquisitionDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} years` : 
                         'N/A'
@@ -2587,52 +2587,52 @@ export default function InvestmentDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Acquisition Price</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(investment.property.acquisitionPrice)}</p>
+                    <p className="text-sm text-ink-600">Acquisition Price</p>
+                    <p className="font-medium text-ink-900">{formatCurrency(investment.property.acquisitionPrice)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Current Value</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(getCurrentNOICalculation())}</p>
+                    <p className="text-sm text-ink-600">Current Value</p>
+                    <p className="font-medium text-ink-900">{formatCurrency(getCurrentNOICalculation())}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Distributions */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Distributions</h2>
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
+              <h2 className="text-xl font-semibold text-ink-900 mb-6">Distributions</h2>
               
               {/* Waterfall Distributions */}
               {waterfallStructures.some(structure => structure.waterfallDistributions && structure.waterfallDistributions.length > 0) ? (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-800 mb-3">Waterfall Distributions</h3>
+                  <h3 className="text-lg font-medium text-ink-800 mb-3">Waterfall Distributions</h3>
                   {waterfallStructures.map(structure => 
                     structure.waterfallDistributions && structure.waterfallDistributions.length > 0 && 
                     structure.waterfallDistributions.map((distribution: any) => (
-                      <div key={distribution.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div key={distribution.id} className="p-4 bg-accent/5 rounded-lg border border-accent/20">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <p className="font-medium text-gray-900">{distribution.description || `Distribution from ${structure.name}`}</p>
-                            <p className="text-sm text-gray-600">{formatDate(distribution.distributionDate)}</p>
-                            <p className="text-xs text-blue-600">Waterfall: {structure.name}</p>
+                            <p className="font-medium text-ink-900">{distribution.description || `Distribution from ${structure.name}`}</p>
+                            <p className="text-sm text-ink-600">{formatDate(distribution.distributionDate)}</p>
+                            <p className="text-xs text-accent">Waterfall: {structure.name}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-green-600">{formatCurrency(distribution.totalAmount)}</p>
-                            <p className="text-sm text-gray-600">{distribution.distributionType}</p>
+                            <p className="text-sm text-ink-600">{distribution.distributionType}</p>
                           </div>
                         </div>
                         
                         {/* Distribution Breakdown */}
-                        <div className="mt-3 pt-3 border-t border-blue-200">
+                        <div className="mt-3 pt-3 border-t border-accent/20">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm font-medium text-gray-700">Distribution Breakdown</p>
+                            <p className="text-sm font-medium text-ink-700">Distribution Breakdown</p>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => {
                                   // Fetch and display detailed breakdown
                                   fetchDistributionBreakdown(distribution.id)
                                 }}
-                                className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-100 px-2 py-1 rounded transition-colors duration-200"
+                                className="text-xs text-accent hover:text-[#4b9ba2] hover:bg-accent/10 px-2 py-1 rounded transition-colors duration-200"
                               >
                                 View Details
                               </button>
@@ -2660,12 +2660,12 @@ export default function InvestmentDetailPage() {
                           {/* Quick Summary */}
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div className="bg-white p-2 rounded border">
-                              <p className="text-gray-600">Total Distributed</p>
+                              <p className="text-ink-600">Total Distributed</p>
                               <p className="font-medium text-green-600">{formatCurrency(distribution.totalAmount)}</p>
                             </div>
                             <div className="bg-white p-2 rounded border">
-                              <p className="text-gray-600">Status</p>
-                              <p className="font-medium text-blue-600">{distribution.isProcessed ? 'Processed' : 'Pending'}</p>
+                              <p className="text-ink-600">Status</p>
+                              <p className="font-medium text-accent">{distribution.isProcessed ? 'Processed' : 'Pending'}</p>
                             </div>
                           </div>
                         </div>
@@ -2679,17 +2679,17 @@ export default function InvestmentDetailPage() {
               {investment.distributions.length > 0 ? (
                 <div className="space-y-4">
                   {waterfallStructures.some(structure => structure.waterfallDistributions && structure.waterfallDistributions.length > 0) && (
-                    <h3 className="text-lg font-medium text-gray-800 mb-3 mt-6">Legacy Distributions</h3>
+                    <h3 className="text-lg font-medium text-ink-800 mb-3 mt-6">Legacy Distributions</h3>
                   )}
                   {investment.distributions.map((distribution) => (
-                    <div key={distribution.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={distribution.id} className="flex items-center justify-between p-4 bg-ink-50 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">{distribution.description}</p>
-                        <p className="text-sm text-gray-600">{formatDate(distribution.distributionDate)}</p>
+                        <p className="font-medium text-ink-900">{distribution.description}</p>
+                        <p className="text-sm text-ink-600">{formatDate(distribution.distributionDate)}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-green-600">{formatCurrency(distribution.amount)}</p>
-                        <p className="text-sm text-gray-600">{distribution.distributionType}</p>
+                        <p className="text-sm text-ink-600">{distribution.distributionType}</p>
                       </div>
                     </div>
                   ))}
@@ -2700,25 +2700,25 @@ export default function InvestmentDetailPage() {
               {allDistributions.length > 0 ? (
                 <div className="space-y-3">
                   {allDistributions.map((distribution) => (
-                    <div key={distribution.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <div key={distribution.id} className="flex items-center justify-between p-3 bg-ink-50 rounded-lg hover:bg-ink-100 transition-colors duration-200">
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-ink-900">
                             {formatCurrency(distribution.totalAmount)}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-ink-600">
                             {formatDate(distribution.distributionDate)} • {distribution.waterfallStructure?.name || 'Global Structure'}
                           </p>
                           {distribution.description && (
-                            <p className="text-xs text-gray-500">{distribution.description}</p>
+                            <p className="text-xs text-ink-500">{distribution.description}</p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => fetchDistributionBreakdown(distribution.id)}
-                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                           title="View Breakdown"
                         >
                           <EyeIcon className="h-4 w-4" />
@@ -2746,7 +2746,7 @@ export default function InvestmentDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600">No distributions yet</p>
+                <p className="text-ink-600">No distributions yet</p>
               )}
             </div>
           </div>
@@ -2760,11 +2760,11 @@ export default function InvestmentDetailPage() {
                 readOnly={currentUser?.role === 'INVESTOR'}
               />
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
                 <div className="animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                  <div className="h-6 bg-ink-200 rounded w-48 mb-4"></div>
                   <div className="space-y-3">
-                    <div className="h-20 bg-gray-100 rounded"></div>
+                    <div className="h-20 bg-ink-100 rounded"></div>
                   </div>
                 </div>
               </div>
@@ -2778,11 +2778,11 @@ export default function InvestmentDetailPage() {
                 readOnly={currentUser?.role === 'INVESTOR'}
               />
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
                 <div className="animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                  <div className="h-6 bg-ink-200 rounded w-48 mb-4"></div>
                   <div className="space-y-3">
-                    <div className="h-20 bg-gray-100 rounded"></div>
+                    <div className="h-20 bg-ink-100 rounded"></div>
                   </div>
                 </div>
               </div>
@@ -2792,9 +2792,9 @@ export default function InvestmentDetailPage() {
 
             {/* Entity Management (Admin only) */}
             {currentUser?.role === 'ADMIN' && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Entity Management</h2>
+                  <h2 className="text-xl font-semibold text-ink-900">Entity Management</h2>
                   <button
                     onClick={async () => {
                       if (availableEntities.length === 0) {
@@ -2802,15 +2802,15 @@ export default function InvestmentDetailPage() {
                       }
                       setShowSelectEntityModal(true)
                     }}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-600">Active entities in this project:</p>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    <p className="text-sm text-ink-600">Active entities in this project:</p>
+                    <span className="text-xs bg-accent/10 text-ink-800 px-2 py-1 rounded-full">
                       {propertyEntityInvestments.length} {propertyEntityInvestments.length === 1 ? 'entity' : 'entities'}
                     </span>
                   </div>
@@ -2818,18 +2818,18 @@ export default function InvestmentDetailPage() {
                   {propertyEntityInvestments.length > 0 ? (
                     <div className="space-y-3">
                       {propertyEntityInvestments.map((entityInvestment) => (
-                        <div key={entityInvestment.id} className="bg-gray-50 rounded-lg p-3">
+                        <div key={entityInvestment.id} className="bg-ink-50 rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium text-gray-900">{entityInvestment.entity.name}</p>
-                              <p className="text-sm text-gray-600">{entityInvestment.entity.type}</p>
-                              <p className="text-xs text-blue-600">{formatCurrency(entityInvestment.investmentAmount)} • {formatPercentage(parseFloat(entityInvestment.ownershipPercentage || '0'))}</p>
+                              <p className="font-medium text-ink-900">{entityInvestment.entity.name}</p>
+                              <p className="text-sm text-ink-600">{entityInvestment.entity.type}</p>
+                              <p className="text-xs text-accent">{formatCurrency(entityInvestment.investmentAmount)} • {formatPercentage(parseFloat(entityInvestment.ownershipPercentage || '0'))}</p>
                             </div>
                             <div className="flex items-center space-x-2">
                               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span>
                               <button
                                 onClick={() => handleEditEntity(entityInvestment)}
-                                className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors duration-200"
+                                className="p-1 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded transition-colors duration-200"
                                 title="Edit Entity"
                               >
                                 <PencilIcon className="h-4 w-4" />
@@ -2846,13 +2846,13 @@ export default function InvestmentDetailPage() {
                           
                           {/* Entity Owners - prefer per-deal owners if available */}
                           {((entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0) || (entityInvestment.entity.entityOwners && entityInvestment.entity.entityOwners.length > 0)) && (
-                            <div className="mt-2 pt-2 border-t border-gray-200">
-                              <p className="text-xs font-medium text-gray-700 mb-1">Investors:</p>
+                            <div className="mt-2 pt-2 border-t border-ink-200">
+                              <p className="text-xs font-medium text-ink-700 mb-1">Investors:</p>
                               <div className="space-y-1">
                                 {(entityInvestment.entityInvestmentOwners && entityInvestment.entityInvestmentOwners.length > 0 ? entityInvestment.entityInvestmentOwners : entityInvestment.entity.entityOwners).map((owner: any) => (
                                   <div key={owner.id} className="flex justify-between text-xs">
-                                    <span className="text-gray-600">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</span>
-                                    <span className="text-gray-800">{formatPercentage(owner.ownershipPercentage)} • {formatCurrency(owner.investmentAmount)}</span>
+                                    <span className="text-ink-600">{owner.user?.firstName || owner.user?.lastName ? `${owner.user?.firstName || ''} ${owner.user?.lastName || ''}`.trim() : (owner.investorEntity?.name || 'Investing Entity')}</span>
+                                    <span className="text-ink-800">{formatPercentage(owner.ownershipPercentage)} • {formatCurrency(owner.investmentAmount)}</span>
                                   </div>
                                 ))}
                               </div>
@@ -2862,7 +2862,7 @@ export default function InvestmentDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">No entities active in this project</p>
+                    <p className="text-sm text-ink-500 italic">No entities active in this project</p>
                   )}
                   
                   <button
@@ -2872,7 +2872,7 @@ export default function InvestmentDetailPage() {
                       }
                       setShowSelectEntityModal(true)
                     }}
-                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add New Entity
                   </button>
@@ -2887,9 +2887,9 @@ export default function InvestmentDetailPage() {
 
             {/* NOI Calculator */}
             {(((investment as any)?.property as any)?.['dealStatus']) !== 'UNDER_CONSTRUCTION' && (
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">NOI Calculator</h2>
+                <h2 className="text-xl font-semibold text-ink-900">NOI Calculator</h2>
                 {currentUser?.role !== 'INVESTOR' && (
                 <button
                   onClick={() => {
@@ -2902,7 +2902,7 @@ export default function InvestmentDetailPage() {
                     })
                     setShowNOIModal(true)
                   }}
-                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                 >
                   <CalculatorIcon className="h-5 w-5" />
                 </button>
@@ -2910,34 +2910,34 @@ export default function InvestmentDetailPage() {
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Annual Rent:</span>
+                  <span className="text-sm text-ink-600">Annual Rent:</span>
                   <span className="font-medium">{formatCurrency((investment?.property?.monthlyRent || 0) * 12)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Annual Other Income:</span>
+                  <span className="text-sm text-ink-600">Annual Other Income:</span>
                   <span className="font-medium">{formatCurrency((investment?.property?.otherIncome || 0) * 12)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Annual Revenue:</span>
+                  <span className="text-sm text-ink-600">Annual Revenue:</span>
                   <span className="font-medium">{formatCurrency(((investment?.property?.monthlyRent || 0) * 12) + ((investment?.property?.otherIncome || 0) * 12))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Annual Expenses:</span>
+                  <span className="text-sm text-ink-600">Annual Expenses:</span>
                   <span className="font-medium">{formatCurrency(investment?.property?.annualExpenses || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">NOI:</span>
+                  <span className="text-sm text-ink-600">NOI:</span>
                   <span className="font-medium text-green-600">
                     {formatCurrency(((investment?.property?.monthlyRent || 0) * 12) + ((investment?.property?.otherIncome || 0) * 12) - (investment?.property?.annualExpenses || 0))}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Cap Rate:</span>
+                  <span className="text-sm text-ink-600">Cap Rate:</span>
                   <span className="font-medium">{formatPercentage(investment?.property?.capRate || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Estimated Value:</span>
-                  <span className="font-medium text-blue-600">
+                  <span className="text-sm text-ink-600">Estimated Value:</span>
+                  <span className="font-medium text-accent">
                     {investment?.property?.capRate > 0 ? 
                       formatCurrency((((investment?.property?.monthlyRent || 0) * 12) + ((investment?.property?.otherIncome || 0) * 12) - (investment?.property?.annualExpenses || 0)) / (investment?.property?.capRate / 100)) : 
                       'N/A'
@@ -2956,7 +2956,7 @@ export default function InvestmentDetailPage() {
                       })
                       setShowNOIModal(true)
                     }}
-                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Update NOI Calculations
                   </button>
@@ -2967,15 +2967,15 @@ export default function InvestmentDetailPage() {
 
             {/* Deal Status Management (Admins/Managers) */}
             {((currentUser as any)?.role === 'ADMIN' || (currentUser as any)?.role === 'MANAGER') && (
-              <div className="bg-white rounded-2xl shadow-sm border p-6">
+              <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Deal Status</h2>
+                  <h2 className="text-xl font-semibold text-ink-900">Deal Status</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Deal Status</label>
+                    <label className="block text-sm font-medium text-ink-700 mb-2">Deal Status</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       value={(investment as any)?.property?.dealStatus || 'STABILIZED'}
                       onChange={async (e) => {
                         const dealStatus = e.target.value
@@ -2997,9 +2997,9 @@ export default function InvestmentDetailPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Funding Status</label>
+                    <label className="block text-sm font-medium text-ink-700 mb-2">Funding Status</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       value={(investment as any)?.property?.fundingStatus || 'FUNDED'}
                       onChange={async (e) => {
                         const fundingStatus = e.target.value
@@ -3022,13 +3022,13 @@ export default function InvestmentDetailPage() {
             )}
 
             {/* Insurance Information - Visible to all, but edit controls only for Admin/Manager */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Insurance</h2>
+                <h2 className="text-xl font-semibold text-ink-900">Insurance</h2>
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowInsuranceModal(true)}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
@@ -3038,18 +3038,18 @@ export default function InvestmentDetailPage() {
                 {insuranceHistory.length > 0 ? (
                   <div className="space-y-2">
                     {insuranceHistory.slice(0, 3).map((insurance: any) => (
-                      <div key={insurance.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div key={insurance.id} className="p-3 bg-ink-50 rounded-lg">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{insurance.provider}</p>
-                            <p className="text-sm text-gray-600">Policy: {insurance.policyNumber}</p>
-                            <p className="text-sm text-gray-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
+                            <p className="font-medium text-ink-900">{insurance.provider}</p>
+                            <p className="text-sm text-ink-600">Policy: {insurance.policyNumber}</p>
+                            <p className="text-sm text-ink-600">Premium: {formatCurrency(insurance.annualPremium)}</p>
                             {insurance.documentUrl && (
                               <a
                                 href={insurance.documentUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-flex items-center gap-1"
+                                className="text-sm text-accent hover:text-[#4b9ba2] mt-2 inline-flex items-center gap-1"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -3058,21 +3058,21 @@ export default function InvestmentDetailPage() {
                               </a>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(insurance.renewalDate)}</span>
+                          <span className="text-xs text-ink-500">{formatDate(insurance.renewalDate)}</span>
                         </div>
                       </div>
                     ))}
                     {insuranceHistory.length > 3 && (
-                      <p className="text-sm text-gray-500">+{insuranceHistory.length - 3} more records</p>
+                      <p className="text-sm text-ink-500">+{insuranceHistory.length - 3} more records</p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No insurance records</p>
+                  <p className="text-sm text-ink-500 italic">No insurance records</p>
                 )}
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowInsuranceModal(true)}
-                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Insurance
                   </button>
@@ -3081,13 +3081,13 @@ export default function InvestmentDetailPage() {
             </div>
 
             {/* Tax Information - Visible to all, but edit controls only for Admin/Manager */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Property Taxes</h2>
+                <h2 className="text-xl font-semibold text-ink-900">Property Taxes</h2>
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowTaxModal(true)}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
@@ -3097,17 +3097,17 @@ export default function InvestmentDetailPage() {
                 {taxHistory.length > 0 ? (
                   <div className="space-y-2">
                     {taxHistory.slice(0, 3).map((tax: any) => (
-                      <div key={tax.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div key={tax.id} className="p-3 bg-ink-50 rounded-lg">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">Tax Year {tax.taxYear}</p>
-                            <p className="text-sm text-gray-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
+                            <p className="font-medium text-ink-900">Tax Year {tax.taxYear}</p>
+                            <p className="text-sm text-ink-600">Amount: {formatCurrency(tax.annualPropertyTax)}</p>
                             {tax.documentUrl && (
                               <a
                                 href={tax.documentUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-flex items-center gap-1"
+                                className="text-sm text-accent hover:text-[#4b9ba2] mt-2 inline-flex items-center gap-1"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -3116,21 +3116,21 @@ export default function InvestmentDetailPage() {
                               </a>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(tax.createdAt)}</span>
+                          <span className="text-xs text-ink-500">{formatDate(tax.createdAt)}</span>
                         </div>
                       </div>
                     ))}
                     {taxHistory.length > 3 && (
-                      <p className="text-sm text-gray-500">+{taxHistory.length - 3} more records</p>
+                      <p className="text-sm text-ink-500">+{taxHistory.length - 3} more records</p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No tax records</p>
+                  <p className="text-sm text-ink-500 italic">No tax records</p>
                 )}
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowTaxModal(true)}
-                    className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Tax Information
                   </button>
@@ -3140,14 +3140,14 @@ export default function InvestmentDetailPage() {
 
             {/* Waterfall Distributions - hide entire card for investors */}
             {currentUser?.role !== 'INVESTOR' && (
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Waterfall Distributions</h2>
+                <h2 className="text-xl font-semibold text-ink-900">Waterfall Distributions</h2>
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setShowCreateWaterfallModal(true)}
-                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                       title="Create Waterfall Structure"
                     >
                       <PlusIcon className="h-5 w-5" />
@@ -3166,20 +3166,20 @@ export default function InvestmentDetailPage() {
                 {waterfallStructures.length > 0 ? (
                   <div className="space-y-2">
                     {waterfallStructures.slice(0, showAllWaterfallStructures ? undefined : 3).map((structure: any) => (
-                      <div key={structure.id} className="p-3 bg-gray-50 rounded-lg border">
+                      <div key={structure.id} className="p-3 bg-ink-50 rounded-lg border">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex justify-between items-start">
                               <div>
-                                <p className="font-medium text-gray-900">{structure.name}</p>
-                                <p className="text-sm text-gray-600">{structure.description}</p>
-                                <p className="text-xs text-gray-500">{structure.waterfallTiers.length} tiers</p>
+                                <p className="font-medium text-ink-900">{structure.name}</p>
+                                <p className="text-sm text-ink-600">{structure.description}</p>
+                                <p className="text-xs text-ink-500">{structure.waterfallTiers.length} tiers</p>
                               </div>
                               {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                                 <div className="flex space-x-2">
                                   <button
                                     onClick={() => handleEditWaterfallStructure(structure)}
-                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                                    className="p-2 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded-lg transition-colors duration-200"
                                     title="Edit Structure"
                                   >
                                     <PencilIcon className="h-5 w-5" />
@@ -3199,15 +3199,15 @@ export default function InvestmentDetailPage() {
                             </div>
                             {structure.waterfallDistributions && structure.waterfallDistributions.length > 0 && (
                               <div className="mt-2">
-                                <p className="text-xs font-medium text-gray-700 mb-1">Distributions:</p>
+                                <p className="text-xs font-medium text-ink-700 mb-1">Distributions:</p>
                                 {structure.waterfallDistributions.slice(0, 2).map((distribution: any) => (
-                                  <div key={distribution.id} className="flex justify-between items-center text-xs text-gray-600 mb-1">
+                                  <div key={distribution.id} className="flex justify-between items-center text-xs text-ink-600 mb-1">
                                     <span>{formatCurrency(distribution.totalAmount)} - {distribution.distributionType}</span>
                                     {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                                       <div className="flex space-x-1">
                                         <button
                                           onClick={() => handleEditDistribution(distribution)}
-                                          className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                                          className="p-1 text-accent hover:text-[#4b9ba2] hover:bg-accent/5 rounded"
                                           title="Edit Distribution"
                                         >
                                           <PencilIcon className="h-3 w-3" />
@@ -3224,12 +3224,12 @@ export default function InvestmentDetailPage() {
                                   </div>
                                 ))}
                                 {structure.waterfallDistributions.length > 2 && (
-                                  <p className="text-xs text-gray-500">+{structure.waterfallDistributions.length - 2} more distributions</p>
+                                  <p className="text-xs text-ink-500">+{structure.waterfallDistributions.length - 2} more distributions</p>
                                 )}
                               </div>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">{formatDate(structure.createdAt)}</span>
+                          <span className="text-xs text-ink-500">{formatDate(structure.createdAt)}</span>
                         </div>
                       </div>
                     ))}
@@ -3241,7 +3241,7 @@ export default function InvestmentDetailPage() {
                           console.log('Total waterfall structures:', waterfallStructures.length)
                           setShowAllWaterfallStructures(!showAllWaterfallStructures)
                         }}
-                        className="w-full text-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-4 py-3 rounded-lg border border-blue-200 transition-colors duration-200 font-medium"
+                        className="w-full text-center text-accent hover:text-[#4b9ba2] hover:bg-accent/5 px-4 py-3 rounded-lg border border-accent/20 transition-colors duration-200 font-medium"
                       >
                         {showAllWaterfallStructures 
                           ? `Show Less` 
@@ -3251,14 +3251,14 @@ export default function InvestmentDetailPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No waterfall structures</p>
+                  <p className="text-sm text-ink-500 italic">No waterfall structures</p>
                 )}
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <div className="space-y-2">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setShowCreateWaterfallModal(true)}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
+                        className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                       >
                         Create Structure
                       </button>
@@ -3281,7 +3281,7 @@ export default function InvestmentDetailPage() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setShowCreateGlobalWaterfallModal(true)}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200 font-medium"
+                        className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
                       >
                         Create Global Structure
                       </button>
@@ -3306,46 +3306,46 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Upload Document</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Upload Document</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleUploadDocument} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Document Title
                 </label>
                 <input
                   type="text"
                   value={newDocument.title}
                   onChange={(e) => setNewDocument({ ...newDocument, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Description
                 </label>
                 <textarea
                   value={newDocument.description}
                   onChange={(e) => setNewDocument({ ...newDocument, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Document Type
                 </label>
                 <select
                   value={newDocument.documentType}
                   onChange={(e) => setNewDocument({ ...newDocument, documentType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="">Select document type</option>
@@ -3363,13 +3363,13 @@ export default function InvestmentDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   File
                 </label>
                 <input
                   type="file"
                   onChange={(e) => setNewDocument({ ...newDocument, file: e.target.files?.[0] || null })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
@@ -3377,13 +3377,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowUploadModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Upload
                 </button>
@@ -3397,10 +3397,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Investment</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Edit Investment</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -3409,15 +3409,15 @@ export default function InvestmentDetailPage() {
               {/* Investment Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Investment Details</h4>
+                  <h4 className="text-lg font-medium text-ink-900 mb-4">Investment Details</h4>
                   <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-800">
+                    <div className="p-3 bg-accent/5 rounded-lg border border-accent/20">
+                      <p className="text-sm text-ink-800">
                         <strong>Note:</strong> Investment amount is calculated from entity investments and cannot be edited here.
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Ownership Percentage
                       </label>
                       <input
@@ -3425,19 +3425,19 @@ export default function InvestmentDetailPage() {
                         step="0.01"
                         value={editData.ownershipPercentage}
                         onChange={(e) => setEditData({ ...editData, ownershipPercentage: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Investment Date
                       </label>
                       <input
                         type="date"
                         value={editData.investmentDate}
                         onChange={(e) => setEditData({ ...editData, investmentDate: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
@@ -3447,54 +3447,54 @@ export default function InvestmentDetailPage() {
 
                 {/* Property Details */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Property Details</h4>
+                  <h4 className="text-lg font-medium text-ink-900 mb-4">Property Details</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Property Name
                       </label>
                       <input
                         type="text"
                         value={editData.propertyName}
                         onChange={(e) => setEditData({ ...editData, propertyName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Property Address
                       </label>
                       <input
                         type="text"
                         value={editData.propertyAddress}
                         onChange={(e) => setEditData({ ...editData, propertyAddress: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-ink-700 mb-2">
                           Bedrooms
                         </label>
                         <input
                           type="number"
                           value={editData.bedrooms}
                           onChange={(e) => setEditData({ ...editData, bedrooms: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-ink-700 mb-2">
                           Bathrooms
                         </label>
                         <input
                           type="number"
                           value={editData.bathrooms}
                           onChange={(e) => setEditData({ ...editData, bathrooms: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                           required
                         />
                       </div>
@@ -3506,22 +3506,22 @@ export default function InvestmentDetailPage() {
               {/* Financial Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Financial Details</h4>
+                  <h4 className="text-lg font-medium text-ink-900 mb-4">Financial Details</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Monthly Rent
                       </label>
                       <input
                         type="number"
                         value={editData.monthlyRent}
                         onChange={(e) => setEditData({ ...editData, monthlyRent: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Cap Rate (%)
                       </label>
                       <input
@@ -3529,12 +3529,12 @@ export default function InvestmentDetailPage() {
                         step="0.01"
                         value={editData.capRate}
                         onChange={(e) => setEditData({ ...editData, capRate: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Acquisition Price
                       </label>
                       <input
@@ -3551,12 +3551,12 @@ export default function InvestmentDetailPage() {
                             totalCost: totalCost.toString()
                           });
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Construction Cost
                       </label>
                       <input
@@ -3573,27 +3573,27 @@ export default function InvestmentDetailPage() {
                             totalCost: totalCost.toString()
                           });
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Total Cost (Auto-calculated)
                       </label>
                       <input
                         type="number"
                         step="0.01"
                         value={editData.totalCost}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg bg-ink-50 text-ink-600"
                         readOnly
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-ink-500 mt-1">
                         Total Cost = Acquisition Price + Construction Cost
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Occupancy Rate (%)
                       </label>
                       <input
@@ -3601,19 +3601,19 @@ export default function InvestmentDetailPage() {
                         step="0.01"
                         value={editData.occupancyRate}
                         onChange={(e) => setEditData({ ...editData, occupancyRate: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Annual Expenses
                       </label>
                       <input
                         type="number"
                         value={editData.annualExpenses}
                         onChange={(e) => setEditData({ ...editData, annualExpenses: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
@@ -3622,45 +3622,45 @@ export default function InvestmentDetailPage() {
 
                 {/* Debt Details */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Debt Information</h4>
+                  <h4 className="text-lg font-medium text-ink-900 mb-4">Debt Information</h4>
                   <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-800">
+                    <div className="p-3 bg-accent/5 rounded-lg border border-accent/20">
+                      <p className="text-sm text-ink-800">
                         <strong>Note:</strong> Debt amount is managed in the Property Loans section and cannot be edited here.
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Debt Details
                       </label>
                       <textarea
                         value={editData.debtDetails}
                         onChange={(e) => setEditData({ ...editData, debtDetails: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         rows={3}
                         placeholder="Bank, loan terms, interest rate, etc."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Square Feet
                       </label>
                       <input
                         type="number"
                         value={editData.squareFeet}
                         onChange={(e) => setEditData({ ...editData, squareFeet: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-ink-700 mb-2">
                         Property Type
                       </label>
                       <select
                         value={editData.propertyType}
                         onChange={(e) => setEditData({ ...editData, propertyType: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       >
                         <option value="RESIDENTIAL">Residential</option>
                         <option value="COMMERCIAL">Commercial</option>
@@ -3675,13 +3675,13 @@ export default function InvestmentDetailPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Property Description
                 </label>
                 <textarea
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                 />
               </div>
@@ -3692,13 +3692,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Save Changes
                 </button>
@@ -3713,8 +3713,8 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Set Contact For: {pendingEntityContact.name}</h3>
-              <span className="text-xs text-gray-500">Required before adding entity</span>
+              <h3 className="text-lg font-semibold text-ink-900">Set Contact For: {pendingEntityContact.name}</h3>
+              <span className="text-xs text-ink-500">Required before adding entity</span>
             </div>
             <form
               onSubmit={async (e) => {
@@ -3767,39 +3767,39 @@ export default function InvestmentDetailPage() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Person <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={pendingEntityContact.contactPerson}
                   onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactPerson: e.target.value } : prev)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+                <label className="block text-sm font-medium text-ink-700 mb-2">Contact Email</label>
                 <input
                   type="email"
                   value={pendingEntityContact.contactEmail}
                   onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactEmail: e.target.value } : prev)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
+                <label className="block text-sm font-medium text-ink-700 mb-2">Contact Phone</label>
                 <input
                   type="tel"
                   value={pendingEntityContact.contactPhone}
                   onChange={(e) => setPendingEntityContact(prev => prev ? { ...prev, contactPhone: e.target.value } : prev)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div className="flex pt-4">
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Save Contact Info
                 </button>
@@ -3814,17 +3814,17 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Add Entity to Project</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Add Entity to Project</h3>
               <button
                 onClick={() => setShowSelectEntityModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Select from Existing Entities</h4>
+                <h4 className="text-sm font-medium text-ink-700 mb-3">Select from Existing Entities</h4>
                 {(() => {
                   // Filter out entities already in this project
                   const existingEntityIds = propertyEntityInvestments.map((ei: any) => String(ei.entityId))
@@ -3832,7 +3832,7 @@ export default function InvestmentDetailPage() {
                   
                   if (availableToAdd.length === 0) {
                     return (
-                      <p className="text-sm text-gray-500 italic py-4">
+                      <p className="text-sm text-ink-500 italic py-4">
                         No other entities available. All existing entities are already added to this project.
                       </p>
                     )
@@ -3843,18 +3843,18 @@ export default function InvestmentDetailPage() {
                       {availableToAdd.map((entity: any) => (
                         <div
                           key={entity.id}
-                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                          className="flex items-center justify-between p-3 border border-ink-200 rounded-lg hover:bg-ink-50 transition-colors duration-200"
                         >
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{entity.name}</p>
-                            <p className="text-sm text-gray-600">{entity.type}</p>
+                            <p className="font-medium text-ink-900">{entity.name}</p>
+                            <p className="text-sm text-ink-600">{entity.type}</p>
                             {entity.contactPerson && (
-                              <p className="text-xs text-gray-500 mt-1">Contact: {entity.contactPerson}</p>
+                              <p className="text-xs text-ink-500 mt-1">Contact: {entity.contactPerson}</p>
                             )}
                           </div>
                           <button
                             onClick={() => handleAddExistingEntityToProperty(entity.id)}
-                            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 text-sm font-medium"
+                            className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 text-sm font-medium"
                           >
                             Add to Project
                           </button>
@@ -3865,13 +3865,13 @@ export default function InvestmentDetailPage() {
                 })()}
               </div>
               
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-ink-200">
                 <button
                   onClick={() => {
                     setShowSelectEntityModal(false)
                     setShowCreateEntityModal(true)
                   }}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
+                  className="w-full px-4 py-2 bg-ink-100 text-ink-700 hover:bg-ink-200 rounded-lg transition-colors duration-200 font-medium"
                 >
                   Create New Entity Instead
                 </button>
@@ -3881,7 +3881,7 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowSelectEntityModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -3896,35 +3896,35 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Create New Entity</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Create New Entity</h3>
               <button
                 onClick={() => setShowCreateEntityModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleCreateEntity} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Entity Name
                 </label>
                 <input
                   type="text"
                   value={newEntity.name}
                   onChange={(e) => setNewEntity({ ...newEntity, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Entity Type
                 </label>
                 <select
                   value={newEntity.type}
                   onChange={(e) => setNewEntity({ ...newEntity, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 >
                   <option value="LLC">LLC</option>
                   <option value="CORPORATION">Corporation</option>
@@ -3934,72 +3934,72 @@ export default function InvestmentDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Address
                 </label>
                 <input
                   type="text"
                   value={newEntity.address}
                   onChange={(e) => setNewEntity({ ...newEntity, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Tax ID
                 </label>
                 <input
                   type="text"
                   value={newEntity.taxId}
                   onChange={(e) => setNewEntity({ ...newEntity, taxId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Person <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={newEntity.contactPerson}
                   onChange={(e) => setNewEntity({ ...newEntity, contactPerson: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Email
                 </label>
                 <input
                   type="email"
                   value={newEntity.contactEmail}
                   onChange={(e) => setNewEntity({ ...newEntity, contactEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Phone
                 </label>
                 <input
                   type="tel"
                   value={newEntity.contactPhone}
                   onChange={(e) => setNewEntity({ ...newEntity, contactPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateEntityModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Create Entity
                 </button>
@@ -4015,10 +4015,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Create Multi-Investor Investment</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Create Multi-Investor Investment</h3>
               <button
                 onClick={() => setShowMultiInvestorModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -4027,14 +4027,14 @@ export default function InvestmentDetailPage() {
               {/* Entity and Property Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Select Entity
                   </label>
                   <div className="space-y-2">
                     <select
                       value={multiInvestorData.entityId}
                       onChange={(e) => setMultiInvestorData({ ...multiInvestorData, entityId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       required
                       disabled={loadingEntities}
                     >
@@ -4048,13 +4048,13 @@ export default function InvestmentDetailPage() {
                       ))}
                     </select>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-ink-500">
                         {loadingEntities ? 'Loading...' : `${availableEntities.length} entities available`}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowCreateEntityInModal(true)}
-                        className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors duration-200"
+                        className="text-xs text-accent hover:text-[#4b9ba2] hover:bg-accent/5 px-2 py-1 rounded transition-colors duration-200"
                       >
                         + Create New Entity
                       </button>
@@ -4062,13 +4062,13 @@ export default function InvestmentDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Property
                   </label>
                   <input
                     type="text"
                     value={investment?.property?.name || ''}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg bg-ink-50"
                     disabled
                   />
                 </div>
@@ -4077,28 +4077,28 @@ export default function InvestmentDetailPage() {
               {/* Investment Amounts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Total Investment Amount
                   </label>
                   <input
                     type="number"
                     value={multiInvestorData.totalInvestmentAmount}
                     onChange={(e) => setMultiInvestorData({ ...multiInvestorData, totalInvestmentAmount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     placeholder="0.00"
                     step="0.01"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Entity Ownership % of Total Deal
                   </label>
                   <input
                     type="number"
                     value={multiInvestorData.entityOwnershipPercentage}
                     onChange={(e) => setMultiInvestorData({ ...multiInvestorData, entityOwnershipPercentage: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     placeholder="0.0"
                     step="0.1"
                     required
@@ -4109,7 +4109,7 @@ export default function InvestmentDetailPage() {
               {/* Investors Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">Entity Investors</h4>
+                  <h4 className="text-lg font-medium text-ink-900">Entity Investors</h4>
                   <button
                     type="button"
                     onClick={addInvestor}
@@ -4121,9 +4121,9 @@ export default function InvestmentDetailPage() {
                 
                 <div className="space-y-4">
                   {multiInvestorData.investors.map((investor, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div key={index} className="border border-ink-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <h5 className="font-medium text-gray-900">Investor {index + 1}</h5>
+                        <h5 className="font-medium text-ink-900">Investor {index + 1}</h5>
                         {multiInvestorData.investors.length > 1 && (
                           <button
                             type="button"
@@ -4137,7 +4137,7 @@ export default function InvestmentDetailPage() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Investor Type
                           </label>
                           <select
@@ -4151,7 +4151,7 @@ export default function InvestmentDetailPage() {
                               updateInvestor(index, 'userName', '')
                               updateInvestor(index, 'entityName', '')
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           >
                             <option value="INDIVIDUAL">Individual</option>
@@ -4159,7 +4159,7 @@ export default function InvestmentDetailPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Select {investor.investorType === 'ENTITY' ? 'Entity' : 'Investor'}
                           </label>
                           {investor.investorType === 'ENTITY' ? (
@@ -4170,7 +4170,7 @@ export default function InvestmentDetailPage() {
                                 updateInvestor(index, 'entityId', e.target.value)
                                 updateInvestor(index, 'entityName', selectedEntity?.name || '')
                               }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               required
                             >
                               <option value="">Select entity...</option>
@@ -4189,7 +4189,7 @@ export default function InvestmentDetailPage() {
                                 updateInvestor(index, 'userEmail', selectedUser?.email || '')
                                 updateInvestor(index, 'userName', `${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`.trim())
                               }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               required
                             >
                               <option value="">Select investor...</option>
@@ -4202,28 +4202,28 @@ export default function InvestmentDetailPage() {
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Investment Amount
                           </label>
                           <input
                             type="number"
                             value={investor.investmentAmount}
                             onChange={(e) => updateInvestor(index, 'investmentAmount', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="0.00"
                             step="0.01"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Ownership % of Entity
                           </label>
                           <input
                             type="number"
                             value={investor.ownershipPercentage}
                             onChange={(e) => updateInvestor(index, 'ownershipPercentage', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="0.0"
                             step="0.1"
                             required
@@ -4235,31 +4235,31 @@ export default function InvestmentDetailPage() {
                 </div>
 
                 {/* Validation Summary */}
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h5 className="font-medium text-blue-900 mb-2">Validation Summary</h5>
+                <div className="mt-4 p-4 bg-accent/5 rounded-lg">
+                  <h5 className="font-medium text-ink-900 mb-2">Validation Summary</h5>
                   <div className="text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Total Entity Ownership:</span>
-                      <span className="font-medium text-blue-900">{multiInvestorData.entityOwnershipPercentage}%</span>
+                      <span className="text-accent">Total Entity Ownership:</span>
+                      <span className="font-medium text-ink-900">{multiInvestorData.entityOwnershipPercentage}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Total Investor Ownership:</span>
+                      <span className="text-accent">Total Investor Ownership:</span>
                       <span className={`font-medium ${multiInvestorData.investors.reduce((sum, investor) => sum + parseFloat(investor.ownershipPercentage || '0'), 0) === 100 ? 'text-green-600' : 'text-red-600'}`}>
                         {multiInvestorData.investors.reduce((sum, investor) => sum + parseFloat(investor.ownershipPercentage || '0'), 0).toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Total Investment Amount:</span>
-                      <span className="font-medium text-blue-900">${parseFloat(multiInvestorData.totalInvestmentAmount || '0').toLocaleString()}</span>
+                      <span className="text-accent">Total Investment Amount:</span>
+                      <span className="font-medium text-ink-900">${parseFloat(multiInvestorData.totalInvestmentAmount || '0').toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Total Investor Amount:</span>
+                      <span className="text-accent">Total Investor Amount:</span>
                       <span className={`font-medium ${multiInvestorData.investors.reduce((sum, investor) => sum + parseFloat(investor.investmentAmount || '0'), 0) <= parseFloat(multiInvestorData.totalInvestmentAmount || '0') ? 'text-green-600' : 'text-red-600'}`}>
                         ${multiInvestorData.investors.reduce((sum, investor) => sum + parseFloat(investor.investmentAmount || '0'), 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Negative Amounts:</span>
+                      <span className="text-accent">Negative Amounts:</span>
                       <span className={`font-medium ${multiInvestorData.investors.some(investor => parseFloat(investor.investmentAmount || '0') < 0) ? 'text-red-600' : 'text-green-600'}`}>
                         {multiInvestorData.investors.some(investor => parseFloat(investor.investmentAmount || '0') < 0) ? 'Found' : 'None'}
                       </span>
@@ -4272,7 +4272,7 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowMultiInvestorModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -4292,35 +4292,35 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Create New Entity</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Create New Entity</h3>
               <button
                 onClick={() => setShowCreateEntityInModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleCreateEntityInModal} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Entity Name
                 </label>
                 <input
                   type="text"
                   value={newEntity.name}
                   onChange={(e) => setNewEntity({ ...newEntity, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Entity Type
                 </label>
                 <select
                   value={newEntity.type}
                   onChange={(e) => setNewEntity({ ...newEntity, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 >
                   <option value="LLC">LLC</option>
                   <option value="CORPORATION">Corporation</option>
@@ -4330,72 +4330,72 @@ export default function InvestmentDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Address
                 </label>
                 <input
                   type="text"
                   value={newEntity.address}
                   onChange={(e) => setNewEntity({ ...newEntity, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Tax ID
                 </label>
                 <input
                   type="text"
                   value={newEntity.taxId}
                   onChange={(e) => setNewEntity({ ...newEntity, taxId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Person <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={newEntity.contactPerson}
                   onChange={(e) => setNewEntity({ ...newEntity, contactPerson: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Email
                 </label>
                 <input
                   type="email"
                   value={newEntity.contactEmail}
                   onChange={(e) => setNewEntity({ ...newEntity, contactEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Contact Phone
                 </label>
                 <input
                   type="tel"
                   value={newEntity.contactPhone}
                   onChange={(e) => setNewEntity({ ...newEntity, contactPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateEntityInModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Create Entity
                 </button>
@@ -4410,20 +4410,20 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-3xl mx-4 my-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Entity: {editingEntityInvestment.entity.name}</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Entity: {editingEntityInvestment.entity.name}</h3>
               <button
                 onClick={() => setShowEditEntityModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleUpdateEntityInvestment} className="space-y-4">
               {/* Entity Investment Details */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="bg-ink-50 rounded-lg p-4 mb-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-ink-600 mb-1">
                       Total Investment
                     </label>
                     <input
@@ -4449,12 +4449,12 @@ export default function InvestmentDetailPage() {
                         }
                         setEditingEntityInvestment(updated)
                       }}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20 focus:border-accent"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-ink-600 mb-1">
                       Ownership %
                     </label>
                     <input
@@ -4465,7 +4465,7 @@ export default function InvestmentDetailPage() {
                         ...editingEntityInvestment,
                         ownershipPercentage: e.target.value
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20 focus:border-accent"
                       required
                     />
                   </div>
@@ -4473,8 +4473,8 @@ export default function InvestmentDetailPage() {
               </div>
 
               {/* Unified selector: add entity or individual as investor */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-accent/5 rounded-lg p-4 mb-4">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Select Entity or Individual to Add as Investor
                 </label>
                 <select
@@ -4613,7 +4613,7 @@ export default function InvestmentDetailPage() {
 
                     setSelectedEntityToAdd('')
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 >
                   <option value="">Select an entity or individual to add as investor...</option>
                   <optgroup label="Create New Individual">
@@ -4636,7 +4636,7 @@ export default function InvestmentDetailPage() {
                       ))}
                   </optgroup>
                 </select>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-ink-500 mt-2">
                   Select an entity or individual to automatically add them as an investor and view entity members below.
                 </p>
               </div>
@@ -4644,16 +4644,16 @@ export default function InvestmentDetailPage() {
               {/* Entity Investors */}
               <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-medium text-gray-900">Entity Investors</h4>
+                    <h4 className="text-lg font-medium text-ink-900">Entity Investors</h4>
                   </div>
                   <div className="space-y-4">
                     {editingEntityInvestment.entity.entityOwners && editingEntityInvestment.entity.entityOwners.length > 0 ? (
                       editingEntityInvestment.entity.entityOwners.map((owner: any, index: number) => (
                       <div key={owner.id} className="border rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-sm font-medium text-gray-700">
+                          <h5 className="text-sm font-medium text-ink-700">
                             Investor {index + 1}
-                            <span className="ml-2 text-gray-500 font-normal">
+                            <span className="ml-2 text-ink-500 font-normal">
                               — {owner.investorEntityId
                                 ? (owner.entityName || (availableEntities.find(e => String(e.id) === String(owner.investorEntityId))?.name) || 'Entity')
                                 : ((owner.user?.firstName || owner.user?.lastName)
@@ -4675,11 +4675,11 @@ export default function InvestmentDetailPage() {
                           {/* Selection of investors is now done via the top unified selector */}
                           
                           {owner.investorEntityId ? (
-                            <div className="text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2">
+                            <div className="text-sm text-ink-700 bg-ink-100 border border-ink-200 rounded-lg px-3 py-2">
                               <span className="font-medium">Investing Entity:</span>{' '}
                               {owner.entityName || (availableEntities.find(e => e.id === owner.investorEntityId)?.name) || 'Selected entity'}
                               {Array.isArray(owner.entityOwnersSnapshot) && owner.entityOwnersSnapshot.length > 0 && (
-                                <div className="mt-2 text-xs text-gray-600">
+                                <div className="mt-2 text-xs text-ink-600">
                                   <div className="font-semibold mb-1">Members preset in entity:</div>
                                   <ul className="list-disc ml-5 space-y-0.5">
                                     {owner.entityOwnersSnapshot.map((m: any, i: number) => (
@@ -4706,19 +4706,19 @@ export default function InvestmentDetailPage() {
                                       updateEntityInvestor(index, 'breakdown', initial)
                                     }
                                   }}
-                                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                  className="px-2 py-1 text-xs bg-accent text-white rounded hover:bg-[#4b9ba2]"
                                 >
                                   {owner.showBreakdown ? 'Hide entity investment breakdown' : 'Specify entity investment breakdown'}
                                 </button>
                               </div>
 
                               {owner.showBreakdown && Array.isArray(owner.breakdown) && (
-                                <div className="mt-3 rounded border border-blue-200 bg-white p-3">
-                                  <div className="text-xs font-semibold text-blue-900 mb-2">Breakdown for this deal</div>
+                                <div className="mt-3 rounded border border-accent/20 bg-white p-3">
+                                  <div className="text-xs font-semibold text-ink-900 mb-2">Breakdown for this deal</div>
                                   <div className="space-y-2">
                                     {owner.breakdown.map((row: any, bi: number) => (
                                       <div key={row.id || bi} className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-gray-700 flex-1">{row.label}</span>
+                                        <span className="text-xs text-ink-700 flex-1">{row.label}</span>
                                         <input
                                           type="number"
                                           step="0.01"
@@ -4737,13 +4737,13 @@ export default function InvestmentDetailPage() {
                                       </div>
                                     ))}
                                   </div>
-                                  <div className="mt-2 text-xs text-gray-700 flex items-center justify-between gap-3">
+                                  <div className="mt-2 text-xs text-ink-700 flex items-center justify-between gap-3">
                                     <span>Breakdown total (auto-synced to investment amount)</span>
                                     <span className="text-green-600 font-medium">
                                       ${owner.breakdown.reduce((s: number, r: any) => s + (parseFloat(r.amount || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                   </div>
-                                  <div className="text-[10px] text-gray-500 mt-1">This breakdown is specific to this deal and does not change entity membership.</div>
+                                  <div className="text-[10px] text-ink-500 mt-1">This breakdown is specific to this deal and does not change entity membership.</div>
                                 </div>
                               )}
                             </div>
@@ -4754,28 +4754,28 @@ export default function InvestmentDetailPage() {
                                 placeholder="First Name"
                                 value={owner.user?.firstName || ''}
                                 onChange={(e) => updateEntityInvestor(index, 'user', { firstName: e.target.value })}
-                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                                className="px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20"
                               />
                               <input
                                 type="text"
                                 placeholder="Last Name"
                                 value={owner.user.lastName || ''}
                                 onChange={(e) => updateEntityInvestor(index, 'user', { lastName: e.target.value })}
-                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                                className="px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20"
                               />
                               <input
                                 type="email"
                                 placeholder="Email"
                                 value={owner.user.email || ''}
                                 onChange={(e) => updateEntityInvestor(index, 'user', { email: e.target.value })}
-                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500"
+                                className="px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20"
                               />
                             </div>
                           ) : null}
                           
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-xs text-gray-500 mb-1">Investment Amount</label>
+                              <label className="block text-xs text-ink-500 mb-1">Investment Amount</label>
                               <input
                                 type="number"
                                 step="0.01"
@@ -4795,12 +4795,12 @@ export default function InvestmentDetailPage() {
                                     updateEntityInvestor(index, 'investmentAmount', amt)
                                   }
                                 }}
-                                className={`px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 ${owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0 ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}`}
+                                className={`px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20 ${owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0 ? 'bg-ink-50 text-ink-700 cursor-not-allowed' : ''}`}
                                 title={owner.showBreakdown && Array.isArray(owner.breakdown) && owner.breakdown.length > 0 ? "Investment amount is auto-calculated from breakdown" : "Enter the investment amount for this investor"}
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-gray-500 mb-1">Ownership %</label>
+                              <label className="block text-xs text-ink-500 mb-1">Ownership %</label>
                               <input
                                 type="number"
                                 step="0.01"
@@ -4813,7 +4813,7 @@ export default function InvestmentDetailPage() {
                                     updateEntityInvestor(index, 'ownershipPercentage', newPct)
                                   }
                                 }}
-                                className={`px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 ${owner.fromEntity === true ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}`}
+                                className={`px-2 py-1.5 text-sm border border-ink-300 rounded-lg focus:ring-1 focus:ring-accent/20 ${owner.fromEntity === true ? 'bg-ink-50 text-ink-700 cursor-not-allowed' : ''}`}
                                 title={owner.fromEntity === true ? "Ownership percentage comes from the entity and cannot be changed" : "Enter the ownership percentage"}
                               />
                             </div>
@@ -4822,7 +4822,7 @@ export default function InvestmentDetailPage() {
                       </div>
                     ))
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-ink-500">
                         <p>No investors in this entity yet.</p>
                         <p className="text-sm">Click "Add Investor" to add the first investor.</p>
                       </div>
@@ -4831,24 +4831,24 @@ export default function InvestmentDetailPage() {
               </div>
 
               {/* Validation Summary */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Validation Summary</h4>
+              <div className="bg-accent/5 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-ink-900 mb-2">Validation Summary</h4>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Total Ownership:</span>
+                    <span className="text-accent">Total Ownership:</span>
                     <span className={`font-medium ${(editingEntityInvestment.entity.entityOwners || []).reduce((sum: number, owner: any) => sum + parseFloat(owner.ownershipPercentage || 0), 0) === 100 ? 'text-green-600' : 'text-red-600'}`}>
                       {(editingEntityInvestment.entity.entityOwners || []).reduce((sum: number, owner: any) => sum + parseFloat(owner.ownershipPercentage || 0), 0).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Total Investor Amounts:</span>
+                    <span className="text-accent">Total Investor Amounts:</span>
                     <span className={`font-medium ${(editingEntityInvestment.entity.entityOwners || []).reduce((sum: number, owner: any) => sum + parseFloat(owner.investmentAmount || 0), 0) <= parseFloat(editingEntityInvestment.investmentAmount || 0) ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency((editingEntityInvestment.entity.entityOwners || []).reduce((sum: number, owner: any) => sum + parseFloat(owner.investmentAmount || 0), 0))}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Entity Investment Amount:</span>
-                    <span className="font-medium text-blue-900">
+                    <span className="text-accent">Entity Investment Amount:</span>
+                    <span className="font-medium text-ink-900">
                       {formatCurrency(parseFloat(editingEntityInvestment.investmentAmount || 0))}
                     </span>
                   </div>
@@ -4859,13 +4859,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowEditEntityModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Update Entity Investment
                 </button>
@@ -4879,10 +4879,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">NOI Calculator</h3>
+              <h3 className="text-xl font-semibold text-ink-900">NOI Calculator</h3>
               <button
                 onClick={() => setShowNOIModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -4890,7 +4890,7 @@ export default function InvestmentDetailPage() {
             <form onSubmit={handleNOICalculation} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Monthly Rent
                   </label>
                   <input
@@ -4898,12 +4898,12 @@ export default function InvestmentDetailPage() {
                     value={noiData.monthlyRent}
                     onChange={(e) => setNoiData({ ...noiData, monthlyRent: e.target.value })}
                     readOnly={currentUser?.role === 'INVESTOR'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Other Income (Monthly)
                   </label>
                   <input
@@ -4911,12 +4911,12 @@ export default function InvestmentDetailPage() {
                     value={noiData.otherIncome}
                     onChange={(e) => setNoiData({ ...noiData, otherIncome: e.target.value })}
                     readOnly={currentUser?.role === 'INVESTOR'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Annual Expenses
                   </label>
                   <input
@@ -4924,12 +4924,12 @@ export default function InvestmentDetailPage() {
                     value={noiData.annualExpenses}
                     onChange={(e) => setNoiData({ ...noiData, annualExpenses: e.target.value })}
                     readOnly={currentUser?.role === 'INVESTOR'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Cap Rate (%)
                   </label>
                   <input
@@ -4938,49 +4938,49 @@ export default function InvestmentDetailPage() {
                     value={noiData.capRate}
                     onChange={(e) => setNoiData({ ...noiData, capRate: e.target.value })}
                     readOnly={currentUser?.role === 'INVESTOR'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
               </div>
 
               {/* NOI Calculation Results */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-3">Calculation Results</h4>
+              <div className="bg-accent/5 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-ink-900 mb-3">Calculation Results</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Annual Rent:</span>
-                    <span className="font-medium text-blue-900">
+                    <span className="text-accent">Annual Rent:</span>
+                    <span className="font-medium text-ink-900">
                       {formatCurrency(parseFloat(noiData.monthlyRent || '0') * 12)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Annual Other Income:</span>
-                    <span className="font-medium text-blue-900">
+                    <span className="text-accent">Annual Other Income:</span>
+                    <span className="font-medium text-ink-900">
                       {formatCurrency(parseFloat(noiData.otherIncome || '0') * 12)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Annual Revenue:</span>
-                    <span className="font-medium text-blue-900">
+                    <span className="text-accent">Annual Revenue:</span>
+                    <span className="font-medium text-ink-900">
                       {formatCurrency((parseFloat(noiData.monthlyRent || '0') * 12) + (parseFloat(noiData.otherIncome || '0') * 12))}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Annual Expenses:</span>
-                    <span className="font-medium text-blue-900">
+                    <span className="text-accent">Annual Expenses:</span>
+                    <span className="font-medium text-ink-900">
                       {formatCurrency(parseFloat(noiData.annualExpenses || '0'))}
                     </span>
                   </div>
-                  <div className="flex justify-between border-t border-blue-200 pt-2">
-                    <span className="text-blue-700 font-medium">NOI:</span>
+                  <div className="flex justify-between border-t border-accent/20 pt-2">
+                    <span className="text-accent font-medium">NOI:</span>
                     <span className="font-bold text-green-600">
                       {formatCurrency(((parseFloat(noiData.monthlyRent || '0') * 12) + (parseFloat(noiData.otherIncome || '0') * 12)) - parseFloat(noiData.annualExpenses || '0'))}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Estimated Value:</span>
-                    <span className="font-bold text-blue-600">
+                    <span className="text-accent">Estimated Value:</span>
+                    <span className="font-bold text-accent">
                       {parseFloat(noiData.capRate || '0') > 0 ? 
                         formatCurrency((((parseFloat(noiData.monthlyRent || '0') * 12) + (parseFloat(noiData.otherIncome || '0') * 12)) - parseFloat(noiData.annualExpenses || '0')) / (parseFloat(noiData.capRate || '0') / 100)) : 
                         'N/A'
@@ -4994,14 +4994,14 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowNOIModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 {currentUser?.role !== 'INVESTOR' && (
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Update NOI Calculations
                 </button>
@@ -5017,111 +5017,111 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Add Insurance Information</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Add Insurance Information</h3>
               <button
                 onClick={() => setShowInsuranceModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleAddInsurance} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Insurance Provider
                 </label>
                 <input
                   type="text"
                   value={insuranceData.provider}
                   onChange={(e) => setInsuranceData({ ...insuranceData, provider: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Policy Number
                 </label>
                 <input
                   type="text"
                   value={insuranceData.policyNumber}
                   onChange={(e) => setInsuranceData({ ...insuranceData, policyNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Annual Premium
                 </label>
                 <input
                   type="number"
                   value={insuranceData.annualPremium}
                   onChange={(e) => setInsuranceData({ ...insuranceData, annualPremium: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Coverage Amount
                 </label>
                 <input
                   type="number"
                   value={insuranceData.coverageAmount}
                   onChange={(e) => setInsuranceData({ ...insuranceData, coverageAmount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Renewal Date
                 </label>
                 <input
                   type="date"
                   value={insuranceData.renewalDate}
                   onChange={(e) => setInsuranceData({ ...insuranceData, renewalDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Notes
                 </label>
                 <textarea
                   value={insuranceData.notes}
                   onChange={(e) => setInsuranceData({ ...insuranceData, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Upload Document (Policy, Certificate, etc.)
                 </label>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   onChange={(e) => setInsuranceDocument(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
                 {insuranceDocument && (
-                  <p className="text-sm text-gray-600 mt-1">Selected: {insuranceDocument.name}</p>
+                  <p className="text-sm text-ink-600 mt-1">Selected: {insuranceDocument.name}</p>
                 )}
               </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowInsuranceModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Add Insurance
                 </button>
@@ -5136,75 +5136,75 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Add Tax Information</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Add Tax Information</h3>
               <button
                 onClick={() => setShowTaxModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleAddTax} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Tax Year
                 </label>
                 <input
                   type="number"
                   value={taxData.taxYear}
                   onChange={(e) => setTaxData({ ...taxData, taxYear: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Annual Property Tax
                 </label>
                 <input
                   type="number"
                   value={taxData.annualPropertyTax}
                   onChange={(e) => setTaxData({ ...taxData, annualPropertyTax: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Notes
                 </label>
                 <textarea
                   value={taxData.notes}
                   onChange={(e) => setTaxData({ ...taxData, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Upload Document (Tax Bill, Assessment, etc.)
                 </label>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   onChange={(e) => setTaxDocument(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
                 {taxDocument && (
-                  <p className="text-sm text-gray-600 mt-1">Selected: {taxDocument.name}</p>
+                  <p className="text-sm text-ink-600 mt-1">Selected: {taxDocument.name}</p>
                 )}
               </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowTaxModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Add Tax Information
                 </button>
@@ -5218,10 +5218,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Create Waterfall Structure</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Create Waterfall Structure</h3>
               <button
                 onClick={() => setShowCreateWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5229,46 +5229,46 @@ export default function InvestmentDetailPage() {
             <form onSubmit={handleCreateWaterfallStructure} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Structure Name
                   </label>
                   <input
                     type="text"
                     value={waterfallData.name}
                     onChange={(e) => setWaterfallData({ ...waterfallData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Description
                   </label>
                   <input
                     type="text"
                     value={waterfallData.description}
                     onChange={(e) => setWaterfallData({ ...waterfallData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">Waterfall Tiers</h4>
+                  <h4 className="text-lg font-medium text-ink-900">Waterfall Tiers</h4>
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
                 </div>
                 <div className="space-y-4">
                   {waterfallData.tiers.map((tier, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                    <div key={index} className="p-4 border border-ink-200 rounded-lg">
                       <div className="flex items-center justify-between mb-4">
-                        <h5 className="font-medium text-gray-900">Tier {tier.tierNumber}</h5>
+                        <h5 className="font-medium text-ink-900">Tier {tier.tierNumber}</h5>
                         {waterfallData.tiers.length > 1 && (
                           <button
                             type="button"
@@ -5281,29 +5281,29 @@ export default function InvestmentDetailPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Name
                           </label>
                           <input
                             type="text"
                             value={tier.tierName}
                             onChange={(e) => updateWaterfallTier(index, 'tierName', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                             placeholder="e.g., Preferred Return, Catch-Up, Promote"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             Descriptive name for this tier (e.g., "8% Preferred Return")
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Type
                           </label>
                           <select
                             value={tier.tierType}
                             onChange={(e) => updateWaterfallTier(index, 'tierType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           >
                             <option value="PREFERRED_RETURN">Preferred Return</option>
@@ -5312,55 +5312,55 @@ export default function InvestmentDetailPage() {
                             <option value="RESIDUAL">Residual</option>
                             <option value="RETURN_OF_CAPITAL">Return of Capital</option>
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             How this tier distributes funds (affects calculation logic)
                           </p>
                           {tier.tierType === 'PREFERRED_RETURN' && (
-                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                            <p className="text-xs text-accent mt-1 font-medium">
                               Preferred Return: Pays investors a fixed annual return (e.g., 8%) before any other distributions
                             </p>
                           )}
                           {tier.tierType === 'CATCH_UP' && (
-                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                            <p className="text-xs text-accent mt-1 font-medium">
                               Catch-Up: Ensures LPs receive their fair share before GP promote kicks in
                             </p>
                           )}
                           {tier.tierType === 'PROMOTE' && (
-                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                            <p className="text-xs text-accent mt-1 font-medium">
                               Promote: GP's share of profits after LPs receive their preferred return and catch-up
                             </p>
                           )}
                           {tier.tierType === 'RESIDUAL' && (
-                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                            <p className="text-xs text-accent mt-1 font-medium">
                               Residual: Remaining profits distributed based on ownership percentages
                             </p>
                           )}
                           {tier.tierType === 'RETURN_OF_CAPITAL' && (
-                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                            <p className="text-xs text-accent mt-1 font-medium">
                               Return of Capital: Returns original investment amounts to investors
                             </p>
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Priority
                           </label>
                           <input
                             type="number"
                             value={tier.priority}
                             onChange={(e) => updateWaterfallTier(index, 'priority', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                             placeholder="1"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             Order of distribution (1 = first, 2 = second, etc.)
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Return Rate (%)
                           </label>
                           <input
@@ -5368,15 +5368,15 @@ export default function InvestmentDetailPage() {
                             step="0.01"
                             value={tier.returnRate || ''}
                             onChange={(e) => updateWaterfallTier(index, 'returnRate', e.target.value ? parseFloat(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="8.0"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             Annual return rate for preferred return tiers (e.g., 8.0 = 8%)
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Catch-Up (%)
                           </label>
                           <input
@@ -5384,15 +5384,15 @@ export default function InvestmentDetailPage() {
                             step="0.01"
                             value={tier.catchUpPercentage || ''}
                             onChange={(e) => updateWaterfallTier(index, 'catchUpPercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="80.0"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             Percentage of profits to LP before GP promote (e.g., 80.0 = 80%)
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Promote (%)
                           </label>
                           <input
@@ -5400,10 +5400,10 @@ export default function InvestmentDetailPage() {
                             step="0.01"
                             value={tier.promotePercentage || ''}
                             onChange={(e) => updateWaterfallTier(index, 'promotePercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="20.0"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             Percentage of profits to GP after catch-up (e.g., 20.0 = 20%)
                           </p>
                         </div>
@@ -5417,13 +5417,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Create Structure
                 </button>
@@ -5437,23 +5437,23 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Process Distribution</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Process Distribution</h3>
               <button
                 onClick={() => setShowWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleProcessDistribution} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Waterfall Structure
                 </label>
                 <select
                   value={distributionData.waterfallStructureId}
                   onChange={(e) => setDistributionData({ ...distributionData, waterfallStructureId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="">Select a structure</option>
@@ -5472,13 +5472,13 @@ export default function InvestmentDetailPage() {
                     ))}
                   </optgroup>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   Choose the waterfall structure that defines how this distribution will be split among investors
                 </p>
               </div>
               {/* Total Amount */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Total Amount
                 </label>
                 <input
@@ -5486,39 +5486,39 @@ export default function InvestmentDetailPage() {
                   step="0.01"
                   value={distributionData.totalAmount}
                   onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                   placeholder="0.00"
                 />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-ink-500 mt-1">
                     {distributionData.distributionType === 'REFINANCE'
                       ? 'For refinance distributions, this will be kept in sync with the Cash to Borrower amount below.'
                       : 'The total amount to be distributed (e.g., $50,000 in rental income).'}
                   </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Distribution Date
                 </label>
                 <input
                   type="date"
                   value={distributionData.distributionDate}
                   onChange={(e) => setDistributionData({ ...distributionData, distributionDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   When this distribution will be paid to investors
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Distribution Type
                 </label>
                 <select
                   value={distributionData.distributionType}
                   onChange={(e) => setDistributionData({ ...distributionData, distributionType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="RENTAL_INCOME">Rental Income</option>
@@ -5530,20 +5530,20 @@ export default function InvestmentDetailPage() {
                   <option value="PROMOTE">Promote</option>
                   <option value="OTHER">Other</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   The source of funds being distributed (affects waterfall calculations)
                 </p>
               </div>
 
               {/* Refinance Fields - Only show when REFINANCE is selected */}
               {distributionData.distributionType === 'REFINANCE' && (
-                <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-medium text-blue-900 mb-3">Refinance Details</h4>
-                  <div className="p-3 bg-blue-100 rounded-lg border border-blue-300 mb-4">
-                    <p className="text-xs text-blue-800 font-medium">
+                <div className="space-y-4 p-4 bg-accent/5 rounded-lg border border-accent/20">
+                  <h4 className="text-sm font-medium text-ink-900 mb-3">Refinance Details</h4>
+                  <div className="p-3 bg-accent/10 rounded-lg border border-accent/30 mb-4">
+                    <p className="text-xs text-ink-800 font-medium">
                       💡 <strong>How it works:</strong> Enter the refinance amount and fees. The system will:
                     </p>
-                    <ul className="text-xs text-blue-700 mt-2 ml-4 list-disc">
+                    <ul className="text-xs text-accent mt-2 ml-4 list-disc">
                       <li>Set the new debt amount to the refinance amount</li>
                       <li>Use the <strong>Cash to Borrower</strong> amount as the total distribution through the waterfall</li>
                       <li>Optionally upload a refinance statement which is saved into the deal files</li>
@@ -5551,7 +5551,7 @@ export default function InvestmentDetailPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Refinance Amount *
                     </label>
                     <input
@@ -5568,17 +5568,17 @@ export default function InvestmentDetailPage() {
                           totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       required
                       placeholder="0.00"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       Total refinance amount (this becomes the new debt amount)
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Origination Fees ($)
                     </label>
                     <input
@@ -5592,17 +5592,17 @@ export default function InvestmentDetailPage() {
                           totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       required
                       placeholder="0.00"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       Loan origination fees (typically 1-2% of loan amount)
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Closing Fees
                     </label>
                     <div className="space-y-2">
@@ -5610,7 +5610,7 @@ export default function InvestmentDetailPage() {
                         <div key={idx} className="grid grid-cols-6 gap-2 items-center">
                           <input
                             type="text"
-                            className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="col-span-3 px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="Category (e.g., Title, Appraisal)"
                             value={item.category}
                             onChange={(e) => {
@@ -5622,7 +5622,7 @@ export default function InvestmentDetailPage() {
                           <input
                             type="number"
                             step="0.01"
-                            className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="col-span-2 px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             placeholder="Amount"
                             value={item.amount}
                             onChange={(e) => {
@@ -5653,17 +5653,17 @@ export default function InvestmentDetailPage() {
                         </div>
                       ))}
                       <div className="flex justify-between items-center">
-                        <button type="button" className="text-blue-600 hover:text-blue-800 text-sm" onClick={() => setDistributionData({ ...distributionData, closingFeesItems: [...distributionData.closingFeesItems, { category: '', amount: '' }] })}>+ Add Closing Fee</button>
-                        <div className="text-sm text-gray-700">Total: ${parseFloat(distributionData.closingFees || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <button type="button" className="text-accent hover:text-[#4b9ba2] text-sm" onClick={() => setDistributionData({ ...distributionData, closingFeesItems: [...distributionData.closingFeesItems, { category: '', amount: '' }] })}>+ Add Closing Fee</button>
+                        <div className="text-sm text-ink-700">Total: ${parseFloat(distributionData.closingFees || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-ink-500">
                         Add one or more closing fee line items with categories.
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Prepayment Penalty ($)
                     </label>
                     <input
@@ -5677,11 +5677,11 @@ export default function InvestmentDetailPage() {
                           totalAmount: distributionData.cashToBorrower || distributionData.totalAmount,
                         })
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       required
                       placeholder="0.00"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       Prepayment penalty on old loan
                     </p>
                   </div>
@@ -5700,7 +5700,7 @@ export default function InvestmentDetailPage() {
 
                   {/* Cash to Borrower (controls distribution amount) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Cash to Borrower (Distribution Amount) *
                     </label>
                     <input
@@ -5715,18 +5715,18 @@ export default function InvestmentDetailPage() {
                           totalAmount: cashToBorrower, // keep waterfall amount in sync
                         })
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       required
                       placeholder="0.00"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       This is the cash-out amount that will flow through the distribution waterfall to investors.
                     </p>
                   </div>
 
                   {/* Optional refinance statement upload */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-700 mb-2">
                       Refinance Statement (optional)
                     </label>
                     <input
@@ -5736,16 +5736,16 @@ export default function InvestmentDetailPage() {
                         const file = e.target.files?.[0] || null
                         setRefinanceStatementFile(file)
                       }}
-                      className="block w-full text-sm text-gray-900 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="block w-full text-sm text-ink-900 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-accent/5 file:text-accent hover:file:bg-accent/10"
                     />
                     <input
                       type="text"
                       value={refinanceStatementDescription}
                       onChange={(e) => setRefinanceStatementDescription(e.target.value)}
                       placeholder="Short description for this statement (optional)"
-                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-2 w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-ink-500 mt-1">
                       If provided, the statement will be saved into the deal&apos;s files and tagged with this distribution.
                     </p>
                     {attachedFileError && (
@@ -5758,17 +5758,17 @@ export default function InvestmentDetailPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Description
                 </label>
                 <textarea
                   value={distributionData.description}
                   onChange={(e) => setDistributionData({ ...distributionData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                   placeholder="Optional notes about this distribution"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   Additional details about this distribution (optional)
                 </p>
               </div>
@@ -5776,7 +5776,7 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -5797,23 +5797,23 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Distribution</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Edit Distribution</h3>
               <button
                 onClick={() => setShowEditDistributionModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800">
+            <div className="mb-4 p-4 bg-accent/5 rounded-lg border border-accent/20">
+              <p className="text-sm text-ink-800">
                 <strong>Edit Distribution:</strong> Update the details of this distribution. 
                 Note: Changing the amount will recalculate the waterfall distribution.
               </p>
             </div>
             <form onSubmit={handleUpdateDistribution} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Total Amount
                 </label>
                 <input
@@ -5821,37 +5821,37 @@ export default function InvestmentDetailPage() {
                   step="0.01"
                   value={distributionData.totalAmount}
                   onChange={(e) => setDistributionData({ ...distributionData, totalAmount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                   placeholder="0.00"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   The total amount to be distributed (e.g., $50,000 in rental income)
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Distribution Date
                 </label>
                 <input
                   type="date"
                   value={distributionData.distributionDate}
                   onChange={(e) => setDistributionData({ ...distributionData, distributionDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   When this distribution will be paid to investors
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Distribution Type
                 </label>
                 <select
                   value={distributionData.distributionType}
                   onChange={(e) => setDistributionData({ ...distributionData, distributionType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="RENTAL_INCOME">Rental Income</option>
@@ -5863,22 +5863,22 @@ export default function InvestmentDetailPage() {
                   <option value="PROMOTE">Promote</option>
                   <option value="OTHER">Other</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   The source of funds being distributed (affects waterfall calculations)
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Description
                 </label>
                 <textarea
                   value={distributionData.description}
                   onChange={(e) => setDistributionData({ ...distributionData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                   placeholder="Optional notes about this distribution"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   Additional details about this distribution (optional)
                 </p>
               </div>
@@ -5886,13 +5886,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowEditDistributionModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Update Distribution
                 </button>
@@ -5906,16 +5906,16 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Create Global Waterfall Structure</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Create Global Waterfall Structure</h3>
               <button
                 onClick={() => setShowCreateGlobalWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm text-purple-800">
+            <div className="mb-4 p-4 bg-accent/5 rounded-lg border border-accent/20">
+              <p className="text-sm text-ink-800">
                 <strong>Global Structure:</strong> This structure can be applied to any entity investment. 
                 It will be copied and customized for each entity it's applied to.
               </p>
@@ -5923,46 +5923,46 @@ export default function InvestmentDetailPage() {
             <form onSubmit={handleCreateGlobalWaterfallStructure} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Structure Name
                   </label>
                   <input
                     type="text"
                     value={waterfallData.name}
                     onChange={(e) => setWaterfallData({ ...waterfallData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Description
                   </label>
                   <input
                     type="text"
                     value={waterfallData.description}
                     onChange={(e) => setWaterfallData({ ...waterfallData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">Waterfall Tiers</h4>
+                  <h4 className="text-lg font-medium text-ink-900">Waterfall Tiers</h4>
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
                 </div>
                 <div className="space-y-4">
                   {waterfallData.tiers.map((tier, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                    <div key={index} className="p-4 border border-ink-200 rounded-lg">
                       <div className="flex items-center justify-between mb-4">
-                        <h5 className="font-medium text-gray-900">Tier {tier.tierNumber}</h5>
+                        <h5 className="font-medium text-ink-900">Tier {tier.tierNumber}</h5>
                         {waterfallData.tiers.length > 1 && (
                           <button
                             type="button"
@@ -5975,25 +5975,25 @@ export default function InvestmentDetailPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Name
                           </label>
                           <input
                             type="text"
                             value={tier.tierName}
                             onChange={(e) => updateWaterfallTier(index, 'tierName', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Type
                           </label>
                           <select
                             value={tier.tierType}
                             onChange={(e) => updateWaterfallTier(index, 'tierType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           >
                             <option value="PREFERRED_RETURN">Preferred Return</option>
@@ -6002,7 +6002,7 @@ export default function InvestmentDetailPage() {
                             <option value="RESIDUAL">Residual</option>
                             <option value="RETURN_OF_CAPITAL">Return of Capital</option>
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             {tier.tierType === 'PREFERRED_RETURN' && 'Guaranteed return to investors before profits are split'}
                             {tier.tierType === 'CATCH_UP' && 'Allows GP to catch up to their promote percentage'}
                             {tier.tierType === 'PROMOTE' && 'GP share of profits after preferred return and catch-up'}
@@ -6011,14 +6011,14 @@ export default function InvestmentDetailPage() {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Priority
                           </label>
                           <input
                             type="number"
                             value={tier.priority}
                             onChange={(e) => updateWaterfallTier(index, 'priority', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           />
                         </div>
@@ -6027,7 +6027,7 @@ export default function InvestmentDetailPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                           {tier.tierType === 'PREFERRED_RETURN' && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-ink-700 mb-2">
                                 Return Rate (%)
                               </label>
                               <input
@@ -6035,13 +6035,13 @@ export default function InvestmentDetailPage() {
                                 step="0.01"
                                 value={tier.returnRate || ''}
                                 onChange={(e) => updateWaterfallTier(index, 'returnRate', parseFloat(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               />
                             </div>
                           )}
                           {tier.tierType === 'CATCH_UP' && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-ink-700 mb-2">
                                 Catch-Up Percentage (%)
                               </label>
                               <input
@@ -6049,13 +6049,13 @@ export default function InvestmentDetailPage() {
                                 step="0.01"
                                 value={tier.catchUpPercentage || ''}
                                 onChange={(e) => updateWaterfallTier(index, 'catchUpPercentage', parseFloat(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               />
                             </div>
                           )}
                           {tier.tierType === 'PROMOTE' && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-ink-700 mb-2">
                                 Promote Percentage (%)
                               </label>
                               <input
@@ -6063,7 +6063,7 @@ export default function InvestmentDetailPage() {
                                 step="0.01"
                                 value={tier.promotePercentage || ''}
                                 onChange={(e) => updateWaterfallTier(index, 'promotePercentage', parseFloat(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               />
                             </div>
                           )}
@@ -6077,13 +6077,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateGlobalWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Create Global Structure
                 </button>
@@ -6098,10 +6098,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Apply Waterfall Structure</h3>
+              <h3 className="text-lg font-semibold text-ink-900">Apply Waterfall Structure</h3>
               <button
                 onClick={() => setShowApplyWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6114,13 +6114,13 @@ export default function InvestmentDetailPage() {
             </div>
             <form onSubmit={handleApplyWaterfallStructure} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Global Waterfall Structure
                 </label>
                 <select
                   value={applyWaterfallData.waterfallStructureId}
                   onChange={(e) => setApplyWaterfallData({ ...applyWaterfallData, waterfallStructureId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="">Select a global structure</option>
@@ -6132,13 +6132,13 @@ export default function InvestmentDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Entity Investment
                 </label>
                 <select
                   value={applyWaterfallData.entityInvestmentId}
                   onChange={(e) => setApplyWaterfallData({ ...applyWaterfallData, entityInvestmentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="">Select an entity investment</option>
@@ -6153,7 +6153,7 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowApplyWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -6173,16 +6173,16 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Waterfall Structure</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Edit Waterfall Structure</h3>
               <button
                 onClick={() => setShowEditWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800">
+            <div className="mb-4 p-4 bg-accent/5 rounded-lg border border-accent/20">
+              <p className="text-sm text-ink-800">
                 <strong>Edit Structure:</strong> Modify the waterfall structure for this property. 
                 Changes will affect all future distributions using this structure.
               </p>
@@ -6190,46 +6190,46 @@ export default function InvestmentDetailPage() {
             <form onSubmit={handleUpdateWaterfallStructure} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Structure Name
                   </label>
                   <input
                     type="text"
                     value={waterfallData.name}
                     onChange={(e) => setWaterfallData({ ...waterfallData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Description
                   </label>
                   <input
                     type="text"
                     value={waterfallData.description}
                     onChange={(e) => setWaterfallData({ ...waterfallData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">Waterfall Tiers</h4>
+                  <h4 className="text-lg font-medium text-ink-900">Waterfall Tiers</h4>
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
                 </div>
                 <div className="space-y-4">
                   {waterfallData.tiers.map((tier, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                    <div key={index} className="p-4 border border-ink-200 rounded-lg">
                       <div className="flex items-center justify-between mb-4">
-                        <h5 className="font-medium text-gray-900">Tier {tier.tierNumber}</h5>
+                        <h5 className="font-medium text-ink-900">Tier {tier.tierNumber}</h5>
                         {waterfallData.tiers.length > 1 && (
                           <button
                             type="button"
@@ -6242,25 +6242,25 @@ export default function InvestmentDetailPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Name
                           </label>
                           <input
                             type="text"
                             value={tier.tierName}
                             onChange={(e) => updateWaterfallTier(index, 'tierName', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Type
                           </label>
                           <select
                             value={tier.tierType}
                             onChange={(e) => updateWaterfallTier(index, 'tierType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           >
                             <option value="PREFERRED_RETURN">Preferred Return</option>
@@ -6269,7 +6269,7 @@ export default function InvestmentDetailPage() {
                             <option value="RESIDUAL">Residual</option>
                             <option value="RETURN_OF_CAPITAL">Return of Capital</option>
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             {tier.tierType === 'PREFERRED_RETURN' && 'Guaranteed return to investors before profits are split'}
                             {tier.tierType === 'CATCH_UP' && 'Allows GP to catch up to their promote percentage'}
                             {tier.tierType === 'PROMOTE' && 'GP share of profits after preferred return and catch-up'}
@@ -6278,14 +6278,14 @@ export default function InvestmentDetailPage() {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Priority
                           </label>
                           <input
                             type="number"
                             value={tier.priority}
                             onChange={(e) => updateWaterfallTier(index, 'priority', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                             min="1"
                           />
@@ -6295,7 +6295,7 @@ export default function InvestmentDetailPage() {
                         {/* Return Rate - Only for PREFERRED_RETURN */}
                         {tier.tierType === 'PREFERRED_RETURN' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Return Rate (%)
                             </label>
                             <input
@@ -6303,10 +6303,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.returnRate || ''}
                               onChange={(e) => updateWaterfallTier(index, 'returnRate', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="8.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               Annual preferred return rate (e.g., 8% = 8.0)
                             </p>
                           </div>
@@ -6315,7 +6315,7 @@ export default function InvestmentDetailPage() {
                         {/* Catch-Up Percentage - Only for CATCH_UP */}
                         {tier.tierType === 'CATCH_UP' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Catch-Up Percentage (%)
                             </label>
                             <input
@@ -6323,10 +6323,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.catchUpPercentage || ''}
                               onChange={(e) => updateWaterfallTier(index, 'catchUpPercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="80.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               Percentage of profits GP receives during catch-up (e.g., 80% = 80.0)
                             </p>
                           </div>
@@ -6335,7 +6335,7 @@ export default function InvestmentDetailPage() {
                         {/* Promote Percentage - Only for PROMOTE */}
                         {tier.tierType === 'PROMOTE' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Promote Percentage (%)
                             </label>
                             <input
@@ -6343,10 +6343,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.promotePercentage || ''}
                               onChange={(e) => updateWaterfallTier(index, 'promotePercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="20.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               GP's promote percentage of profits (e.g., 20% = 20.0)
                             </p>
                           </div>
@@ -6355,8 +6355,8 @@ export default function InvestmentDetailPage() {
                         {/* No additional fields for RESIDUAL and RETURN_OF_CAPITAL */}
                         {(tier.tierType === 'RESIDUAL' || tier.tierType === 'RETURN_OF_CAPITAL') && (
                           <div className="col-span-3">
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                              <p className="text-sm text-gray-600">
+                            <div className="p-3 bg-ink-50 rounded-lg border border-ink-200">
+                              <p className="text-sm text-ink-600">
                                 {tier.tierType === 'RESIDUAL' 
                                   ? 'Residual profits are split based on ownership percentages. No additional configuration needed.'
                                   : 'Return of capital distributes original invested amounts. No additional configuration needed.'
@@ -6375,13 +6375,13 @@ export default function InvestmentDetailPage() {
                   <button
                     type="button"
                     onClick={() => setShowEditWaterfallModal(false)}
-                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                    className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                    className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                   >
                     Update Structure
                   </button>
@@ -6415,16 +6415,16 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Global Waterfall Structure</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Edit Global Waterfall Structure</h3>
               <button
                 onClick={() => setShowEditGlobalWaterfallModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm text-purple-800">
+            <div className="mb-4 p-4 bg-accent/5 rounded-lg border border-accent/20">
+              <p className="text-sm text-ink-800">
                 <strong>Edit Global Structure:</strong> Modify the global waterfall structure. 
                 Changes will affect all entity investments that use this structure.
               </p>
@@ -6432,46 +6432,46 @@ export default function InvestmentDetailPage() {
             <form onSubmit={handleUpdateGlobalWaterfallStructure} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Structure Name
                   </label>
                   <input
                     type="text"
                     value={waterfallData.name}
                     onChange={(e) => setWaterfallData({ ...waterfallData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-ink-700 mb-2">
                     Description
                   </label>
                   <input
                     type="text"
                     value={waterfallData.description}
                     onChange={(e) => setWaterfallData({ ...waterfallData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900">Waterfall Tiers</h4>
+                  <h4 className="text-lg font-medium text-ink-900">Waterfall Tiers</h4>
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
                 </div>
                 <div className="space-y-4">
                   {waterfallData.tiers.map((tier, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                    <div key={index} className="p-4 border border-ink-200 rounded-lg">
                       <div className="flex items-center justify-between mb-4">
-                        <h5 className="font-medium text-gray-900">Tier {tier.tierNumber}</h5>
+                        <h5 className="font-medium text-ink-900">Tier {tier.tierNumber}</h5>
                         {waterfallData.tiers.length > 1 && (
                           <button
                             type="button"
@@ -6484,25 +6484,25 @@ export default function InvestmentDetailPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Name
                           </label>
                           <input
                             type="text"
                             value={tier.tierName}
                             onChange={(e) => updateWaterfallTier(index, 'tierName', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Tier Type
                           </label>
                           <select
                             value={tier.tierType}
                             onChange={(e) => updateWaterfallTier(index, 'tierType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                           >
                             <option value="PREFERRED_RETURN">Preferred Return</option>
@@ -6511,7 +6511,7 @@ export default function InvestmentDetailPage() {
                             <option value="RESIDUAL">Residual</option>
                             <option value="RETURN_OF_CAPITAL">Return of Capital</option>
                           </select>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-ink-500 mt-1">
                             {tier.tierType === 'PREFERRED_RETURN' && 'Guaranteed return to investors before profits are split'}
                             {tier.tierType === 'CATCH_UP' && 'Allows GP to catch up to their promote percentage'}
                             {tier.tierType === 'PROMOTE' && 'GP share of profits after preferred return and catch-up'}
@@ -6520,14 +6520,14 @@ export default function InvestmentDetailPage() {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-ink-700 mb-2">
                             Priority
                           </label>
                           <input
                             type="number"
                             value={tier.priority}
                             onChange={(e) => updateWaterfallTier(index, 'priority', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                             required
                             min="1"
                           />
@@ -6537,7 +6537,7 @@ export default function InvestmentDetailPage() {
                         {/* Return Rate - Only for PREFERRED_RETURN */}
                         {tier.tierType === 'PREFERRED_RETURN' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Return Rate (%)
                             </label>
                             <input
@@ -6545,10 +6545,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.returnRate || ''}
                               onChange={(e) => updateWaterfallTier(index, 'returnRate', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="8.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               Annual preferred return rate (e.g., 8% = 8.0)
                             </p>
                           </div>
@@ -6557,7 +6557,7 @@ export default function InvestmentDetailPage() {
                         {/* Catch-Up Percentage - Only for CATCH_UP */}
                         {tier.tierType === 'CATCH_UP' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Catch-Up Percentage (%)
                             </label>
                             <input
@@ -6565,10 +6565,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.catchUpPercentage || ''}
                               onChange={(e) => updateWaterfallTier(index, 'catchUpPercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="80.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               Percentage of profits GP receives during catch-up (e.g., 80% = 80.0)
                             </p>
                           </div>
@@ -6577,7 +6577,7 @@ export default function InvestmentDetailPage() {
                         {/* Promote Percentage - Only for PROMOTE */}
                         {tier.tierType === 'PROMOTE' && (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-ink-700 mb-2">
                               Promote Percentage (%)
                             </label>
                             <input
@@ -6585,10 +6585,10 @@ export default function InvestmentDetailPage() {
                               step="0.01"
                               value={tier.promotePercentage || ''}
                               onChange={(e) => updateWaterfallTier(index, 'promotePercentage', e.target.value ? parseFloat(e.target.value) : null)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                               placeholder="20.0"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-ink-500 mt-1">
                               GP's promote percentage of profits (e.g., 20% = 20.0)
                             </p>
                           </div>
@@ -6597,8 +6597,8 @@ export default function InvestmentDetailPage() {
                         {/* No additional fields for RESIDUAL and RETURN_OF_CAPITAL */}
                         {(tier.tierType === 'RESIDUAL' || tier.tierType === 'RETURN_OF_CAPITAL') && (
                           <div className="col-span-3">
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                              <p className="text-sm text-gray-600">
+                            <div className="p-3 bg-ink-50 rounded-lg border border-ink-200">
+                              <p className="text-sm text-ink-600">
                                 {tier.tierType === 'RESIDUAL' 
                                   ? 'Residual profits are split based on ownership percentages. No additional configuration needed.'
                                   : 'Return of capital distributes original invested amounts. No additional configuration needed.'
@@ -6616,7 +6616,7 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowEditGlobalWaterfallModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -6634,7 +6634,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Update Global Structure
                 </button>
@@ -6648,46 +6648,46 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Document</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Edit Document</h3>
               <button
                 onClick={() => setShowEditDocumentModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleUpdateDocument} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Document Title
                 </label>
                 <input
                   type="text"
                   value={editDocumentData.title}
                   onChange={(e) => setEditDocumentData({ ...editDocumentData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Description
                 </label>
                 <textarea
                   value={editDocumentData.description}
                   onChange={(e) => setEditDocumentData({ ...editDocumentData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Document Type
                 </label>
                 <select
                   value={editDocumentData.documentType}
                   onChange={(e) => setEditDocumentData({ ...editDocumentData, documentType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   required
                 >
                   <option value="">Select document type</option>
@@ -6706,7 +6706,7 @@ export default function InvestmentDetailPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-ink-700 mb-2">
                   Document Visibility
                 </label>
                 <div className="space-y-2">
@@ -6715,27 +6715,27 @@ export default function InvestmentDetailPage() {
                       type="checkbox"
                       checked={editDocumentData.visibleToAdmin}
                       onChange={(e) => setEditDocumentData({ ...editDocumentData, visibleToAdmin: e.target.checked })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-accent focus:ring-accent/20 border-ink-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Visible to Administrators</span>
+                    <span className="ml-2 text-sm text-ink-700">Visible to Administrators</span>
                   </label>
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={editDocumentData.visibleToManager}
                       onChange={(e) => setEditDocumentData({ ...editDocumentData, visibleToManager: e.target.checked })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-accent focus:ring-accent/20 border-ink-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Visible to Managers</span>
+                    <span className="ml-2 text-sm text-ink-700">Visible to Managers</span>
                   </label>
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={editDocumentData.visibleToInvestor}
                       onChange={(e) => setEditDocumentData({ ...editDocumentData, visibleToInvestor: e.target.checked })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-accent focus:ring-accent/20 border-ink-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Visible to Investors</span>
+                    <span className="ml-2 text-sm text-ink-700">Visible to Investors</span>
                   </label>
                 </div>
               </div>
@@ -6743,13 +6743,13 @@ export default function InvestmentDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowEditDocumentModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 text-ink-700 bg-ink-100 hover:bg-ink-200 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
                 >
                   Update Document
                 </button>
@@ -6764,10 +6764,10 @@ export default function InvestmentDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Distribution Breakdown</h3>
+              <h3 className="text-xl font-semibold text-ink-900">Distribution Breakdown</h3>
               <button
                 onClick={() => setShowBreakdownModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6776,15 +6776,15 @@ export default function InvestmentDetailPage() {
             <div className="space-y-6">
               {/* Attached refinance / closing statements */}
               {Array.isArray(breakdownData.attachedFiles) && breakdownData.attachedFiles.length > 0 && (
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                  <h4 className="text-sm font-semibold text-slate-900 mb-3">📄 Attached Closing Statements</h4>
+                <div className="bg-ink-50 rounded-lg p-4 border border-ink-200">
+                  <h4 className="text-sm font-semibold text-ink-900 mb-3">📄 Attached Closing Statements</h4>
                   <ul className="space-y-2">
                     {breakdownData.attachedFiles.map((file: any) => (
                       <li key={file.id} className="flex items-center justify-between text-sm">
                         <div>
-                          <p className="font-medium text-slate-900">{file.originalName}</p>
+                          <p className="font-medium text-ink-900">{file.originalName}</p>
                           {file.description && (
-                            <p className="text-xs text-slate-500 line-clamp-1">{file.description}</p>
+                            <p className="text-xs text-ink-500 line-clamp-1">{file.description}</p>
                           )}
                         </div>
                         <button
@@ -6811,7 +6811,7 @@ export default function InvestmentDetailPage() {
                               console.error('Error opening attached statement:', err)
                             }
                           }}
-                          className="ml-4 inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+                          className="ml-4 inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-accent bg-accent/5 hover:bg-accent/10 border border-accent/20"
                         >
                           Open
                         </button>
@@ -6823,24 +6823,24 @@ export default function InvestmentDetailPage() {
 
               {/* Summary Section */}
               {breakdownData.detailedBreakdown?.summary && (
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="text-lg font-semibold text-blue-900 mb-3">💰 Financial Summary</h4>
+                <div className="bg-accent/5 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-ink-900 mb-3">💰 Financial Summary</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-blue-700">Total Distributed</p>
-                      <p className="text-lg font-bold text-blue-900">{formatCurrency(breakdownData.detailedBreakdown.summary.totalDistributed)}</p>
+                      <p className="text-sm text-accent">Total Distributed</p>
+                      <p className="text-lg font-bold text-ink-900">{formatCurrency(breakdownData.detailedBreakdown.summary.totalDistributed)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700">Tiers Processed</p>
-                      <p className="text-lg font-bold text-blue-900">{breakdownData.detailedBreakdown.summary.tiersProcessed}</p>
+                      <p className="text-sm text-accent">Tiers Processed</p>
+                      <p className="text-lg font-bold text-ink-900">{breakdownData.detailedBreakdown.summary.tiersProcessed}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700">Individual Investors</p>
-                      <p className="text-lg font-bold text-blue-900">{breakdownData.detailedBreakdown.summary.totalInvestors}</p>
+                      <p className="text-sm text-accent">Individual Investors</p>
+                      <p className="text-lg font-bold text-ink-900">{breakdownData.detailedBreakdown.summary.totalInvestors}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700">Entities</p>
-                      <p className="text-lg font-bold text-blue-900">{breakdownData.detailedBreakdown.summary.totalEntities}</p>
+                      <p className="text-sm text-accent">Entities</p>
+                      <p className="text-lg font-bold text-ink-900">{breakdownData.detailedBreakdown.summary.totalEntities}</p>
                     </div>
                   </div>
                 </div>
@@ -6849,13 +6849,13 @@ export default function InvestmentDetailPage() {
               {/* Tiers Breakdown */}
               {breakdownData.detailedBreakdown?.byTier && (
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900">🏗️ Tier Breakdown</h4>
+                  <h4 className="text-lg font-semibold text-ink-900">🏗️ Tier Breakdown</h4>
                   {Object.entries(breakdownData.detailedBreakdown.byTier).map(([tierName, tierData]: [string, any]) => (
-                    <div key={tierName} className="border border-gray-200 rounded-lg p-4">
+                    <div key={tierName} className="border border-ink-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h5 className="text-md font-semibold text-gray-900">{tierName}</h5>
+                        <h5 className="text-md font-semibold text-ink-900">{tierName}</h5>
                         <div className="text-right">
-                          <p className="text-sm text-gray-600">{tierData.tierType}</p>
+                          <p className="text-sm text-ink-600">{tierData.tierType}</p>
                           <p className="text-lg font-bold text-green-600">{formatCurrency(tierData.totalAmount)}</p>
                         </div>
                       </div>
@@ -6863,13 +6863,13 @@ export default function InvestmentDetailPage() {
                       {/* Individual Investors */}
                       {tierData.investors && tierData.investors.length > 0 && (
                         <div className="mb-3">
-                          <h6 className="text-sm font-medium text-gray-700 mb-2">👤 Individual Investors</h6>
+                          <h6 className="text-sm font-medium text-ink-700 mb-2">👤 Individual Investors</h6>
                           <div className="space-y-2">
                             {tierData.investors.map((investor: any, index: number) => (
-                              <div key={index} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                              <div key={index} className="flex items-center justify-between bg-ink-50 rounded px-3 py-2">
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{investor.name}</p>
-                                  {investor.email && <p className="text-xs text-gray-600">{investor.email}</p>}
+                                  <p className="text-sm font-medium text-ink-900">{investor.name}</p>
+                                  {investor.email && <p className="text-xs text-ink-600">{investor.email}</p>}
                                 </div>
                                 <p className="text-sm font-semibold text-green-600">{formatCurrency(investor.amount)}</p>
                               </div>
@@ -6881,13 +6881,13 @@ export default function InvestmentDetailPage() {
                       {/* Entities */}
                       {tierData.entities && tierData.entities.length > 0 && (
                         <div>
-                          <h6 className="text-sm font-medium text-gray-700 mb-2">🏢 Entities</h6>
+                          <h6 className="text-sm font-medium text-ink-700 mb-2">🏢 Entities</h6>
                           <div className="space-y-2">
                             {tierData.entities.map((entity: any, index: number) => (
-                              <div key={index} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                              <div key={index} className="flex items-center justify-between bg-ink-50 rounded px-3 py-2">
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{entity.name}</p>
-                                  <p className="text-xs text-gray-600">{entity.ownershipPercentage}% ownership</p>
+                                  <p className="text-sm font-medium text-ink-900">{entity.name}</p>
+                                  <p className="text-xs text-ink-600">{entity.ownershipPercentage}% ownership</p>
                                 </div>
                                 <p className="text-sm font-semibold text-green-600">{formatCurrency(entity.amount)}</p>
                               </div>

@@ -237,7 +237,7 @@ export default function PipelineContacts() {
             resetForm()
             setShowModal(true)
           }}
-          className="w-full sm:w-auto px-4 py-2 bg-secondary text-white rounded-lg hover:bg-primary transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
+          className="w-full sm:w-auto px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
         >
           <PlusIcon className="h-5 w-5" />
           <span>Add Contact</span>
@@ -247,7 +247,7 @@ export default function PipelineContacts() {
       {/* Contacts Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
         </div>
       ) : contacts.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
@@ -299,7 +299,7 @@ export default function PipelineContacts() {
                     <EnvelopeIcon className="h-4 w-4 flex-shrink-0" />
                     <a
                       href={`mailto:${contact.email}`}
-                      className="text-accent hover:text-primary hover:underline truncate transition-colors"
+                      className="text-accent hover:text-[#4b9ba2] hover:underline truncate transition-colors"
                     >
                       {contact.email}
                     </a>
@@ -310,7 +310,7 @@ export default function PipelineContacts() {
                     <PhoneIcon className="h-4 w-4 flex-shrink-0" />
                     <a
                       href={`tel:${contact.phone}`}
-                      className="text-accent hover:text-primary hover:underline transition-colors"
+                      className="text-accent hover:text-[#4b9ba2] hover:underline transition-colors"
                     >
                       {contact.phone}
                     </a>
@@ -439,7 +439,7 @@ export default function PipelineContacts() {
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm sm:text-base"
                 />
               </div>
 
@@ -479,7 +479,7 @@ export default function PipelineContacts() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm sm:text-base"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export default function PipelineContacts() {
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="hover:text-orange-900"
+                        className="hover:text-[#3f7e84]"
                       >
                         <XMarkIcon className="h-3 w-3" />
                       </button>
@@ -514,7 +514,7 @@ export default function PipelineContacts() {
                       }
                     }}
                     placeholder="Add tag..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm sm:text-base"
                   />
                   <button
                     type="button"

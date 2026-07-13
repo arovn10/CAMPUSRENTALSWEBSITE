@@ -293,20 +293,20 @@ export default function CRMContacts() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Entity Management</h1>
-        <p className="text-slate-600 mt-2">Manage entities, view owners, and upload documents (EIN, tax forms, etc.)</p>
+        <h1 className="text-3xl font-bold text-ink-900">Entity Management</h1>
+        <p className="text-ink-600 mt-2">Manage entities, view owners, and upload documents (EIN, tax forms, etc.)</p>
       </div>
 
       {/* Search and Add */}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-ink-400" />
           <input
             type="text"
             placeholder="Search entities by name, contact person, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
           />
         </div>
         <button
@@ -315,7 +315,7 @@ export default function CRMContacts() {
             setEditingEntity(null)
             setShowCreateModal(true)
           }}
-          className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-primary transition-colors shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
         >
           <PlusIcon className="h-5 w-5" />
           Add Entity
@@ -325,20 +325,20 @@ export default function CRMContacts() {
       {/* Entities Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {entities.map((entity) => (
             <div 
               key={entity.id} 
-              className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer"
+              className="bg-white border border-ink-200 rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer"
               onClick={() => handleViewDocuments(entity)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900">{entity.name}</h3>
-                  <span className="inline-block mt-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                  <h3 className="text-lg font-semibold text-ink-900">{entity.name}</h3>
+                  <span className="inline-block mt-1 px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded">
                     {entity.type}
                   </span>
                 </div>
@@ -367,7 +367,7 @@ export default function CRMContacts() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm text-slate-600">
+              <div className="space-y-2 text-sm text-ink-600">
                 {entity.taxId && (
                   <div className="font-medium">Tax ID: <span className="font-normal">{entity.taxId}</span></div>
                 )}
@@ -377,7 +377,7 @@ export default function CRMContacts() {
                 {entity.contactEmail && (
                   <div className="flex items-center gap-2">
                     <EnvelopeIcon className="h-4 w-4 flex-shrink-0" />
-                    <a href={`mailto:${entity.contactEmail}`} className="text-accent hover:text-primary hover:underline transition-colors truncate" onClick={(e) => e.stopPropagation()}>
+                    <a href={`mailto:${entity.contactEmail}`} className="text-accent hover:text-[#4b9ba2] hover:underline transition-colors truncate" onClick={(e) => e.stopPropagation()}>
                       {entity.contactEmail}
                     </a>
                   </div>
@@ -385,7 +385,7 @@ export default function CRMContacts() {
                 {entity.contactPhone && (
                   <div className="flex items-center gap-2">
                     <PhoneIcon className="h-4 w-4 flex-shrink-0" />
-                    <a href={`tel:${entity.contactPhone}`} className="text-accent hover:text-primary hover:underline transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <a href={`tel:${entity.contactPhone}`} className="text-accent hover:text-[#4b9ba2] hover:underline transition-colors" onClick={(e) => e.stopPropagation()}>
                       {entity.contactPhone}
                     </a>
                   </div>
@@ -397,7 +397,7 @@ export default function CRMContacts() {
                   </div>
                 )}
                 {entity.entityOwners && entity.entityOwners.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200">
+                  <div className="pt-2 border-t border-ink-200">
                     <span className="font-medium">{entity.entityOwners.length}</span> owner(s)
                   </div>
                 )}
@@ -411,8 +411,8 @@ export default function CRMContacts() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-xl font-semibold text-slate-900">
+            <div className="flex items-center justify-between p-6 border-b border-ink-200">
+              <h2 className="text-xl font-semibold text-ink-900">
                 {editingEntity ? 'Edit Entity' : 'Create Entity'}
               </h2>
               <button
@@ -421,28 +421,28 @@ export default function CRMContacts() {
                   setEditingEntity(null)
                   resetForm()
                 }}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-2 text-ink-400 hover:text-ink-600 rounded-lg"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleCreateOrUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Entity Name *</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Entity Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Entity Type *</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Entity Type *</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 >
                   {ENTITY_TYPES.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -450,48 +450,48 @@ export default function CRMContacts() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tax ID</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Tax ID</label>
                 <input
                   type="text"
                   value={formData.taxId}
                   onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Contact Person</label>
                 <input
                   type="text"
                   value={formData.contactPerson}
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Contact Email</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Contact Email</label>
                 <input
                   type="email"
                   value={formData.contactEmail}
                   onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Contact Phone</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Contact Phone</label>
                 <input
                   type="tel"
                   value={formData.contactPhone}
                   onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                <label className="block text-sm font-medium text-ink-700 mb-1">Address</label>
                 <input
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -500,11 +500,11 @@ export default function CRMContacts() {
                   id="isActive"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                  className="h-4 w-4 text-accent focus:ring-accent/20 border-ink-300 rounded"
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-slate-700">Active</label>
+                <label htmlFor="isActive" className="text-sm font-medium text-ink-700">Active</label>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-ink-200">
                 <button
                   type="button"
                   onClick={() => {
@@ -512,13 +512,13 @@ export default function CRMContacts() {
                     setEditingEntity(null)
                     resetForm()
                   }}
-                  className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                  className="px-4 py-2 text-ink-700 bg-ink-100 rounded-lg hover:bg-ink-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-primary transition-colors shadow-md hover:shadow-lg font-medium"
+                  className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors shadow-md hover:shadow-lg font-medium"
                 >
                   {editingEntity ? 'Update' : 'Create'}
                 </button>
@@ -533,11 +533,11 @@ export default function CRMContacts() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-5xl w-full max-h-[95vh] overflow-y-auto my-8 shadow-2xl">
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-6 z-10">
+            <div className="sticky top-0 bg-white border-b border-ink-200 p-6 z-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">{selectedEntity.name}</h2>
-                  <p className="text-sm text-slate-500 mt-1">Entity Document Hub</p>
+                  <h2 className="text-2xl font-bold text-ink-900">{selectedEntity.name}</h2>
+                  <p className="text-sm text-ink-500 mt-1">Entity Document Hub</p>
                 </div>
               <button
                 onClick={() => {
@@ -545,7 +545,7 @@ export default function CRMContacts() {
                   setSelectedEntity(null)
                   setEntityDocuments([])
                 }}
-                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
               >
                   <XMarkIcon className="h-6 w-6" />
               </button>
@@ -554,27 +554,27 @@ export default function CRMContacts() {
 
             <div className="p-6 space-y-6">
               {/* Entity Information Section */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <BuildingOfficeIcon className="h-5 w-5 text-blue-600" />
+              <div className="bg-ink-50 rounded-xl p-6 border border-ink-100">
+                <h3 className="text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
+                  <BuildingOfficeIcon className="h-5 w-5 text-accent" />
                   Entity Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Entity Type</label>
-                    <p className="text-base font-medium text-slate-900 mt-1">{selectedEntity.type}</p>
+                    <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Entity Type</label>
+                    <p className="text-base font-medium text-ink-900 mt-1">{selectedEntity.type}</p>
                   </div>
                   {selectedEntity.taxId && (
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tax ID (EIN)</label>
-                      <p className="text-base font-medium text-slate-900 mt-1">{selectedEntity.taxId}</p>
+                      <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Tax ID (EIN)</label>
+                      <p className="text-base font-medium text-ink-900 mt-1">{selectedEntity.taxId}</p>
                     </div>
                   )}
                   {selectedEntity.address && (
                     <div className="md:col-span-2">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</label>
-                      <p className="text-base text-slate-900 mt-1 flex items-start gap-2">
-                        <MapPinIcon className="h-4 w-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                      <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Address</label>
+                      <p className="text-base text-ink-900 mt-1 flex items-start gap-2">
+                        <MapPinIcon className="h-4 w-4 text-ink-400 flex-shrink-0 mt-0.5" />
                         {selectedEntity.address}
                       </p>
                     </div>
@@ -585,29 +585,29 @@ export default function CRMContacts() {
               {/* Contact Information Section */}
               {(selectedEntity.contactPerson || selectedEntity.contactEmail || selectedEntity.contactPhone) && (
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-100">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
                     <EnvelopeIcon className="h-5 w-5 text-emerald-600" />
                     Contact Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedEntity.contactPerson && (
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact Person</label>
-                        <p className="text-base font-medium text-slate-900 mt-1">{selectedEntity.contactPerson}</p>
+                        <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Contact Person</label>
+                        <p className="text-base font-medium text-ink-900 mt-1">{selectedEntity.contactPerson}</p>
                       </div>
                     )}
                     {selectedEntity.contactEmail && (
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</label>
-                        <a href={`mailto:${selectedEntity.contactEmail}`} className="text-base text-blue-600 hover:text-blue-700 hover:underline mt-1 block">
+                        <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Email</label>
+                        <a href={`mailto:${selectedEntity.contactEmail}`} className="text-base text-accent hover:text-[#4b9ba2] hover:underline mt-1 block">
                           {selectedEntity.contactEmail}
                         </a>
                       </div>
                     )}
                     {selectedEntity.contactPhone && (
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</label>
-                        <a href={`tel:${selectedEntity.contactPhone}`} className="text-base text-blue-600 hover:text-blue-700 hover:underline mt-1 block">
+                        <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Phone</label>
+                        <a href={`tel:${selectedEntity.contactPhone}`} className="text-base text-accent hover:text-[#4b9ba2] hover:underline mt-1 block">
                           {selectedEntity.contactPhone}
                         </a>
                       </div>
@@ -618,28 +618,28 @@ export default function CRMContacts() {
 
               {/* Entity Owners Section */}
               {selectedEntity.entityOwners && selectedEntity.entityOwners.length > 0 && (
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <UsersIcon className="h-5 w-5 text-purple-600" />
+                <div className="bg-ink-50 rounded-xl p-6 border border-ink-100">
+                  <h3 className="text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
+                    <UsersIcon className="h-5 w-5 text-accent" />
                     Entity Owners ({selectedEntity.entityOwners.length})
                   </h3>
                   <div className="space-y-3">
                     {selectedEntity.entityOwners.map((owner, idx) => (
-                      <div key={idx} className="bg-white rounded-lg p-4 border border-purple-100">
+                      <div key={idx} className="bg-white rounded-lg p-4 border border-ink-100">
                         <div className="flex items-center justify-between">
                           <div>
                             {owner.user && (
-                              <p className="font-medium text-slate-900">
+                              <p className="font-medium text-ink-900">
                                 {owner.user.firstName} {owner.user.lastName}
                               </p>
                             )}
                             {owner.investorEntity && (
-                              <p className="font-medium text-slate-900">{owner.investorEntity.name}</p>
+                              <p className="font-medium text-ink-900">{owner.investorEntity.name}</p>
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-purple-600">{owner.ownershipPercentage}%</p>
-                            <p className="text-xs text-slate-500">{formatCurrency(owner.investmentAmount)}</p>
+                            <p className="text-sm font-semibold text-accent">{owner.ownershipPercentage}%</p>
+                            <p className="text-xs text-ink-500">{formatCurrency(owner.investmentAmount)}</p>
                           </div>
                         </div>
                       </div>
@@ -649,30 +649,30 @@ export default function CRMContacts() {
               )}
 
               {/* Documents Section */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <DocumentTextIcon className="h-5 w-5 text-amber-600" />
+              <div className="bg-ink-50 rounded-xl p-6 border border-ink-100">
+                <h3 className="text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
+                  <DocumentTextIcon className="h-5 w-5 text-accent" />
                   Documents ({entityDocuments.length})
                 </h3>
 
                 {/* Upload Form */}
-                <form onSubmit={handleUploadDocument} className="mb-6 p-4 bg-white rounded-lg border border-amber-200 space-y-4">
-                  <h4 className="font-semibold text-slate-900">Upload New Document</h4>
+                <form onSubmit={handleUploadDocument} className="mb-6 p-4 bg-white rounded-lg border border-ink-200 space-y-4">
+                  <h4 className="font-semibold text-ink-900">Upload New Document</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                  <label className="block text-sm font-medium text-ink-700 mb-1">Title *</label>
                   <input
                     type="text"
                     name="title"
                     required
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Document Type</label>
+                  <label className="block text-sm font-medium text-ink-700 mb-1">Document Type</label>
                   <select
                     name="documentType"
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                   >
                     {DOCUMENT_TYPES.map((type) => (
                       <option key={type} value={type}>{type.replace('_', ' ')}</option>
@@ -680,27 +680,27 @@ export default function CRMContacts() {
                   </select>
                 </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-ink-700 mb-1">Description</label>
                       <textarea
                         name="description"
                         rows={2}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent"
                       />
                     </div>
                     <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">File *</label>
+                  <label className="block text-sm font-medium text-ink-700 mb-1">File *</label>
                   <input
                     type="file"
                     name="file"
                     required
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                        className="w-full px-3 py-2 border border-ink-300 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20"
                   />
                     </div>
                 </div>
                 <button
                   type="submit"
                   disabled={uploadingDocument}
-                    className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {uploadingDocument ? 'Uploading...' : 'Upload Document'}
                 </button>
@@ -709,23 +709,23 @@ export default function CRMContacts() {
                 {/* Documents List */}
                 <div className="space-y-3">
                 {entityDocuments.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-lg border border-amber-200">
-                      <DocumentTextIcon className="h-12 w-12 text-amber-300 mx-auto mb-4" />
-                      <p className="text-slate-500 font-medium">No documents uploaded yet</p>
-                      <p className="text-sm text-slate-400 mt-1">Upload documents using the form above</p>
+                    <div className="text-center py-12 bg-white rounded-lg border border-ink-200">
+                      <DocumentTextIcon className="h-12 w-12 text-ink-300 mx-auto mb-4" />
+                      <p className="text-ink-500 font-medium">No documents uploaded yet</p>
+                      <p className="text-sm text-ink-400 mt-1">Upload documents using the form above</p>
                     </div>
                 ) : (
                   entityDocuments.map((doc) => (
-                      <div key={doc.id} className="bg-white rounded-lg p-4 border border-amber-200 hover:border-amber-300 hover:shadow-md transition-all">
+                      <div key={doc.id} className="bg-white rounded-lg p-4 border border-ink-200 hover:border-ink-300 hover:shadow-md transition-all">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1">
-                            <PaperClipIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <PaperClipIcon className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-slate-900 mb-1">{doc.title}</div>
+                              <div className="font-semibold text-ink-900 mb-1">{doc.title}</div>
                               {doc.description && (
-                                <div className="text-sm text-slate-600 mb-2">{doc.description}</div>
+                                <div className="text-sm text-ink-600 mb-2">{doc.description}</div>
                               )}
-                              <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <div className="flex items-center gap-4 text-xs text-ink-500">
                                 <span>{doc.fileName}</span>
                                 <span>•</span>
                                 <span>{(doc.fileSize / 1024).toFixed(2)} KB</span>
@@ -740,7 +740,7 @@ export default function CRMContacts() {
                         href={doc.filePath}
                         target="_blank"
                         rel="noopener noreferrer"
-                            className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex-shrink-0"
+                            className="px-4 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors flex-shrink-0"
                       >
                         View
                       </a>

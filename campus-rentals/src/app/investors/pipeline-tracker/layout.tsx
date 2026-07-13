@@ -99,8 +99,8 @@ export default function PipelineTrackerLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-accent" />
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent" />
       </div>
     )
   }
@@ -108,7 +108,7 @@ export default function PipelineTrackerLayout({
   if (!isAuthorized) return null
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] -mt-4 sm:-mt-6 lg:-mt-8">
+    <div className="min-h-screen bg-ink-50 -mt-4 sm:-mt-6 lg:-mt-8">
       {/* Pipeline header: white bg, green border, title, ADMIN badge, tabs */}
       <header
         className="sticky top-0 z-50 bg-white border-b-2 border-accent shadow-sm"
@@ -118,7 +118,7 @@ export default function PipelineTrackerLayout({
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => router.push('/investors/dashboard')}
-                className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 text-ink-600 hover:text-ink-900 hover:bg-ink-100 rounded-lg transition-colors"
                 aria-label="Back to dashboard"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
@@ -128,12 +128,12 @@ export default function PipelineTrackerLayout({
               >
                 <span className="text-white font-bold text-xs sm:text-sm">CR</span>
               </div>
-              <span className="font-semibold text-gray-900 text-sm sm:text-base hidden sm:inline">
+              <span className="font-semibold text-ink-900 text-sm sm:text-base hidden sm:inline">
                 Deal Pipeline
               </span>
               {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-ink-100 text-ink-700 border border-ink-200"
                   title="You can edit and use Deal Pipeline"
                 >
                   ADMIN
@@ -154,7 +154,7 @@ export default function PipelineTrackerLayout({
                   key={tab.id}
                   href={tab.path}
                   className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-t-lg text-sm font-medium border-b-2 whitespace-nowrap flex-shrink-0 transition-colors ${
-                    isActive ? 'bg-accent text-white border-accent' : 'text-gray-600 hover:bg-gray-100 border-transparent'
+                    isActive ? 'bg-accent text-white border-accent' : 'text-ink-600 hover:bg-ink-100 border-transparent'
                   }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />

@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 
-const ACCENT = '#54AAB1'
-
 type SigRequest = {
   id: string
   documentId: string
@@ -81,36 +79,42 @@ export default function SignaturesPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-gray-500">Loading…</div>
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    )
+  }
 
   const pending = requests.filter((r) => r.status === 'PENDING')
   const completed = requests.filter((r) => r.status !== 'PENDING')
 
   return (
     <div className="mx-auto max-w-3xl p-6 lg:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Documents to Sign</h1>
-      <p className="mt-1 text-sm text-gray-500">Review and sign documents that require your signature.</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink-900">Documents to Sign</h1>
+      <p className="mt-1 text-sm text-ink-500">Review and sign documents that require your signature.</p>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-      <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-gray-500">Awaiting your signature</h2>
+      <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">Awaiting your signature</h2>
       {pending.length === 0 ? (
-        <p className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500">Nothing to sign right now.</p>
+        <p className="rounded-2xl bg-white p-6 text-sm text-ink-500 shadow-soft ring-1 ring-ink-900/5">Nothing to sign right now.</p>
       ) : (
         <div className="space-y-3">
           {pending.map((r) => (
-            <div key={r.id} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div key={r.id} className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-gray-900">{r.documentTitle}</p>
-                  <p className="text-xs text-gray-400">Requested {dateFmt(r.createdAt)}</p>
+                  <p className="font-semibold text-ink-900">{r.documentTitle}</p>
+                  <p className="text-xs text-ink-400">Requested {dateFmt(r.createdAt)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <a
                     href={`/api/investors/documents/${r.documentId}/download`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    className="rounded-xl border border-ink-200 px-3 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-50 transition-colors"
                   >
                     Review
                   </a>
@@ -120,19 +124,18 @@ export default function SignaturesPage() {
                       setNameInput('')
                       setError(null)
                     }}
-                    className="rounded-xl px-3 py-2 text-sm font-semibold text-white"
-                    style={{ backgroundColor: ACCENT }}
+                    className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors"
                   >
                     {signingId === r.id ? 'Cancel' : 'Sign'}
                   </button>
                 </div>
               </div>
               {signingId === r.id && (
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <label className="block text-sm font-medium text-gray-700">
+                <div className="mt-4 border-t border-ink-100 pt-4">
+                  <label className="block text-sm font-medium text-ink-700">
                     Type your full legal name to sign
                   </label>
-                  <p className="mb-2 text-xs text-gray-400">
+                  <p className="mb-2 text-xs text-ink-400">
                     By typing your name and clicking Sign, you agree this constitutes your electronic signature.
                   </p>
                   <div className="flex gap-2">
@@ -140,14 +143,12 @@ export default function SignaturesPage() {
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
                       placeholder="Full legal name"
-                      className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                      style={{ ['--tw-ring-color' as any]: ACCENT }}
+                      className="flex-1 rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                     />
                     <button
                       onClick={() => sign(r.id)}
                       disabled={busy}
-                      className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                      style={{ backgroundColor: ACCENT }}
+                      className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60"
                     >
                       {busy ? 'Signing…' : 'Sign'}
                     </button>
@@ -161,19 +162,19 @@ export default function SignaturesPage() {
 
       {completed.length > 0 && (
         <>
-          <h2 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-gray-500">History</h2>
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <tbody className="divide-y divide-gray-100">
+          <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">History</h2>
+          <div className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
+            <table className="min-w-full divide-y divide-ink-100 text-sm">
+              <tbody className="divide-y divide-ink-100">
                 {completed.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-4 py-3 text-gray-900">{r.documentTitle}</td>
+                  <tr key={r.id} className="hover:bg-ink-50">
+                    <td className="px-4 py-3 text-ink-900">{r.documentTitle}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${r.status === 'SIGNED' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                         {r.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500">{dateFmt(r.signedAt)}</td>
+                    <td className="px-4 py-3 text-right text-ink-500">{dateFmt(r.signedAt)}</td>
                   </tr>
                 ))}
               </tbody>

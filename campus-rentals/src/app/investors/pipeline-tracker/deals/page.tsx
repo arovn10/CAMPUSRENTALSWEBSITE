@@ -155,26 +155,26 @@ export default function PipelineTrackerDealsPage() {
     <div
       key={deal.id}
       onClick={() => router.push(`/investors/pipeline-tracker/deals/${deal.id}`)}
-      className="bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all cursor-pointer overflow-hidden"
+      className="bg-white rounded-xl border border-ink-200/80 shadow-sm hover:shadow hover:border-ink-300 transition-all cursor-pointer overflow-hidden"
     >
       <div className="p-5">
         <div className="flex items-start justify-between gap-2 mb-3">
-          <h2 className="text-lg font-semibold text-slate-900 truncate flex-1">{deal.name}</h2>
-          <ArrowUpRightIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+          <h2 className="text-lg font-semibold text-ink-900 truncate flex-1">{deal.name}</h2>
+          <ArrowUpRightIcon className="h-5 w-5 text-ink-400 flex-shrink-0" />
         </div>
         {deal.stage && (
           <span
             className="inline-block px-2.5 py-1 rounded-lg text-xs font-medium mb-2"
             style={{
-              backgroundColor: deal.stage.color ? `${deal.stage.color}20` : '#E0E7FF',
-              color: deal.stage.color || '#3B82F6',
+              backgroundColor: deal.stage.color ? `${deal.stage.color}20` : '#54AAB120',
+              color: deal.stage.color || '#54AAB1',
             }}
           >
             {deal.stage.name}
           </span>
         )}
-        <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-2">
-          <span className="font-medium text-slate-700">{deal.dealType}</span>
+        <div className="flex flex-wrap gap-2 text-xs text-ink-500 mb-2">
+          <span className="font-medium text-ink-700">{deal.dealType}</span>
           <span>·</span>
           <span>{deal.status}</span>
           {deal.priority && deal.priority !== 'MEDIUM' && (
@@ -185,31 +185,31 @@ export default function PipelineTrackerDealsPage() {
           )}
         </div>
         {(deal.property?.address || deal.description) && (
-          <p className="text-sm text-slate-600 line-clamp-2 mb-2">
+          <p className="text-sm text-ink-600 line-clamp-2 mb-2">
             {deal.property?.address || deal.description}
           </p>
         )}
         {deal.estimatedValue != null && deal.estimatedValue > 0 && (
-          <p className="text-sm font-semibold text-slate-900">{formatCurrency(deal.estimatedValue)}</p>
+          <p className="text-sm font-semibold text-ink-900">{formatCurrency(deal.estimatedValue)}</p>
         )}
-        {deal.source && <p className="text-xs text-slate-500 mt-1">Source: {deal.source}</p>}
+        {deal.source && <p className="text-xs text-ink-500 mt-1">Source: {deal.source}</p>}
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-ink-50">
       <div className="max-w-7xl mx-auto px-0 sm:px-4 lg:px-8 py-4 sm:py-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">List</h1>
-            <p className="text-slate-500 mt-0.5 text-sm">Deal pipeline — filter, sort, and view by stage or timeline.</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-ink-900 tracking-tight">List</h1>
+            <p className="text-ink-500 mt-0.5 text-sm">Deal pipeline — filter, sort, and view by stage or timeline.</p>
           </div>
           {isAdminOrManager && (
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-ink-300 rounded-lg hover:bg-ink-50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
             >
               <PlusIcon className="h-4 w-4" />
               New deal
@@ -218,13 +218,13 @@ export default function PipelineTrackerDealsPage() {
         </div>
 
         {/* Filter and sort bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-4 p-3 sm:p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 mb-4 p-3 sm:p-4 bg-white rounded-xl border border-ink-200 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Filter by stage:</label>
+            <label className="text-sm font-medium text-ink-700">Filter by stage:</label>
             <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-offset-0 focus:ring-accent focus:border-accent"
+              className="px-3 py-2 border border-ink-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-offset-0 focus:ring-accent focus:border-accent"
             >
               <option value="">All stages</option>
               {stageOptions.map((s) => (
@@ -233,11 +233,11 @@ export default function PipelineTrackerDealsPage() {
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+            <label className="text-sm font-medium text-ink-700">Sort by:</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-accent"
+              className="px-3 py-2 border border-ink-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-accent"
             >
               <option value="name">Name</option>
               <option value="stage">Stage</option>
@@ -247,22 +247,22 @@ export default function PipelineTrackerDealsPage() {
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-accent"
+              className="px-3 py-2 border border-ink-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-accent"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-2 ml-auto">
-            <label className="text-sm font-medium text-gray-700">View:</label>
-            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+            <label className="text-sm font-medium text-ink-700">View:</label>
+            <div className="flex rounded-lg border border-ink-300 overflow-hidden">
               {(['all', 'stage', 'quarter'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-2 text-sm font-medium border-r border-gray-300 last:border-r-0 ${
-                    viewMode === mode ? 'bg-accent text-white' : 'text-gray-700 bg-white hover:bg-gray-50'
+                  className={`px-3 py-2 text-sm font-medium border-r border-ink-300 last:border-r-0 ${
+                    viewMode === mode ? 'bg-accent text-white' : 'text-ink-700 bg-white hover:bg-ink-50'
                   }`}
                 >
                   {mode === 'all' ? 'All' : mode === 'stage' ? 'By stage' : 'By quarter/year'}
@@ -275,19 +275,19 @@ export default function PipelineTrackerDealsPage() {
             placeholder="Search deals..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-56 focus:ring-2 focus:ring-accent focus:border-accent"
+            className="px-3 py-2 border border-ink-300 rounded-lg text-sm w-full sm:w-56 focus:ring-2 focus:ring-accent focus:border-accent"
           />
         </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="h-10 w-10 rounded-full border-2 border-slate-200 border-t-accent animate-spin" />
+            <div className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           </div>
         ) : viewMode === 'stage' ? (
           <div className="space-y-6">
             {Object.entries(groupedByStage).map(([stageName, list]) => (
               <div key={stageName}>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-ink-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: list[0]?.stage?.color ?? '#54AAB1' }}
@@ -300,7 +300,7 @@ export default function PipelineTrackerDealsPage() {
               </div>
             ))}
             {Object.keys(groupedByStage).length === 0 && (
-              <div className="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500 text-sm">
+              <div className="text-center py-12 bg-white rounded-xl border border-ink-200 text-ink-500 text-sm">
                 No deals match the current filters.
               </div>
             )}
@@ -311,7 +311,7 @@ export default function PipelineTrackerDealsPage() {
               const list = groupedByQuarter[label] ?? []
               return (
               <div key={label}>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{label} ({list.length})</h2>
+                <h2 className="text-sm font-semibold text-ink-500 uppercase tracking-wider mb-3">{label} ({list.length})</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {list.map(renderDealCard)}
                 </div>
@@ -319,7 +319,7 @@ export default function PipelineTrackerDealsPage() {
             );
             })}
             {quarterKeysOrdered.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500 text-sm">
+              <div className="text-center py-12 bg-white rounded-xl border border-ink-200 text-ink-500 text-sm">
                 No deals match the current filters.
               </div>
             )}
@@ -331,12 +331,12 @@ export default function PipelineTrackerDealsPage() {
         )}
 
         {!loading && filteredAndSorted.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-            <div className="inline-flex p-4 bg-slate-100 rounded-2xl mb-4">
-              <FolderIcon className="h-12 w-12 text-slate-500" />
+          <div className="text-center py-16 bg-white rounded-2xl border border-ink-200">
+            <div className="inline-flex p-4 bg-ink-100 rounded-2xl mb-4">
+              <FolderIcon className="h-12 w-12 text-ink-500" />
             </div>
-            <p className="text-lg font-semibold text-slate-900 mb-1">No deals yet</p>
-            <p className="text-slate-500 text-sm mb-4">
+            <p className="text-lg font-semibold text-ink-900 mb-1">No deals yet</p>
+            <p className="text-ink-500 text-sm mb-4">
               {isAdminOrManager
                 ? 'Create a prospective deal to start tracking.'
                 : 'Deals linked to your investments will appear here.'}
@@ -345,7 +345,7 @@ export default function PipelineTrackerDealsPage() {
               <button
                 type="button"
                 onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent bg-white border border-ink-300 rounded-lg hover:bg-ink-50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
                 <PlusIcon className="h-4 w-4" />
                 New deal

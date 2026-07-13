@@ -23,7 +23,7 @@ function token() {
 }
 const authHeaders = () => ({ Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' })
 
-type Tab = 'invites' | 'commitments' | 'calls' | 'announcements' | 'k1'
+type Tab = 'investors' | 'invites' | 'commitments' | 'calls' | 'announcements' | 'k1'
 
 export default function AdminIMSPage() {
   const router = useRouter()
@@ -61,6 +61,7 @@ export default function AdminIMSPage() {
   if (!allowed) return null
 
   const tabs: { id: Tab; label: string }[] = [
+    { id: 'investors', label: 'Investors' },
     { id: 'invites', label: 'Invites' },
     { id: 'commitments', label: 'Commitments' },
     { id: 'calls', label: 'Capital Calls' },
@@ -90,6 +91,7 @@ export default function AdminIMSPage() {
       </div>
 
       <div className="mt-6">
+        {tab === 'investors' && <InvestorsTab onDone={flash} />}
         {tab === 'invites' && <InvitesTab properties={properties} onDone={flash} />}
         {tab === 'commitments' && <CommitmentsTab investors={investors} properties={properties} onDone={flash} />}
         {tab === 'calls' && <CallsTab investors={investors} properties={properties} onDone={flash} />}
@@ -108,6 +110,259 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-400">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+/* ───────── Investors (directory + edit) ───────── */
+type AdminUser = {
+  id: string
+  email: string
+  firstName: string | null
+  lastName: string | null
+  role: string
+  phone: string | null
+  company: string | null
+  address: string | null
+  city: string | null
+  state: string | null
+  zipCode: string | null
+  country: string | null
+  mailingAddress: string | null
+  mailingCity: string | null
+  mailingState: string | null
+  mailingZipCode: string | null
+  mailingCountry: string | null
+  createdAt: string | null
+}
+
+// Must mirror ALLOWED_PROFILE_FIELDS in /api/admin/users/[id] — contact/address only, never role/email.
+const EDITABLE_USER_FIELDS = [
+  'firstName', 'lastName', 'phone', 'company',
+  'address', 'city', 'state', 'zipCode', 'country',
+  'mailingAddress', 'mailingCity', 'mailingState', 'mailingZipCode', 'mailingCountry',
+] as const
+type EditableUserField = (typeof EDITABLE_USER_FIELDS)[number]
+
+const roleChipCls = (role: string) =>
+  role === 'ADMIN'
+    ? 'inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-[11px] font-semibold text-ink-900'
+    : role === 'MANAGER'
+      ? 'inline-flex items-center rounded-full bg-ink-200 px-2.5 py-0.5 text-[11px] font-semibold text-ink-700'
+      : 'inline-flex items-center rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-semibold text-ink-600'
+
+function InvestorsTab({ onDone }: { onDone: (m: string) => void }) {
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState('')
+  const [query, setQuery] = useState('')
+  const [editing, setEditing] = useState<AdminUser | null>(null)
+
+  const load = useCallback(async () => {
+    setErr('')
+    try {
+      const res = await fetch('/api/admin/users', { headers: authHeaders() })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Failed to load investors')
+      setUsers(Array.isArray(d) ? d : [])
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Failed to load investors')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return users
+    return users.filter((u) => {
+      const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.toLowerCase()
+      return name.includes(q) || (u.email ?? '').toLowerCase().includes(q)
+    })
+  }, [users, query])
+
+  return (
+    <div className="space-y-6">
+      <Section title={`Investors (${users.length})`}>
+        <input
+          className={`${inputCls} mb-4 max-w-sm`}
+          placeholder="Search by name or email…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
+        {loading ? (
+          <p className="text-sm text-ink-400">Loading…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-ink-400">{query ? 'No investors match your search.' : 'No investors yet.'}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
+                <tr>
+                  <th className="py-2 pr-4">Name</th>
+                  <th className="py-2 pr-4">Email</th>
+                  <th className="py-2 pr-4">Role</th>
+                  <th className="py-2 pr-4">Phone</th>
+                  <th className="py-2 pr-4">Joined</th>
+                  <th className="py-2 pr-4" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-100">
+                {filtered.map((u) => (
+                  <tr key={u.id} className="hover:bg-ink-50">
+                    <td className="py-2 pr-4 font-medium text-ink-900">
+                      {`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || '—'}
+                    </td>
+                    <td className="py-2 pr-4 text-ink-600">{u.email}</td>
+                    <td className="py-2 pr-4"><span className={roleChipCls(u.role)}>{u.role}</span></td>
+                    <td className="py-2 pr-4 text-ink-600">{u.phone || '—'}</td>
+                    <td className="py-2 pr-4 text-ink-500">{dateFmt(u.createdAt)}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <button
+                        onClick={() => setEditing(u)}
+                        className="rounded-xl px-3 py-1.5 text-sm font-semibold text-accent hover:bg-accent/10 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+
+      {editing && (
+        <EditInvestorModal
+          user={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            load()
+            onDone('Investor updated')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function EditInvestorModal({ user, onClose, onSaved }: { user: AdminUser; onClose: () => void; onSaved: () => void }) {
+  const [draft, setDraft] = useState<Record<EditableUserField, string>>(() => {
+    const d = {} as Record<EditableUserField, string>
+    for (const k of EDITABLE_USER_FIELDS) d[k] = (user[k] as string | null) ?? ''
+    return d
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+
+  // Body scroll-lock while the modal is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  const save = async () => {
+    setErr('')
+    const changed: Record<string, string> = {}
+    for (const k of EDITABLE_USER_FIELDS) {
+      if (draft[k] !== ((user[k] as string | null) ?? '')) changed[k] = draft[k]
+    }
+    if (Object.keys(changed).length === 0) {
+      onClose()
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(changed),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Failed to update investor')
+      onSaved()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Failed to update investor')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const field = (key: EditableUserField, label: string, span2 = false, type: 'text' | 'tel' = 'text') => (
+    <div className={span2 ? 'sm:col-span-2' : ''}>
+      <label className="mb-1 block text-sm font-medium text-ink-700">{label}</label>
+      <input
+        type={type}
+        className={inputCls}
+        value={draft[key]}
+        onChange={(e) => setDraft((p) => ({ ...p, [key]: e.target.value }))}
+      />
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-lift"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-ink-900">
+              Edit {`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email}
+            </h3>
+            <p className="mt-1 text-sm text-ink-500">{user.email}</p>
+          </div>
+          <span className={roleChipCls(user.role)}>{user.role}</span>
+        </div>
+        <p className="mt-2 text-xs text-ink-400">Email and role cannot be changed here.</p>
+
+        {err && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Contact</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {field('firstName', 'First name')}
+          {field('lastName', 'Last name')}
+          {field('phone', 'Phone', false, 'tel')}
+          {field('company', 'Company')}
+        </div>
+
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Primary address</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {field('address', 'Street address', true)}
+          {field('city', 'City')}
+          {field('state', 'State')}
+          {field('zipCode', 'ZIP code')}
+          {field('country', 'Country')}
+        </div>
+
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Mailing address (K-1 delivery)</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {field('mailingAddress', 'Mailing street address', true)}
+          {field('mailingCity', 'Mailing city')}
+          {field('mailingState', 'Mailing state')}
+          {field('mailingZipCode', 'Mailing ZIP code')}
+          {field('mailingCountry', 'Mailing country')}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="rounded-xl bg-ink-100 px-4 py-2 text-sm font-semibold text-ink-700 hover:bg-ink-200 transition-colors disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving} className={btn}>
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

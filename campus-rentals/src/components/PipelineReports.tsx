@@ -132,7 +132,7 @@ export default function PipelineReports() {
     <div className="space-y-4 sm:space-y-6">
       {/* Date Range Filter */}
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-secondary">Time Period:</label>
+        <label className="text-sm font-medium text-ink-800">Time Period:</label>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
@@ -154,21 +154,21 @@ export default function PipelineReports() {
             </div>
             <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
           </div>
-          <p className="text-xs text-text mb-1">Total Deals</p>
-          <p className="text-2xl font-bold text-secondary">{totalDeals}</p>
-          <p className="text-xs text-text mt-1">{activeDeals} active</p>
+          <p className="text-xs text-ink-500 mb-1">Total Deals</p>
+          <p className="text-2xl font-bold text-ink-800">{totalDeals}</p>
+          <p className="text-xs text-ink-500 mt-1">{activeDeals} active</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <CurrencyDollarIcon className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <CurrencyDollarIcon className="h-6 w-6 text-accent" />
             </div>
             <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
           </div>
-          <p className="text-xs text-text mb-1">Total Value</p>
-          <p className="text-2xl font-bold text-secondary">{formatCurrency(totalValue)}</p>
-          <p className="text-xs text-text mt-1">Portfolio value</p>
+          <p className="text-xs text-ink-500 mb-1">Total Value</p>
+          <p className="text-2xl font-bold text-ink-800">{formatCurrency(totalValue)}</p>
+          <p className="text-xs text-ink-500 mt-1">Portfolio value</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
@@ -182,25 +182,25 @@ export default function PipelineReports() {
               <ArrowTrendingDownIcon className="h-5 w-5 text-red-600" />
             )}
           </div>
-          <p className="text-xs text-text mb-1">Total ROI</p>
+          <p className="text-xs text-ink-500 mb-1">Total ROI</p>
           <p className={`text-2xl font-bold ${totalROI >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatPercent(totalROI)}
           </p>
-          <p className="text-xs text-text mt-1">
+          <p className="text-xs text-ink-500 mt-1">
             {formatCurrency(totalValue - totalInvested)} gain/loss
           </p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <CurrencyDollarIcon className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <CurrencyDollarIcon className="h-6 w-6 text-accent" />
             </div>
             <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
           </div>
-          <p className="text-xs text-text mb-1">Total Invested</p>
-          <p className="text-2xl font-bold text-secondary">{formatCurrency(totalInvested)}</p>
-          <p className="text-xs text-text mt-1">Initial investment</p>
+          <p className="text-xs text-ink-500 mb-1">Total Invested</p>
+          <p className="text-2xl font-bold text-ink-800">{formatCurrency(totalInvested)}</p>
+          <p className="text-xs text-ink-500 mt-1">Initial investment</p>
         </div>
       </div>
 
@@ -208,16 +208,16 @@ export default function PipelineReports() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Deals by Status */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Deals by Status</h3>
+          <h3 className="text-lg font-semibold text-ink-800 mb-4">Deals by Status</h3>
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
             </div>
           ) : (
             <div className="space-y-3">
               {Object.entries(dealsByStatus).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
-                  <span className="text-sm text-text capitalize">{status.toLowerCase()}</span>
+                  <span className="text-sm text-ink-500 capitalize">{status.toLowerCase()}</span>
                   <div className="flex items-center gap-3 flex-1 mx-4">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
@@ -225,7 +225,7 @@ export default function PipelineReports() {
                         style={{ width: `${(count / totalDeals) * 100}%` }}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-secondary w-12 text-right">{count}</span>
+                    <span className="text-sm font-semibold text-ink-800 w-12 text-right">{count}</span>
                   </div>
                 </div>
               ))}
@@ -235,16 +235,16 @@ export default function PipelineReports() {
 
         {/* Deals by Funding Status */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Deals by Funding Status</h3>
+          <h3 className="text-lg font-semibold text-ink-800 mb-4">Deals by Funding Status</h3>
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
             </div>
           ) : (
             <div className="space-y-3">
               {Object.entries(dealsByFundingStatus).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
-                  <span className="text-sm text-text capitalize">{status.toLowerCase()}</span>
+                  <span className="text-sm text-ink-500 capitalize">{status.toLowerCase()}</span>
                   <div className="flex items-center gap-3 flex-1 mx-4">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
@@ -252,7 +252,7 @@ export default function PipelineReports() {
                         style={{ width: `${(count / totalDeals) * 100}%` }}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-secondary w-12 text-right">{count}</span>
+                    <span className="text-sm font-semibold text-ink-800 w-12 text-right">{count}</span>
                   </div>
                 </div>
               ))}
@@ -263,25 +263,25 @@ export default function PipelineReports() {
 
       {/* Top Deals */}
       <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-        <h3 className="text-lg font-semibold text-secondary mb-4">Top Deals by Value</h3>
+        <h3 className="text-lg font-semibold text-ink-800 mb-4">Top Deals by Value</h3>
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
           </div>
         ) : topDeals.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-text">No deals found</p>
+            <p className="text-ink-500">No deals found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-secondary">Deal</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-secondary">Property</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-secondary">Value</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-secondary">Cost</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-secondary">ROI</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-ink-800">Deal</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-ink-800">Property</th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold text-ink-800">Value</th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold text-ink-800">Cost</th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold text-ink-800">ROI</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,14 +291,14 @@ export default function PipelineReports() {
                   const roi = dealCost > 0 ? ((dealValue - dealCost) / dealCost) * 100 : 0
                   return (
                     <tr key={deal.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-secondary">{deal.name}</td>
-                      <td className="py-3 px-4 text-sm text-text">
+                      <td className="py-3 px-4 text-sm text-ink-800">{deal.name}</td>
+                      <td className="py-3 px-4 text-sm text-ink-500">
                         {deal.property?.name || deal.property?.address || 'N/A'}
                       </td>
-                      <td className="py-3 px-4 text-sm text-right font-medium text-secondary">
+                      <td className="py-3 px-4 text-sm text-right font-medium text-ink-800">
                         {formatCurrency(dealValue)}
                       </td>
-                      <td className="py-3 px-4 text-sm text-right text-text">
+                      <td className="py-3 px-4 text-sm text-right text-ink-500">
                         {formatCurrency(dealCost)}
                       </td>
                       <td className={`py-3 px-4 text-sm text-right font-medium ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>

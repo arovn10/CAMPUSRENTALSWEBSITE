@@ -141,12 +141,12 @@ export default function PipelineProperties() {
       {/* Properties Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
         </div>
       ) : filteredProperties.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <BuildingOfficeIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-text">No properties found</p>
+          <p className="text-ink-500">No properties found</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -157,9 +157,9 @@ export default function PipelineProperties() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-secondary mb-1">{property.name}</h3>
+                  <h3 className="text-lg font-semibold text-ink-800 mb-1">{property.name}</h3>
                   {property.address && (
-                    <div className="flex items-center gap-1 text-sm text-text">
+                    <div className="flex items-center gap-1 text-sm text-ink-500">
                       <MapPinIcon className="h-4 w-4 flex-shrink-0" />
                       <span className="truncate">{property.address}</span>
                     </div>
@@ -170,16 +170,16 @@ export default function PipelineProperties() {
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-text mb-1">Current Value</p>
-                    <p className="font-semibold text-secondary flex items-center gap-1">
+                    <p className="text-xs text-ink-500 mb-1">Current Value</p>
+                    <p className="font-semibold text-ink-800 flex items-center gap-1">
                       <CurrencyDollarIcon className="h-4 w-4 text-accent" />
                       {formatCurrency(property.currentValue)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-text mb-1">Total Cost</p>
-                    <p className="font-semibold text-secondary flex items-center gap-1">
-                      <CurrencyDollarIcon className="h-4 w-4 text-primary" />
+                    <p className="text-xs text-ink-500 mb-1">Total Cost</p>
+                    <p className="font-semibold text-ink-800 flex items-center gap-1">
+                      <CurrencyDollarIcon className="h-4 w-4 text-accent" />
                       {formatCurrency(property.totalCost)}
                     </p>
                   </div>
@@ -187,16 +187,16 @@ export default function PipelineProperties() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-text mb-1">Occupancy</p>
-                    <p className="font-semibold text-secondary flex items-center gap-1">
+                    <p className="text-xs text-ink-500 mb-1">Occupancy</p>
+                    <p className="font-semibold text-ink-800 flex items-center gap-1">
                       <ChartBarIcon className="h-4 w-4 text-accent" />
                       {formatPercent(property.occupancyRate)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-text mb-1">Cap Rate</p>
-                    <p className="font-semibold text-secondary flex items-center gap-1">
-                      <ChartBarIcon className="h-4 w-4 text-primary" />
+                    <p className="text-xs text-ink-500 mb-1">Cap Rate</p>
+                    <p className="font-semibold text-ink-800 flex items-center gap-1">
+                      <ChartBarIcon className="h-4 w-4 text-accent" />
                       {formatPercent(property.capRate)}
                     </p>
                   </div>
@@ -204,8 +204,8 @@ export default function PipelineProperties() {
 
                 {property.acquisitionDate && (
                   <div>
-                    <p className="text-xs text-text mb-1">Acquisition Date</p>
-                    <p className="font-semibold text-secondary flex items-center gap-1">
+                    <p className="text-xs text-ink-500 mb-1">Acquisition Date</p>
+                    <p className="font-semibold text-ink-800 flex items-center gap-1">
                       <CalendarIcon className="h-4 w-4 text-accent" />
                       {formatDate(property.acquisitionDate)}
                     </p>
@@ -219,7 +219,7 @@ export default function PipelineProperties() {
                     </span>
                   )}
                   {property.fundingStatus && (
-                    <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full border border-primary/20">
+                    <span className="px-2 py-1 text-xs bg-accent/10 text-accent rounded-full border border-accent/20">
                       {property.fundingStatus}
                     </span>
                   )}

@@ -121,7 +121,7 @@ export default function InvestorUpdatesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-slate-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-accent border-t-transparent" />
       </div>
     )
   }
@@ -130,16 +130,16 @@ export default function InvestorUpdatesPage() {
     <div className="max-w-4xl mx-auto space-y-8" style={{ fontFamily: 'var(--font-sans)' }}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold text-slate-900 tracking-tight">Updates</h1>
-          <p className="text-[15px] text-slate-600 mt-1">Announcements, distributions, and document notices</p>
+          <h1 className="text-[28px] font-semibold text-ink-900 tracking-tight">Updates</h1>
+          <p className="text-[15px] text-ink-600 mt-1">Announcements, distributions, and document notices</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFilterRead(filterRead === 'all' ? 'unread' : 'all')}
             className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
               filterRead === 'unread'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                ? 'bg-ink-900 text-white border-ink-900'
+                : 'bg-white border-ink-200 text-ink-700 hover:bg-ink-50'
             }`}
           >
             {filterRead === 'unread' ? 'Unread only' : 'All'}
@@ -147,7 +147,7 @@ export default function InvestorUpdatesPage() {
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-ink-700 bg-ink-100 hover:bg-ink-200 transition-colors"
             >
               <CheckIcon className="w-4 h-4" />
               Mark all read
@@ -164,10 +164,10 @@ export default function InvestorUpdatesPage() {
 
       <div className="space-y-2">
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center">
-            <BellIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600 font-medium">No updates</p>
-            <p className="text-slate-500 text-sm mt-1">
+          <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-12 text-center">
+            <BellIcon className="w-12 h-12 text-ink-300 mx-auto mb-4" />
+            <p className="text-ink-600 font-medium">No updates</p>
+            <p className="text-ink-500 text-sm mt-1">
               Distribution notices, new documents, and property updates will appear here.
             </p>
           </div>
@@ -178,8 +178,8 @@ export default function InvestorUpdatesPage() {
             return (
               <div
                 key={n.id}
-                className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-colors ${
-                  n.isRead ? 'border-slate-200/80' : 'border-slate-300 bg-slate-50/50'
+                className={`bg-white rounded-2xl shadow-soft ring-1 overflow-hidden transition-colors ${
+                  n.isRead ? 'ring-ink-900/5' : 'ring-accent/30'
                 }`}
               >
                 <div
@@ -188,28 +188,28 @@ export default function InvestorUpdatesPage() {
                 >
                   <div
                     className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
-                      n.isRead ? 'bg-slate-100' : 'bg-slate-200'
+                      n.isRead ? 'bg-ink-100' : 'bg-accent/10'
                     }`}
                   >
-                    <Icon className="w-5 h-5 text-slate-600" />
+                    <Icon className={`w-5 h-5 ${n.isRead ? 'text-ink-600' : 'text-accent'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-ink-400">
                         {typeLabel(n.type)}
                       </span>
-                      <span className="text-[13px] text-slate-500">{formatDate(n.createdAt)}</span>
+                      <span className="text-[13px] text-ink-500">{formatDate(n.createdAt)}</span>
                       {!n.isRead && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800">
                           New
                         </span>
                       )}
                     </div>
-                    <p className={`mt-1 font-semibold ${n.isRead ? 'text-slate-700' : 'text-slate-900'}`}>
+                    <p className={`mt-1 font-semibold tracking-tight ${n.isRead ? 'text-ink-700' : 'text-ink-900'}`}>
                       {n.title}
                     </p>
                     {isExpanded && (
-                      <p className="mt-2 text-[15px] text-slate-600 whitespace-pre-wrap">{n.message}</p>
+                      <p className="mt-2 text-[15px] text-ink-600 whitespace-pre-wrap">{n.message}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -219,13 +219,13 @@ export default function InvestorUpdatesPage() {
                           e.stopPropagation()
                           markRead(n.id)
                         }}
-                        className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                        className="p-2 rounded-lg text-ink-500 hover:bg-ink-100 hover:text-ink-700 transition-colors"
                         title="Mark as read"
                       >
                         <CheckIcon className="w-5 h-5" />
                       </button>
                     )}
-                    <span className="text-slate-400">
+                    <span className="text-ink-400">
                       {isExpanded ? (
                         <ChevronUpIcon className="w-5 h-5" />
                       ) : (

@@ -201,9 +201,9 @@ export default function CapitalAccountPage() {
                   </td>
                 </tr>
                 {openId === a.propertyId && (
-                  <tr key={`${a.propertyId}-ledger`} className="bg-gray-50">
+                  <tr key={`${a.propertyId}-ledger`} className="bg-ink-50">
                     <td colSpan={8} className="px-4 py-3">
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-ink-500">
                         {a.ledger.length === 0 ? (
                           'No transactions recorded.'
                         ) : (
@@ -211,17 +211,17 @@ export default function CapitalAccountPage() {
                             <tbody>
                               {a.ledger.map((l, i) => (
                                 <tr key={i}>
-                                  <td className="py-1 pr-4 text-gray-400">{dateFmt(l.date)}</td>
+                                  <td className="py-1 pr-4 text-ink-400">{dateFmt(l.date)}</td>
                                   <td className="py-1 pr-4">
                                     <span
                                       className={
-                                        l.type === 'DISTRIBUTION' ? 'text-green-700' : 'text-gray-700'
+                                        l.type === 'DISTRIBUTION' ? 'text-green-700' : 'text-ink-700'
                                       }
                                     >
                                       {l.type === 'DISTRIBUTION' ? 'Distribution' : 'Contribution'}
                                     </span>
                                   </td>
-                                  <td className="py-1 text-right font-medium text-gray-800">
+                                  <td className="py-1 text-right font-medium text-ink-800">
                                     {l.type === 'DISTRIBUTION' ? '+' : '−'}
                                     {usd(l.amount)}
                                   </td>
@@ -240,7 +240,7 @@ export default function CapitalAccountPage() {
         </table>
       </div>
 
-      <p className="mt-6 text-xs text-gray-400">
+      <p className="mt-6 text-xs text-ink-400">
         Figures derived from your recorded contributions, distributions, and current property
         valuations. IRR is a true XIRR over dated cash flows. Distributions are paid outside this
         portal; this is your statement of record.
