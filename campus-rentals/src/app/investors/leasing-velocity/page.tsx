@@ -14,7 +14,7 @@ export default function LeasingVelocityRedirectPage() {
   }, [router])
   return (
     <div className="flex justify-center items-center min-h-[40vh]">
-      <div className="h-8 w-8 rounded-full border-2 border-slate-200 border-t-slate-600 animate-spin" />
+      <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
     </div>
   )
 }

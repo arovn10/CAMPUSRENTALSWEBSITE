@@ -69,6 +69,14 @@ interface Distribution {
   type: 'RENTAL' | 'SALE' | 'REFINANCE' | 'INSURANCE_SETTLEMENT' | 'OTHER'
 }
 
+interface ActivityEntry {
+  id: string
+  type: 'CONTRIBUTION' | 'DISTRIBUTION'
+  amount: number
+  date: string
+  propertyName: string
+}
+
 interface User {
   id: string
   email: string
@@ -137,6 +145,7 @@ export default function InvestorDashboard() {
     totalProjectCost: 0
   })
   const [loading, setLoading] = useState(true)
+  const [recentActivity, setRecentActivity] = useState<ActivityEntry[]>([])
   const [showInvestedBreakdown, setShowInvestedBreakdown] = useState(false)
   const [investedBreakdown, setInvestedBreakdown] = useState<{ property: string; amount: number }[]>([])
   // Legacy: keep a single "overview" view so any stray reference to activeView (e.g. from sessionStorage or links) does not throw
@@ -154,6 +163,40 @@ export default function InvestorDashboard() {
       router.push('/investors/login')
     }
   }, [router])
+
+  // Recent activity feed — latest ledger entries from the capital account
+  // (same source of truth as /investors/banking). Additive; independent of the
+  // existing dashboard data flow.
+  useEffect(() => {
+    const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
+    if (!token) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/investors/capital-account', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        const entries: ActivityEntry[] = (data.accounts ?? []).flatMap((a: any) =>
+          (a.ledger ?? []).map((e: any, i: number) => ({
+            id: `${a.propertyId}-${e.type}-${e.date}-${i}`,
+            type: e.type,
+            amount: e.amount ?? 0,
+            date: e.date,
+            propertyName: a.propertyName ?? '—'
+          }))
+        )
+        entries.sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime())
+        if (!cancelled) setRecentActivity(entries.slice(0, 6))
+      } catch {
+        // Non-fatal — the feed simply stays hidden
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const fetchDashboardData = async (user: User) => {
     try {
@@ -450,24 +493,24 @@ export default function InvestorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
-            <div className="h-16 w-16 rounded-full border-4 border-blue-200"></div>
-            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+            <div className="h-16 w-16 rounded-full border-4 border-ink-100"></div>
+            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
           </div>
-          <p className="mt-6 text-slate-600 font-medium">Loading your portfolio...</p>
+          <p className="mt-6 text-ink-600 font-medium">Loading your portfolio...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className="min-h-screen bg-ink-50" style={{ fontFamily: 'var(--font-sans)' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="mb-10 sm:mb-12">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">Overview</h1>
-          <p className="mt-1 text-[15px] text-slate-500">Your portfolio at a glance</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-ink-900 tracking-tight">Overview</h1>
+          <p className="mt-1 text-[15px] text-ink-500">Your portfolio at a glance</p>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
@@ -484,93 +527,134 @@ export default function InvestorDashboard() {
               setShowInvestedBreakdown(true)
             }}
             onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLElement).click()}
-            className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300/80 transition-all cursor-pointer"
+            className="bg-white rounded-2xl p-5 sm:p-6 shadow-soft ring-1 ring-ink-900/5 hover:shadow-lift transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 rounded-xl">
-                <CurrencyDollarIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-xl">
+                <CurrencyDollarIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Invested</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Total Invested</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.totalInvested)}</p>
+            <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.totalInvested)}</p>
             <p className="text-sm text-emerald-600 font-medium mt-1">Growing</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-soft ring-1 ring-ink-900/5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 rounded-xl">
-                <ChartBarIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-xl">
+                <ChartBarIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Current Value</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Current Value</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.currentValue)}</p>
-            <p className="text-sm text-slate-500 font-medium mt-1">Stabilized portfolio</p>
+            <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.currentValue)}</p>
+            <p className="text-sm text-ink-500 font-medium mt-1">Stabilized portfolio</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-soft ring-1 ring-ink-900/5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 rounded-xl">
-                <BanknotesIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-xl">
+                <BanknotesIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Distributions</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Distributions</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatCurrency(stats.totalDistributions)}</p>
-            <p className="text-sm text-slate-500 font-medium mt-1">Cash received</p>
+            <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.totalDistributions)}</p>
+            <p className="text-sm text-ink-500 font-medium mt-1">Cash received</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-soft ring-1 ring-ink-900/5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-slate-100 rounded-xl">
-                <ArrowTrendingUpIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-xl">
+                <ArrowTrendingUpIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Average IRR</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Average IRR</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{formatPercentage(stats.averageIRR)}</p>
-            <p className="text-sm text-slate-500 font-medium mt-1">Performance</p>
+            <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatPercentage(stats.averageIRR)}</p>
+            <p className="text-sm text-ink-500 font-medium mt-1">Performance</p>
           </div>
         </div>
 
-        <section className="border-t border-slate-200/80 pt-8">
-          <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Quick access</h2>
+        {recentActivity.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-ink-500 uppercase tracking-wider">Recent activity</h2>
+              <Link href="/investors/banking" className="text-sm font-semibold text-accent hover:text-[#4b9ba2] transition-colors">
+                View all
+              </Link>
+            </div>
+            <div className="rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5 divide-y divide-ink-100 overflow-hidden">
+              {recentActivity.map((entry) => (
+                <Link
+                  key={entry.id}
+                  href="/investors/banking"
+                  className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-ink-50 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-medium text-ink-900 truncate">
+                      {formatCurrency(entry.amount)} {entry.type === 'DISTRIBUTION' ? 'distribution' : 'contribution'} — {entry.propertyName}
+                    </p>
+                    <p className="text-xs text-ink-500 mt-0.5">
+                      {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span
+                      className={`inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium ${
+                        entry.type === 'DISTRIBUTION'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-accent/10 text-ink-700'
+                      }`}
+                    >
+                      {entry.type === 'DISTRIBUTION' ? 'Distribution' : 'Contribution'}
+                    </span>
+                    <ArrowUpRightIcon className="h-4 w-4 text-ink-400" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="border-t border-ink-100 pt-8">
+          <h2 className="text-sm font-medium text-ink-500 uppercase tracking-wider mb-4">Quick access</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link
               href="/investors/documents"
-              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-soft ring-1 ring-ink-900/5 hover:shadow-lift transition-all"
             >
-              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
-                <DocumentTextIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-lg flex-shrink-0">
+                <DocumentTextIcon className="h-5 w-5 text-accent" />
               </div>
               <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-slate-900">Documents</p>
-                <p className="text-xs text-slate-500">Tax, PPM, statements</p>
+                <p className="text-[15px] font-semibold text-ink-900">Documents</p>
+                <p className="text-xs text-ink-500">Tax, PPM, statements</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
             </Link>
             <Link
               href="/investors/updates"
-              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-soft ring-1 ring-ink-900/5 hover:shadow-lift transition-all"
             >
-              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
-                <BellIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-lg flex-shrink-0">
+                <BellIcon className="h-5 w-5 text-accent" />
               </div>
               <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-slate-900">Updates</p>
-                <p className="text-xs text-slate-500">Announcements & notices</p>
+                <p className="text-[15px] font-semibold text-ink-900">Updates</p>
+                <p className="text-xs text-ink-500">Announcements & notices</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
             </Link>
             <Link
               href="/investors/performance"
-              className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300 transition-all"
+              className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-soft ring-1 ring-ink-900/5 hover:shadow-lift transition-all"
             >
-              <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
-                <ChartBarIcon className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-accent/10 rounded-lg flex-shrink-0">
+                <ChartBarIcon className="h-5 w-5 text-accent" />
               </div>
               <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-slate-900">Performance</p>
-                <p className="text-xs text-slate-500">Reports & export</p>
+                <p className="text-[15px] font-semibold text-ink-900">Performance</p>
+                <p className="text-xs text-ink-500">Reports & export</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-slate-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
             </Link>
           </div>
         </section>
@@ -578,27 +662,27 @@ export default function InvestorDashboard() {
 
       {showInvestedBreakdown && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-4 sm:py-10 px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 my-4">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words pr-2">Total Invested Breakdown</h3>
-              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg flex-shrink-0 font-medium">
+          <div className="bg-white rounded-2xl shadow-lift w-full max-w-lg ring-1 ring-ink-900/5 my-4">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-ink-100">
+              <h3 className="text-lg sm:text-xl font-bold text-ink-900 break-words pr-2">Total Invested Breakdown</h3>
+              <button onClick={() => setShowInvestedBreakdown(false)} className="p-2 text-ink-700 hover:text-ink-900 hover:bg-ink-100 rounded-lg flex-shrink-0 font-medium">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-4 sm:p-6 divide-y divide-slate-100">
+            <div className="p-4 sm:p-6 divide-y divide-ink-100">
               {investedBreakdown.length > 0 ? (
                 investedBreakdown.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between py-3">
-                    <span className="text-slate-700 font-medium">{item.property}</span>
-                    <span className="text-slate-900 font-semibold">{formatCurrency(item.amount)}</span>
+                    <span className="text-ink-700 font-medium">{item.property}</span>
+                    <span className="text-ink-900 font-semibold">{formatCurrency(item.amount)}</span>
                   </div>
                 ))
               ) : (
-                <p className="text-slate-500">No funded investments found.</p>
+                <p className="text-ink-500">No funded investments found.</p>
               )}
               <div className="flex items-center justify-between pt-4 mt-2">
-                <span className="text-slate-600 font-medium">Total</span>
-                <span className="text-slate-900 font-bold">{formatCurrency(investedBreakdown.reduce((s, i) => s + (i.amount || 0), 0))}</span>
+                <span className="text-ink-600 font-medium">Total</span>
+                <span className="text-ink-900 font-bold">{formatCurrency(investedBreakdown.reduce((s, i) => s + (i.amount || 0), 0))}</span>
               </div>
             </div>
           </div>

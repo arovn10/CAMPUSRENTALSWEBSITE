@@ -399,14 +399,14 @@ export default function PipelineTasks() {
       {/* Tasks Kanban Board */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {(['TODO', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED'] as const).map((status) => (
             <div key={status} className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-secondary capitalize">{status.replace('_', ' ')}</h3>
+                <h3 className="font-semibold text-ink-800 capitalize">{status.replace('_', ' ')}</h3>
                 <span className="px-2 py-1 text-xs font-medium bg-white rounded-full border border-gray-200">
                   {tasksByStatus[status].length}
                 </span>
@@ -418,7 +418,7 @@ export default function PipelineTasks() {
                     className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-secondary text-sm flex-1">{task.title}</h4>
+                      <h4 className="font-medium text-ink-800 text-sm flex-1">{task.title}</h4>
                       <div className="flex items-center gap-1 ml-2">
                         <button
                           onClick={() => handleEdit(task)}
@@ -437,28 +437,28 @@ export default function PipelineTasks() {
                       </div>
                     </div>
                     {task.description && (
-                      <p className="text-xs text-text mb-2 line-clamp-2">{task.description}</p>
+                      <p className="text-xs text-ink-500 mb-2 line-clamp-2">{task.description}</p>
                     )}
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`px-2 py-0.5 text-xs rounded border ${PRIORITY_COLORS[task.priority]}`}>
                         {task.priority}
                       </span>
                       {task.deal && (
-                        <span className="flex items-center gap-1 text-xs text-text">
+                        <span className="flex items-center gap-1 text-xs text-ink-500">
                           <FolderIcon className="h-3 w-3" />
                           {task.deal.name}
                         </span>
                       )}
                     </div>
                     {task.dueDate && (
-                      <div className={`flex items-center gap-1 text-xs mb-2 ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-text'}`}>
+                      <div className={`flex items-center gap-1 text-xs mb-2 ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-ink-500'}`}>
                         <CalendarIcon className="h-3 w-3" />
                         {formatDate(task.dueDate)}
                         {isOverdue(task.dueDate) && <span className="text-red-600">(Overdue)</span>}
                       </div>
                     )}
                     {task.assignedTo && (
-                      <div className="flex items-center gap-1 text-xs text-text">
+                      <div className="flex items-center gap-1 text-xs text-ink-500">
                         <UserIcon className="h-3 w-3" />
                         {task.assignedTo.firstName} {task.assignedTo.lastName}
                       </div>
@@ -477,7 +477,7 @@ export default function PipelineTasks() {
                   </div>
                 ))}
                 {tasksByStatus[status].length === 0 && (
-                  <div className="text-center py-8 text-sm text-text">
+                  <div className="text-center py-8 text-sm text-ink-500">
                     No tasks
                   </div>
                 )}
@@ -492,7 +492,7 @@ export default function PipelineTasks() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-              <h2 className="text-lg sm:text-xl font-semibold text-secondary">
+              <h2 className="text-lg sm:text-xl font-semibold text-ink-800">
                 {editingTask ? 'Edit Task' : 'Create Task'}
               </h2>
               <button
@@ -507,7 +507,7 @@ export default function PipelineTasks() {
             </div>
             <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-secondary mb-1">
+                <label className="block text-sm font-medium text-ink-800 mb-1">
                   Deal *
                 </label>
                 <select
@@ -524,7 +524,7 @@ export default function PipelineTasks() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-1">
+                <label className="block text-sm font-medium text-ink-800 mb-1">
                   Title *
                 </label>
                 <input
@@ -537,7 +537,7 @@ export default function PipelineTasks() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary mb-1">
+                <label className="block text-sm font-medium text-ink-800 mb-1">
                   Description
                 </label>
                 <textarea
@@ -550,7 +550,7 @@ export default function PipelineTasks() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-1">
+                  <label className="block text-sm font-medium text-ink-800 mb-1">
                     Status
                   </label>
                   <select
@@ -565,7 +565,7 @@ export default function PipelineTasks() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-1">
+                  <label className="block text-sm font-medium text-ink-800 mb-1">
                     Priority
                   </label>
                   <select
@@ -582,7 +582,7 @@ export default function PipelineTasks() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-1">
+                  <label className="block text-sm font-medium text-ink-800 mb-1">
                     Due Date
                   </label>
                   <input
@@ -594,7 +594,7 @@ export default function PipelineTasks() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary mb-1">
+                  <label className="block text-sm font-medium text-ink-800 mb-1">
                     Assign To
                   </label>
                   <select
@@ -619,7 +619,7 @@ export default function PipelineTasks() {
                     setShowModal(false)
                     resetForm()
                   }}
-                  className="w-full sm:w-auto px-4 py-2 text-text bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm sm:text-base"
+                  className="w-full sm:w-auto px-4 py-2 text-ink-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm sm:text-base"
                 >
                   Cancel
                 </button>

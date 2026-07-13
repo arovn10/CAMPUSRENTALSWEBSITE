@@ -388,20 +388,20 @@ export default function DealDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
       </div>
     )
   }
 
   if (!deal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600">Deal not found</p>
+          <p className="text-ink-600">Deal not found</p>
           <button
             onClick={() => router.push('/investors/pipeline-tracker/deals')}
-            className="mt-4 px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2]"
           >
             Back to Deals
           </button>
@@ -411,27 +411,27 @@ export default function DealDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-8">
+    <div className="min-h-screen bg-ink-50 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => router.push('/investors/pipeline-tracker/deals')}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4"
+            className="flex items-center gap-2 text-ink-600 hover:text-ink-900 mb-4"
           >
             <ArrowLeftIcon className="h-5 w-5" />
             Back to Deals
           </button>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{deal.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-ink-900">{deal.name}</h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                 {deal.stage && (
                   <span
                     className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
                     style={{
-                      backgroundColor: deal.stage.color ? `${deal.stage.color}20` : '#E0E7FF',
-                      color: deal.stage.color || '#3B82F6',
+                      backgroundColor: deal.stage.color ? `${deal.stage.color}20` : '#54AAB120',
+                      color: deal.stage.color || '#54AAB1',
                     }}
                   >
                     {deal.stage.name}
@@ -445,25 +445,25 @@ export default function DealDetailPage() {
                       ? 'bg-orange-100 text-orange-800'
                       : deal.priority === 'MEDIUM'
                       ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-slate-100 text-slate-800'
+                      : 'bg-ink-100 text-ink-800'
                   }`}
                 >
                   {deal.priority}
                 </span>
-                <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-semibold">
+                <span className="px-2 sm:px-3 py-1 bg-accent/10 text-accent rounded-full text-xs sm:text-sm font-semibold">
                   {deal.dealType}
                 </span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {/* Publish Toggle */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg">
-                <label className="text-xs sm:text-sm font-medium text-slate-700">Published:</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-ink-300 rounded-lg">
+                <label className="text-xs sm:text-sm font-medium text-ink-700">Published:</label>
                 <button
                   onClick={handleTogglePublished}
                   disabled={updatingPublished}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    published ? 'bg-blue-600' : 'bg-gray-200'
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 ${
+                    published ? 'bg-accent' : 'bg-ink-200'
                   } ${updatingPublished ? 'opacity-50 cursor-not-allowed' : ''}`}
                   role="switch"
                   aria-checked={published}
@@ -474,19 +474,19 @@ export default function DealDetailPage() {
                     }`}
                   />
                 </button>
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-ink-600">
                   {published ? 'Yes' : 'No'}
                 </span>
               </div>
               {/* Funded Toggle */}
               {deal.propertyId && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg">
-                  <label className="text-xs sm:text-sm font-medium text-slate-700">Funded:</label>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-ink-300 rounded-lg">
+                  <label className="text-xs sm:text-sm font-medium text-ink-700">Funded:</label>
                   <button
                     onClick={handleToggleFunded}
                     disabled={updatingFunded}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                      funded ? 'bg-green-600' : 'bg-gray-200'
+                      funded ? 'bg-green-600' : 'bg-ink-200'
                     } ${updatingFunded ? 'opacity-50 cursor-not-allowed' : ''}`}
                     role="switch"
                     aria-checked={funded}
@@ -497,7 +497,7 @@ export default function DealDetailPage() {
                       }`}
                     />
                   </button>
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-ink-600">
                     {funded ? 'Yes' : 'No'}
                   </span>
                 </div>
@@ -525,17 +525,17 @@ export default function DealDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Overview */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4">Overview</h2>
+            <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-ink-900 mb-4">Overview</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(deal.location || deal.property?.address) && (
                   <div>
-                    <p className="text-xs sm:text-sm text-slate-500">Location</p>
+                    <p className="text-xs sm:text-sm text-ink-500">Location</p>
                     <button
                       onClick={() => setShowLocationMap(true)}
-                      className="flex items-center gap-2 text-slate-900 font-medium hover:text-blue-600 transition-colors group mt-1"
+                      className="flex items-center gap-2 text-ink-900 font-medium hover:text-accent transition-colors group mt-1"
                     >
-                      <MapPinIcon className="h-4 w-4 text-slate-400 group-hover:text-blue-600 flex-shrink-0" />
+                      <MapPinIcon className="h-4 w-4 text-ink-400 group-hover:text-accent flex-shrink-0" />
                       <span className="underline decoration-dotted text-sm sm:text-base break-words">
                         {deal.property?.address || deal.location}
                       </span>
@@ -544,30 +544,30 @@ export default function DealDetailPage() {
                 )}
                 {deal.estimatedValue && (
                   <div>
-                    <p className="text-xs sm:text-sm text-slate-500">Estimated Value</p>
-                    <p className="text-slate-900 font-medium text-sm sm:text-base">
+                    <p className="text-xs sm:text-sm text-ink-500">Estimated Value</p>
+                    <p className="text-ink-900 font-medium text-sm sm:text-base">
                       ${deal.estimatedValue.toLocaleString()}
                     </p>
                   </div>
                 )}
                 {deal.estimatedCloseDate && (
                   <div>
-                    <p className="text-xs sm:text-sm text-slate-500">Estimated Close Date</p>
-                    <p className="text-slate-900 font-medium text-sm sm:text-base">
+                    <p className="text-xs sm:text-sm text-ink-500">Estimated Close Date</p>
+                    <p className="text-ink-900 font-medium text-sm sm:text-base">
                       {new Date(deal.estimatedCloseDate).toLocaleDateString()}
                     </p>
                   </div>
                 )}
                 {deal.source && (
                   <div>
-                    <p className="text-xs sm:text-sm text-slate-500">Source</p>
-                    <p className="text-slate-900 font-medium text-sm sm:text-base">{deal.source}</p>
+                    <p className="text-xs sm:text-sm text-ink-500">Source</p>
+                    <p className="text-ink-900 font-medium text-sm sm:text-base">{deal.source}</p>
                   </div>
                 )}
                 {deal.assignedTo && (
                   <div>
-                    <p className="text-xs sm:text-sm text-slate-500">Assigned To</p>
-                    <p className="text-slate-900 font-medium text-sm sm:text-base">
+                    <p className="text-xs sm:text-sm text-ink-500">Assigned To</p>
+                    <p className="text-ink-900 font-medium text-sm sm:text-base">
                       {deal.assignedTo.firstName} {deal.assignedTo.lastName}
                     </p>
                   </div>
@@ -575,18 +575,18 @@ export default function DealDetailPage() {
               </div>
               {deal.description && (
                 <div className="mt-4">
-                  <p className="text-xs sm:text-sm text-slate-500 mb-1">Description</p>
-                  <p className="text-slate-700 text-sm sm:text-base">{deal.description}</p>
+                  <p className="text-xs sm:text-sm text-ink-500 mb-1">Description</p>
+                  <p className="text-ink-700 text-sm sm:text-base">{deal.description}</p>
                 </div>
               )}
               {deal.dealTags.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs sm:text-sm text-slate-500 mb-2">Tags</p>
+                  <p className="text-xs sm:text-sm text-ink-500 mb-2">Tags</p>
                   <div className="flex flex-wrap gap-2">
                     {deal.dealTags.map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm"
+                        className="px-2 sm:px-3 py-1 bg-accent/10 text-accent rounded-full text-xs sm:text-sm"
                       >
                         {tag.tag}
                       </span>
@@ -597,15 +597,15 @@ export default function DealDetailPage() {
             </div>
 
             {/* Tasks */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Tasks</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-ink-900">Tasks</h2>
                 <button
                   onClick={() => {
                     setEditingTask(null)
                     setShowTaskModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Task
@@ -615,7 +615,7 @@ export default function DealDetailPage() {
                 {deal.tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="flex items-start gap-3 p-3 bg-ink-50 rounded-lg hover:bg-ink-100 transition-colors cursor-pointer"
                     onClick={() => {
                       setEditingTask(task)
                       setShowTaskModal(true)
@@ -625,17 +625,17 @@ export default function DealDetailPage() {
                       {task.status === 'COMPLETED' ? (
                         <CheckCircleIcon className="h-5 w-5 text-green-600" />
                       ) : task.status === 'IN_PROGRESS' ? (
-                        <ClockIcon className="h-5 w-5 text-blue-600" />
+                        <ClockIcon className="h-5 w-5 text-accent" />
                       ) : (
-                        <XCircleIcon className="h-5 w-5 text-slate-400" />
+                        <XCircleIcon className="h-5 w-5 text-ink-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 text-sm sm:text-base">{task.title}</p>
+                      <p className="font-medium text-ink-900 text-sm sm:text-base">{task.title}</p>
                       {task.description && (
-                        <p className="text-xs sm:text-sm text-slate-600 mt-1">{task.description}</p>
+                        <p className="text-xs sm:text-sm text-ink-600 mt-1">{task.description}</p>
                       )}
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs text-ink-500">
                         <span
                           className={`px-2 py-1 rounded ${
                             task.priority === 'URGENT'
@@ -660,21 +660,21 @@ export default function DealDetailPage() {
                   </div>
                 ))}
                 {deal.tasks.length === 0 && (
-                  <p className="text-sm text-slate-500 text-center py-4">No tasks yet</p>
+                  <p className="text-sm text-ink-500 text-center py-4">No tasks yet</p>
                 )}
               </div>
             </div>
 
             {/* Notes */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Notes</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-ink-900">Notes</h2>
                 <button
                   onClick={() => {
                     setEditingNote(null)
                     setShowNoteModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Note
@@ -682,13 +682,13 @@ export default function DealDetailPage() {
               </div>
               <div className="space-y-4">
                 {deal.notes.map((note) => (
-                  <div key={note.id} className="p-3 sm:p-4 bg-slate-50 rounded-lg">
+                  <div key={note.id} className="p-3 sm:p-4 bg-ink-50 rounded-lg">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                       <div>
-                        <p className="text-xs sm:text-sm font-medium text-slate-900">
+                        <p className="text-xs sm:text-sm font-medium text-ink-900">
                           {note.createdBy.firstName} {note.createdBy.lastName}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-ink-500">
                           {new Date(note.createdAt).toLocaleString()}
                         </p>
                       </div>
@@ -698,20 +698,20 @@ export default function DealDetailPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap break-words">{note.content}</p>
+                    <p className="text-xs sm:text-sm text-ink-700 whitespace-pre-wrap break-words">{note.content}</p>
                   </div>
                 ))}
                 {deal.notes.length === 0 && (
-                  <p className="text-sm text-slate-500 text-center py-4">No notes yet</p>
+                  <p className="text-sm text-ink-500 text-center py-4">No notes yet</p>
                 )}
               </div>
             </div>
 
             {/* Files */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Files</h2>
-                <label className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer disabled:opacity-50">
+                <h2 className="text-lg sm:text-xl font-semibold text-ink-900">Files</h2>
+                <label className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm cursor-pointer disabled:opacity-50">
                   <PaperClipIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   {uploadingFile ? 'Uploading…' : 'Upload file'}
                   <input
@@ -724,20 +724,20 @@ export default function DealDetailPage() {
                 </label>
               </div>
               {loadingFiles ? (
-                <p className="text-sm text-slate-500 py-4">Loading files…</p>
+                <p className="text-sm text-ink-500 py-4">Loading files…</p>
               ) : dealFiles.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No files yet. Upload offers, LOIs, or other documents.</p>
+                <p className="text-sm text-ink-500 text-center py-4">No files yet. Upload offers, LOIs, or other documents.</p>
               ) : (
                 <ul className="space-y-2">
                   {dealFiles.map((f) => (
                     <li
                       key={f.id}
-                      className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg group"
+                      className="flex items-center justify-between gap-3 p-3 bg-ink-50 rounded-lg group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <DocumentTextIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
-                        <span className="text-sm font-medium text-slate-900 truncate">{f.originalName}</span>
-                        <span className="text-xs text-slate-500 flex-shrink-0">
+                        <DocumentTextIcon className="h-5 w-5 text-ink-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-ink-900 truncate">{f.originalName}</span>
+                        <span className="text-xs text-ink-500 flex-shrink-0">
                           {(f.fileSize / 1024).toFixed(1)} KB
                         </span>
                       </div>
@@ -745,7 +745,7 @@ export default function DealDetailPage() {
                         <button
                           type="button"
                           onClick={() => handleDownloadFile(f.id, f.originalName)}
-                          className="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-lg"
+                          className="p-2 text-ink-600 hover:text-accent hover:bg-ink-100 rounded-lg"
                           title="Download"
                         >
                           <ArrowDownTrayIcon className="h-4 w-4" />
@@ -753,7 +753,7 @@ export default function DealDetailPage() {
                         <button
                           type="button"
                           onClick={() => handleDeleteFile(f.id)}
-                          className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          className="p-2 text-ink-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
                           title="Remove"
                         >
                           <XMarkIcon className="h-4 w-4" />
@@ -770,14 +770,14 @@ export default function DealDetailPage() {
           <div className="space-y-6">
             {/* Property Link */}
             {deal.property && (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-4">Linked Property</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-ink-900 mb-4">Linked Property</h3>
                 <div>
-                  <p className="font-medium text-slate-900 text-sm sm:text-base">{deal.property.name}</p>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1 break-words">{deal.property.address}</p>
+                  <p className="font-medium text-ink-900 text-sm sm:text-base">{deal.property.name}</p>
+                  <p className="text-xs sm:text-sm text-ink-600 mt-1 break-words">{deal.property.address}</p>
                   <button
                     onClick={() => router.push(`/investors/investments/${deal.propertyId}`)}
-                    className="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-700 text-xs sm:text-sm"
+                    className="mt-3 flex items-center gap-2 text-accent hover:text-[#4b9ba2] text-xs sm:text-sm"
                   >
                     <LinkIcon className="h-4 w-4" />
                     View Property
@@ -787,37 +787,37 @@ export default function DealDetailPage() {
             )}
 
             {/* Contacts */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-slate-900">Contacts</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-ink-900">Contacts</h3>
                 <button
                   onClick={() => setShowContactModal(true)}
-                  className="p-2 font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 font-medium text-accent hover:text-[#4b9ba2] hover:bg-accent/10 rounded-lg transition-colors"
                 >
                   <PlusIcon className="h-5 w-5" />
                 </button>
               </div>
               <div className="space-y-3">
                 {deal.relationships.map((rel) => (
-                  <div key={rel.id} className="p-3 bg-slate-50 rounded-lg">
-                    <p className="font-medium text-slate-900 text-sm sm:text-base">
+                  <div key={rel.id} className="p-3 bg-ink-50 rounded-lg">
+                    <p className="font-medium text-ink-900 text-sm sm:text-base">
                       {rel.contact
                         ? `${rel.contact.firstName} ${rel.contact.lastName}`
                         : rel.user
                         ? `${rel.user.firstName} ${rel.user.lastName}`
                         : 'Unknown'}
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 mt-1">{rel.role}</p>
+                    <p className="text-xs sm:text-sm text-ink-600 mt-1">{rel.role}</p>
                     {rel.contact?.company && (
-                      <p className="text-xs text-slate-500 mt-1 break-words">{rel.contact.company}</p>
+                      <p className="text-xs text-ink-500 mt-1 break-words">{rel.contact.company}</p>
                     )}
                     {rel.notes && (
-                      <p className="text-xs text-slate-500 mt-1 break-words">{rel.notes}</p>
+                      <p className="text-xs text-ink-500 mt-1 break-words">{rel.notes}</p>
                     )}
                   </div>
                 ))}
                 {deal.relationships.length === 0 && (
-                  <p className="text-sm text-slate-500 text-center py-4">No contacts yet</p>
+                  <p className="text-sm text-ink-500 text-center py-4">No contacts yet</p>
                 )}
               </div>
             </div>

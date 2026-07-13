@@ -16,8 +16,8 @@ const usd = (n: number) =>
 
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{title}</h3>
+    <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
+      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">{title}</h3>
       {children}
     </div>
   )
@@ -26,7 +26,7 @@ export function ChartCard({ title, children }: { title: string; children: React.
 /** Cumulative value line chart over time. points: {date, value}[] (sorted asc). */
 export function LineChart({ points, height = 200 }: { points: { date: string; value: number }[]; height?: number }) {
   if (points.length < 2) {
-    return <p className="text-sm text-gray-400">Not enough data to chart yet.</p>
+    return <p className="text-sm text-ink-400">Not enough data to chart yet.</p>
   }
   const w = 600
   const h = height
@@ -48,8 +48,8 @@ export function LineChart({ points, height = 200 }: { points: { date: string; va
         const y = minY + ((maxY - minY) * i) / ticks
         return (
           <g key={i}>
-            <line x1={pad.l} y1={sy(y)} x2={w - pad.r} y2={sy(y)} stroke="#eef1f1" />
-            <text x={pad.l - 8} y={sy(y) + 3} textAnchor="end" fontSize="9" fill="#9ca3af">
+            <line x1={pad.l} y1={sy(y)} x2={w - pad.r} y2={sy(y)} stroke="#EEF0F1" />
+            <text x={pad.l - 8} y={sy(y) + 3} textAnchor="end" fontSize="9" fill="#8E979D">
               {usd(y)}
             </text>
           </g>
@@ -57,10 +57,10 @@ export function LineChart({ points, height = 200 }: { points: { date: string; va
       })}
       <path d={area} fill={ACCENT} opacity={0.12} />
       <path d={path} fill="none" stroke={ACCENT} strokeWidth={2} />
-      <text x={pad.l} y={h - 8} fontSize="9" fill="#9ca3af">
+      <text x={pad.l} y={h - 8} fontSize="9" fill="#8E979D">
         {new Date(minX).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
       </text>
-      <text x={w - pad.r} y={h - 8} textAnchor="end" fontSize="9" fill="#9ca3af">
+      <text x={w - pad.r} y={h - 8} textAnchor="end" fontSize="9" fill="#8E979D">
         {new Date(maxX).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
       </text>
     </svg>
@@ -70,7 +70,7 @@ export function LineChart({ points, height = 200 }: { points: { date: string; va
 /** Donut allocation chart. slices: {label, value}[]. */
 export function DonutChart({ slices, size = 200 }: { slices: { label: string; value: number }[]; size?: number }) {
   const total = slices.reduce((s, x) => s + Math.max(x.value, 0), 0)
-  if (total <= 0) return <p className="text-sm text-gray-400">No allocation to show.</p>
+  if (total <= 0) return <p className="text-sm text-ink-400">No allocation to show.</p>
   const r = size / 2
   const inner = r * 0.6
   let angle = -Math.PI / 2
@@ -100,8 +100,8 @@ export function DonutChart({ slices, size = 200 }: { slices: { label: string; va
         {slices.map((s, i) => (
           <li key={i} className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: PALETTE[i % PALETTE.length] }} />
-            <span className="text-gray-700">{s.label}</span>
-            <span className="text-gray-400">{((s.value / total) * 100).toFixed(0)}%</span>
+            <span className="text-ink-700">{s.label}</span>
+            <span className="text-ink-400">{((s.value / total) * 100).toFixed(0)}%</span>
           </li>
         ))}
       </ul>
@@ -111,7 +111,7 @@ export function DonutChart({ slices, size = 200 }: { slices: { label: string; va
 
 /** Monthly bars (e.g. distributions calendar). bars: {label, value}[]. */
 export function BarChart({ bars, height = 200 }: { bars: { label: string; value: number }[]; height?: number }) {
-  if (bars.length === 0) return <p className="text-sm text-gray-400">No distributions recorded.</p>
+  if (bars.length === 0) return <p className="text-sm text-ink-400">No distributions recorded.</p>
   const w = 600
   const h = height
   const pad = { l: 56, r: 12, t: 12, b: 28 }
@@ -122,8 +122,8 @@ export function BarChart({ bars, height = 200 }: { bars: { label: string; value:
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="Distributions by month">
       {[0, 0.5, 1].map((f, i) => (
         <g key={i}>
-          <line x1={pad.l} y1={sy(max * f)} x2={w - pad.r} y2={sy(max * f)} stroke="#eef1f1" />
-          <text x={pad.l - 8} y={sy(max * f) + 3} textAnchor="end" fontSize="9" fill="#9ca3af">
+          <line x1={pad.l} y1={sy(max * f)} x2={w - pad.r} y2={sy(max * f)} stroke="#EEF0F1" />
+          <text x={pad.l - 8} y={sy(max * f) + 3} textAnchor="end" fontSize="9" fill="#8E979D">
             {usd(max * f)}
           </text>
         </g>
@@ -135,7 +135,7 @@ export function BarChart({ bars, height = 200 }: { bars: { label: string; value:
           <g key={i}>
             <rect x={x} y={sy(b.value)} width={bwidth} height={Math.max(h - pad.b - sy(b.value), 0)} rx={2} fill={ACCENT} />
             {i % Math.ceil(bars.length / 8 || 1) === 0 && (
-              <text x={x + bwidth / 2} y={h - 10} textAnchor="middle" fontSize="8" fill="#9ca3af">
+              <text x={x + bwidth / 2} y={h - 10} textAnchor="middle" fontSize="8" fill="#8E979D">
                 {b.label}
               </text>
             )}
@@ -157,7 +157,7 @@ export function WaterfallChart({
   steps: { label: string; value: number; kind: 'base' | 'add' | 'sub' | 'total' }[]
   height?: number
 }) {
-  if (steps.length === 0) return <p className="text-sm text-gray-400">No data.</p>
+  if (steps.length === 0) return <p className="text-sm text-ink-400">No data.</p>
   const w = 600
   const h = height
   const pad = { l: 56, r: 12, t: 12, b: 36 }
@@ -181,7 +181,7 @@ export function WaterfallChart({
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="Capital bridge">
       {[0, 0.5, 1].map((f, i) => (
-        <line key={i} x1={pad.l} y1={sy(max * f)} x2={w - pad.r} y2={sy(max * f)} stroke="#eef1f1" />
+        <line key={i} x1={pad.l} y1={sy(max * f)} x2={w - pad.r} y2={sy(max * f)} stroke="#EEF0F1" />
       ))}
       {bars.map((b, i) => {
         const x = pad.l + i * bw + bw * 0.15
@@ -191,10 +191,10 @@ export function WaterfallChart({
         return (
           <g key={i}>
             <rect x={x} y={top} width={bwidth} height={barH} rx={2} fill={color(steps[i].kind)} />
-            <text x={x + bwidth / 2} y={h - 20} textAnchor="middle" fontSize="8" fill="#6b7280">
+            <text x={x + bwidth / 2} y={h - 20} textAnchor="middle" fontSize="8" fill="#6B747A">
               {b.label}
             </text>
-            <text x={x + bwidth / 2} y={h - 8} textAnchor="middle" fontSize="8" fill="#9ca3af">
+            <text x={x + bwidth / 2} y={h - 8} textAnchor="middle" fontSize="8" fill="#8E979D">
               {usd(b.value)}
             </text>
           </g>

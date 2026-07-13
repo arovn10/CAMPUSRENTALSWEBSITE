@@ -95,21 +95,27 @@ export default function AnalyticsPage() {
     return { deployed, allocation, distBars, bridge }
   }, [data])
 
-  if (loading) return <div className="p-8 text-gray-500">Loading analytics…</div>
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    )
+  }
   if (error) return <div className="p-8 text-red-600">{error}</div>
   if (!data || !charts || data.accounts.length === 0) {
     return (
       <div className="p-8">
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-        <p className="mt-2 text-gray-500">No investment data to visualize yet.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink-900">Analytics</h1>
+        <p className="mt-2 text-ink-500">No investment data to visualize yet.</p>
       </div>
     )
   }
 
   return (
     <div className="mx-auto max-w-5xl p-6 lg:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-      <p className="mt-1 text-sm text-gray-500">A visual view of your portfolio, allocation, and distributions.</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink-900">Analytics</h1>
+      <p className="mt-1 text-sm text-ink-500">A visual view of your portfolio, allocation, and distributions.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <ChartCard title="Capital deployed over time">

@@ -55,7 +55,7 @@ export default function PipelineTrackerOverviewPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="h-10 w-10 rounded-full border-2 border-gray-200 border-t-accent animate-spin" />
+        <div className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -64,25 +64,25 @@ export default function PipelineTrackerOverviewPage() {
     <div className="space-y-8" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Summary cards */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Summary</h2>
+        <h2 className="text-sm font-semibold text-ink-500 uppercase tracking-wider mb-4">Summary</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
-            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm border-l-4 border-accent"
+            className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm border-l-4 border-accent"
           >
-            <p className="text-sm font-medium text-gray-500">Total Deals</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{deals.length}</p>
+            <p className="text-sm font-medium text-ink-500">Total Deals</p>
+            <p className="mt-1 text-2xl font-bold text-ink-900">{deals.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Stages</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{stageNames.length}</p>
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-ink-500">Stages</p>
+            <p className="mt-1 text-2xl font-bold text-ink-900">{stageNames.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Upcoming (90 days)</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{upcomingDates.length}</p>
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-ink-500">Upcoming (90 days)</p>
+            <p className="mt-1 text-2xl font-bold text-ink-900">{upcomingDates.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">With close date</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-ink-500">With close date</p>
+            <p className="mt-1 text-2xl font-bold text-ink-900">
               {deals.filter((d) => d.estimatedCloseDate).length}
             </p>
           </div>
@@ -91,23 +91,23 @@ export default function PipelineTrackerOverviewPage() {
 
       {/* Deals by stage */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Deals by stage</h2>
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-          <ul className="divide-y divide-gray-100">
+        <h2 className="text-sm font-semibold text-ink-500 uppercase tracking-wider mb-4">Deals by stage</h2>
+        <div className="rounded-xl border border-ink-200 bg-white overflow-hidden shadow-sm">
+          <ul className="divide-y divide-ink-100">
             {stageNames.length === 0 ? (
-              <li className="px-5 py-6 text-center text-gray-500 text-sm">No deals yet</li>
+              <li className="px-5 py-6 text-center text-ink-500 text-sm">No deals yet</li>
             ) : (
               stageNames.map((stageName) => {
                 const list = byStage[stageName]
                 const stageColor = list[0]?.stage?.color ?? '#54AAB1'
                 return (
-                  <li key={stageName} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
+                  <li key={stageName} className="flex items-center justify-between px-5 py-3 hover:bg-ink-50">
                     <span
                       className="inline-block w-3 h-3 rounded-full flex-shrink-0 mr-3"
                       style={{ backgroundColor: stageColor }}
                     />
-                    <span className="font-medium text-gray-900 flex-1">{stageName}</span>
-                    <span className="text-gray-500 text-sm">{list.length} deal{list.length !== 1 ? 's' : ''}</span>
+                    <span className="font-medium text-ink-900 flex-1">{stageName}</span>
+                    <span className="text-ink-500 text-sm">{list.length} deal{list.length !== 1 ? 's' : ''}</span>
                   </li>
                 )
               })
@@ -118,30 +118,30 @@ export default function PipelineTrackerOverviewPage() {
 
       {/* Upcoming dates */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+        <h2 className="text-sm font-semibold text-ink-500 uppercase tracking-wider mb-4">
           Upcoming dates (next 90 days)
         </h2>
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+        <div className="rounded-xl border border-ink-200 bg-white overflow-hidden shadow-sm">
           {upcomingDates.length === 0 ? (
-            <div className="px-5 py-8 text-center text-gray-500 text-sm">
+            <div className="px-5 py-8 text-center text-ink-500 text-sm">
               No upcoming close dates in the next 90 days
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-ink-100">
               {upcomingDates.map((deal) => (
-                <li key={deal.id} className="hover:bg-gray-50">
+                <li key={deal.id} className="hover:bg-ink-50">
                   <Link
                     href={`/investors/pipeline-tracker/deals/${deal.id}`}
                     className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-left"
                   >
-                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                    <span className="text-sm font-medium text-ink-900 whitespace-nowrap">
                       {formatDate(deal.date)}
                     </span>
-                    <span className="text-gray-700 flex-1 min-w-0 truncate">{deal.name}</span>
+                    <span className="text-ink-700 flex-1 min-w-0 truncate">{deal.name}</span>
                     {deal.property?.name && (
-                      <span className="text-gray-500 text-sm truncate">{deal.property.name}</span>
+                      <span className="text-ink-500 text-sm truncate">{deal.property.name}</span>
                     )}
-                    <ArrowRightIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <ArrowRightIcon className="h-4 w-4 text-ink-400 flex-shrink-0" />
                   </Link>
                 </li>
               ))}

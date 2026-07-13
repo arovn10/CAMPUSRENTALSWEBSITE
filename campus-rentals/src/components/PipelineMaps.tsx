@@ -166,15 +166,15 @@ export default function PipelineMaps() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Map */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Property Locations</h3>
+          <h3 className="text-lg font-semibold text-ink-800 mb-4">Property Locations</h3>
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
             </div>
           ) : propertiesWithCoords.length === 0 ? (
             <div className="text-center py-12">
               <MapPinIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-text">No properties with coordinates found</p>
+              <p className="text-ink-500">No properties with coordinates found</p>
               <p className="text-xs text-gray-500 mt-2">Addresses are being geocoded...</p>
             </div>
           ) : (
@@ -222,15 +222,15 @@ export default function PipelineMaps() {
 
         {/* Properties List */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Properties</h3>
+          <h3 className="text-lg font-semibold text-ink-800 mb-4">Properties</h3>
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-accent border-t-transparent"></div>
             </div>
           ) : filteredProperties.length === 0 ? (
             <div className="text-center py-12">
               <BuildingOfficeIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-text">No properties found</p>
+              <p className="text-ink-500">No properties found</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -246,9 +246,9 @@ export default function PipelineMaps() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-secondary mb-1">{property.name}</h4>
+                      <h4 className="font-semibold text-ink-800 mb-1">{property.name}</h4>
                       {property.address && (
-                        <div className="flex items-center gap-1 text-sm text-text mb-2">
+                        <div className="flex items-center gap-1 text-sm text-ink-500 mb-2">
                           <MapPinIcon className="h-4 w-4 flex-shrink-0" />
                           <span className="truncate">{property.address}</span>
                         </div>

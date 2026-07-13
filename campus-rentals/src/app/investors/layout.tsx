@@ -131,8 +131,8 @@ export default function InvestorsLayout({
 
   if (authorized === null && !isPublic) {
     return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center" style={{ fontFamily: 'var(--font-sans)' }}>
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-slate-600" />
+      <div className="min-h-screen bg-ink-50 flex items-center justify-center" style={{ fontFamily: 'var(--font-sans)' }}>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-ink-200 border-t-accent" />
       </div>
     )
   }
@@ -152,15 +152,15 @@ export default function InvestorsLayout({
   )?.id ?? 'overview'
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-slate-800 flex" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className="min-h-screen bg-ink-50 text-ink-800 flex" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Sidebar - desktop: Apple-style clean panel */}
-      <aside className="hidden lg:flex flex-col w-60 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 shadow-sm fixed inset-y-0 left-0 z-40">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+      <aside className="hidden lg:flex flex-col w-60 bg-white/95 backdrop-blur-xl border-r border-ink-100 shadow-soft fixed inset-y-0 left-0 z-40">
+        <div className="p-5 border-b border-ink-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
-              <BuildingOffice2Icon className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-ink-950 flex items-center justify-center shadow-sm">
+              <BuildingOffice2Icon className="w-5 h-5 text-accent" />
             </div>
-            <span className="font-semibold text-slate-900 text-[17px] tracking-tight">Campus Rentals</span>
+            <span className="font-semibold text-ink-900 text-[17px] tracking-tight">Campus Rentals</span>
           </div>
           {currentUser?.role && <RoleBadge role={currentUser.role} />}
         </div>
@@ -174,8 +174,8 @@ export default function InvestorsLayout({
                 href={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-semibold transition-all duration-200 ${
                   active
-                    ? 'bg-slate-100 text-slate-900'
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-accent/10 text-ink-900 shadow-[inset_2px_0_0_0_#54AAB1]'
+                    : 'text-ink-600 hover:text-ink-900 hover:bg-ink-50'
                 }`}
               >
                 <Icon className="w-5 h-5 flex-shrink-0 opacity-80" />
@@ -184,11 +184,11 @@ export default function InvestorsLayout({
             )
           })}
         </nav>
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-ink-100">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[15px] font-semibold bg-transparent text-slate-800 hover:text-red-700 hover:bg-red-50 transition-colors border-0 shadow-none"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[15px] font-semibold bg-transparent text-ink-700 hover:text-red-700 hover:bg-red-50 transition-colors border-0 shadow-none"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5" />
             Sign out
@@ -197,19 +197,19 @@ export default function InvestorsLayout({
       </aside>
 
       {/* Mobile header - single top bar; no main site header on /investors */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 min-h-[3.5rem] bg-white/95 backdrop-blur-xl border-b border-slate-200/80 flex items-center justify-between px-3 sm:px-4 z-[100] shadow-sm">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 min-h-[3.5rem] bg-white/95 backdrop-blur-xl border-b border-ink-100 flex items-center justify-between px-3 sm:px-4 z-[100] shadow-sm">
         <button
           onClick={() => setSidebarOpen((o) => !o)}
-          className="p-2 -ml-1 rounded-xl text-slate-700 hover:bg-slate-100 touch-manipulation"
+          className="p-2 -ml-1 rounded-xl text-ink-700 hover:bg-ink-100 touch-manipulation"
           aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
         >
           {sidebarOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
         </button>
         <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
-          <div className="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
-            <BuildingOffice2Icon className="w-4 h-4 text-white" />
+          <div className="w-9 h-9 flex-shrink-0 rounded-xl bg-ink-950 flex items-center justify-center shadow-sm">
+            <BuildingOffice2Icon className="w-4 h-4 text-accent" />
           </div>
-          <span className="font-semibold text-slate-900 truncate">Campus Rentals</span>
+          <span className="font-semibold text-ink-900 truncate">Campus Rentals</span>
           {currentUser?.role && <RoleBadge role={currentUser.role} />}
         </div>
         <div className="w-10 flex-shrink-0" />
@@ -224,14 +224,14 @@ export default function InvestorsLayout({
         />
       )}
       <aside
-        className={`lg:hidden fixed top-14 left-0 bottom-0 w-[min(18rem,85vw)] max-w-[18rem] bg-white border-r border-slate-200 z-[90] transform transition-transform duration-300 ease-out shadow-xl ${
+        className={`lg:hidden fixed top-14 left-0 bottom-0 w-[min(18rem,85vw)] max-w-[18rem] bg-white border-r border-ink-100 z-[90] transform transition-transform duration-300 ease-out shadow-xl ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
         aria-label="Main menu"
       >
-        <div className="p-4 border-b border-slate-100">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Menu</p>
+        <div className="p-4 border-b border-ink-100">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Menu</p>
         </div>
         <nav className="p-4 space-y-1 overflow-y-auto">
           {sectionNav.map((item) => {
@@ -243,7 +243,7 @@ export default function InvestorsLayout({
                 href={item.path}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-semibold ${
-                  active ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  active ? 'bg-accent/10 text-ink-900 shadow-[inset_2px_0_0_0_#54AAB1]' : 'text-ink-600 hover:text-ink-900 hover:bg-ink-50'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -257,7 +257,7 @@ export default function InvestorsLayout({
               handleLogout()
               setSidebarOpen(false)
             }}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[15px] font-semibold bg-transparent text-slate-700 hover:text-red-700 hover:bg-red-50 mt-4 border-0 shadow-none"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[15px] font-semibold bg-transparent text-ink-700 hover:text-red-700 hover:bg-red-50 mt-4 border-0 shadow-none"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5" />
             Sign out
