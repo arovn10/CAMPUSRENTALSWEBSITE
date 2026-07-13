@@ -1,6 +1,13 @@
 import { Client } from 'pg'
 import { readdirSync, readFileSync, existsSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { config as loadEnv } from 'dotenv'
+
+// The Lightsail deploy runs this from a bare SSH shell where DATABASE_URL is
+// not exported (the app gets it from PM2). Load the app's env files so
+// migrations actually run on deploy instead of skipping "non-critically".
+loadEnv({ path: join(__dirname, '..', '.env') })
+loadEnv({ path: join(__dirname, '..', '.env.local') })
 
 const MIGRATIONS_DIR = join(__dirname)
 const MIGRATIONS_LOG_FILE = join(__dirname, '..', '.migrations-log.json')
@@ -118,8 +125,9 @@ async function main() {
   let dbName = ''
   let dbPort = 0
 
-  const databaseUrl = process.env.DATABASE_URL
-  if (databaseUrl && !databaseUrl.includes('prisma+postgres://')) {
+  // Prefer the direct (non-Accelerate) URL — raw pg cannot speak prisma:// pooling.
+  const databaseUrl = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL
+  if (databaseUrl && !databaseUrl.includes('prisma+postgres://') && !databaseUrl.startsWith('prisma://')) {
     try {
       const url = new URL(databaseUrl)
       dbHost = url.hostname
