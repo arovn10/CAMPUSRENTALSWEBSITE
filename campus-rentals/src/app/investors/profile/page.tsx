@@ -453,7 +453,7 @@ function ChangePasswordForm() {
     try {
       const token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
       const res = await fetch('/api/investors/users/change-my-password', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(form),
       })
