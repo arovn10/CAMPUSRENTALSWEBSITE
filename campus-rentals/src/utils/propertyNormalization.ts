@@ -63,7 +63,9 @@ const normalizeProperty = (raw: any): Property => {
     buildingId,
     buildingName: raw?.buildingName ?? raw?.BuildingName ?? null,
     buildingAddress: raw?.buildingAddress ?? raw?.BuildingAddress ?? null,
-    isBuilding: raw?.isBuilding ?? raw?.IsBuilding ?? null,
+    // A row that belongs to a building (buildingId set) is a UNIT — the backend
+    // marks some unit rows isBuilding=true, which made them render as buildings.
+    isBuilding: buildingId ? false : (raw?.isBuilding ?? raw?.IsBuilding ?? null),
     propertyTypeCategory: raw?.propertyTypeCategory ?? raw?.PropertyTypeCategory ?? null,
   };
 };
@@ -85,10 +87,15 @@ export const normalizeProperties = (input: any[]): Property[] => {
     }
   });
 
-  const derivedBuildings: Property[] = [];
+  // Per 2026-07-13 decision: the public site lists INDIVIDUAL UNITS only —
+  // no synthesized building-group cards, and building envelope records whose
+  // units are present are dropped. (Building grouping can return later.)
+  const buildingRecordIds = new Set<number>();
 
   buildingGroups.forEach((units, buildingId) => {
-    const hasBuildingRecord = existingIds.has(buildingId);
+    if (existingIds.has(buildingId)) {
+      buildingRecordIds.add(buildingId);
+    }
     const school =
       normalizeSchool(units.find((unit) => unit.school)?.school) ??
       inferSchoolFromAddress(units.find((unit) => unit.buildingAddress || unit.address)?.buildingAddress || units[0]?.address);
@@ -104,55 +111,7 @@ export const normalizeProperties = (input: any[]): Property[] => {
         unit.buildingAddress = units[0]?.buildingAddress;
       }
     });
-
-    if (hasBuildingRecord) {
-      const buildingRecord = normalized.find((property) => property.property_id === buildingId);
-      if (buildingRecord && !buildingRecord.school && school) {
-        buildingRecord.school = school;
-      }
-      return;
-    }
-
-    const rentRange = buildRange(units.map((unit) => unit.price));
-    const bedRange = buildRange(units.map((unit) => unit.bedrooms));
-    const bathRange = buildRange(units.map((unit) => unit.bathrooms));
-    const sqftRange = buildRange(units.map((unit) => unit.squareFeet));
-
-    const representative = units[0];
-    const buildingName = representative.buildingName || representative.name || `Building ${buildingId}`;
-    const buildingAddress = representative.buildingAddress || representative.address;
-
-    derivedBuildings.push({
-      property_id: buildingId,
-      username: representative.username,
-      address: buildingAddress,
-      name: buildingName,
-      description: representative.description,
-      bedrooms: bedRange.max ?? 0,
-      bathrooms: bathRange.max ?? 0,
-      price: rentRange.min ?? 0,
-      squareFeet: sqftRange.max ?? 0,
-      amenities: representative.amenities ?? null,
-      leaseTerms: representative.leaseTerms,
-      photo: representative.photo ?? null,
-      school: school ?? representative.school ?? null,
-      latitude: representative.latitude ?? null,
-      longitude: representative.longitude ?? null,
-      buildingId,
-      buildingName,
-      buildingAddress,
-      isBuilding: true,
-      isBuildingGroup: true,
-      unitCount: units.length,
-      unitIds: units.map((unit) => unit.property_id),
-      minRent: rentRange.min,
-      maxRent: rentRange.max,
-      minBeds: bedRange.min,
-      maxBeds: bedRange.max,
-      minBaths: bathRange.min,
-      maxBaths: bathRange.max,
-    });
   });
 
-  return [...normalized, ...derivedBuildings];
+  return normalized.filter((property) => !buildingRecordIds.has(property.property_id));
 };
