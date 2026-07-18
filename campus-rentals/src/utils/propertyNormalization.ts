@@ -38,7 +38,11 @@ const buildRange = (values: Array<number | null | undefined>) => {
 };
 
 const normalizeProperty = (raw: any): Property => {
-  const address = toString(raw?.address ?? raw?.Address ?? raw?.buildingAddress ?? '');
+  // '??' misses empty strings — a unit with address '' must fall back to its
+  // building's address (e.g. FAU Unit 3110) or the card renders a blank title.
+  const address =
+    toString(raw?.address ?? raw?.Address ?? '').trim() ||
+    toString(raw?.buildingAddress ?? raw?.BuildingAddress ?? '').trim();
   const name = toString(raw?.name ?? raw?.Name ?? raw?.propertyName ?? raw?.buildingName ?? '');
   const buildingId = toNumber(raw?.buildingId ?? raw?.BuildingId);
   const propertyId = toNumber(raw?.property_id ?? raw?.propertyId ?? raw?.PropertyId ?? raw?.id, 0) || 0;
