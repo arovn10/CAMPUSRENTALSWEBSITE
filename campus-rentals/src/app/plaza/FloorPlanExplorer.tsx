@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Interactive floor plans for Campus Rentals Plaza.
+ * Interactive floor plans for Maple Street Plaza.
  * Redrawn (simplified + approximate) from the approved permit set — not construction documents.
  * Rendering follows architectural drawing conventions: heavy exterior walls, lighter interior
  * partitions, door swings, window glazing, hatched outdoor space, drafting-tick dimensions.

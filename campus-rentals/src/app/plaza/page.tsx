@@ -58,7 +58,7 @@ function WaitlistForm() {
         </div>
         <h3 className="mb-1 text-xl font-semibold tracking-tight text-ink-900">You&apos;re on the list.</h3>
         <p className="text-sm leading-relaxed text-ink-500">
-          We&apos;ll reach out as Campus Rentals Plaza gets closer to opening — pricing, move-in dates, and first pick
+          We&apos;ll reach out as Maple Street Plaza gets closer to opening — pricing, move-in dates, and first pick
           go to the waitlist.
         </p>
       </div>
@@ -112,7 +112,7 @@ export default function PlazaPage() {
       <div className="fixed inset-0 -z-10 bg-ink-950">
         <Image
           src="/plaza/hero.jpg"
-          alt="Campus Rentals Plaza — rendering of the corner of the development at 7900 Maple Street"
+          alt="Maple Street Plaza — rendering of the corner of the development at 7900 Maple Street"
           fill
           priority
           className="object-cover"
@@ -126,7 +126,7 @@ export default function PlazaPage() {
         <div className="section-shell relative z-10 pb-24">
           <div className="max-w-3xl stagger">
             <span className="eyebrow">Coming mid-2027 · 7900 Maple Street, New Orleans</span>
-            <h1 className="text-display-xl font-semibold text-white">Campus Rentals Plaza</h1>
+            <h1 className="text-display-xl font-semibold text-white">Maple Street Plaza</h1>
             <p className="mt-4 max-w-xl text-xl leading-relaxed text-white/75 sm:text-2xl">
               Maple Street, all together. Seven residences above a restaurant, a boutique storefront,
               and a courtyard made for staying a while.
@@ -251,7 +251,7 @@ export default function PlazaPage() {
         <div className="relative h-[70vh] min-h-[480px]">
           <Image
             src="/plaza/courtyard.jpg"
-            alt="Rendering of the Campus Rentals Plaza courtyard entrance with string lights between the two buildings"
+            alt="Rendering of the Maple Street Plaza courtyard entrance with string lights between the two buildings"
             fill
             className="object-cover"
             sizes="100vw"
@@ -291,7 +291,7 @@ export default function PlazaPage() {
               <span className="eyebrow">Transit-Oriented</span>
               <h2 className="text-display font-semibold text-ink-900">Built where the city already goes.</h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-500">
-                Campus Rentals Plaza is transit-oriented development in the truest sense — a short walk
+                Maple Street Plaza is transit-oriented development in the truest sense — a short walk
                 to the St.&nbsp;Charles streetcar line, on a Maple Street block you can live from on foot:
                 coffee, restaurants, shops, and the university corridor, all without reaching for car keys.
               </p>

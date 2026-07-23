@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
- * Campus Rentals Plaza waitlist. Public write: stores the signup and fires a
+ * Maple Street Plaza waitlist. Public write: stores the signup and fires a
  * best-effort notification email. Honeypot + field caps keep bots cheap.
  */
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     await sendEmail({
       to: 'rovnerproperties@gmail.com',
       subject: `Plaza waitlist: ${name} (${interest.toLowerCase()})`,
-      html: `<p><strong>${name}</strong> joined the Campus Rentals Plaza waitlist.</p>
+      html: `<p><strong>${name}</strong> joined the Maple Street Plaza waitlist.</p>
              <p>Interest: <strong>${interest}</strong><br/>Email: ${email}${phone ? `<br/>Phone: ${phone}` : ''}</p>
              ${message ? `<p>Note: ${message}</p>` : ''}`,
     })
