@@ -11,7 +11,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { trackEvent } from '@/utils/analytics'
 
-type RoomKind = 'room' | 'wet' | 'core' | 'service' | 'outdoor'
+type RoomKind = 'room' | 'wet' | 'core' | 'service' | 'outdoor' | 'zone'
+/** kind 'zone' = an unwalled area of an open-concept space: label + tap target, no lines. */
 type Room = { id: string; name: string; sqft?: number; x: number; y: number; w: number; h: number; kind?: RoomKind }
 /** Swing door: hinge at (x,y), opening runs along wallAngle (deg, 0=+x, 90=+y-down), leaf `len`, side flips the swing. */
 type Door = { x: number; y: number; wallAngle: number; len: number; side?: 1 | -1; type?: 'swing' | 'slide' }
@@ -20,6 +21,8 @@ type Dim = { x1: number; y1: number; x2: number; y2: number; label: string }
 type FurnKind = 'bed' | 'sofa' | 'table' | 'island' | 'round' | 'lounge'
 type Furn = { id: string; kind: FurnKind; x: number; y: number; w: number; h: number; rot?: number; chairs?: 'long' | 'ends' | 'stools' | 'none' }
 type Street = { label: string; x: number; y: number; vertical?: boolean }
+type Seg = { x1: number; y1: number; x2: number; y2: number; heavy?: boolean }
+type Fixture = { x: number; y: number; w: number; h: number }
 type Plan = {
   id: string
   name: string
@@ -32,6 +35,8 @@ type Plan = {
   dims: Dim[]
   furniture: Furn[]
   streets?: Street[]
+  walls?: Seg[] // explicit wall segments not implied by a walled room's outline
+  fixtures?: Fixture[] // built-ins (kitchen counters etc.), always visible
 }
 
 const PLANS: Plan[] = [
@@ -44,19 +49,31 @@ const PLANS: Plan[] = [
     rooms: [
       { id: 'terrace', name: 'Terrace', sqft: 96, x: 17.5, y: 0, w: 12, h: 8, kind: 'outdoor' },
       { id: 'bed2', name: 'Bedroom 2', sqft: 156, x: 0, y: 0, w: 13, h: 12 },
-      { id: 'living', name: 'Living Room', sqft: 204, x: 13, y: 8, w: 17, h: 12 },
       { id: 'bed3', name: 'Bedroom 3', sqft: 168, x: 30, y: 0, w: 17, h: 12 },
       { id: 'pbath', name: 'Primary Bath', sqft: 90, x: 0, y: 12, w: 9, h: 10, kind: 'wet' },
       { id: 'wic', name: 'W.I.C.', sqft: 48, x: 0, y: 22, w: 9, h: 6, kind: 'wet' },
       { id: 'half', name: 'Powder', sqft: 30, x: 9, y: 20, w: 4, h: 8, kind: 'wet' },
       { id: 'core', name: 'Stair · Elevator', x: 13, y: 20, w: 11, h: 8, kind: 'core' },
-      { id: 'kitchen', name: 'Kitchen', sqft: 150, x: 24, y: 20, w: 14, h: 8 },
       { id: 'laundry', name: 'Pantry', sqft: 48, x: 30, y: 12, w: 8, h: 8, kind: 'wet' },
       { id: 'bath3', name: 'Bath 3', sqft: 45, x: 38, y: 12, w: 9, h: 6, kind: 'wet' },
       { id: 'bath4', name: 'Bath 4', sqft: 45, x: 38, y: 18, w: 9, h: 5, kind: 'wet' },
       { id: 'pbed', name: 'Primary Bedroom', sqft: 196, x: 0, y: 28, w: 14, h: 14 },
-      { id: 'dining', name: 'Dining', sqft: 238, x: 14, y: 28, w: 17, h: 14 },
       { id: 'bed4', name: 'Bedroom 4', sqft: 224, x: 31, y: 28, w: 16, h: 14 },
+      // Open-concept living / kitchen / dining flow around the core — no walls between them.
+      { id: 'living', name: 'Living', sqft: 204, x: 13, y: 8, w: 17, h: 12, kind: 'zone' },
+      { id: 'kitchen', name: 'Kitchen', sqft: 150, x: 24, y: 20, w: 14, h: 8, kind: 'zone' },
+      { id: 'dining', name: 'Dining', sqft: 238, x: 14, y: 28, w: 17, h: 14, kind: 'zone' },
+    ],
+    walls: [
+      // Terrace recess: solid exterior stubs flanking the folding glass wall.
+      { x1: 17.5, y1: 0, x2: 17.5, y2: 8, heavy: true },
+      { x1: 29.5, y1: 0, x2: 29.5, y2: 8, heavy: true },
+      { x1: 13, y1: 8, x2: 17.5, y2: 8, heavy: true },
+      { x1: 29.5, y1: 8, x2: 30, y2: 8, heavy: true },
+    ],
+    fixtures: [
+      { x: 24.2, y: 20.2, w: 1.7, h: 7.6 }, // kitchen counter run against the core wall
+      { x: 24.2, y: 20.2, w: 8.5, h: 1.7 }, // counter return along the top
     ],
     doors: [
       { x: 13, y: 3.4, wallAngle: 90, len: 2.8, side: 1 },
@@ -68,7 +85,6 @@ const PLANS: Plan[] = [
       { x: 31, y: 33.2, wallAngle: 90, len: 2.8, side: -1 },
       { x: 38, y: 13.2, wallAngle: 90, len: 2.4, side: -1 },
       { x: 38, y: 19.2, wallAngle: 90, len: 2.2, side: -1 },
-      { x: 26, y: 28, wallAngle: 0, len: 2.8, side: -1 },
       { x: 18.5, y: 8, wallAngle: 0, len: 10, type: 'slide' },
     ],
     windows: [
@@ -110,15 +126,19 @@ const PLANS: Plan[] = [
     rooms: [
       { id: 'balcony', name: 'Balcony', sqft: 60, x: 16, y: -5, w: 12, h: 5, kind: 'outdoor' },
       { id: 'pbed', name: 'Primary Bedroom', sqft: 156, x: 0, y: 0, w: 13, h: 12 },
-      { id: 'living', name: 'Living Room', sqft: 192, x: 13, y: 0, w: 16, h: 12 },
       { id: 'bed2', name: 'Bedroom 2', sqft: 180, x: 29, y: 0, w: 15, h: 12 },
       { id: 'pbath', name: 'Primary Bath', sqft: 48, x: 0, y: 12, w: 8, h: 6, kind: 'wet' },
       { id: 'wic', name: 'W.I.C.', sqft: 40, x: 0, y: 18, w: 8, h: 5, kind: 'wet' },
-      { id: 'kitchen', name: 'Kitchen', sqft: 110, x: 8, y: 12, w: 13, h: 11 },
-      { id: 'dining', name: 'Dining', sqft: 70, x: 21, y: 12, w: 8, h: 11 },
-      { id: 'entry', name: 'Entry', x: 29, y: 12, w: 8, h: 11, kind: 'core' },
       { id: 'bath2', name: 'Bath 2', sqft: 42, x: 37, y: 12, w: 7, h: 6, kind: 'wet' },
       { id: 'wic2', name: 'W.I.C.', sqft: 35, x: 37, y: 18, w: 7, h: 5, kind: 'wet' },
+      // Open-concept living / kitchen / dining / entry — one continuous space.
+      { id: 'living', name: 'Living', sqft: 192, x: 13, y: 0, w: 16, h: 12, kind: 'zone' },
+      { id: 'kitchen', name: 'Kitchen', sqft: 110, x: 8, y: 12, w: 13, h: 11, kind: 'zone' },
+      { id: 'dining', name: 'Dining', sqft: 70, x: 21, y: 12, w: 8, h: 11, kind: 'zone' },
+      { id: 'entry', name: 'Entry', x: 29, y: 12, w: 8, h: 11, kind: 'zone' },
+    ],
+    fixtures: [
+      { x: 8.2, y: 21.2, w: 9.5, h: 1.6 }, // kitchen counter along the rear wall
     ],
     doors: [
       { x: 13, y: 8.8, wallAngle: 90, len: 2.6, side: -1 },
@@ -221,6 +241,7 @@ const ROOM_FILL: Record<RoomKind, string> = {
   core: '#eef1f3',
   service: '#f7f8f9',
   outdoor: 'transparent',
+  zone: 'transparent',
 }
 
 const rad = (deg: number) => (deg * Math.PI) / 180
@@ -632,6 +653,7 @@ export default function FloorPlanExplorer() {
             const isSel = r.id === selectedRoom
             const kind = r.kind ?? 'room'
             const outdoor = kind === 'outdoor'
+            const zone = kind === 'zone'
             return (
               <g key={r.id} onClick={() => { setSelectedRoom(isSel ? null : r.id); track('room_tap') }} style={{ cursor: 'pointer' }}>
                 <rect
@@ -640,7 +662,7 @@ export default function FloorPlanExplorer() {
                   width={r.w}
                   height={r.h}
                   fill={isSel ? 'rgba(84,170,177,0.14)' : outdoor ? 'rgba(84,170,177,0.04)' : ROOM_FILL[kind]}
-                  stroke={outdoor ? ACCENT : PARTITION}
+                  stroke={zone ? 'none' : outdoor ? ACCENT : PARTITION}
                   strokeWidth={outdoor ? 0.9 : 1.1}
                   strokeDasharray={outdoor ? '3 2.6' : undefined}
                   vectorEffect="non-scaling-stroke"
@@ -652,6 +674,38 @@ export default function FloorPlanExplorer() {
               </g>
             )
           })}
+
+          {/* Explicit wall segments (terrace recess, etc.) */}
+          {plan.walls?.map((s, i) => (
+            <line
+              key={i}
+              x1={s.x1}
+              y1={s.y1}
+              x2={s.x2}
+              y2={s.y2}
+              stroke={s.heavy ? WALL : PARTITION}
+              strokeWidth={s.heavy ? 2.6 : 1.1}
+              vectorEffect="non-scaling-stroke"
+              pointerEvents="none"
+            />
+          ))}
+
+          {/* Built-in fixtures (kitchen counters) */}
+          {plan.fixtures?.map((f, i) => (
+            <rect
+              key={i}
+              x={f.x}
+              y={f.y}
+              width={f.w}
+              height={f.h}
+              rx={0.15}
+              fill="#f9fafb"
+              stroke="#b0b9c1"
+              strokeWidth={0.9}
+              vectorEffect="non-scaling-stroke"
+              pointerEvents="none"
+            />
+          ))}
 
           {/* Heavy exterior envelope */}
           <rect
