@@ -62,9 +62,20 @@ Apple-product-page-style showcase for the 7900 Maple Street mixed-use developmen
   `RENT | BUY | EITHER`; one row per email (repeat signup updates in place); best-effort
   notification email to rovnerproperties@gmail.com. GA event: `plaza_waitlist_join`.
 - **Content rules (from Alec):** do NOT name the restaurant tenant yet; green/sustainability
-  section removed for now; floor plans pending (placeholder promises waitlist members first look).
-  Credits: Graham Hill Architect · Asper Construction (per the approved permit set —
-  "ASK Construction" was a voice-note mishearing).
+  section removed for now. Credits: Graham Hill Architect · Asper Construction (per the approved
+  permit set — "ASK Construction" was a voice-note mishearing).
+- **Interactive floor plans** (`app/plaza/FloorPlanExplorer.tsx`, 2026-07-22): SVG plans redrawn
+  (simplified/approximate) from permit sheets A201/A402/A403 — plan tabs (Penthouse / Flat /
+  Ground Floor), toggles for room labels / dimensions / draggable+rotatable example furniture,
+  tap-a-room area chips. Per Alec: no raster permit crops on the page — keep plans dynamic.
+  GA event `plaza_floorplan_interact` (deduped per plan+action).
+- **Fact source:** the approved permit set ("7900-04 Maple - Approved Permit Set R10 11.20.2025",
+  Google Drive, owner grahamledoux@gmail.com; 36.6 MB — over the Drive connector's 10 MB download
+  cap; text extraction works, drawing images came from Alec's screenshots). Key verbatims: units
+  101 (937 SF 2BR ADA/FHA, "AFFORDABLE UNIT FOR BUILDING B"), 201–204 (2BR 966–992 SF, balconies),
+  301 "OWNER'S UNIT" / 302 penthouse (1,960 SF, terrace w/ folding glass wall, private elevators);
+  commercial shells 1,611 SF + 653 SF; Marvin impact-rated windows; NFPA 13R; STC 61–62;
+  ButterflyMX; HU-B1 zoning, 38'-9" height.
 - Nav: "The Plaza" in header (desktop + mobile) and footer Explore; `/plaza` in sitemap.
 
 ## UI gotchas (learned the hard way — don't relearn)
