@@ -50,7 +50,10 @@ const data = Object.fromEntries(ALLOWED.filter(k => k in body).map(k => [k, body
 - Auth token: `sessionStorage` + httpOnly `cr_auth` cookie (dual-read during migration).
 - CI: `pr-check.yml` (install, prisma validate, `tsc --noEmit`, `next build`) gates every PR to `main`; `automerge` label enables native auto-merge after checks.
 
-## Campus Rentals Plaza page (`/plaza`, 2026-07-22)
+## Maple Street Plaza page (`/plaza`, 2026-07-22)
+
+> Branding (2026-07-23, per Alec): the development is **"Maple Street Plaza"** — NOT "Campus Rentals Plaza".
+> Nav tab stays "The Plaza". Internal identifiers (`/plaza`, `plaza_waitlist`, GA `plaza_*`) unchanged.
 
 Apple-product-page-style showcase for the 7900 Maple Street mixed-use development
 (7 residences · restaurant + commercial · courtyard · streetcar-adjacent; opening mid-2027).

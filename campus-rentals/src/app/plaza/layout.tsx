@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
-const title = 'Campus Rentals Plaza | Mixed-Use Living on Maple Street, New Orleans'
+const title = 'Maple Street Plaza | Mixed-Use Living on Maple Street, New Orleans'
 const description =
-  'Campus Rentals Plaza — a new mixed-use development at 7900 Maple Street, New Orleans. Seven residences above a restaurant, boutique commercial space, and a string-lit courtyard, steps from the St. Charles streetcar. Opening mid-2027. Join the waitlist.'
+  'Maple Street Plaza — a new mixed-use development at 7900 Maple Street, New Orleans. Seven residences above a restaurant, boutique commercial space, and a string-lit courtyard, steps from the St. Charles streetcar. Opening mid-2027. Join the waitlist.'
 
 export const metadata: Metadata = {
   title,
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description,
     url: 'https://campusrentalsllc.com/plaza',
     siteName: 'Campus Rentals LLC',
-    images: [{ url: '/plaza/hero.jpg', width: 2624, height: 1632, alt: 'Campus Rentals Plaza rendering — 7900 Maple Street' }],
+    images: [{ url: '/plaza/hero.jpg', width: 2624, height: 1632, alt: 'Maple Street Plaza rendering — 7900 Maple Street' }],
     type: 'website',
   },
   twitter: {
@@ -28,7 +28,7 @@ export default function PlazaLayout({ children }: { children: React.ReactNode })
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ApartmentComplex',
-    name: 'Campus Rentals Plaza',
+    name: 'Maple Street Plaza',
     description,
     url: 'https://campusrentalsllc.com/plaza',
     address: {
