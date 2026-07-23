@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { trackEvent } from '@/utils/analytics'
+import FloorPlanExplorer from './FloorPlanExplorer'
 
 const inputCls =
   'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-800 placeholder:text-ink-400 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20'
@@ -57,7 +58,7 @@ function WaitlistForm() {
         </div>
         <h3 className="mb-1 text-xl font-semibold tracking-tight text-ink-900">You&apos;re on the list.</h3>
         <p className="text-sm leading-relaxed text-ink-500">
-          We&apos;ll reach out as Campus Rentals Plaza gets closer to opening — floor plans, pricing, and first pick
+          We&apos;ll reach out as Campus Rentals Plaza gets closer to opening — pricing, move-in dates, and first pick
           go to the waitlist.
         </p>
       </div>
@@ -96,7 +97,7 @@ function WaitlistForm() {
         {status === 'sending' ? 'Joining…' : 'Join the waitlist'}
       </button>
       <p className="text-center text-[11px] leading-relaxed text-white/40">
-        No spam — just first access to floor plans, pricing, and move-in dates.
+        No spam — just first access to pricing, availability, and move-in dates.
       </p>
     </form>
   )
@@ -186,13 +187,14 @@ export default function PlazaPage() {
               <h3 className="text-headline font-semibold text-ink-900">The Penthouses</h3>
               <p className="mt-3 text-[15px] leading-relaxed text-ink-500">
                 Four bedrooms and four-and-a-half baths across the entire top floor of each building —
-                treetop views over the Maple Street corridor, made for a house of friends who want the
-                best seat in the neighborhood.
+                1,960 square feet under vaulted wood ceilings, with a private elevator that opens at
+                your door and a terrace behind a folding glass wall.
               </p>
               <ul className="mt-6 space-y-2 text-sm text-ink-600">
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />4 bed · 4.5 bath</li>
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Full top floor of each building</li>
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Private balconies</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />4 bed · 4.5 bath · 1,960 sq ft</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Private elevator, direct to your entry</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Terrace with full folding glass wall</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Vaulted beadboard ceilings</li>
               </ul>
             </div>
             <div className="card-premium p-8 sm:p-10">
@@ -204,15 +206,43 @@ export default function PlazaPage() {
                 makes room.
               </p>
               <ul className="mt-6 space-y-2 text-sm text-ink-600">
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 bed · 2 bath</li>
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />5 residences across both buildings</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 bed · 2 bath · 937–992 sq ft</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Private balconies on the second floor</li>
                 <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 designated market-affordable</li>
               </ul>
             </div>
           </div>
-          <p className="mt-10 text-center text-sm text-ink-400">
-            Floor plans coming soon — waitlist members see them first.
-          </p>
+
+          {/* Craft & construction details — sourced from the approved permit set */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ['Built for the Gulf', 'Hurricane-impact-rated Marvin windows and storefronts'],
+              ['Quiet by design', 'Sound-insulated floors and walls between every home'],
+              ['Fully sprinklered', 'Fire suppression and monitored detection throughout'],
+              ['Keyless living', 'Video intercom, smart locks, and a package kiosk'],
+              ['Crafted exterior', 'Lime-washed brick, cedar gables, and artisan siding'],
+              ['In-home laundry', 'Washer, dryer, and full appliances in every residence'],
+            ].map(([title, sub]) => (
+              <div key={title} className="rounded-2xl border border-ink-100 bg-white p-5">
+                <p className="text-sm font-semibold text-ink-900">{title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-ink-500">{sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ FLOOR PLANS ============ */}
+      <section className="border-y border-ink-100 bg-white py-24 sm:py-32">
+        <div className="section-shell">
+          <div className="mx-auto mb-14 max-w-2xl text-center">
+            <span className="eyebrow">Floor Plans</span>
+            <h2 className="text-display font-semibold text-ink-900">Drawn, approved, under way.</h2>
+            <p className="mx-auto mt-4 max-w-lg text-lg text-ink-500">
+              Explore the homes — tap rooms, flip on dimensions, and arrange the furniture.
+            </p>
+          </div>
+          <FloorPlanExplorer />
         </div>
       </section>
 
@@ -325,8 +355,8 @@ export default function PlazaPage() {
             <span className="eyebrow">The Waitlist</span>
             <h2 className="text-display font-semibold text-white">Seven homes. First come, first pick.</h2>
             <p className="mx-auto mt-4 max-w-lg text-lg text-white/60">
-              Tell us whether you&apos;d rent or buy, and you&apos;ll be first in line for floor plans,
-              pricing, and move-in dates.
+              Tell us whether you&apos;d rent or buy, and you&apos;ll be first in line for pricing,
+              availability, and move-in dates.
             </p>
           </div>
           <WaitlistForm />
