@@ -88,6 +88,7 @@ export default function Header() {
                 </div>
               )}
             </div>
+            <Link href="/plaza" className={navLink}>The Plaza</Link>
             <Link href="/about" className={navLink}>About</Link>
             <Link href="/contact" className={navLink}>Contact</Link>
             <Link href="/investors/login" className={navLink}>Investors</Link>
@@ -150,6 +151,7 @@ export default function Header() {
             <Link href="/tulane-housing" className="pl-1 text-base text-ink-700 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>Tulane / Loyola — New Orleans</Link>
             <Link href="/fau-housing" className="pl-1 text-base text-ink-700 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>FAU — Boca Raton</Link>
           </div>
+          <Link href="/plaza" className="text-lg font-medium text-ink-800 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>The Plaza</Link>
           <Link href="/about" className="text-lg font-medium text-ink-800 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>About</Link>
           <Link href="/contact" className="text-lg font-medium text-ink-800 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
           <Link href="/investors/login" className="text-lg font-medium text-ink-800 transition-colors hover:text-accent" onClick={() => setMobileMenuOpen(false)}>Investors</Link>

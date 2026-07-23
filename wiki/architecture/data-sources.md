@@ -57,6 +57,14 @@ the Abodingo dashboard (`GET property-tours/my`, `PUT property-tours/{id}/cancel
 2. Next.js route `Cache-Control` — 1 h fresh / 24 h stale-while-revalidate (5 min for fallback responses)
 3. Force refresh: `GET /api/force-refresh` or `/api/cache/refresh` on the live site
 
+### Display policy: individual units only (2026-07-13)
+
+The public site lists **individual units as standalone apartment cards** — never
+synthesized building-group cards, and building envelope records are dropped when their
+units are listed (`normalizeProperties`). A unit row with a parent `buildingId` is always
+treated as a unit even if the backend flags it `isBuilding`; a unit with a blank address
+inherits its building's address. Building grouping may return later as a product decision.
+
 ## Images
 
 Photos are S3 (`abodebucket`, us-east-2) URLs rewritten to CloudFront (`d1m1syk7iv23tg.cloudfront.net`) by `s3ToCloudFrontUrl()`.

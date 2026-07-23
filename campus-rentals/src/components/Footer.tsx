@@ -40,6 +40,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/tulane-housing" className="text-ink-300 transition-colors hover:text-white">Tulane / Loyola Housing</Link></li>
               <li><Link href="/fau-housing" className="text-ink-300 transition-colors hover:text-white">FAU Housing</Link></li>
+              <li><Link href="/plaza" className="text-ink-300 transition-colors hover:text-white">Campus Rentals Plaza</Link></li>
               <li><Link href="/about" className="text-ink-300 transition-colors hover:text-white">About Us</Link></li>
               <li><Link href="/contact" className="text-ink-300 transition-colors hover:text-white">Contact</Link></li>
             </ul>
