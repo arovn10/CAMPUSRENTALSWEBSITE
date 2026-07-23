@@ -106,9 +106,9 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 
 export default function PlazaPage() {
   return (
-    <div className="min-h-screen bg-ink-50">
-      {/* ============ HERO ============ */}
-      <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-ink-950">
+    <div className="min-h-screen">
+      {/* Fixed background — the rendering sits behind the whole page; content scrolls over it. */}
+      <div className="fixed inset-0 -z-10 bg-ink-950">
         <Image
           src="/plaza/hero.jpg"
           alt="Campus Rentals Plaza — rendering of the corner of the development at 7900 Maple Street"
@@ -117,8 +117,12 @@ export default function PlazaPage() {
           className="object-cover"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/40 to-ink-950/20" />
-        <div className="section-shell relative z-10 pb-20 pt-40">
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-ink-950/15" />
+      </div>
+
+      {/* ============ HERO — one viewport, transparent so the fixed photo shows ============ */}
+      <section className="relative flex h-[100svh] min-h-[560px] items-end">
+        <div className="section-shell relative z-10 pb-24">
           <div className="max-w-3xl stagger">
             <span className="eyebrow">Coming mid-2027 · 7900 Maple Street, New Orleans</span>
             <h1 className="text-display-xl font-semibold text-white">Campus Rentals Plaza</h1>
@@ -138,6 +142,8 @@ export default function PlazaPage() {
         </div>
       </section>
 
+      {/* Everything below rides over the fixed photo as an opaque sheet. */}
+      <div className="relative z-10 rounded-t-[2rem] bg-ink-50 shadow-[0_-20px_60px_rgba(10,15,20,0.35)]">
       {/* ============ INTRO ============ */}
       <section className="py-24 sm:py-32">
         <div className="section-shell">
@@ -326,6 +332,7 @@ export default function PlazaPage() {
           <WaitlistForm />
         </div>
       </section>
+      </div>
     </div>
   )
 }
