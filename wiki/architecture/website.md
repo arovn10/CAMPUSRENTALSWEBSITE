@@ -63,7 +63,8 @@ Apple-product-page-style showcase for the 7900 Maple Street mixed-use developmen
   notification email to rovnerproperties@gmail.com. GA event: `plaza_waitlist_join`.
 - **Content rules (from Alec):** do NOT name the restaurant tenant yet; green/sustainability
   section removed for now; floor plans pending (placeholder promises waitlist members first look).
-  Credits: Graham Hill Architect · ASK Construction & Development.
+  Credits: Graham Hill Architect · Asper Construction (per the approved permit set —
+  "ASK Construction" was a voice-note mishearing).
 - Nav: "The Plaza" in header (desktop + mobile) and footer Explore; `/plaza` in sitemap.
 
 ## UI gotchas (learned the hard way — don't relearn)

@@ -307,7 +307,7 @@ export default function PlazaPage() {
             </div>
             <p className="text-sm text-ink-400">
               Architecture by <span className="font-medium text-ink-600">Graham Hill Architect</span> ·
-              Built by <span className="font-medium text-ink-600">ASK Construction &amp; Development</span> ·
+              Built by <span className="font-medium text-ink-600">Asper Construction</span> ·
               Developed by <span className="font-medium text-ink-600">Campus Rentals</span>
             </p>
           </div>
