@@ -50,6 +50,22 @@ const data = Object.fromEntries(ALLOWED.filter(k => k in body).map(k => [k, body
 - Auth token: `sessionStorage` + httpOnly `cr_auth` cookie (dual-read during migration).
 - CI: `pr-check.yml` (install, prisma validate, `tsc --noEmit`, `next build`) gates every PR to `main`; `automerge` label enables native auto-merge after checks.
 
+## Campus Rentals Plaza page (`/plaza`, 2026-07-22)
+
+Apple-product-page-style showcase for the 7900 Maple Street mixed-use development
+(7 residences · restaurant + commercial · courtyard · streetcar-adjacent; opening mid-2027).
+
+- **Page:** `app/plaza/page.tsx` (client) + `app/plaza/layout.tsx` (metadata + ApartmentComplex JSON-LD).
+  Renderings in `public/plaza/` (compressed JPEGs — keep under ~1 MB each).
+- **Waitlist:** `POST /api/plaza-waitlist` → `plaza_waitlist` table (Prisma `PlazaWaitlist`,
+  migration `scripts/add-02-plaza-waitlist.sql`). Honeypot field `company`; interest must be
+  `RENT | BUY | EITHER`; one row per email (repeat signup updates in place); best-effort
+  notification email to rovnerproperties@gmail.com. GA event: `plaza_waitlist_join`.
+- **Content rules (from Alec):** do NOT name the restaurant tenant yet; green/sustainability
+  section removed for now; floor plans pending (placeholder promises waitlist members first look).
+  Credits: Graham Hill Architect · ASK Construction & Development.
+- Nav: "The Plaza" in header (desktop + mobile) and footer Explore; `/plaza` in sitemap.
+
 ## UI gotchas (learned the hard way — don't relearn)
 
 - **`backdrop-filter` on an ancestor breaks `position: fixed` children.** The glass nav

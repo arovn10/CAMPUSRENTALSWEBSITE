@@ -1616,3 +1616,16 @@ model Announcement {
   @@index([propertyId])
   @@map("announcements")
 }
+
+model PlazaWaitlist {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  interest  String   // RENT | BUY | EITHER
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("plaza_waitlist")
+}
