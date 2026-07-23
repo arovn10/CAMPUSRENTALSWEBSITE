@@ -208,7 +208,7 @@ export default function PlazaPage() {
               <ul className="mt-6 space-y-2 text-sm text-ink-600">
                 <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 bed · 2 bath · 937–992 sq ft</li>
                 <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Private balconies on the second floor</li>
-                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 designated market-affordable</li>
+                <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />2 market-affordable — one ADA-adaptable on the ground floor</li>
               </ul>
             </div>
           </div>

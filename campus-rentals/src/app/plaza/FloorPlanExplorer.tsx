@@ -111,7 +111,7 @@ const PLANS: Plan[] = [
     rooms: [
       { id: 'retailB', name: 'Retail', sqft: 653, x: 0, y: 0, w: 22, h: 18 },
       { id: 'lobbyB', name: 'Lobby 7904', sqft: 168, x: 22, y: 0, w: 8, h: 12 },
-      { id: 'unit101', name: 'Residence 101 · 2BR', sqft: 937, x: 0, y: 18, w: 30, h: 27 },
+      { id: 'unit101', name: 'Residence 101 · 2BR · ADA', sqft: 937, x: 0, y: 18, w: 30, h: 27 },
       { id: 'courtyard', name: 'Courtyard', x: 30, y: 0, w: 18, h: 45, outdoor: true },
       { id: 'retailA', name: 'Restaurant Space', sqft: 1611, x: 48, y: 0, w: 40, h: 30 },
       { id: 'lobbyA', name: 'Lobby 7900', sqft: 110, x: 88, y: 0, w: 12, h: 12 },
