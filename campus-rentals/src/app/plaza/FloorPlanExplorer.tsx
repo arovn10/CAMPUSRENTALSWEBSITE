@@ -76,15 +76,22 @@ const PLANS: Plan[] = [
       { x: 24.2, y: 20.2, w: 8.5, h: 1.7 }, // counter return along the top
     ],
     doors: [
+      // Bedroom 2 from the small hall beside the terrace (A403).
       { x: 13, y: 3.4, wallAngle: 90, len: 2.8, side: 1 },
+      // Bedroom 3 from the living-side hall.
       { x: 30, y: 6.2, wallAngle: 90, len: 2.8, side: -1 },
-      { x: 9, y: 13.2, wallAngle: 90, len: 2.6, side: -1 },
-      { x: 3.2, y: 22, wallAngle: 0, len: 2.4, side: 1 },
+      // Primary suite chain per A403: bedroom → W.I.C. → bath. No bath door to the hall.
+      { x: 3, y: 28, wallAngle: 0, len: 2.6, side: -1 },
+      { x: 3.2, y: 22, wallAngle: 0, len: 2.4, side: -1 },
+      // Powder off the central hall.
       { x: 10.2, y: 20, wallAngle: 0, len: 2.2, side: 1 },
+      // Primary bedroom + Bedroom 4 from the halls flanking dining.
       { x: 14, y: 30.4, wallAngle: 90, len: 2.8, side: 1 },
       { x: 31, y: 33.2, wallAngle: 90, len: 2.8, side: -1 },
+      // Baths 3 & 4 off the right-side hall; pantry opens to the kitchen.
       { x: 38, y: 13.2, wallAngle: 90, len: 2.4, side: -1 },
       { x: 38, y: 19.2, wallAngle: 90, len: 2.2, side: -1 },
+      { x: 32, y: 20, wallAngle: 0, len: 2.4, side: -1 },
       { x: 18.5, y: 8, wallAngle: 0, len: 10, type: 'slide' },
     ],
     windows: [
@@ -129,34 +136,41 @@ const PLANS: Plan[] = [
       { id: 'bed2', name: 'Bedroom 2', sqft: 180, x: 29, y: 0, w: 15, h: 12 },
       { id: 'pbath', name: 'Primary Bath', sqft: 48, x: 0, y: 12, w: 8, h: 6, kind: 'wet' },
       { id: 'wic', name: 'W.I.C.', sqft: 40, x: 0, y: 18, w: 8, h: 5, kind: 'wet' },
-      { id: 'bath2', name: 'Bath 2', sqft: 42, x: 37, y: 12, w: 7, h: 6, kind: 'wet' },
-      { id: 'wic2', name: 'W.I.C.', sqft: 35, x: 37, y: 18, w: 7, h: 5, kind: 'wet' },
-      // Open-concept living / kitchen / dining / entry — one continuous space.
-      { id: 'living', name: 'Living', sqft: 192, x: 13, y: 0, w: 16, h: 12, kind: 'zone' },
+      // Bedroom 2 suite per A402: W.I.C. straight off the bedroom; bath + laundry off the entry hall.
+      { id: 'wic2', name: 'W.I.C.', sqft: 35, x: 39, y: 12, w: 5, h: 4.5, kind: 'wet' },
+      { id: 'bath2', name: 'Bath 2', sqft: 42, x: 37, y: 16.5, w: 7, h: 6.5, kind: 'wet' },
+      { id: 'laundry', name: 'Laundry', x: 30, y: 16.5, w: 7, h: 6.5, kind: 'wet' },
+      // Open concept per A402: dining and living share the top with the balcony; kitchen below.
+      { id: 'dining', name: 'Dining', sqft: 70, x: 13, y: 0, w: 7, h: 12, kind: 'zone' },
+      { id: 'living', name: 'Living', sqft: 192, x: 20, y: 0, w: 9, h: 12, kind: 'zone' },
       { id: 'kitchen', name: 'Kitchen', sqft: 110, x: 8, y: 12, w: 13, h: 11, kind: 'zone' },
-      { id: 'dining', name: 'Dining', sqft: 70, x: 21, y: 12, w: 8, h: 11, kind: 'zone' },
-      { id: 'entry', name: 'Entry', x: 29, y: 12, w: 8, h: 11, kind: 'zone' },
+      { id: 'entry', name: 'Entry', x: 21, y: 12, w: 9, h: 11, kind: 'zone' },
     ],
     fixtures: [
       { x: 8.2, y: 21.2, w: 9.5, h: 1.6 }, // kitchen counter along the rear wall
     ],
     doors: [
+      // Bedroom doors from the open living space.
       { x: 13, y: 8.8, wallAngle: 90, len: 2.6, side: -1 },
       { x: 29, y: 8.8, wallAngle: 90, len: 2.6, side: 1 },
+      // Primary suite per A402: bedroom → bath → W.I.C.
       { x: 2.4, y: 12, wallAngle: 0, len: 2.4, side: -1 },
       { x: 2.4, y: 18, wallAngle: 0, len: 2.2, side: 1 },
-      { x: 37, y: 13, wallAngle: 90, len: 2.2, side: -1 },
-      { x: 37, y: 19, wallAngle: 90, len: 2, side: -1 },
-      { x: 31.5, y: 23, wallAngle: 0, len: 2.8, side: -1 },
-      { x: 17, y: 0, wallAngle: 0, len: 10, type: 'slide' },
+      // Bedroom 2 → W.I.C. directly; bath + laundry from the entry-side hall.
+      { x: 40.2, y: 12, wallAngle: 0, len: 2.2, side: 1 },
+      { x: 37.6, y: 16.5, wallAngle: 0, len: 2.2, side: 1 },
+      { x: 31, y: 16.5, wallAngle: 0, len: 2.2, side: 1 },
+      // Front entry door on the rear wall; balcony French door at its left end.
+      { x: 24, y: 23, wallAngle: 0, len: 2.8, side: -1 },
+      { x: 17, y: 0, wallAngle: 0, len: 2.8, side: -1 },
     ],
     windows: [
       { x: 2.5, y: 0, len: 8 },
+      { x: 21, y: 0, len: 6 },
       { x: 31.5, y: 0, len: 10 },
       { x: 0, y: 2.5, len: 7, vertical: true },
       { x: 44, y: 2.5, len: 7, vertical: true },
       { x: 10, y: 23, len: 7 },
-      { x: 21.5, y: 23, len: 6 },
     ],
     dims: [
       { x1: 0, y1: -8.5, x2: 44, y2: -8.5, label: "44'-0\"" },
@@ -167,9 +181,9 @@ const PLANS: Plan[] = [
     furniture: [
       { id: 'fl-bed1', kind: 'bed', x: 3.2, y: 1.2, w: 6.5, h: 7 },
       { id: 'fl-bed2', kind: 'bed', x: 34, y: 1.2, w: 5, h: 6.5 },
-      { id: 'fl-sofa', kind: 'sofa', x: 14.3, y: 1, w: 7, h: 3 },
-      { id: 'fl-coffee', kind: 'table', x: 15.8, y: 5.2, w: 4, h: 2, chairs: 'none' },
-      { id: 'fl-dining', kind: 'table', x: 22.2, y: 15.4, w: 5.5, h: 3.4, chairs: 'ends' },
+      { id: 'fl-sofa', kind: 'sofa', x: 21.3, y: 1, w: 7, h: 3 },
+      { id: 'fl-coffee', kind: 'table', x: 22.8, y: 5.2, w: 4, h: 2, chairs: 'none' },
+      { id: 'fl-dining', kind: 'round', x: 14.7, y: 4, w: 3.6, h: 3.6 },
       { id: 'fl-island', kind: 'island', x: 10.6, y: 15.8, w: 7, h: 2.6 },
       { id: 'fl-bistro', kind: 'round', x: 20.6, y: -3.6, w: 2.4, h: 2.4 },
     ],
