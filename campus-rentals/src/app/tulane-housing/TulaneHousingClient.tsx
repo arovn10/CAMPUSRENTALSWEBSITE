@@ -231,7 +231,7 @@ export default function TulaneHousingClient() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
                 href="#properties" 
-                className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
+                className="px-8 py-4 bg-accent-deep text-white shadow-glow rounded-2xl hover:bg-[#336E73] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
               >
                 View Tulane Off Campus Housing
               </Link>
@@ -344,7 +344,7 @@ export default function TulaneHousingClient() {
                   <div className="text-center mt-12">
                     <button
                       onClick={handleShowMore}
-                      className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
+                      className="px-8 py-4 bg-accent-deep text-white shadow-glow rounded-2xl hover:bg-[#336E73] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
                     >
                       Show More ({allProperties.length - displayedCount} remaining)
                     </button>
@@ -446,7 +446,7 @@ export default function TulaneHousingClient() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link 
                 href="/contact" 
-                className="px-8 py-4 bg-accent text-white shadow-glow rounded-2xl hover:bg-[#4b9ba2] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
+                className="px-8 py-4 bg-accent-deep text-white shadow-glow rounded-2xl hover:bg-[#336E73] hover:-translate-y-0.5 transition-all duration-300 ease-out-expo text-lg font-semibold rounded-full"
               >
                 Schedule a Tour
               </Link>
@@ -454,15 +454,6 @@ export default function TulaneHousingClient() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-8 bg-gray-900/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <div className="text-center">
-              <p className="text-gray-400 mb-2">Premium Tulane Off Campus Housing</p>
-              <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Campus Rentals. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );

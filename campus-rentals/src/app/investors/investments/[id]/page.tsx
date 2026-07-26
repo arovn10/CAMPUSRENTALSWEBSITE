@@ -2203,7 +2203,7 @@ export default function InvestmentDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                        <CurrencyDollarIcon className="h-5 w-5 text-ink-400" />
+                        <CurrencyDollarIcon className="h-5 w-5 text-ink-500" />
                         <div>
                           <p className="text-sm text-ink-600">Investment Amount</p>
                           <p className="text-lg font-semibold text-ink-900">
@@ -2212,14 +2212,14 @@ export default function InvestmentDetailPage() {
                         </div>
                       </div>
                   <div className="flex items-center space-x-3">
-                    <ChartBarIcon className="h-5 w-5 text-ink-400" />
+                    <ChartBarIcon className="h-5 w-5 text-ink-500" />
                     <div>
                       <p className="text-sm text-ink-600">Ownership Percentage</p>
                       <p className="text-lg font-semibold text-ink-900">{formatPercentage(investment.ownershipPercentage)}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <CalendarIcon className="h-5 w-5 text-ink-400" />
+                    <CalendarIcon className="h-5 w-5 text-ink-500" />
                     <div>
                       <p className="text-sm text-ink-600">Investment Date</p>
                       <p className="text-lg font-semibold text-ink-900">{formatDate(investment.investmentDate)}</p>
@@ -2228,14 +2228,14 @@ export default function InvestmentDetailPage() {
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
-                    <BuildingOfficeIcon className="h-5 w-5 text-ink-400" />
+                    <BuildingOfficeIcon className="h-5 w-5 text-ink-500" />
                     <div>
                       <p className="text-sm text-ink-600">Property Type</p>
                       <p className="text-lg font-semibold text-ink-900">{investment.property.propertyType}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <HomeIcon className="h-5 w-5 text-ink-400" />
+                    <HomeIcon className="h-5 w-5 text-ink-500" />
                     <div>
                       <p className="text-sm text-ink-600">Property Details</p>
                       <p className="text-lg font-semibold text-ink-900">{investment.property.bedrooms} bed, {investment.property.bathrooms} bath</p>
@@ -2247,7 +2247,7 @@ export default function InvestmentDetailPage() {
                     </span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <BanknotesIcon className="h-5 w-5 text-ink-400" />
+                    <BanknotesIcon className="h-5 w-5 text-ink-500" />
                     <div>
                       <p className="text-sm text-ink-600">Debt Amount</p>
                       <p className="text-lg font-semibold text-ink-900">
@@ -2872,7 +2872,7 @@ export default function InvestmentDetailPage() {
                       }
                       setShowSelectEntityModal(true)
                     }}
-                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add New Entity
                   </button>
@@ -2956,7 +2956,7 @@ export default function InvestmentDetailPage() {
                       })
                       setShowNOIModal(true)
                     }}
-                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Update NOI Calculations
                   </button>
@@ -3072,7 +3072,7 @@ export default function InvestmentDetailPage() {
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowInsuranceModal(true)}
-                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Insurance
                   </button>
@@ -3130,7 +3130,7 @@ export default function InvestmentDetailPage() {
                 {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                   <button
                     onClick={() => setShowTaxModal(true)}
-                    className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                    className="w-full px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                   >
                     Add Tax Information
                   </button>
@@ -3258,7 +3258,7 @@ export default function InvestmentDetailPage() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setShowCreateWaterfallModal(true)}
-                        className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                        className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                       >
                         Create Structure
                       </button>
@@ -3281,7 +3281,7 @@ export default function InvestmentDetailPage() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setShowCreateGlobalWaterfallModal(true)}
-                        className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 font-medium"
+                        className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 font-medium"
                       >
                         Create Global Structure
                       </button>
@@ -3309,7 +3309,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Upload Document</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -3383,7 +3383,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Upload
                 </button>
@@ -3400,7 +3400,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Edit Investment</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -3698,7 +3698,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Save Changes
                 </button>
@@ -3799,7 +3799,7 @@ export default function InvestmentDetailPage() {
               <div className="flex pt-4">
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="w-full px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Save Contact Info
                 </button>
@@ -3817,7 +3817,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Add Entity to Project</h3>
               <button
                 onClick={() => setShowSelectEntityModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -3854,7 +3854,7 @@ export default function InvestmentDetailPage() {
                           </div>
                           <button
                             onClick={() => handleAddExistingEntityToProperty(entity.id)}
-                            className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200 text-sm font-medium"
+                            className="px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200 text-sm font-medium"
                           >
                             Add to Project
                           </button>
@@ -3899,7 +3899,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Create New Entity</h3>
               <button
                 onClick={() => setShowCreateEntityModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -3999,7 +3999,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Create Entity
                 </button>
@@ -4018,7 +4018,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Create Multi-Investor Investment</h3>
               <button
                 onClick={() => setShowMultiInvestorModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -4295,7 +4295,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Create New Entity</h3>
               <button
                 onClick={() => setShowCreateEntityInModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -4395,7 +4395,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Create Entity
                 </button>
@@ -4413,7 +4413,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Entity: {editingEntityInvestment.entity.name}</h3>
               <button
                 onClick={() => setShowEditEntityModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -4706,7 +4706,7 @@ export default function InvestmentDetailPage() {
                                       updateEntityInvestor(index, 'breakdown', initial)
                                     }
                                   }}
-                                  className="px-2 py-1 text-xs bg-accent text-white rounded hover:bg-[#4b9ba2]"
+                                  className="px-2 py-1 text-xs bg-accent-deep text-white rounded hover:bg-[#336E73]"
                                 >
                                   {owner.showBreakdown ? 'Hide entity investment breakdown' : 'Specify entity investment breakdown'}
                                 </button>
@@ -4865,7 +4865,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Update Entity Investment
                 </button>
@@ -4882,7 +4882,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">NOI Calculator</h3>
               <button
                 onClick={() => setShowNOIModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5001,7 +5001,7 @@ export default function InvestmentDetailPage() {
                 {currentUser?.role !== 'INVESTOR' && (
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Update NOI Calculations
                 </button>
@@ -5020,7 +5020,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Add Insurance Information</h3>
               <button
                 onClick={() => setShowInsuranceModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5121,7 +5121,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Add Insurance
                 </button>
@@ -5139,7 +5139,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Add Tax Information</h3>
               <button
                 onClick={() => setShowTaxModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5204,7 +5204,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Add Tax Information
                 </button>
@@ -5221,7 +5221,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Create Waterfall Structure</h3>
               <button
                 onClick={() => setShowCreateWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5259,7 +5259,7 @@ export default function InvestmentDetailPage() {
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
@@ -5423,7 +5423,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Create Structure
                 </button>
@@ -5440,7 +5440,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Process Distribution</h3>
               <button
                 onClick={() => setShowWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5800,7 +5800,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Edit Distribution</h3>
               <button
                 onClick={() => setShowEditDistributionModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5892,7 +5892,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Update Distribution
                 </button>
@@ -5909,7 +5909,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Create Global Waterfall Structure</h3>
               <button
                 onClick={() => setShowCreateGlobalWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -5953,7 +5953,7 @@ export default function InvestmentDetailPage() {
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
@@ -6083,7 +6083,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Create Global Structure
                 </button>
@@ -6101,7 +6101,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-lg font-semibold text-ink-900">Apply Waterfall Structure</h3>
               <button
                 onClick={() => setShowApplyWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6176,7 +6176,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Edit Waterfall Structure</h3>
               <button
                 onClick={() => setShowEditWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6220,7 +6220,7 @@ export default function InvestmentDetailPage() {
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
@@ -6381,7 +6381,7 @@ export default function InvestmentDetailPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                    className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                   >
                     Update Structure
                   </button>
@@ -6418,7 +6418,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Edit Global Waterfall Structure</h3>
               <button
                 onClick={() => setShowEditGlobalWaterfallModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6462,7 +6462,7 @@ export default function InvestmentDetailPage() {
                   <button
                     type="button"
                     onClick={addWaterfallTier}
-                    className="px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                    className="px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                   >
                     Add Tier
                   </button>
@@ -6634,7 +6634,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Update Global Structure
                 </button>
@@ -6651,7 +6651,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Edit Document</h3>
               <button
                 onClick={() => setShowEditDocumentModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -6749,7 +6749,7 @@ export default function InvestmentDetailPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-accent text-white hover:bg-[#4b9ba2] rounded-lg transition-colors duration-200"
+                  className="flex-1 px-4 py-2 bg-accent-deep text-white hover:bg-[#336E73] rounded-lg transition-colors duration-200"
                 >
                   Update Document
                 </button>
@@ -6767,7 +6767,7 @@ export default function InvestmentDetailPage() {
               <h3 className="text-xl font-semibold text-ink-900">Distribution Breakdown</h3>
               <button
                 onClick={() => setShowBreakdownModal(false)}
-                className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
+                className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors duration-200"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>

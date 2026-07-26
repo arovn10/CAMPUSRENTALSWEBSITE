@@ -521,7 +521,7 @@ export default function CRMDealPipeline() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreateDeal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors"
           >
             <PlusIcon className="h-5 w-5" />
             New Deal

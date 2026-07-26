@@ -79,7 +79,7 @@ export default function InvestorsPropertiesPage() {
       </div>
 
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-400" />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-500" />
         <input
           type="search"
           placeholder="Search by name or address..."
@@ -118,7 +118,7 @@ export default function InvestorsPropertiesPage() {
                   href={`/properties/${p.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-semibold rounded-xl hover:bg-[#4b9ba2] transition-colors shrink-0"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-accent-deep text-white text-sm font-semibold rounded-xl hover:bg-[#336E73] transition-colors shrink-0"
                 >
                   View availability
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" />

@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About Campus Rentals | Off-Campus Student Housing Near Tulane & FAU',
-  description: 'Learn about Campus Rentals LLC - your trusted provider of premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Discover why students choose us for luxury, modern student apartments and rentals.',
+  title: 'About Us | Locally Owned Student Housing',
+  description: 'Campus Rentals LLC is a locally owned student-housing operator serving Tulane in New Orleans and FAU in Boca Raton — renovated homes, managed by the owners.',
   keywords: [
     'Tulane off campus housing',
     'Tulane off campus apartments',
@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     url: 'https://campusrentalsllc.com/about',
     siteName: 'Campus Rentals LLC',
     type: 'website',
+    // Must be restated: declaring `openGraph` without `images` drops the root og:image.
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Campus Rentals LLC student housing' }],
   },
   alternates: {
     canonical: 'https://campusrentalsllc.com/about',

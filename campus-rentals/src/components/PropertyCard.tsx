@@ -171,7 +171,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-ink-100">
-              <span className="text-sm text-ink-400">No image available</span>
+              <span className="text-sm text-ink-600">No image available</span>
             </div>
           )}
           {/* Price badge */}
@@ -195,7 +195,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             {title}
           </h3>
           {subtitle && subtitle !== title && (
-            <p className="mb-2 line-clamp-1 text-sm text-ink-400">{subtitle}</p>
+            <p className="mb-2 line-clamp-1 text-sm text-ink-500">{subtitle}</p>
           )}
 
           <div className="mb-4 mt-3 flex flex-wrap items-center gap-2">
@@ -209,11 +209,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </p>
 
           <div className="flex items-center justify-between border-t border-ink-100 pt-4">
-            <p className="text-xs font-medium text-ink-400">
+            <p className="text-xs font-medium text-ink-500">
               Available {formatAvailableDate(property.leaseTerms)}
             </p>
             {!isMobile && (
-              <span className="group/link flex items-center gap-1 text-sm font-semibold text-accent">
+              <span className="group/link flex items-center gap-1 text-sm font-semibold text-accent-deep">
                 Details
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </span>
@@ -236,7 +236,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                   e.stopPropagation();
                   handleViewDetails();
                 }}
-                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4b9ba2]"
+                className="flex-1 rounded-xl bg-accent-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#336E73]"
               >
                 View details
               </button>
@@ -320,7 +320,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 </button>
                 <button
                   onClick={handleViewDetails}
-                  className="flex-1 bg-accent text-white px-4 py-3 rounded-lg font-medium hover:bg-accent/90 transition-colors"
+                  className="flex-1 bg-accent-deep text-white px-4 py-3 rounded-lg font-medium hover:bg-[#336E73] transition-colors"
                 >
                   View Full Details
                 </button>

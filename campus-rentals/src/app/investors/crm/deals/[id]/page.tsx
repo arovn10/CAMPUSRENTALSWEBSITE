@@ -236,7 +236,7 @@ export default function DealDetailPage() {
           <p className="text-ink-600">Deal not found</p>
           <button
             onClick={() => router.push('/investors/dashboard?tab=crm')}
-            className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2]"
+            className="mt-4 px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73]"
           >
             Back to CRM
           </button>
@@ -337,7 +337,7 @@ export default function DealDetailPage() {
                       onClick={() => setShowLocationMap(true)}
                       className="flex items-center gap-2 text-ink-900 font-medium hover:text-accent transition-colors group"
                     >
-                      <MapPinIcon className="h-4 w-4 text-ink-400 group-hover:text-accent" />
+                      <MapPinIcon className="h-4 w-4 text-ink-500 group-hover:text-accent" />
                       <span className="underline decoration-dotted">
                         {deal.property?.address || deal.location}
                       </span>
@@ -407,7 +407,7 @@ export default function DealDetailPage() {
                     setEditingTask(null)
                     setShowTaskModal(true)
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors"
                 >
                   <PlusIcon className="h-5 w-5" />
                   Add Task
@@ -429,7 +429,7 @@ export default function DealDetailPage() {
                       ) : task.status === 'IN_PROGRESS' ? (
                         <ClockIcon className="h-5 w-5 text-accent" />
                       ) : (
-                        <XCircleIcon className="h-5 w-5 text-ink-400" />
+                        <XCircleIcon className="h-5 w-5 text-ink-500" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -476,7 +476,7 @@ export default function DealDetailPage() {
                     setEditingNote(null)
                     setShowNoteModal(true)
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors"
                 >
                   <PlusIcon className="h-5 w-5" />
                   Add Note

@@ -31,7 +31,7 @@ function AbodingoTourFunnel({ propertyId, onGuestFallback }: { propertyId: numbe
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => trackEvent('lead_tour_signup_redirect', { property_id: String(propertyId) })}
-        className="block w-full rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#4b9ba2]"
+        className="block w-full rounded-xl bg-accent-deep px-6 py-3.5 text-center text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#336E73]"
       >
         Create a free account &amp; request tour
       </a>
@@ -47,7 +47,7 @@ function AbodingoTourFunnel({ propertyId, onGuestFallback }: { propertyId: numbe
       <button
         type="button"
         onClick={onGuestFallback}
-        className="w-full bg-transparent py-1 text-center text-xs font-medium text-ink-400 underline-offset-2 transition-colors hover:text-ink-600 hover:underline"
+        className="w-full bg-transparent py-1 text-center text-xs font-medium text-ink-500 underline-offset-2 transition-colors hover:text-ink-600 hover:underline"
       >
         Continue without an account
       </button>
@@ -63,7 +63,7 @@ interface LeadCaptureProps {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-800 placeholder:text-ink-400 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20';
+  'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-base text-ink-800 placeholder:text-ink-500 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20';
 
 function LeadForm({ propertyId, propertyName, onDone }: { propertyId: number | string; propertyName: string; onDone?: () => void }) {
   const [mode, setMode] = useState<Mode>('tour');
@@ -200,11 +200,11 @@ function LeadForm({ propertyId, propertyName, onDone }: { propertyId: number | s
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="w-full rounded-xl bg-accent px-6 py-3.5 text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#4b9ba2] disabled:translate-y-0 disabled:opacity-60"
+        className="w-full rounded-xl bg-accent-deep px-6 py-3.5 text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#336E73] disabled:translate-y-0 disabled:opacity-60"
       >
         {status === 'sending' ? 'Sending…' : mode === 'tour' ? 'Request tour' : 'Send message'}
       </button>
-      <p className="text-center text-[11px] leading-relaxed text-ink-400">
+      <p className="text-center text-[11px] leading-relaxed text-ink-500">
         No spam, no obligation — we typically reply within one business day.
       </p>
     </form>
@@ -257,7 +257,7 @@ export default function LeadCapture({ propertyId, propertyName, variant = 'panel
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-full p-2 text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
+                className="rounded-full p-2 text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-700"
                 aria-label="Close"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

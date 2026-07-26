@@ -16,15 +16,20 @@
 
 @layer base {
   body {
-    @apply text-text;
+    /* ink-700 (11.17:1 on white). Was `text-text` #7A7A7A = 4.29:1 -> failed AA. */
+    @apply text-ink-700;
     font-family: var(--font-sans);
   }
+  /* Headings inherit their section's color instead of a forced legacy gray.
+     `text-secondary` (#54595F) was only 2.77:1 on ink-950, so every heading on a
+     dark background silently failed AA (e.g. the footer). Per design-system hard
+     rule 6: no global element-level color defaults. */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-secondary font-semibold;
+    @apply font-semibold;
     font-family: var(--font-sans);
   }
   a {
-    @apply text-text hover:text-accent transition-colors duration-200;
+    @apply transition-colors duration-200;
   }
   /* NOTE: buttons style themselves explicitly. A global bg-accent default here
      painted every unstyled <button> solid teal — link-style buttons rendered as
@@ -45,7 +50,7 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-accent text-white px-4 py-2 rounded-md hover:bg-primary transition-colors duration-200;
+    @apply bg-accent-deep text-white px-4 py-2 rounded-md hover:bg-[#336E73] transition-colors duration-200;
   }
   .btn-secondary {
     @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-primary transition-colors duration-200;
@@ -95,7 +100,7 @@ html {
 @layer components {
   /* Buttons */
   .btn-hero {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent px-8 py-4 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#4b9ba2] hover:shadow-lift active:translate-y-0;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent-deep px-8 py-4 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#336E73] hover:shadow-lift active:translate-y-0;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-md transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/20 active:translate-y-0;
@@ -120,6 +125,11 @@ html {
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
   }
   .eyebrow {
+    @apply mb-3 inline-block text-xs font-semibold uppercase tracking-[0.2em] text-accent-deep;
+  }
+  /* Same eyebrow on a dark section: the light accent is 7.25:1 on ink-950, while
+     accent-deep would drop to 3.99:1 and fail for this small a size. */
+  .eyebrow-on-dark {
     @apply mb-3 inline-block text-xs font-semibold uppercase tracking-[0.2em] text-accent;
   }
 }

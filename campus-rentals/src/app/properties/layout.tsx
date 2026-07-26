@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Browse Off-Campus Student Housing | Tulane & FAU Properties',
-  description: 'Browse our complete selection of off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Filter by bedrooms, price, and location to find your perfect student apartment or rental property.',
+  description: 'Browse every available off-campus rental near Tulane in New Orleans and FAU in Boca Raton — photos, bedrooms, and pricing for each home.',
   keywords: [
     'Tulane off campus housing',
     'Tulane off campus apartments',
@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     url: 'https://campusrentalsllc.com/properties',
     siteName: 'Campus Rentals LLC',
     type: 'website',
+    // Must be restated: declaring `openGraph` without `images` drops the root og:image.
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Campus Rentals LLC student housing' }],
   },
   alternates: {
     canonical: 'https://campusrentalsllc.com/properties',

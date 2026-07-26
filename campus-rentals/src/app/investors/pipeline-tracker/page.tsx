@@ -141,7 +141,7 @@ export default function PipelineTrackerOverviewPage() {
                     {deal.property?.name && (
                       <span className="text-ink-500 text-sm truncate">{deal.property.name}</span>
                     )}
-                    <ArrowRightIcon className="h-4 w-4 text-ink-400 flex-shrink-0" />
+                    <ArrowRightIcon className="h-4 w-4 text-ink-500 flex-shrink-0" />
                   </Link>
                 </li>
               ))}
@@ -153,7 +153,7 @@ export default function PipelineTrackerOverviewPage() {
       <div className="flex justify-center pt-4">
         <Link
           href="/investors/pipeline-tracker/deals"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity bg-accent text-white"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity bg-accent-deep text-white"
         >
           <BuildingOfficeIcon className="h-5 w-5" />
           View all deals

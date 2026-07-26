@@ -533,7 +533,7 @@ export default function InvestorDashboard() {
               <div className="p-2 bg-accent/10 rounded-xl">
                 <CurrencyDollarIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Total Invested</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Total Invested</span>
             </div>
             <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.totalInvested)}</p>
             <p className="text-sm text-emerald-600 font-medium mt-1">Growing</p>
@@ -544,7 +544,7 @@ export default function InvestorDashboard() {
               <div className="p-2 bg-accent/10 rounded-xl">
                 <ChartBarIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Current Value</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Current Value</span>
             </div>
             <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.currentValue)}</p>
             <p className="text-sm text-ink-500 font-medium mt-1">Stabilized portfolio</p>
@@ -555,7 +555,7 @@ export default function InvestorDashboard() {
               <div className="p-2 bg-accent/10 rounded-xl">
                 <BanknotesIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Distributions</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Distributions</span>
             </div>
             <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatCurrency(stats.totalDistributions)}</p>
             <p className="text-sm text-ink-500 font-medium mt-1">Cash received</p>
@@ -566,7 +566,7 @@ export default function InvestorDashboard() {
               <div className="p-2 bg-accent/10 rounded-xl">
                 <ArrowTrendingUpIcon className="h-5 w-5 text-accent" />
               </div>
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Average IRR</span>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Average IRR</span>
             </div>
             <p className="text-2xl sm:text-3xl font-semibold text-ink-900">{formatPercentage(stats.averageIRR)}</p>
             <p className="text-sm text-ink-500 font-medium mt-1">Performance</p>
@@ -606,7 +606,7 @@ export default function InvestorDashboard() {
                     >
                       {entry.type === 'DISTRIBUTION' ? 'Distribution' : 'Contribution'}
                     </span>
-                    <ArrowUpRightIcon className="h-4 w-4 text-ink-400" />
+                    <ArrowUpRightIcon className="h-4 w-4 text-ink-500" />
                   </div>
                 </Link>
               ))}
@@ -628,7 +628,7 @@ export default function InvestorDashboard() {
                 <p className="text-[15px] font-semibold text-ink-900">Documents</p>
                 <p className="text-xs text-ink-500">Tax, PPM, statements</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-500 ml-auto flex-shrink-0" />
             </Link>
             <Link
               href="/investors/updates"
@@ -641,7 +641,7 @@ export default function InvestorDashboard() {
                 <p className="text-[15px] font-semibold text-ink-900">Updates</p>
                 <p className="text-xs text-ink-500">Announcements & notices</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-500 ml-auto flex-shrink-0" />
             </Link>
             <Link
               href="/investors/performance"
@@ -654,7 +654,7 @@ export default function InvestorDashboard() {
                 <p className="text-[15px] font-semibold text-ink-900">Performance</p>
                 <p className="text-xs text-ink-500">Reports & export</p>
               </div>
-              <ArrowUpRightIcon className="h-4 w-4 text-ink-400 ml-auto flex-shrink-0" />
+              <ArrowUpRightIcon className="h-4 w-4 text-ink-500 ml-auto flex-shrink-0" />
             </Link>
           </div>
         </section>

@@ -160,7 +160,7 @@ export default function PipelineTrackerDealsPage() {
       <div className="p-5">
         <div className="flex items-start justify-between gap-2 mb-3">
           <h2 className="text-lg font-semibold text-ink-900 truncate flex-1">{deal.name}</h2>
-          <ArrowUpRightIcon className="h-5 w-5 text-ink-400 flex-shrink-0" />
+          <ArrowUpRightIcon className="h-5 w-5 text-ink-500 flex-shrink-0" />
         </div>
         {deal.stage && (
           <span
@@ -262,7 +262,7 @@ export default function PipelineTrackerDealsPage() {
                   type="button"
                   onClick={() => setViewMode(mode)}
                   className={`px-3 py-2 text-sm font-medium border-r border-ink-300 last:border-r-0 ${
-                    viewMode === mode ? 'bg-accent text-white' : 'text-ink-700 bg-white hover:bg-ink-50'
+                    viewMode === mode ? 'bg-accent-deep text-white' : 'text-ink-700 bg-white hover:bg-ink-50'
                   }`}
                 >
                   {mode === 'all' ? 'All' : mode === 'stage' ? 'By stage' : 'By quarter/year'}
@@ -358,7 +358,7 @@ export default function PipelineTrackerDealsPage() {
       {/* Deal count badge bottom-right */}
       {!loading && filteredAndSorted.length > 0 && (
         <div
-          className="fixed bottom-6 right-6 px-4 py-2 rounded-full text-sm font-medium bg-accent text-white shadow-lg"
+          className="fixed bottom-6 right-6 px-4 py-2 rounded-full text-sm font-medium bg-accent-deep text-white shadow-lg"
           aria-live="polite"
         >
           {filteredAndSorted.length} deal{filteredAndSorted.length !== 1 ? 's' : ''}

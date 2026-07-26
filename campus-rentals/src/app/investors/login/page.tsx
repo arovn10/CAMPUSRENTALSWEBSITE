@@ -105,9 +105,10 @@ export default function LoginPage() {
           <p className="mt-6 text-xs font-medium uppercase tracking-[0.2em] text-accent">
             Investor Portal
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+          {/* h1, not h2 — this is the page's top-level heading (axe page-has-heading-one). */}
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
             Campus Rentals
-          </h2>
+          </h1>
           <p className="mt-2 text-sm text-ink-300">
             {showForgotPassword ? 'Request a link to reset your password' : 'Sign in to your investment portal'}
           </p>
@@ -125,7 +126,7 @@ export default function LoginPage() {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <EnvelopeIcon className="h-5 w-5 text-ink-400" />
+                    <EnvelopeIcon className="h-5 w-5 text-ink-500" />
                   </div>
                   <input
                     id="email"
@@ -147,7 +148,7 @@ export default function LoginPage() {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <LockClosedIcon className="h-5 w-5 text-ink-400" />
+                    <LockClosedIcon className="h-5 w-5 text-ink-500" />
                   </div>
                   <input
                     id="password"
@@ -163,8 +164,10 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <button
                       type="button"
-                      className="text-ink-400 hover:text-ink-600 transition-colors duration-200 p-1"
+                      className="flex h-11 w-11 items-center justify-center text-ink-500 transition-colors duration-200 hover:text-ink-600"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? (
                         <EyeSlashIcon className="h-5 w-5" />
@@ -188,7 +191,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="font-medium text-accent hover:text-[#4b9ba2] transition-colors duration-200"
+                  className="font-medium text-accent-deep hover:text-[#336E73] transition-colors duration-200"
                 >
                   Forgot your password?
                 </button>
@@ -199,7 +202,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent-deep hover:bg-[#336E73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
               >
                 {loading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
@@ -215,7 +218,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => router.push('/register')}
-                  className="font-medium text-accent hover:text-[#4b9ba2] transition-colors duration-200"
+                  className="font-medium text-accent-deep hover:text-[#336E73] transition-colors duration-200"
                 >
                   Contact us to get started
                 </button>
@@ -231,7 +234,7 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <EnvelopeIcon className="h-5 w-5 text-ink-400" />
+                  <EnvelopeIcon className="h-5 w-5 text-ink-500" />
                 </div>
                 <input
                   id="forgot-email"
@@ -278,7 +281,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={forgotPasswordLoading}
-                className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
+                className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl text-white bg-accent-deep hover:bg-[#336E73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-glow"
               >
                 {forgotPasswordLoading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto"></div>
@@ -292,7 +295,8 @@ export default function LoginPage() {
         </div>
 
         {/* Security Notice */}
-        <div className="mt-8 flex items-start justify-center gap-2 text-ink-400">
+        {/* On the ink-950 page background, muted text must go lighter, not darker. */}
+        <div className="mt-8 flex items-start justify-center gap-2 text-ink-300">
           <LockClosedIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <p className="text-xs leading-relaxed text-center max-w-xs">
             Your connection is encrypted and secure. We use industry-standard security measures to protect your account.

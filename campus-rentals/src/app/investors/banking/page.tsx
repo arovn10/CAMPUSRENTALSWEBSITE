@@ -108,7 +108,7 @@ function Kpi({
 }) {
   return (
     <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-soft ring-1 ring-ink-900/5">
-      <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">{label}</p>
       <p
         className={`mt-2 text-2xl md:text-3xl font-semibold tracking-tight ${
           valueClassName ?? 'text-ink-900'
@@ -116,7 +116,7 @@ function Kpi({
       >
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-ink-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-ink-500">{hint}</p>}
     </div>
   )
 }
@@ -269,7 +269,7 @@ export default function BankingDashboardPage() {
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink-900">Banking</h1>
           <p className="mt-1 text-[15px] text-ink-500">
             Account overview and transaction history
-            {data && <span className="text-ink-400"> · as of {dateFmt(data.asOf)}</span>}
+            {data && <span className="text-ink-500"> · as of {dateFmt(data.asOf)}</span>}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -284,7 +284,7 @@ export default function BankingDashboardPage() {
           <button
             onClick={downloadStatement}
             disabled={downloading}
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4b9ba2] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#336E73] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <DocumentArrowDownIcon className="h-4 w-4" />
             {downloading ? 'Preparing…' : 'Download statement'}
@@ -328,7 +328,7 @@ export default function BankingDashboardPage() {
       <section className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
         <div className="flex flex-col gap-3 border-b border-ink-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
-            <BanknotesIcon className="h-5 w-5 text-ink-400" />
+            <BanknotesIcon className="h-5 w-5 text-ink-500" />
             <h2 className="text-lg font-semibold tracking-tight text-ink-900">Transactions</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -344,7 +344,7 @@ export default function BankingDashboardPage() {
                 onClick={() => setTypeFilter(value)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   typeFilter === value
-                    ? 'bg-accent text-white'
+                    ? 'bg-accent-deep text-white'
                     : 'bg-ink-100 text-ink-700 hover:bg-ink-200'
                 }`}
               >
@@ -375,7 +375,7 @@ export default function BankingDashboardPage() {
           ) : (
             <table className="w-full min-w-[640px]">
               <thead>
-                <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wider text-ink-400">
+                <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wider text-ink-500">
                   <th className="px-5 py-3 font-semibold sm:px-6">Date</th>
                   <th className="px-5 py-3 font-semibold sm:px-6">Property</th>
                   <th className="px-5 py-3 font-semibold sm:px-6">Type</th>
@@ -419,7 +419,7 @@ export default function BankingDashboardPage() {
       {distributionsByProperty.length > 0 && (
         <section className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
           <div className="flex items-center gap-2 border-b border-ink-100 px-5 py-4 sm:px-6">
-            <BuildingOffice2Icon className="h-5 w-5 text-ink-400" />
+            <BuildingOffice2Icon className="h-5 w-5 text-ink-500" />
             <h2 className="text-lg font-semibold tracking-tight text-ink-900">
               Distributions by property
             </h2>
@@ -427,7 +427,7 @@ export default function BankingDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[320px]">
               <thead>
-                <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wider text-ink-400">
+                <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wider text-ink-500">
                   <th className="px-5 py-3 font-semibold sm:px-6">Property</th>
                   <th className="px-5 py-3 text-right font-semibold sm:px-6">Total</th>
                 </tr>

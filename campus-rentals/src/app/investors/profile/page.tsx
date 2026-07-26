@@ -60,7 +60,7 @@ interface FieldDef {
 const inputCls =
   'w-full rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-900 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
 const btnPrimary =
-  'rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+  'rounded-xl bg-accent-deep px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#336E73] transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
 const btnSecondary =
   'rounded-xl bg-ink-100 px-4 py-2.5 text-sm font-semibold text-ink-700 hover:bg-ink-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
 
@@ -175,7 +175,7 @@ function EditableSection({
         <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
           {fields.map((f) => (
             <div key={f.key} className={f.span2 ? 'sm:col-span-2' : ''}>
-              <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">{f.label}</dt>
+              <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">{f.label}</dt>
               <dd className="mt-1 text-sm text-ink-800">{(profile[f.key] as string | null) || '—'}</dd>
             </div>
           ))}
@@ -207,7 +207,7 @@ function EditableSection({
                     onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })}
                   />
                 )}
-                {f.hint && <p className="mt-1 text-xs text-ink-400">{f.hint}</p>}
+                {f.hint && <p className="mt-1 text-xs text-ink-500">{f.hint}</p>}
               </div>
             ))}
           </div>
@@ -325,12 +325,12 @@ export default function InvestorProfilePage() {
         </div>
         <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
           <div>
-            <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Email</dt>
+            <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Email</dt>
             <dd className="mt-1 text-sm text-ink-800">{profile.email}</dd>
-            <p className="mt-1 text-xs text-ink-400">Email cannot be changed — contact your administrator.</p>
+            <p className="mt-1 text-xs text-ink-500">Email cannot be changed — contact your administrator.</p>
           </div>
           <div>
-            <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Role</dt>
+            <dt className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Role</dt>
             <dd className="mt-1 text-sm text-ink-800">{role}</dd>
           </div>
         </dl>
@@ -508,7 +508,7 @@ function ChangePasswordForm() {
       <button
         type="submit"
         disabled={status === 'saving'}
-        className="w-fit rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4b9ba2] disabled:opacity-60"
+        className="w-fit rounded-xl bg-accent-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#336E73] disabled:opacity-60"
       >
         {status === 'saving' ? 'Updating…' : 'Update password'}
       </button>

@@ -12,6 +12,11 @@ module.exports = {
         secondary: '#54595F',
         text: '#7A7A7A',
         accent: '#54AAB1',
+        // AA-compliant companion: `accent` is only 2.71:1 on white, so it fails WCAG
+        // as text on light backgrounds and as a fill under white text. Same hue
+        // (184.5deg), 4.92:1 on white. Use on light bg / as button fill; keep plain
+        // `accent` for dark backgrounds, where it is 7.25:1.
+        'accent-deep': '#3A7A7F',
         // Premium neutral scale for the public site
         ink: {
           50: '#F7F8F8',

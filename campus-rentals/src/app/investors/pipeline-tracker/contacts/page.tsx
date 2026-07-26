@@ -22,7 +22,7 @@ export default function PipelineTrackerContacts() {
           onClick={() => setActiveTab('contacts')}
           className={`px-4 py-2 font-medium text-sm transition-colors rounded-md ${
             activeTab === 'contacts'
-              ? 'bg-accent text-white shadow-sm'
+              ? 'bg-accent-deep text-white shadow-sm'
               : 'text-ink-600 hover:text-ink-900 hover:bg-ink-200'
           }`}
         >
@@ -32,7 +32,7 @@ export default function PipelineTrackerContacts() {
           onClick={() => setActiveTab('entities')}
           className={`px-4 py-2 font-medium text-sm transition-colors rounded-md ${
             activeTab === 'entities'
-              ? 'bg-accent text-white shadow-sm'
+              ? 'bg-accent-deep text-white shadow-sm'
               : 'text-ink-600 hover:text-ink-900 hover:bg-ink-200'
           }`}
         >

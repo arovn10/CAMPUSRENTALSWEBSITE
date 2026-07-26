@@ -195,7 +195,7 @@ export default function InvestorUpdatesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-ink-400">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
                         {typeLabel(n.type)}
                       </span>
                       <span className="text-[13px] text-ink-500">{formatDate(n.createdAt)}</span>
@@ -225,7 +225,7 @@ export default function InvestorUpdatesPage() {
                         <CheckIcon className="w-5 h-5" />
                       </button>
                     )}
-                    <span className="text-ink-400">
+                    <span className="text-ink-500">
                       {isExpanded ? (
                         <ChevronUpIcon className="w-5 h-5" />
                       ) : (

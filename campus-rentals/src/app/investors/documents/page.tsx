@@ -322,7 +322,7 @@ export default function InvestorDocumentsPage() {
                   setQuickReceipt(true)
                   setUploadForm((f) => ({ ...f, documentType: 'RECEIPT', entityId: 'company', title: '', file: null }))
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-deep text-white text-sm font-semibold hover:bg-[#336E73] transition-colors"
               >
                 <ReceiptRefundIcon className="w-5 h-5" />
                 Upload receipt
@@ -360,7 +360,7 @@ export default function InvestorDocumentsPage() {
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
                 <label htmlFor="doc-file" className="cursor-pointer block">
-                  <ArrowUpTrayIcon className="w-12 h-12 text-ink-400 mx-auto mb-2" />
+                  <ArrowUpTrayIcon className="w-12 h-12 text-ink-500 mx-auto mb-2" />
                   <p className="text-ink-700 font-medium">
                     {uploadForm.file ? (
                       <span className="text-emerald-600">{uploadForm.file.name}</span>
@@ -430,7 +430,7 @@ export default function InvestorDocumentsPage() {
               <button
                 type="submit"
                 disabled={uploading || !uploadForm.file}
-                className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl bg-accent-deep text-white text-sm font-semibold hover:bg-[#336E73] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? 'Uploading…' : 'Save document'}
               </button>
@@ -505,7 +505,7 @@ export default function InvestorDocumentsPage() {
                     <button
                       type="button"
                       onClick={() => handleDownload(doc)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-deep text-white text-sm font-semibold hover:bg-[#336E73] transition-colors"
                     >
                       <ArrowDownTrayIcon className="w-4 h-4" />
                       Download

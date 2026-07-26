@@ -97,7 +97,7 @@ export default function SignaturesPage() {
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-      <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">Awaiting your signature</h2>
+      <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">Awaiting your signature</h2>
       {pending.length === 0 ? (
         <p className="rounded-2xl bg-white p-6 text-sm text-ink-500 shadow-soft ring-1 ring-ink-900/5">Nothing to sign right now.</p>
       ) : (
@@ -107,7 +107,7 @@ export default function SignaturesPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-ink-900">{r.documentTitle}</p>
-                  <p className="text-xs text-ink-400">Requested {dateFmt(r.createdAt)}</p>
+                  <p className="text-xs text-ink-500">Requested {dateFmt(r.createdAt)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <a
@@ -124,7 +124,7 @@ export default function SignaturesPage() {
                       setNameInput('')
                       setError(null)
                     }}
-                    className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors"
+                    className="rounded-xl bg-accent-deep px-3 py-2 text-sm font-semibold text-white hover:bg-[#336E73] transition-colors"
                   >
                     {signingId === r.id ? 'Cancel' : 'Sign'}
                   </button>
@@ -135,7 +135,7 @@ export default function SignaturesPage() {
                   <label className="block text-sm font-medium text-ink-700">
                     Type your full legal name to sign
                   </label>
-                  <p className="mb-2 text-xs text-ink-400">
+                  <p className="mb-2 text-xs text-ink-500">
                     By typing your name and clicking Sign, you agree this constitutes your electronic signature.
                   </p>
                   <div className="flex gap-2">
@@ -148,7 +148,7 @@ export default function SignaturesPage() {
                     <button
                       onClick={() => sign(r.id)}
                       disabled={busy}
-                      className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60"
+                      className="rounded-xl bg-accent-deep px-4 py-2 text-sm font-semibold text-white hover:bg-[#336E73] transition-colors disabled:opacity-60"
                     >
                       {busy ? 'Signing…' : 'Sign'}
                     </button>
@@ -162,7 +162,7 @@ export default function SignaturesPage() {
 
       {completed.length > 0 && (
         <>
-          <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">History</h2>
+          <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">History</h2>
           <div className="overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
             <table className="min-w-full divide-y divide-ink-100 text-sm">
               <tbody className="divide-y divide-ink-100">

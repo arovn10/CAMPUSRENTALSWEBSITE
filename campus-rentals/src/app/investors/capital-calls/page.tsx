@@ -118,21 +118,21 @@ export default function CapitalCallsPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Total committed</p>
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Total committed</p>
           <p className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">{usd(totalCommitted)}</p>
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Total called</p>
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Total called</p>
           <p className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">{usd(totalCalled)}</p>
         </div>
-        <div className="rounded-2xl bg-accent p-5 text-white shadow-soft">
+        <div className="rounded-2xl bg-accent-deep p-5 text-white shadow-soft">
           <p className="text-xs font-medium uppercase tracking-[0.15em] opacity-90">Total funded</p>
           <p className="mt-1 text-2xl font-semibold tracking-tight">{usd(totalFunded)}</p>
         </div>
       </div>
 
       {/* Capital calls */}
-      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">Capital calls</h2>
+      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">Capital calls</h2>
       {calls.length === 0 ? (
         <p className="rounded-2xl bg-white p-6 text-sm text-ink-500 shadow-soft ring-1 ring-ink-900/5">No capital calls.</p>
       ) : (
@@ -166,7 +166,7 @@ export default function CapitalCallsPage() {
                     <button
                       onClick={() => respond(c, 'FUND')}
                       disabled={busy === c.responseId}
-                      className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60"
+                      className="rounded-xl bg-accent-deep px-3 py-2 text-sm font-semibold text-white hover:bg-[#336E73] transition-colors disabled:opacity-60"
                     >
                       I’ve funded this
                     </button>
@@ -179,13 +179,13 @@ export default function CapitalCallsPage() {
       )}
 
       {/* Commitments */}
-      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">Commitments</h2>
+      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">Commitments</h2>
       {commitments.length === 0 ? (
         <p className="rounded-2xl bg-white p-6 text-sm text-ink-500 shadow-soft ring-1 ring-ink-900/5">No commitments recorded.</p>
       ) : (
         <div className="overflow-x-auto rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
           <table className="min-w-full divide-y divide-ink-100 text-sm">
-            <thead className="bg-ink-50 text-left text-xs uppercase tracking-wider text-ink-400">
+            <thead className="bg-ink-50 text-left text-xs uppercase tracking-wider text-ink-500">
               <tr>
                 <th className="px-4 py-3">Deal</th>
                 <th className="px-4 py-3 text-right">Committed</th>

@@ -146,7 +146,7 @@ export default function DealNoteModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : note ? 'Update Note' : 'Create Note'}
             </button>

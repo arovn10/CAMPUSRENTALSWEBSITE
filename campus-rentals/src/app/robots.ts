@@ -6,12 +6,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/investors/', '/test-auth'],
+        disallow: ['/api/', '/admin/', '/investors/', '/test-auth', '/properties/create'],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/investors/', '/test-auth'],
+        disallow: ['/api/', '/admin/', '/investors/', '/test-auth', '/properties/create'],
       },
     ],
     sitemap: 'https://campusrentalsllc.com/sitemap.xml',

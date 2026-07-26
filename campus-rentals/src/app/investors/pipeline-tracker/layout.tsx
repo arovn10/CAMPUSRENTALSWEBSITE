@@ -154,7 +154,7 @@ export default function PipelineTrackerLayout({
                   key={tab.id}
                   href={tab.path}
                   className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-t-lg text-sm font-medium border-b-2 whitespace-nowrap flex-shrink-0 transition-colors ${
-                    isActive ? 'bg-accent text-white border-accent' : 'text-ink-600 hover:bg-ink-100 border-transparent'
+                    isActive ? 'bg-accent-deep text-white border-accent' : 'text-ink-600 hover:bg-ink-100 border-transparent'
                   }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />

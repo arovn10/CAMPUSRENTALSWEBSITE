@@ -6,7 +6,7 @@ import { trackEvent } from '@/utils/analytics'
 import FloorPlanExplorer from './FloorPlanExplorer'
 
 const inputCls =
-  'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-800 placeholder:text-ink-400 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20'
+  'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-base text-ink-800 placeholder:text-ink-500 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20'
 
 type Interest = 'RENT' | 'BUY' | 'EITHER'
 
@@ -75,7 +75,7 @@ function WaitlistForm() {
             type="button"
             onClick={() => setInterest(i)}
             className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
-              interest === i ? 'bg-accent text-white shadow-glow' : 'bg-transparent text-white/70 hover:text-white'
+              interest === i ? 'bg-accent-deep text-white shadow-glow' : 'bg-transparent text-white/70 hover:text-white'
             }`}
           >
             {i === 'RENT' ? 'Renting' : i === 'BUY' ? 'Buying' : 'Either'}
@@ -92,11 +92,11 @@ function WaitlistForm() {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="w-full rounded-xl bg-accent px-6 py-4 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#4b9ba2] disabled:translate-y-0 disabled:opacity-60"
+        className="w-full rounded-xl bg-accent-deep px-6 py-4 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#336E73] disabled:translate-y-0 disabled:opacity-60"
       >
         {status === 'sending' ? 'Joining…' : 'Join the waitlist'}
       </button>
-      <p className="text-center text-[11px] leading-relaxed text-white/40">
+      <p className="text-center text-[11px] leading-relaxed text-white/60">
         No spam — just first access to pricing, availability, and move-in dates.
       </p>
     </form>
@@ -125,7 +125,7 @@ export default function PlazaPage() {
       <section className="relative flex h-[100svh] min-h-[560px] items-end">
         <div className="section-shell relative z-10 pb-24">
           <div className="max-w-3xl stagger">
-            <span className="eyebrow">Coming mid-2027 · 7900 Maple Street, New Orleans</span>
+            <span className="eyebrow-on-dark">Coming mid-2027 · 7900 Maple Street, New Orleans</span>
             <h1 className="text-display-xl font-semibold text-white">Maple Street Plaza</h1>
             <p className="mt-4 max-w-xl text-xl leading-relaxed text-white/75 sm:text-2xl">
               Maple Street, all together. Seven residences above a restaurant, a boutique storefront,
@@ -166,7 +166,7 @@ export default function PlazaPage() {
               ['Steps', 'To the streetcar'],
             ].map(([value, label]) => (
               <div key={label}>
-                <dt className="order-2 text-xs font-medium uppercase tracking-[0.18em] text-ink-400">{label}</dt>
+                <dt className="order-2 text-xs font-medium uppercase tracking-[0.18em] text-ink-500">{label}</dt>
                 <dd className="text-4xl font-semibold tracking-tight text-ink-900">{value}</dd>
               </div>
             ))}
@@ -238,7 +238,7 @@ export default function PlazaPage() {
           <div className="mx-auto mb-14 max-w-2xl text-center">
             <span className="eyebrow">Floor Plans</span>
             <h2 className="text-display font-semibold text-ink-900">Drawn, approved, under way.</h2>
-            <p className="mx-auto mt-4 max-w-lg text-lg text-ink-500">
+            <p className="mx-auto mt-4 max-w-lg text-lg text-ink-600">
               Explore the homes — tap rooms, flip on dimensions, and arrange the furniture.
             </p>
           </div>
@@ -260,7 +260,7 @@ export default function PlazaPage() {
         </div>
         <div className="section-shell relative z-10 -mt-32 pb-24 sm:pb-32">
           <div className="max-w-2xl stagger">
-            <span className="eyebrow">The Ground Floor</span>
+            <span className="eyebrow-on-dark">The Ground Floor</span>
             <h2 className="text-display font-semibold text-white">Dinner downstairs.<br />Evenings in the courtyard.</h2>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
               A restaurant anchors one corner — announcement coming soon — with a boutique commercial
@@ -290,7 +290,7 @@ export default function PlazaPage() {
             <div>
               <span className="eyebrow">Transit-Oriented</span>
               <h2 className="text-display font-semibold text-ink-900">Built where the city already goes.</h2>
-              <p className="mt-5 text-[17px] leading-relaxed text-ink-500">
+              <p className="mt-5 text-[17px] leading-relaxed text-ink-600">
                 Maple Street Plaza is transit-oriented development in the truest sense — a short walk
                 to the St.&nbsp;Charles streetcar line, on a Maple Street block you can live from on foot:
                 coffee, restaurants, shops, and the university corridor, all without reaching for car keys.
@@ -326,16 +326,16 @@ export default function PlazaPage() {
           <div className="mx-auto flex max-w-3xl flex-col items-center gap-10 text-center">
             <div className="flex w-full flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-16">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-400">Broke ground</p>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-500">Broke ground</p>
                 <p className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">Early 2026</p>
               </div>
               <div className="hidden h-px w-24 bg-ink-200 sm:block" />
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-400">Opening</p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight text-accent">Mid-2027</p>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-500">Opening</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-accent-deep">Mid-2027</p>
               </div>
             </div>
-            <p className="text-sm text-ink-400">
+            <p className="text-sm text-ink-500">
               Architecture by <span className="font-medium text-ink-600">Graham Hill Architect</span> ·
               Built by <span className="font-medium text-ink-600">Asper Construction</span> ·
               Developed by <span className="font-medium text-ink-600">Campus Rentals</span>
@@ -352,7 +352,7 @@ export default function PlazaPage() {
         />
         <div className="section-shell relative">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <span className="eyebrow">The Waitlist</span>
+            <span className="eyebrow-on-dark">The Waitlist</span>
             <h2 className="text-display font-semibold text-white">Seven homes. First come, first pick.</h2>
             <p className="mx-auto mt-4 max-w-lg text-lg text-white/60">
               Tell us whether you&apos;d rent or buy, and you&apos;ll be first in line for pricing,

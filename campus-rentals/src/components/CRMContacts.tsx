@@ -300,7 +300,7 @@ export default function CRMContacts() {
       {/* Search and Add */}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-ink-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-ink-500" />
           <input
             type="text"
             placeholder="Search entities by name, contact person, or email..."
@@ -315,7 +315,7 @@ export default function CRMContacts() {
             setEditingEntity(null)
             setShowCreateModal(true)
           }}
-          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+          className="px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
         >
           <PlusIcon className="h-5 w-5" />
           Add Entity
@@ -421,7 +421,7 @@ export default function CRMContacts() {
                   setEditingEntity(null)
                   resetForm()
                 }}
-                className="p-2 text-ink-400 hover:text-ink-600 rounded-lg"
+                className="p-2 text-ink-500 hover:text-ink-600 rounded-lg"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -518,7 +518,7 @@ export default function CRMContacts() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors shadow-md hover:shadow-lg font-medium"
+                  className="px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors shadow-md hover:shadow-lg font-medium"
                 >
                   {editingEntity ? 'Update' : 'Create'}
                 </button>
@@ -545,7 +545,7 @@ export default function CRMContacts() {
                   setSelectedEntity(null)
                   setEntityDocuments([])
                 }}
-                  className="p-2 text-ink-400 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
+                  className="p-2 text-ink-500 hover:text-ink-600 hover:bg-ink-100 rounded-lg transition-colors"
               >
                   <XMarkIcon className="h-6 w-6" />
               </button>
@@ -574,7 +574,7 @@ export default function CRMContacts() {
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-ink-500 uppercase tracking-wider">Address</label>
                       <p className="text-base text-ink-900 mt-1 flex items-start gap-2">
-                        <MapPinIcon className="h-4 w-4 text-ink-400 flex-shrink-0 mt-0.5" />
+                        <MapPinIcon className="h-4 w-4 text-ink-500 flex-shrink-0 mt-0.5" />
                         {selectedEntity.address}
                       </p>
                     </div>
@@ -700,7 +700,7 @@ export default function CRMContacts() {
                 <button
                   type="submit"
                   disabled={uploadingDocument}
-                    className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="w-full px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {uploadingDocument ? 'Uploading...' : 'Upload Document'}
                 </button>
@@ -712,7 +712,7 @@ export default function CRMContacts() {
                     <div className="text-center py-12 bg-white rounded-lg border border-ink-200">
                       <DocumentTextIcon className="h-12 w-12 text-ink-300 mx-auto mb-4" />
                       <p className="text-ink-500 font-medium">No documents uploaded yet</p>
-                      <p className="text-sm text-ink-400 mt-1">Upload documents using the form above</p>
+                      <p className="text-sm text-ink-500 mt-1">Upload documents using the form above</p>
                     </div>
                 ) : (
                   entityDocuments.map((doc) => (
@@ -740,7 +740,7 @@ export default function CRMContacts() {
                         href={doc.filePath}
                         target="_blank"
                         rel="noopener noreferrer"
-                            className="px-4 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors flex-shrink-0"
+                            className="px-4 py-2 text-sm font-medium bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors flex-shrink-0"
                       >
                         View
                       </a>

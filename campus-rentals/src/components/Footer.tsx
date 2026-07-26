@@ -36,7 +36,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-400">Explore</h4>
+            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-300">Explore</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/tulane-housing" className="text-ink-300 transition-colors hover:text-white">Tulane / Loyola Housing</Link></li>
               <li><Link href="/fau-housing" className="text-ink-300 transition-colors hover:text-white">FAU Housing</Link></li>
@@ -47,7 +47,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-400">Residents &amp; Partners</h4>
+            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-300">Residents &amp; Partners</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <a href={`${ABODINGO_WEBSITE_URL}/login`} target="_blank" rel="noopener noreferrer" className="text-ink-300 transition-colors hover:text-white">
@@ -61,9 +61,33 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-8 text-xs text-ink-400 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Campus Rentals LLC. All rights reserved.</p>
-          <p>New Orleans, LA &middot; Boca Raton, FL</p>
+        <div className="mt-12 border-t border-white/10 pt-8">
+          {/* Equal Housing Opportunity — the baseline disclosure for a housing provider. */}
+          <Link
+            href="/fair-housing"
+            className="group flex items-start gap-3 text-xs leading-relaxed text-ink-300 transition-colors hover:text-white"
+          >
+            <svg className="mt-0.5 h-8 w-8 shrink-0 text-ink-300 transition-colors group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 4l9 6.5" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 9.8V20h13V9.8" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20v-5.5h4V20" />
+            </svg>
+            <span>
+              <strong className="font-semibold text-white">Equal Housing Opportunity.</strong> We rent
+              without regard to race, color, religion, sex, disability, familial status, or national
+              origin. Need an accommodation? Just ask.
+            </span>
+          </Link>
+
+          <div className="mt-8 flex flex-col items-center justify-between gap-4 text-xs text-ink-300 sm:flex-row">
+            <p>&copy; {new Date().getFullYear()} Campus Rentals LLC. All rights reserved.</p>
+            <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
+              <Link href="/terms" className="transition-colors hover:text-white">Terms</Link>
+              <Link href="/fair-housing" className="transition-colors hover:text-white">Fair Housing</Link>
+              <span className="text-ink-300">New Orleans, LA &middot; Boca Raton, FL</span>
+            </nav>
+          </div>
         </div>
       </div>
     </footer>

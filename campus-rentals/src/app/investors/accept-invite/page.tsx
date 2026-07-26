@@ -124,7 +124,7 @@ function AcceptInviteInner() {
               <div>
                 <label className="block text-sm font-medium text-ink-700 mb-2">First name</label>
                 <div className="relative">
-                  <UserIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <UserIcon className="w-5 h-5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={firstName}
@@ -147,7 +147,7 @@ function AcceptInviteInner() {
             <div>
               <label className="block text-sm font-medium text-ink-700 mb-2">Create password</label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -163,7 +163,7 @@ function AcceptInviteInner() {
             <div>
               <label className="block text-sm font-medium text-ink-700 mb-2">Confirm password</label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -180,7 +180,7 @@ function AcceptInviteInner() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white text-sm font-semibold bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-glow"
+              className="w-full py-3 rounded-xl text-white text-sm font-semibold bg-accent-deep hover:bg-[#336E73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-glow"
             >
               {loading ? 'Creating account…' : 'Create account'}
             </button>
