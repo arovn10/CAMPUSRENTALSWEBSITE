@@ -81,6 +81,34 @@ Apple-product-page-style showcase for the 7900 Maple Street mixed-use developmen
   ButterflyMX; HU-B1 zoning, 38'-9" height.
 - Nav: "The Plaza" in header (desktop + mobile) and footer Explore; `/plaza` in sitemap.
 
+## Site quality baseline (2026-07-23 audit — hold this line)
+
+A full audit measured the public site; everything below was fixed and must not regress.
+
+| Area | Baseline now | What was wrong |
+|---|---|---|
+| Accessibility | **0 axe violations** across `/`, `/properties`, `/tulane-housing`, `/fau-housing`, `/plaza`, `/about`, `/contact`, `/privacy`, `/terms`, `/fair-housing`, `/investors/login` | ~150 violations; no `<main>` anywhere; accent failed AA; base layer forced failing colors on all headings |
+| Canonicals | exactly **1 per page** | a hardcoded homepage canonical in the root `<head>` shipped on every page → every sub-page claimed to be a duplicate of `/` |
+| Footers / `<main>` | exactly **1 each**, both from `layout.tsx` | `/about`, `/contact`, `/fau-housing`, `/tulane-housing` each rendered a second legacy footer — doubled copyright, mismatched navy, and "Powered by Abode Student Listing Service" shown to customers |
+| Metadata | unique title + 136–156 char description per page | `/contact` inherited the homepage title verbatim; root description was 283 chars; `/about` + `/properties` dropped `og:image` by declaring `openGraph` without `images` |
+| Mobile | no horizontal overflow; tap targets ≥44px; **all form fields ≥16px** | drawer links 24–28px, hamburger 40px, IG icon 24px; 14px inputs made iOS zoom the page on focus |
+| Legal | `/privacy`, `/terms`, `/fair-housing` + Equal Housing statement in footer | none existed, while three forms collect PII and a Google Ads tag runs (Ads policy requires a privacy policy) |
+| Failure states | branded `error.tsx`, `global-error.tsx`, `not-found.tsx` | none existed — crashes and bad URLs fell through to Next's default screen |
+| `/investors/*` | `X-Robots-Tag: noindex` via `middleware.ts` | the portal login was `index, follow`. Its layout is a client component, so metadata can't be used — the header is the mechanism |
+| Images | `sharp` installed | production `next/image` ran on the slow JS fallback |
+
+**Hero video (`components/HeroVideo.tsx`):** the source asset is a **68 MB** MP4
+(`Content-Type: binary/octet-stream`). It is now served via **CloudFront** (not S3 direct),
+`preload="metadata"`, has a pause control, and only autoplays on desktop when the visitor
+hasn't requested reduced motion and isn't on Data Saver / a slow link. **Still owed:**
+transcode to <3 MB + add a poster frame + fix the content type — needs S3 write access.
+
+**Not yet done from that audit:** no alert exists for the catastrophic silent failure mode
+(Abodingo auth breaks → listings vanish); `health-monitor.yml` only pings `/api/health`.
+Minimum viable fix: assert `/api/properties` returns ≥15 listings and lacks
+`X-Data-Staleness: stale`. Also unbuilt: renter content gaps (pricing transparency,
+application process/fees, lease terms, FAQ, testimonials).
+
 ## UI gotchas (learned the hard way — don't relearn)
 
 - **`backdrop-filter` on an ancestor breaks `position: fixed` children.** The glass nav
