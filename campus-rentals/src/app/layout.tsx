@@ -14,7 +14,8 @@ export const metadata: Metadata = {
     default: 'Campus Rentals LLC | Off-Campus Student Housing Near Tulane & FAU',
     template: '%s | Campus Rentals LLC',
   },
-  description: 'Find premium off-campus student housing near Tulane University in New Orleans and Florida Atlantic University (FAU) in Boca Raton. Browse luxury apartments, houses, and rentals perfect for college students. View photos, amenities, and pricing for the best off-campus housing options.',
+  // Kept under ~155 chars so Google shows it whole instead of truncating mid-sentence.
+  description: 'Off-campus student housing near Tulane in New Orleans and FAU in Boca Raton — renovated homes, real photos, and locally owned, professional management.',
   keywords: [
     'Tulane off campus housing',
     'Tulane off campus apartments',
@@ -159,7 +160,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="canonical" href="https://campusrentalsllc.com" />
+        {/* NOTE: no hardcoded <link rel="canonical"> here. Next emits the correct
+            per-page canonical from each page's `alternates.canonical` metadata.
+            A hardcoded homepage canonical here shipped on EVERY page and told
+            Google every sub-page was a duplicate of / (2026-07-23). */}
         <meta name="geo.region" content="US-LA,US-FL" />
         <meta name="geo.placename" content="New Orleans, LA; Boca Raton, FL" />
         <meta name="geo.position" content="29.9511;-90.0715;26.3683;-80.1289" />
@@ -189,8 +193,16 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Analytics />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink-900 focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lift"
+        >
+          Skip to content
+        </a>
         <Header />
-        {children}
+        {/* Single <main> landmark for the whole app — without it every page failed
+            axe landmark-one-main and flooded `region` violations. */}
+        <main id="main">{children}</main>
         <Footer />
       </body>
     </html>

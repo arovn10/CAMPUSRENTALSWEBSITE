@@ -231,7 +231,7 @@ export default function InvestorsLayout({
         aria-label="Main menu"
       >
         <div className="p-4 border-b border-ink-100">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">Menu</p>
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">Menu</p>
         </div>
         <nav className="p-4 space-y-1 overflow-y-auto">
           {sectionNav.map((item) => {

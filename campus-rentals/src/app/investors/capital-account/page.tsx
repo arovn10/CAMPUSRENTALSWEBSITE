@@ -48,9 +48,9 @@ function token() {
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
-      <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-400">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.15em] text-ink-500">{label}</p>
       <p className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
+      {hint && <p className="mt-0.5 text-xs text-ink-500">{hint}</p>}
     </div>
   )
 }
@@ -129,12 +129,12 @@ export default function CapitalAccountPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink-900">My Capital Account</h1>
-          <span className="text-xs text-ink-400">as of {dateFmt(data.asOf)}</span>
+          <span className="text-xs text-ink-500">as of {dateFmt(data.asOf)}</span>
         </div>
         <button
           onClick={downloadStatement}
           disabled={downloading}
-          className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
+          className="rounded-xl bg-accent-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#336E73] focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
         >
           {downloading ? 'Generating…' : 'Download statement (PDF)'}
         </button>
@@ -148,7 +148,7 @@ export default function CapitalAccountPage() {
         <Kpi label="Current value" value={usd(c.currentValue)} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="rounded-2xl bg-accent p-5 text-white shadow-soft">
+        <div className="rounded-2xl bg-accent-deep p-5 text-white shadow-soft">
           <p className="text-xs font-medium uppercase tracking-[0.15em] opacity-90">Net IRR</p>
           <p className="mt-1 text-2xl font-semibold tracking-tight">{pct(c.irr)}</p>
         </div>
@@ -158,12 +158,12 @@ export default function CapitalAccountPage() {
       </div>
 
       {/* Per-deal accounts */}
-      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">
+      <h2 className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">
         Holdings ({data.accounts.length})
       </h2>
       <div className="overflow-x-auto rounded-2xl bg-white shadow-soft ring-1 ring-ink-900/5">
         <table className="min-w-full divide-y divide-ink-100 text-sm">
-          <thead className="bg-ink-50 text-left text-xs uppercase tracking-wider text-ink-400">
+          <thead className="bg-ink-50 text-left text-xs uppercase tracking-wider text-ink-500">
             <tr>
               <th className="px-4 py-3">Deal</th>
               <th className="px-4 py-3 text-right">Own %</th>
@@ -181,7 +181,7 @@ export default function CapitalAccountPage() {
                 <tr key={a.propertyId} className="hover:bg-ink-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-ink-900">{a.propertyName}</div>
-                    {a.address && <div className="text-xs text-ink-400">{a.address}</div>}
+                    {a.address && <div className="text-xs text-ink-500">{a.address}</div>}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-ink-700">{a.ownershipPercent}%</td>
                   <td className="px-4 py-3 text-right font-semibold tracking-tight tabular-nums text-ink-900">{usd(a.metrics.totalContributed)}</td>
@@ -211,7 +211,7 @@ export default function CapitalAccountPage() {
                             <tbody>
                               {a.ledger.map((l, i) => (
                                 <tr key={i}>
-                                  <td className="py-1 pr-4 text-ink-400">{dateFmt(l.date)}</td>
+                                  <td className="py-1 pr-4 text-ink-500">{dateFmt(l.date)}</td>
                                   <td className="py-1 pr-4">
                                     <span
                                       className={
@@ -240,7 +240,7 @@ export default function CapitalAccountPage() {
         </table>
       </div>
 
-      <p className="mt-6 text-xs text-ink-400">
+      <p className="mt-6 text-xs text-ink-500">
         Figures derived from your recorded contributions, distributions, and current property
         valuations. IRR is a true XIRR over dated cash flows. Distributions are paid outside this
         portal; this is your statement of record.

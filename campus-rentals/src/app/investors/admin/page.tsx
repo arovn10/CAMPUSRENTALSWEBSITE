@@ -103,12 +103,12 @@ export default function AdminIMSPage() {
 }
 
 const inputCls = 'w-full rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-900 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20'
-const btn = 'rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b9ba2] transition-colors disabled:opacity-60'
+const btn = 'rounded-xl bg-accent-deep px-4 py-2 text-sm font-semibold text-white hover:bg-[#336E73] transition-colors disabled:opacity-60'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-400">{title}</h2>
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-500">{title}</h2>
       {children}
     </div>
   )
@@ -193,13 +193,13 @@ function InvestorsTab({ onDone }: { onDone: (m: string) => void }) {
         />
         {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
         {loading ? (
-          <p className="text-sm text-ink-400">Loading…</p>
+          <p className="text-sm text-ink-500">Loading…</p>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-ink-400">{query ? 'No investors match your search.' : 'No investors yet.'}</p>
+          <p className="text-sm text-ink-500">{query ? 'No investors match your search.' : 'No investors yet.'}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-500">
                 <tr>
                   <th className="py-2 pr-4">Name</th>
                   <th className="py-2 pr-4">Email</th>
@@ -320,11 +320,11 @@ function EditInvestorModal({ user, onClose, onSaved }: { user: AdminUser; onClos
           </div>
           <span className={roleChipCls(user.role)}>{user.role}</span>
         </div>
-        <p className="mt-2 text-xs text-ink-400">Email and role cannot be changed here.</p>
+        <p className="mt-2 text-xs text-ink-500">Email and role cannot be changed here.</p>
 
         {err && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
 
-        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Contact</p>
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-500">Contact</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {field('firstName', 'First name')}
           {field('lastName', 'Last name')}
@@ -332,7 +332,7 @@ function EditInvestorModal({ user, onClose, onSaved }: { user: AdminUser; onClos
           {field('company', 'Company')}
         </div>
 
-        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Primary address</p>
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-500">Primary address</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {field('address', 'Street address', true)}
           {field('city', 'City')}
@@ -341,7 +341,7 @@ function EditInvestorModal({ user, onClose, onSaved }: { user: AdminUser; onClos
           {field('country', 'Country')}
         </div>
 
-        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Mailing address (K-1 delivery)</p>
+        <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-500">Mailing address (K-1 delivery)</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {field('mailingAddress', 'Mailing street address', true)}
           {field('mailingCity', 'Mailing city')}
@@ -428,10 +428,10 @@ function InvitesTab({ properties, onDone }: { properties: PropertyOpt[]; onDone:
       </Section>
 
       <Section title={`Invites (${invites.length})`}>
-        {invites.length === 0 ? <p className="text-sm text-ink-400">No invites yet.</p> : (
+        {invites.length === 0 ? <p className="text-sm text-ink-500">No invites yet.</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-500">
                 <tr><th className="py-2 pr-4">Email</th><th className="py-2 pr-4">Role</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Expires</th></tr>
               </thead>
               <tbody className="divide-y divide-ink-100">
@@ -505,10 +505,10 @@ function CommitmentsTab({ investors, properties, onDone }: { investors: Investor
       </Section>
 
       <Section title={`All commitments (${rows.length})`}>
-        {rows.length === 0 ? <p className="text-sm text-ink-400">None yet.</p> : (
+        {rows.length === 0 ? <p className="text-sm text-ink-500">None yet.</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
+              <thead className="text-left text-xs uppercase tracking-wider text-ink-500">
                 <tr><th className="py-2 pr-4">Deal</th><th className="py-2 pr-4 text-right">Amount</th><th className="py-2 pr-4">Date</th><th className="py-2 pr-4">Status</th></tr>
               </thead>
               <tbody className="divide-y divide-ink-100">
@@ -578,7 +578,7 @@ function CallsTab({ investors, properties, onDone }: { investors: Investor[]; pr
           <input className={inputCls} placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
-        <p className="mt-4 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Per-investor allocations</p>
+        <p className="mt-4 mb-2 text-xs font-semibold uppercase tracking-wider text-ink-500">Per-investor allocations</p>
         <div className="space-y-2">
           {allocs.map((a, idx) => (
             <div key={idx} className="flex gap-2">
@@ -614,7 +614,7 @@ function CallsTab({ investors, properties, onDone }: { investors: Investor[]; pr
       </Section>
 
       <Section title={`Capital calls (${calls.length})`}>
-        {calls.length === 0 ? <p className="text-sm text-ink-400">None yet.</p> : (
+        {calls.length === 0 ? <p className="text-sm text-ink-500">None yet.</p> : (
           <div className="space-y-3">
             {calls.map((c) => (
               <div key={c.id} className="rounded-xl border border-ink-200 p-4">
@@ -622,7 +622,7 @@ function CallsTab({ investors, properties, onDone }: { investors: Investor[]; pr
                   <span className="font-semibold text-ink-900">{c.dealName ?? 'Investment'} — {usd(c.totalAmount)}</span>
                   <span className="rounded-md bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-600">{c.status}</span>
                 </div>
-                <p className="mt-1 text-xs text-ink-400">Issued {dateFmt(c.issuedAt)} · due {dateFmt(c.dueDate)}</p>
+                <p className="mt-1 text-xs text-ink-500">Issued {dateFmt(c.issuedAt)} · due {dateFmt(c.dueDate)}</p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {c.responses?.map((r: any) => (
                     <li key={r.id} className="flex justify-between text-ink-600">
@@ -688,13 +688,13 @@ function AnnouncementsTab({ properties, onDone }: { properties: PropertyOpt[]; o
       </Section>
 
       <Section title={`Sent (${rows.length})`}>
-        {rows.length === 0 ? <p className="text-sm text-ink-400">No announcements yet.</p> : (
+        {rows.length === 0 ? <p className="text-sm text-ink-500">No announcements yet.</p> : (
           <ul className="space-y-2 text-sm">
             {rows.map((r) => (
               <li key={r.id} className="rounded-xl border border-ink-100 p-3">
                 <div className="flex justify-between">
                   <span className="font-semibold text-ink-900">{r.title}</span>
-                  <span className="text-xs text-ink-400">{dateFmt(r.createdAt)} · {r.recipientCount} sent</span>
+                  <span className="text-xs text-ink-500">{dateFmt(r.createdAt)} · {r.recipientCount} sent</span>
                 </div>
                 <p className="mt-1 text-ink-600">{r.body}</p>
               </li>
@@ -771,10 +771,10 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
         {allocations && (
           <div className="mt-4 overflow-x-auto">
             {allocations.length === 0 ? (
-              <p className="text-sm text-ink-400">No distributions recorded for {year}.</p>
+              <p className="text-sm text-ink-500">No distributions recorded for {year}.</p>
             ) : (
               <table className="min-w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wider text-ink-400">
+                <thead className="text-left text-xs uppercase tracking-wider text-ink-500">
                   <tr>
                     <th className="py-2 pr-4">Investor</th>
                     <th className="py-2 pr-4 text-right">Rental income</th>
@@ -815,7 +815,7 @@ function K1Tab({ investors, onDone }: { investors: Investor[]; onDone: (m: strin
       </Section>
 
       <Section title="Deliver a finalized K-1 PDF to an investor">
-        <p className="mb-3 text-xs text-ink-400">
+        <p className="mb-3 text-xs text-ink-500">
           The PDF is routed to the selected investor only and emailed to them. It appears in their Documents.
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

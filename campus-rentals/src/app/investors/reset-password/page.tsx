@@ -88,7 +88,7 @@ function ResetPasswordInner() {
                 New password
               </label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="password"
                   name="password"
@@ -103,7 +103,7 @@ function ResetPasswordInner() {
                 <button
                   type="button"
                   onClick={() => setShow((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-500 hover:text-ink-600 transition-colors"
                   aria-label={show ? 'Hide password' : 'Show password'}
                 >
                   {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -116,7 +116,7 @@ function ResetPasswordInner() {
                 Confirm new password
               </label>
               <div className="relative">
-                <LockClosedIcon className="w-5 h-5 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <LockClosedIcon className="w-5 h-5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   id="confirm"
                   name="confirm"
@@ -136,7 +136,7 @@ function ResetPasswordInner() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white text-sm font-semibold bg-accent hover:bg-[#4b9ba2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-glow"
+              className="w-full py-3 rounded-xl text-white text-sm font-semibold bg-accent-deep hover:bg-[#336E73] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-glow"
             >
               {loading ? 'Resetting…' : 'Reset password'}
             </button>

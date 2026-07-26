@@ -110,7 +110,7 @@ export default function PortfolioDashboardPage() {
         >
           <PencilSquareIcon className="w-5 h-5 text-ink-500" />
           Edit listing details on the website
-          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-ink-400" />
+          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-ink-500" />
         </a>
       </div>
 
@@ -123,7 +123,7 @@ export default function PortfolioDashboardPage() {
       {/* Summary cards - Apple style */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-medium uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-ink-500 text-[13px] font-medium uppercase tracking-wider">
             <CurrencyDollarIcon className="w-5 h-5 text-ink-500" />
             Total invested
           </div>
@@ -132,13 +132,13 @@ export default function PortfolioDashboardPage() {
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="text-ink-400 text-[13px] font-medium uppercase tracking-wider">Current value</div>
+          <div className="text-ink-500 text-[13px] font-medium uppercase tracking-wider">Current value</div>
           <p className="mt-3 text-[28px] font-semibold text-emerald-600 tracking-tight">
             {stats ? formatCurrency(stats.currentValue) : '—'}
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-medium uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-ink-500 text-[13px] font-medium uppercase tracking-wider">
             <ArrowTrendingUpIcon className="w-5 h-5 text-ink-500" />
             Total return
           </div>
@@ -147,7 +147,7 @@ export default function PortfolioDashboardPage() {
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="text-ink-400 text-[13px] font-medium uppercase tracking-wider">IRR</div>
+          <div className="text-ink-500 text-[13px] font-medium uppercase tracking-wider">IRR</div>
           <p className="mt-3 text-[28px] font-semibold text-accent tracking-tight">
             {stats != null ? `${stats.totalIrr.toFixed(1)}%` : '—'}
           </p>
@@ -168,7 +168,7 @@ export default function PortfolioDashboardPage() {
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-[13px] text-ink-400 font-medium uppercase tracking-wider border-b border-ink-100">
+                <tr className="text-left text-[13px] text-ink-500 font-medium uppercase tracking-wider border-b border-ink-100">
                   <th className="px-6 py-4">Property</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Invested</th>

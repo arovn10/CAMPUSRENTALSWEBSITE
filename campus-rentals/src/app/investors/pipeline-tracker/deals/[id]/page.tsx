@@ -401,7 +401,7 @@ export default function DealDetailPage() {
           <p className="text-ink-600">Deal not found</p>
           <button
             onClick={() => router.push('/investors/pipeline-tracker/deals')}
-            className="mt-4 px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2]"
+            className="mt-4 px-4 py-2 font-semibold bg-accent-deep text-white rounded-lg hover:bg-[#336E73]"
           >
             Back to Deals
           </button>
@@ -535,7 +535,7 @@ export default function DealDetailPage() {
                       onClick={() => setShowLocationMap(true)}
                       className="flex items-center gap-2 text-ink-900 font-medium hover:text-accent transition-colors group mt-1"
                     >
-                      <MapPinIcon className="h-4 w-4 text-ink-400 group-hover:text-accent flex-shrink-0" />
+                      <MapPinIcon className="h-4 w-4 text-ink-500 group-hover:text-accent flex-shrink-0" />
                       <span className="underline decoration-dotted text-sm sm:text-base break-words">
                         {deal.property?.address || deal.location}
                       </span>
@@ -605,7 +605,7 @@ export default function DealDetailPage() {
                     setEditingTask(null)
                     setShowTaskModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Task
@@ -627,7 +627,7 @@ export default function DealDetailPage() {
                       ) : task.status === 'IN_PROGRESS' ? (
                         <ClockIcon className="h-5 w-5 text-accent" />
                       ) : (
-                        <XCircleIcon className="h-5 w-5 text-ink-400" />
+                        <XCircleIcon className="h-5 w-5 text-ink-500" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -674,7 +674,7 @@ export default function DealDetailPage() {
                     setEditingNote(null)
                     setShowNoteModal(true)
                   }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
                   <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   Add Note
@@ -711,7 +711,7 @@ export default function DealDetailPage() {
             <div className="bg-white rounded-lg shadow-sm border border-ink-200 p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-ink-900">Files</h2>
-                <label className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors text-sm cursor-pointer disabled:opacity-50">
+                <label className="flex items-center gap-2 px-3 sm:px-4 py-2 font-semibold bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors text-sm cursor-pointer disabled:opacity-50">
                   <PaperClipIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   {uploadingFile ? 'Uploading…' : 'Upload file'}
                   <input

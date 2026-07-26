@@ -251,7 +251,7 @@ export default function PipelineManager({ onClose, onPipelineChange }: PipelineM
             <h3 className="text-lg font-semibold text-ink-900">Pipelines</h3>
             <button
               onClick={() => setShowCreatePipeline(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors"
             >
               <PlusIcon className="h-5 w-5" />
               New Pipeline
@@ -294,7 +294,7 @@ export default function PipelineManager({ onClose, onPipelineChange }: PipelineM
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#4b9ba2] transition-colors"
+                    className="px-4 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors"
                   >
                     Create
                   </button>
@@ -352,7 +352,7 @@ export default function PipelineManager({ onClose, onPipelineChange }: PipelineM
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleUpdatePipeline(editingPipeline)}
-                            className="px-3 py-1 bg-accent text-white text-sm rounded-lg hover:bg-[#4b9ba2]"
+                            className="px-3 py-1 bg-accent-deep text-white text-sm rounded-lg hover:bg-[#336E73]"
                           >
                             Save
                           </button>
@@ -422,7 +422,7 @@ export default function PipelineManager({ onClose, onPipelineChange }: PipelineM
                         />
                         <button
                           onClick={() => handleCreateStage(pipeline.id)}
-                          className="px-3 py-1 bg-accent text-white text-sm rounded hover:bg-[#4b9ba2]"
+                          className="px-3 py-1 bg-accent-deep text-white text-sm rounded hover:bg-[#336E73]"
                         >
                           Add
                         </button>

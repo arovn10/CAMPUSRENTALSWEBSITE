@@ -193,7 +193,7 @@ export default function CacheAdminPage() {
             
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300 font-medium"
+              className="w-full px-6 py-3 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors duration-300 font-medium"
             >
               Login
             </button>

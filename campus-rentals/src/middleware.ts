@@ -20,6 +20,10 @@ export function middleware(_request: NextRequest) {
   res.headers.set('X-Content-Type-Options', 'nosniff')
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   res.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  // Keep the private portal out of search results. The investors layout is a client
+  // component so it cannot export `metadata` — the header is the reliable route.
+  // (Until 2026-07-23 /investors/login served `robots: index, follow`.)
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow')
   return res
 }
 

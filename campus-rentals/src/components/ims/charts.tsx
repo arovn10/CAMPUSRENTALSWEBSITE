@@ -17,7 +17,7 @@ const usd = (n: number) =>
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-ink-900/5">
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-ink-400">{title}</h3>
+      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-ink-500">{title}</h3>
       {children}
     </div>
   )
@@ -26,7 +26,7 @@ export function ChartCard({ title, children }: { title: string; children: React.
 /** Cumulative value line chart over time. points: {date, value}[] (sorted asc). */
 export function LineChart({ points, height = 200 }: { points: { date: string; value: number }[]; height?: number }) {
   if (points.length < 2) {
-    return <p className="text-sm text-ink-400">Not enough data to chart yet.</p>
+    return <p className="text-sm text-ink-500">Not enough data to chart yet.</p>
   }
   const w = 600
   const h = height
@@ -70,7 +70,7 @@ export function LineChart({ points, height = 200 }: { points: { date: string; va
 /** Donut allocation chart. slices: {label, value}[]. */
 export function DonutChart({ slices, size = 200 }: { slices: { label: string; value: number }[]; size?: number }) {
   const total = slices.reduce((s, x) => s + Math.max(x.value, 0), 0)
-  if (total <= 0) return <p className="text-sm text-ink-400">No allocation to show.</p>
+  if (total <= 0) return <p className="text-sm text-ink-500">No allocation to show.</p>
   const r = size / 2
   const inner = r * 0.6
   let angle = -Math.PI / 2
@@ -101,7 +101,7 @@ export function DonutChart({ slices, size = 200 }: { slices: { label: string; va
           <li key={i} className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: PALETTE[i % PALETTE.length] }} />
             <span className="text-ink-700">{s.label}</span>
-            <span className="text-ink-400">{((s.value / total) * 100).toFixed(0)}%</span>
+            <span className="text-ink-500">{((s.value / total) * 100).toFixed(0)}%</span>
           </li>
         ))}
       </ul>
@@ -111,7 +111,7 @@ export function DonutChart({ slices, size = 200 }: { slices: { label: string; va
 
 /** Monthly bars (e.g. distributions calendar). bars: {label, value}[]. */
 export function BarChart({ bars, height = 200 }: { bars: { label: string; value: number }[]; height?: number }) {
-  if (bars.length === 0) return <p className="text-sm text-ink-400">No distributions recorded.</p>
+  if (bars.length === 0) return <p className="text-sm text-ink-500">No distributions recorded.</p>
   const w = 600
   const h = height
   const pad = { l: 56, r: 12, t: 12, b: 28 }
@@ -157,7 +157,7 @@ export function WaterfallChart({
   steps: { label: string; value: number; kind: 'base' | 'add' | 'sub' | 'total' }[]
   height?: number
 }) {
-  if (steps.length === 0) return <p className="text-sm text-ink-400">No data.</p>
+  if (steps.length === 0) return <p className="text-sm text-ink-500">No data.</p>
   const w = 600
   const h = height
   const pad = { l: 56, r: 12, t: 12, b: 36 }

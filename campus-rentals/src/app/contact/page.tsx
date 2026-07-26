@@ -126,9 +126,9 @@ Message: ${formData.message}
               <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <PhoneIcon className="w-8 h-8 text-accent" />
               </div>
-              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
                 Phone
-              </h3>
+              </h2>
               <a 
                 href="tel:5043834552" 
                 className="text-xl text-gray-300 hover:text-accent transition-colors duration-300"
@@ -142,9 +142,9 @@ Message: ${formData.message}
               <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <EnvelopeIcon className="w-8 h-8 text-accent" />
               </div>
-              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
                 Email
-              </h3>
+              </h2>
               <a 
                 href="mailto:rovnerproperties@gmail.com" 
                 className="text-xl text-gray-300 hover:text-accent transition-colors duration-300"
@@ -158,9 +158,9 @@ Message: ${formData.message}
               <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <ClockIcon className="w-8 h-8 text-accent" />
               </div>
-              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
                 Office Hours
-              </h3>
+              </h2>
               <p className="text-xl text-gray-300">
                 Monday - Friday: 9am - 5pm
               </p>
@@ -246,7 +246,7 @@ Message: ${formData.message}
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="w-full px-8 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
+                  className="w-full px-8 py-4 bg-accent-deep text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
                 >
                   {status === 'loading' ? 'Sending...' : 'Send Message'}
                 </button>
@@ -257,18 +257,6 @@ Message: ${formData.message}
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-gray-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-400 mb-2">
-              Powered by Abode Student Listing Service
-            </p>
-            <p className="text-gray-500 text-sm">
-              © {new Date().getFullYear()} Campus Rentals. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 } 

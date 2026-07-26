@@ -134,7 +134,7 @@ export default function CoordinateCacheAdmin() {
               <button
                 onClick={() => handleAction('geocode-all-properties')}
                 disabled={loading}
-                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Processing...' : 'Geocode All Properties'}
               </button>

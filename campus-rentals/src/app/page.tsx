@@ -5,8 +5,7 @@ import { Property } from '@/types';
 import { fetchProperties } from '@/utils/clientApi';
 import PropertyCard from '@/components/PropertyCard';
 import Link from 'next/link';
-
-const VIDEO_URL = 'https://abodebucket.s3.us-east-2.amazonaws.com/uploads/ArchitecturalAnimation.MP4';
+import HeroVideo from '@/components/HeroVideo';
 
 export default function HomePage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -34,21 +33,14 @@ export default function HomePage() {
     <div className="min-h-screen bg-ink-50">
       {/* ============ HERO ============ */}
       <section className="relative flex min-h-[88vh] items-center overflow-hidden bg-ink-950">
-        <video
-          className="absolute inset-0 h-full w-full object-cover opacity-50"
-          src={VIDEO_URL}
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
+        <HeroVideo />
         {/* Cinematic gradient — dark at edges, readable center-left */}
         <div className="absolute inset-0 bg-gradient-to-r from-ink-950/90 via-ink-950/55 to-ink-950/20" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink-950 to-transparent" />
 
         <div className="section-shell relative z-10">
           <div className="max-w-2xl py-24 stagger">
-            <span className="eyebrow">New Orleans &middot; Boca Raton</span>
+            <span className="eyebrow-on-dark">New Orleans &middot; Boca Raton</span>
             <h1 className="text-display-xl font-semibold text-white">
               Student housing,
               <br />
@@ -148,7 +140,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/tulane-housing"
-              className="group inline-flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-[#3E8A91]"
+              className="group inline-flex items-center gap-2 text-sm font-semibold text-accent-deep transition-colors hover:text-[#3E8A91]"
             >
               View all properties
               <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -166,7 +158,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <p className="py-16 text-center text-ink-400">
+            <p className="py-16 text-center text-ink-500">
               Listings are temporarily unavailable — please check back shortly or{' '}
               <Link href="/contact" className="font-medium text-accent">contact us</Link>.
             </p>

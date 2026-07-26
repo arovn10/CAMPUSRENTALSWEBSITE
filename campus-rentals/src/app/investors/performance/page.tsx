@@ -151,7 +151,7 @@ export default function InvestorPerformancePage() {
         </div>
         <button
           onClick={exportCsv}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-[#4b9ba2] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-deep text-white text-sm font-semibold hover:bg-[#336E73] transition-colors"
         >
           <ArrowDownTrayIcon className="w-5 h-5" />
           Export CSV
@@ -167,7 +167,7 @@ export default function InvestorPerformancePage() {
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-semibold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-ink-500 text-[13px] font-semibold uppercase tracking-wider">
             <CurrencyDollarIcon className="w-5 h-5" />
             Total invested
           </div>
@@ -176,13 +176,13 @@ export default function InvestorPerformancePage() {
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="text-ink-400 text-[13px] font-semibold uppercase tracking-wider">Current value</div>
+          <div className="text-ink-500 text-[13px] font-semibold uppercase tracking-wider">Current value</div>
           <p className="mt-3 text-[28px] font-semibold text-emerald-600 tracking-tight">
             {stats ? formatCurrency(stats.currentValue) : '—'}
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="flex items-center gap-2 text-ink-400 text-[13px] font-semibold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-ink-500 text-[13px] font-semibold uppercase tracking-wider">
             <ArrowTrendingUpIcon className="w-5 h-5" />
             Total return
           </div>
@@ -191,7 +191,7 @@ export default function InvestorPerformancePage() {
           </p>
         </div>
         <div className="bg-white rounded-2xl shadow-soft ring-1 ring-ink-900/5 p-6">
-          <div className="text-ink-400 text-[13px] font-semibold uppercase tracking-wider">IRR</div>
+          <div className="text-ink-500 text-[13px] font-semibold uppercase tracking-wider">IRR</div>
           <p className="mt-3 text-[28px] font-semibold text-accent tracking-tight">
             {stats != null ? `${stats.totalIrr.toFixed(1)}%` : '—'}
           </p>
@@ -220,7 +220,7 @@ export default function InvestorPerformancePage() {
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-[13px] text-ink-400 font-semibold uppercase tracking-wider border-b border-ink-100">
+                <tr className="text-left text-[13px] text-ink-500 font-semibold uppercase tracking-wider border-b border-ink-100">
                   <th className="px-6 py-4">Property</th>
                   <th className="px-6 py-4 text-right">Invested</th>
                   <th className="px-6 py-4 text-right">Current value</th>

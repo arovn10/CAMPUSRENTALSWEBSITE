@@ -604,7 +604,7 @@ export default function FloorPlanExplorer() {
               setDragId(null)
             }}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
-              i === planIdx ? 'bg-accent text-white shadow-glow' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:text-ink-900'
+              i === planIdx ? 'bg-accent-deep text-white shadow-glow' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:text-ink-900'
             }`}
           >
             {p.name}
@@ -621,7 +621,7 @@ export default function FloorPlanExplorer() {
           <button
             type="button"
             onClick={resetFurniture}
-            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-400 ring-1 ring-ink-200 transition-colors hover:text-ink-700"
+            className="rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-500 ring-1 ring-ink-200 transition-colors hover:text-ink-700"
           >
             Reset layout
           </button>
@@ -631,12 +631,12 @@ export default function FloorPlanExplorer() {
       {/* Info bar */}
       <div className="mx-auto mb-4 flex min-h-[2.25rem] max-w-xl items-center justify-center text-center">
         {selected ? (
-          <p className="animate-scale-in rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
+          <p className="animate-scale-in rounded-full bg-accent-deep/10 px-4 py-1.5 text-sm font-medium text-accent-deep">
             {selected.name}
             {selected.sqft ? ` · ≈${selected.sqft.toLocaleString()} sq ft` : ''}
           </p>
         ) : (
-          <p className="text-sm text-ink-400">
+          <p className="text-sm text-ink-500">
             {plan.facts} — tap a room{showFurniture ? ' · drag furniture · double-tap to rotate' : ''}.
           </p>
         )}
@@ -769,7 +769,7 @@ export default function FloorPlanExplorer() {
             ))}
         </svg>
       </div>
-      <p className="mt-5 text-center text-xs text-ink-400">
+      <p className="mt-5 text-center text-xs text-ink-500">
         Redrawn from the approved permit set by Graham Hill Architect. Simplified and approximate — layouts,
         dimensions, and finishes subject to refinement during construction.
       </p>
