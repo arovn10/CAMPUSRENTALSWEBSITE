@@ -109,6 +109,51 @@ Minimum viable fix: assert `/api/properties` returns ≥15 listings and lacks
 `X-Data-Staleness: stale`. Also unbuilt: renter content gaps (pricing transparency,
 application process/fees, lease terms, FAQ, testimonials).
 
+## Design-system parity pass (2026-08-31 — hold this line too)
+
+The 2026-07 redesign (home page, header, footer, `PropertyCard`, `LeadCapture`, `/plaza`)
+never reached `/about`, `/contact`, `/tulane-housing`, `/fau-housing`, or `/properties/[id]` —
+those five were still on the pre-redesign dark `gray-900/800` + `secondary`-gradient look,
+which reads as a visibly different, lower-quality product the moment a visitor leaves the
+homepage. All five are now on the `ink`/`accent-deep` system (`card-premium`, `section-shell`,
+`eyebrow`, `btn-hero`/`btn-ghost`/`btn-quiet`) — restyle only, no handler/data-flow changes,
+per the design-system hard rules. `PropertyCard`'s mobile preview modal had the same drift
+(`text-text`, `bg-secondary/10`, gray-200/500) and is fixed too. Remaining known-dark-theme
+files (`test-auth`, `admin/*`) are internal/robots-disallowed and intentionally untouched.
+
+**FAU housing was the bigger gap, not just a reskin.** `/fau-housing/page.tsx` was a bare
+`'use client'` component — client components cannot export `metadata`, so the page had **no
+page-specific title/description/canonical/OG at all** and silently inherited the homepage's.
+It also lacked the `FAQPage`/`LocalBusiness` JSON-LD and keyword-rich prose section that
+`/tulane-housing` already had, and its hero hotlinked a generic Unsplash campus photo behind a
+yellow/green gradient with no relation to the brand. Fixed by splitting it into the same
+server-page + client-component pattern as Tulane (`FAUHousingClient.tsx` + `page.tsx` +
+`metadata.ts`) and bringing the schema/content to parity. If a school hub page is ever added
+again, copy this pattern — a bare client page at a route silently has zero SEO metadata.
+
+**OG images were 404ing.** `/og-image.jpg`, `/og-tulane-housing.jpg`, `/og-fau-housing.jpg`
+were referenced in metadata across the whole site but never existed in `public/` — every link
+shared to Facebook/iMessage/Slack/Instagram-bio rendered with no preview image. Regenerated as
+branded 1200×630 cards (ink-950 bg, accent glow, CR mark) via a small Playwright HTML-to-JPEG
+script; regenerate the same way if the brand palette or copy changes (script pattern: build an
+HTML string with inline CSS at exactly 1200×630, `page.screenshot({type:'jpeg'})` per variant —
+not currently checked into the repo as a script, recreate from this description if needed).
+
+**`/properties` was a crawl-budget dead end.** It was a `'use client'` page whose only job was
+`useEffect(() => router.replace('/'))` — a client-side JS redirect that sat in `sitemap.xml` at
+priority 0.8. Replaced with a real `redirects()` entry in `next.config.js` (permanent, resolved
+before any page renders) and removed the page + its sitemap entry. `/properties/[id]` and
+`/properties/create` are unaffected — they're separate route segments; only the index page was
+a redirect stub. `/properties/layout.tsx`'s own metadata block (for the now-unreachable index)
+was left in place — harmless dead code, and `[id]`'s own `generateMetadata` already overrides it.
+
+**Property detail page (`/properties/[id]`) structured data was thinner than it could be:** no
+`addressLocality`/`addressRegion`, no `geo`, no `BreadcrumbList`. Added all three to the
+`Apartment` JSON-LD in `layout.tsx` (school/city inferred the same way `generateMetadata` already
+does — substring match on `address`/`name` for "new orleans" / "boca"), geo from
+`property.latitude`/`longitude` when present. Do **not** add `aggregateRating`/review schema
+without real review data — fabricating it is a Google Rich Results policy violation.
+
 ## UI gotchas (learned the hard way — don't relearn)
 
 - **`backdrop-filter` on an ancestor breaks `position: fixed` children.** The glass nav

@@ -16,7 +16,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 
-export default function TulaneHousingClient() {
+export default function FAUHousingClient() {
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [displayedCount, setDisplayedCount] = useState(6);
   const [loading, setLoading] = useState(true);
@@ -34,14 +34,17 @@ export default function TulaneHousingClient() {
         const fetchPromise = fetchProperties();
         const fetchedProperties = (await Promise.race([fetchPromise, timeoutPromise])) as Property[];
 
-        // Filter for Tulane properties
-        const tulaneProperties = fetchedProperties.filter(
+        // Filter for FAU properties
+        const fauProperties = fetchedProperties.filter(
           (p) =>
-            p.school === 'Tulane University' ||
-            p.school === 'Loyola University' ||
-            (p.address && p.address.toLowerCase().includes('new orleans'))
+            p.school === 'Florida Atlantic University' ||
+            p.school === 'FAU' ||
+            (p.address &&
+              (p.address.toLowerCase().includes('boca raton') ||
+                p.address.toLowerCase().includes('boca') ||
+                p.address.toLowerCase().includes('fau')))
         );
-        setAllProperties(tulaneProperties);
+        setAllProperties(fauProperties);
       } catch (error) {
         console.error('Error loading properties:', error);
         // Set empty array on error so page still renders
@@ -64,23 +67,23 @@ export default function TulaneHousingClient() {
   const features = [
     {
       icon: <MapPinIcon className="h-6 w-6" />,
-      title: 'Uptown location',
-      description: 'Walkable to Tulane University and Loyola University.',
+      title: 'Prime location near FAU',
+      description: "Minutes from Florida Atlantic University's Boca Raton campus.",
     },
     {
       icon: <WifiIcon className="h-6 w-6" />,
       title: 'High-speed internet',
-      description: 'Reliable WiFi for classes, research, and streaming.',
+      description: 'Reliable WiFi included for classes, research, and streaming.',
     },
     {
       icon: <TruckIcon className="h-6 w-6" />,
-      title: 'Convenient parking',
-      description: 'On-street and dedicated off-street options.',
+      title: 'Dedicated parking',
+      description: 'On-site parking spaces reserved for residents.',
     },
     {
       icon: <ShieldCheckIcon className="h-6 w-6" />,
       title: 'Enhanced security',
-      description: 'Well-lit properties in established neighborhoods.',
+      description: 'Well-lit, secure properties in established neighborhoods.',
     },
     {
       icon: <AcademicCapIcon className="h-6 w-6" />,
@@ -89,31 +92,30 @@ export default function TulaneHousingClient() {
     },
     {
       icon: <HomeIcon className="h-6 w-6" />,
-      title: 'Move-in ready',
-      description: 'Turnkey units with modern amenities.',
+      title: 'Furnished units',
+      description: 'Fully furnished apartments ready for immediate move-in.',
     },
   ];
 
   const faqs = [
     {
-      q: 'What is the best area for off campus housing near Tulane?',
-      a: "The Uptown area near Tulane University is the most popular choice for off campus housing. Our properties are located within walking distance of the campus, close to Audubon Park, and in safe, student-friendly neighborhoods.",
+      q: 'What is the best area for off campus housing near FAU?',
+      a: "Properties close to Glades Road and North University Drive put you minutes from FAU's Boca Raton campus while staying near Town Center Mall, grocery stores, and everyday essentials. Our homes are placed in safe, student-friendly neighborhoods around campus.",
     },
     {
-      q: 'How far are your off campus apartments from Tulane?',
-      a: 'Most of our properties are within 0.5 miles of the Tulane University campus, making them easily walkable or bikeable. This proximity saves you time and money on transportation while keeping you close to campus life.',
+      q: 'How far are your off campus apartments from FAU?',
+      a: "Most of our properties are a short drive or bike ride from Florida Atlantic University's main campus — close enough for an easy commute to class, the library, or a game at FAU Stadium.",
     },
     {
-      q: 'Are your off campus rentals near Tulane furnished?',
-      a: 'Yes! All our off campus housing properties near Tulane come fully furnished with modern furniture, appliances, and everything you need for comfortable student living. Just bring your personal items and move in.',
+      q: 'Are your off campus rentals near FAU furnished?',
+      a: 'Yes — our off-campus housing near FAU comes fully furnished with modern furniture, appliances, and everything you need for comfortable student living. Just bring your personal items and move in.',
     },
     {
-      q: 'Do you offer group housing for students attending Tulane?',
-      a: 'Absolutely! We have spacious houses perfect for groups of friends or roommates. Our group housing options make it easy to live with your friends while attending school in the Tulane area.',
+      q: 'Do you offer group housing for students attending FAU?',
+      a: 'Absolutely. We have spacious houses well suited to groups of friends or roommates, making it easy to live together while attending FAU.',
     },
   ];
 
-  // FAQ structured data
   const faqStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -124,31 +126,30 @@ export default function TulaneHousingClient() {
     })),
   };
 
-  // LocalBusiness structured data
   const localBusinessData = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    '@id': 'https://campusrentalsllc.com/tulane-housing',
-    name: 'Campus Rentals LLC - Tulane Off Campus Housing',
-    description: 'Premium off-campus housing near Tulane University in New Orleans',
-    url: 'https://campusrentalsllc.com/tulane-housing',
+    '@id': 'https://campusrentalsllc.com/fau-housing',
+    name: 'Campus Rentals LLC - FAU Off Campus Housing',
+    description: 'Premium off-campus housing near Florida Atlantic University in Boca Raton',
+    url: 'https://campusrentalsllc.com/fau-housing',
     telephone: '+1-504-383-4552',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Uptown New Orleans',
-      addressLocality: 'New Orleans',
-      addressRegion: 'LA',
-      postalCode: '70118',
+      streetAddress: 'Boca Raton',
+      addressLocality: 'Boca Raton',
+      addressRegion: 'FL',
+      postalCode: '33431',
       addressCountry: 'US',
     },
     geo: {
       '@type': 'GeoCoordinates',
-      latitude: '29.9511',
-      longitude: '-90.0715',
+      latitude: '26.3683',
+      longitude: '-80.1289',
     },
     areaServed: {
       '@type': 'City',
-      name: 'New Orleans',
+      name: 'Boca Raton',
     },
     priceRange: '$$',
     openingHoursSpecification: {
@@ -164,7 +165,7 @@ export default function TulaneHousingClient() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://campusrentalsllc.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Tulane Off Campus Housing', item: 'https://campusrentalsllc.com/tulane-housing' },
+      { '@type': 'ListItem', position: 2, name: 'FAU Off Campus Housing', item: 'https://campusrentalsllc.com/fau-housing' },
     ],
   };
 
@@ -177,21 +178,21 @@ export default function TulaneHousingClient() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'RealEstateAgent',
-            name: 'Campus Rentals LLC - Tulane Off Campus Housing',
-            description: 'Premium off-campus housing near Tulane University in New Orleans',
-            url: 'https://campusrentalsllc.com/tulane-housing',
+            name: 'Campus Rentals LLC - FAU Off Campus Housing',
+            description: 'Premium off-campus housing near Florida Atlantic University in Boca Raton',
+            url: 'https://campusrentalsllc.com/fau-housing',
             address: {
               '@type': 'PostalAddress',
-              addressLocality: 'New Orleans',
-              addressRegion: 'LA',
-              postalCode: '70118',
+              addressLocality: 'Boca Raton',
+              addressRegion: 'FL',
+              postalCode: '33431',
               addressCountry: 'US',
             },
             areaServed: {
               '@type': 'City',
-              name: 'New Orleans',
+              name: 'Boca Raton',
             },
-            serviceType: 'Tulane Off Campus Housing',
+            serviceType: 'FAU Off Campus Housing',
             priceRange: '$$',
           }),
         }}
@@ -210,12 +211,12 @@ export default function TulaneHousingClient() {
           <div className="section-shell relative">
             <div className="mx-auto max-w-3xl text-center stagger">
               <span className="eyebrow-on-dark inline-flex items-center gap-2">
-                <AcademicCapIcon className="h-4 w-4" /> Uptown New Orleans
+                <AcademicCapIcon className="h-4 w-4" /> Boca Raton, Florida
               </span>
-              <h1 className="text-display-xl font-semibold text-white">Tulane off-campus housing.</h1>
+              <h1 className="text-display-xl font-semibold text-white">FAU off-campus housing.</h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70 sm:text-xl">
-                Premium student rentals walkable to Tulane University and Loyola University — fully
-                furnished, professionally managed, and move-in ready.
+                Premium student rentals minutes from Florida Atlantic University — fully furnished,
+                professionally managed, and move-in ready.
               </p>
               <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link href="#properties" className="btn-hero">
@@ -230,11 +231,11 @@ export default function TulaneHousingClient() {
             <dl className="mx-auto mt-16 flex max-w-2xl flex-wrap justify-center gap-x-12 gap-y-6 border-t border-white/10 pt-8">
               <div className="text-center">
                 <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">From campus</dt>
-                <dd className="mt-1 text-2xl font-semibold tracking-tight text-white">≤ 0.5 mi</dd>
+                <dd className="mt-1 text-2xl font-semibold tracking-tight text-white">Minutes away</dd>
               </div>
               <div className="text-center">
-                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">Neighborhood</dt>
-                <dd className="mt-1 text-2xl font-semibold tracking-tight text-white">Uptown</dd>
+                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">City</dt>
+                <dd className="mt-1 text-2xl font-semibold tracking-tight text-white">Boca Raton</dd>
               </div>
               <div className="text-center">
                 <dt className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">Furnishing</dt>
@@ -247,35 +248,33 @@ export default function TulaneHousingClient() {
         {/* ============ SEO CONTENT ============ */}
         <section className="py-20 sm:py-24">
           <div className="section-shell max-w-4xl">
-            <span className="eyebrow">Off-campus housing near Tulane</span>
+            <span className="eyebrow">Off-campus housing near FAU</span>
             <h2 className="text-display font-semibold text-ink-900">
-              The best off-campus housing in the Tulane area.
+              The best off-campus housing near Florida Atlantic University.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-ink-600">
-              Looking for <strong className="text-ink-900">Tulane off campus housing</strong>? Campus
-              Rentals LLC offers the premier selection of{' '}
-              <strong className="text-ink-900">off-campus housing near Tulane University</strong> in New
-              Orleans. Our <strong className="text-ink-900">student housing in the Tulane area</strong>{' '}
-              properties are located in the Uptown neighborhood, within walking distance of the Tulane
-              University and Loyola University campuses.
+              Looking for <strong className="text-ink-900">FAU off campus housing</strong>? Campus Rentals
+              LLC offers a premium selection of{' '}
+              <strong className="text-ink-900">off-campus housing near Florida Atlantic University</strong>{' '}
+              in Boca Raton. Our properties sit close to Glades Road and North University Drive, minutes
+              from FAU&apos;s main campus.
             </p>
             <p className="mt-4 text-lg leading-relaxed text-ink-600">
-              Our <strong className="text-ink-900">off campus apartments near Tulane</strong> and houses
-              are perfect for students seeking comfortable, convenient living spaces close to campus.
-              Whether you&apos;re looking for a rental for yourself or need{' '}
-              <strong className="text-ink-900">off campus housing for students attending Tulane</strong>{' '}
-              in a group, we have options to fit your needs.
+              Our <strong className="text-ink-900">off campus apartments near FAU</strong> and houses are
+              perfect for students who want a comfortable, convenient home base close to campus, Town
+              Center Mall, and downtown Boca Raton. Whether you need a place for yourself or{' '}
+              <strong className="text-ink-900">group housing for students attending FAU</strong>, we have
+              options to fit your needs.
             </p>
 
             <h3 className="mt-12 text-headline font-semibold text-ink-900">
-              Why choose our Tulane off-campus housing?
+              Why choose our FAU off-campus housing?
             </h3>
             <ul className="mt-6 space-y-4">
               {[
                 <>
-                  <strong className="text-ink-900">Prime Uptown location:</strong> just blocks from the
-                  Tulane University campus — easy walking or biking distance to classes, libraries, and
-                  campus events.
+                  <strong className="text-ink-900">Prime location:</strong> minutes from FAU&apos;s Boca
+                  Raton campus, with easy access to Glades Road and I-95.
                 </>,
                 <>
                   <strong className="text-ink-900">Fully furnished:</strong> modern furniture, appliances,
@@ -304,7 +303,7 @@ export default function TulaneHousingClient() {
           <div className="section-shell">
             <div className="mx-auto max-w-2xl text-center">
               <span className="eyebrow">Built for students</span>
-              <h2 className="text-display font-semibold text-ink-900">Living near Tulane, made easy.</h2>
+              <h2 className="text-display font-semibold text-ink-900">Living near FAU, made easy.</h2>
             </div>
             <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((f) => (
@@ -325,9 +324,9 @@ export default function TulaneHousingClient() {
           <div className="section-shell">
             <div className="mx-auto max-w-2xl text-center">
               <span className="eyebrow">Available now</span>
-              <h2 className="text-display font-semibold text-ink-900">Tulane off-campus housing</h2>
+              <h2 className="text-display font-semibold text-ink-900">FAU off-campus housing</h2>
               <p className="mt-4 text-lg text-ink-500">
-                Browse our current selection of premium off-campus housing near Tulane University.
+                Browse our current selection of premium off-campus housing near FAU.
               </p>
             </div>
 
@@ -368,16 +367,14 @@ export default function TulaneHousingClient() {
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
                 <span className="eyebrow">The neighborhood</span>
-                <h2 className="text-display font-semibold text-ink-900">
-                  Perfect for students in the Tulane area.
-                </h2>
+                <h2 className="text-display font-semibold text-ink-900">Perfect for students at FAU.</h2>
                 <ul className="mt-8 space-y-4">
                   {[
-                    'Close to Audubon Park, Freret Street, the Boot, and Maple Street — great for studying and socializing',
-                    'Short commute to classes and campus events — save time and money on transportation',
-                    'Walkable neighborhoods with local coffee shops, restaurants, and grocery stores',
-                    'Great options for groups and housemates',
-                    'Safe, student-friendly neighborhoods with active community and nearby campus security',
+                    "Minutes from FAU's main campus, recreation center, and library",
+                    'Close to Town Center at Boca Raton and everyday shopping and dining',
+                    'A short drive to downtown Boca Raton, Mizner Park, and the beach',
+                    'Easy access to the FAU shuttle and campus bus routes',
+                    'Near FAU Stadium and campus athletics and event venues',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <StarIcon className="mt-1 h-5 w-5 shrink-0 text-accent-deep" />
@@ -391,14 +388,14 @@ export default function TulaneHousingClient() {
                   Student-friendly perks
                 </h3>
                 <p className="mb-5 text-[15px] text-ink-500">
-                  Our off-campus housing near Tulane is tailored specifically for students:
+                  Our off-campus housing near FAU is tailored specifically for students:
                 </p>
                 <ul className="space-y-3 text-[15px] text-ink-600">
                   {[
                     'Lease terms aligned to the academic calendar (fall / spring / summer)',
                     'Responsive local maintenance team',
                     'Personalized tours and placement assistance',
-                    'Neighborhood guidance for newcomers to New Orleans',
+                    'Neighborhood guidance for newcomers to Boca Raton',
                     'Group housing options for friends and roommates',
                     'Competitive student pricing and flexible payment options',
                   ].map((item) => (
@@ -419,7 +416,7 @@ export default function TulaneHousingClient() {
             <div className="text-center">
               <span className="eyebrow">FAQ</span>
               <h2 className="text-display font-semibold text-ink-900">
-                Questions about Tulane off-campus housing
+                Questions about FAU off-campus housing
               </h2>
             </div>
             <div className="mt-12 space-y-4">
@@ -441,10 +438,10 @@ export default function TulaneHousingClient() {
           />
           <div className="section-shell relative text-center">
             <h2 className="mx-auto max-w-2xl text-display font-semibold text-white">
-              Ready to find your Tulane off-campus housing?
+              Ready to find your FAU off-campus housing?
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/60">
-              Schedule a tour today and see why students keep choosing us for housing in the Tulane area.
+              Join the students who found their off-campus home with us. Schedule a tour today.
             </p>
             <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
               <Link href="/contact" className="btn-hero">

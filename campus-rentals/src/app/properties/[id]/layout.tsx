@@ -197,6 +197,7 @@ export default function PropertyLayout({
   // schema.org Apartment + Offer so listings qualify for rich results.
   // Pulled from the server cache only (cheap); silently omitted when unavailable.
   let jsonLd: object | null = null
+  let breadcrumbLd: object | null = null
   try {
     const propertyId = Number(params.id)
     const cached = isCacheValid() ? loadDataFromCache() : null
@@ -204,17 +205,44 @@ export default function PropertyLayout({
     if (property) {
       const photos = cached?.photos?.[propertyId] ?? []
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://campusrentalsllc.com'
+      const propertyUrl = `${siteUrl}/properties/${propertyId}`
+      const addressText = `${property.address || ''} ${property.name || ''}`.toLowerCase()
+      const isNewOrleans = addressText.includes('new orleans') || addressText.includes('nola')
+      const isBocaRaton = addressText.includes('boca')
+      const addressLocality = isNewOrleans ? 'New Orleans' : isBocaRaton ? 'Boca Raton' : undefined
+      const addressRegion = isNewOrleans ? 'LA' : isBocaRaton ? 'FL' : undefined
+      const schoolHubUrl = isNewOrleans
+        ? `${siteUrl}/tulane-housing`
+        : isBocaRaton
+        ? `${siteUrl}/fau-housing`
+        : undefined
+      const schoolHubName = isNewOrleans
+        ? 'Tulane Off Campus Housing'
+        : isBocaRaton
+        ? 'FAU Off Campus Housing'
+        : undefined
+
       jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Apartment',
         name: property.name || property.address,
         description: property.description || undefined,
-        url: `${siteUrl}/properties/${propertyId}`,
+        url: propertyUrl,
         address: {
           '@type': 'PostalAddress',
           streetAddress: property.address,
+          addressLocality,
+          addressRegion,
           addressCountry: 'US',
         },
+        geo:
+          property.latitude != null && property.longitude != null
+            ? {
+                '@type': 'GeoCoordinates',
+                latitude: property.latitude,
+                longitude: property.longitude,
+              }
+            : undefined,
         numberOfBedrooms: property.bedrooms || undefined,
         numberOfBathroomsTotal: property.bathrooms || undefined,
         floorSize: property.squareFeet
@@ -227,9 +255,21 @@ export default function PropertyLayout({
               price: property.price,
               priceCurrency: 'USD',
               availability: 'https://schema.org/InStock',
-              url: `${siteUrl}/properties/${propertyId}`,
+              url: propertyUrl,
             }
           : undefined,
+      }
+
+      if (schoolHubUrl && schoolHubName) {
+        breadcrumbLd = {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: schoolHubName, item: schoolHubUrl },
+            { '@type': 'ListItem', position: 3, name: property.name || property.address, item: propertyUrl },
+          ],
+        }
       }
     }
   } catch {
@@ -242,6 +282,12 @@ export default function PropertyLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {breadcrumbLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
         />
       )}
       {children}

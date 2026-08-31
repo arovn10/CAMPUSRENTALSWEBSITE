@@ -98,27 +98,19 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           if (response.ok) {
             const data = await response.json();
             if (data.thumbnail) {
-              console.log(`Setting DealPhoto thumbnail for property ${property.property_id}:`, data.thumbnail);
               setThumbnail(data.thumbnail);
               setLoading(false);
               return;
             }
           }
         } catch (dealPhotoError) {
-          console.log('No DealPhoto thumbnail found, trying old photos...');
+          // fall through to the old photo system below
         }
-        
+
         // Fallback to old photo system
-        console.log(`Loading photos for property ${property.property_id}...`);
         const photos = await fetchPropertyPhotos(property.property_id);
-        console.log(`Received ${photos.length} photos for property ${property.property_id}:`, photos);
-        
         if (photos.length > 0) {
-          const photoUrl = getOptimizedImageUrl(photos[0]);
-          console.log(`Setting thumbnail URL for property ${property.property_id}:`, photoUrl);
-          setThumbnail(photoUrl);
-        } else {
-          console.log(`No photos found for property ${property.property_id}`);
+          setThumbnail(getOptimizedImageUrl(photos[0]));
         }
       } catch (error) {
         console.error('Error loading property thumbnail:', error);
@@ -258,8 +250,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                   className="object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-secondary/10 to-accent/10 flex items-center justify-center">
-                  <span className="text-text">No image available</span>
+                <div className="flex h-full w-full items-center justify-center bg-ink-100">
+                  <span className="text-ink-500">No image available</span>
                 </div>
               )}
               <button
@@ -273,56 +265,35 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
             
             <div className="p-6">
-              <h3 className="text-xl font-bold text-text mb-3">{title}</h3>
-              
-              <div className="flex items-center gap-3 mb-4 flex-wrap">
-                <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
-                  <svg className="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  {bedsLabel}
-                </div>
-                <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
-                  <svg className="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {bathsLabel}
-                </div>
-                {property.squareFeet && (
-                  <div className="flex items-center text-text bg-secondary/10 px-3 py-1 rounded-full text-sm">
-                    <svg className="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                    {property.squareFeet} sq ft
-                  </div>
-                )}
+              <h3 className="mb-3 text-xl font-semibold tracking-tight text-ink-900">{title}</h3>
+
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="chip">{bedsLabel}</span>
+                <span className="chip">{bathsLabel}</span>
+                {property.squareFeet && <span className="chip">{property.squareFeet} sq ft</span>}
               </div>
-              
-              <p className="text-text/80 mb-4 text-sm">
+
+              <p className="mb-4 text-sm text-ink-500">
                 {property.description || (isBuilding ? 'Explore available units in this building.' : 'Beautiful property in a prime location near campus.')}
               </p>
-              
-              <div className="mb-4">
-                <span className="text-2xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  {priceLabel}
-                </span>
-                <p className="text-sm text-gray-500 mt-1">
-                  Available From: {availabilityText}
-                </p>
+
+              <div className="mb-5">
+                <span className="text-2xl font-semibold tracking-tight text-ink-900">{priceLabel}</span>
+                <p className="mt-1 text-sm text-ink-500">Available {availabilityText}</p>
               </div>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={handlePreviewClose}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  className="flex-1 rounded-xl bg-ink-100 px-4 py-3 text-sm font-semibold text-ink-700 transition-colors hover:bg-ink-200"
                 >
                   Close
                 </button>
                 <button
                   onClick={handleViewDetails}
-                  className="flex-1 bg-accent-deep text-white px-4 py-3 rounded-lg font-medium hover:bg-[#336E73] transition-colors"
+                  className="flex-1 rounded-xl bg-accent-deep px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#336E73]"
                 >
-                  View Full Details
+                  View full details
                 </button>
               </div>
             </div>
