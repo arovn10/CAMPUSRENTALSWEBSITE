@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { EnvelopeIcon, PhoneIcon, ClockIcon } from '@heroicons/react/24/outline';
 import Script from 'next/script';
 
@@ -21,7 +20,6 @@ export default function ContactPage() {
       window.gtag('event', 'conversion', {
         'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
       });
-      console.log('📊 Contact page view conversion tracked');
     }
   }, []);
 
@@ -31,7 +29,6 @@ export default function ContactPage() {
       window.gtag('event', 'conversion', {
         'send_to': 'AW-11303299747/A2gPCIa9pPYaEKPV6o0q'
       });
-      console.log('📊 Form submission conversion tracked');
     }
   };
 
@@ -65,7 +62,7 @@ Message: ${formData.message}
 
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', message: '' });
-      
+
       // Track conversion when form is successfully submitted
       trackConversion();
     } catch (error) {
@@ -79,8 +76,11 @@ Message: ${formData.message}
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const inputCls =
+    'w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-base text-ink-800 placeholder:text-ink-500 outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/20';
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+    <div className="min-h-screen bg-ink-50">
       {/* Google Ads Conversion Tracking */}
       <Script id="google-ads-conversion" strategy="afterInteractive">
         {`
@@ -95,168 +95,145 @@ Message: ${formData.message}
         `}
       </Script>
 
-      {/* Hero Section */}
-      <div className="relative py-24">
-        <div className="absolute inset-0">
-          <Image
-            src="/Campus-Rentals.png"
-            alt="Campus Rentals Background"
-            fill
-            className="object-cover opacity-50"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/90 to-transparent" />
-        </div>
-        <div className="relative container mx-auto px-4 flex flex-col justify-center items-center">
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Contact Us
-          </h1>
-          <p className="text-2xl text-gray-300 text-center max-w-3xl">
-            Get in touch with our team for any questions or inquiries
+      {/* ============ HERO ============ */}
+      <section className="relative overflow-hidden bg-ink-950 py-24 sm:py-32">
+        <div
+          className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, #54AAB1, transparent)' }}
+        />
+        <div className="section-shell relative text-center stagger">
+          <span className="eyebrow-on-dark">Contact us</span>
+          <h1 className="text-display-xl font-semibold text-white">Let&apos;s find your home.</h1>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-white/70 sm:text-xl">
+            Questions about a property, a tour, or leasing near Tulane or FAU? We reply fast.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Contact Information */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Phone Card */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300">
-              <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <PhoneIcon className="w-8 h-8 text-accent" />
+      {/* ============ CONTACT INFO ============ */}
+      <section className="py-20 sm:py-24">
+        <div className="section-shell">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="card-premium p-8">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+                <PhoneIcon className="h-6 w-6 text-accent-deep" />
               </div>
-              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Phone
-              </h2>
-              <a 
-                href="tel:5043834552" 
-                className="text-xl text-gray-300 hover:text-accent transition-colors duration-300"
-              >
+              <h2 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">Phone</h2>
+              <a href="tel:5043834552" className="text-ink-600 transition-colors hover:text-accent-deep">
                 (504) 383-4552
               </a>
             </div>
 
-            {/* Email Card */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300">
-              <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <EnvelopeIcon className="w-8 h-8 text-accent" />
+            <div className="card-premium p-8">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+                <EnvelopeIcon className="h-6 w-6 text-accent-deep" />
               </div>
-              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Email
-              </h2>
-              <a 
-                href="mailto:rovnerproperties@gmail.com" 
-                className="text-xl text-gray-300 hover:text-accent transition-colors duration-300"
+              <h2 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">Email</h2>
+              <a
+                href="mailto:rovnerproperties@gmail.com"
+                className="text-ink-600 transition-colors hover:text-accent-deep"
               >
                 rovnerproperties@gmail.com
               </a>
             </div>
 
-            {/* Office Hours Card */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300">
-              <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <ClockIcon className="w-8 h-8 text-accent" />
+            <div className="card-premium p-8">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+                <ClockIcon className="h-6 w-6 text-accent-deep" />
               </div>
-              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Office Hours
-              </h2>
-              <p className="text-xl text-gray-300">
-                Monday - Friday: 9am - 5pm
-              </p>
+              <h2 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">Office hours</h2>
+              <p className="text-ink-600">Monday – Friday: 9am – 5pm</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Form */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm">
-              <h2 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                Send us a Message
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-lg font-medium text-gray-300 mb-2">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-lg font-medium text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="phone" className="block text-lg font-medium text-gray-300 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-white"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="message" className="block text-lg font-medium text-gray-300 mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent text-white"
-                    required
-                  />
-                </div>
-                {status === 'error' && (
-                  <div className="text-red-400 text-sm">
-                    {errorMessage}
-                  </div>
-                )}
-                {status === 'success' && (
-                  <div className="text-green-400 text-sm">
-                    Message sent successfully! We'll get back to you soon.
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="w-full px-8 py-4 bg-accent-deep text-white rounded-xl hover:bg-accent/90 transition-colors duration-300 text-lg font-medium"
-                >
-                  {status === 'loading' ? 'Sending...' : 'Send Message'}
-                </button>
-              </form>
+      {/* ============ FORM ============ */}
+      <section className="bg-white py-20 sm:py-24">
+        <div className="section-shell">
+          <div className="mx-auto max-w-2xl">
+            <div className="text-center">
+              <span className="eyebrow">Send a message</span>
+              <h2 className="text-display font-semibold text-ink-900">We&apos;ll get back to you soon.</h2>
             </div>
+
+            <form onSubmit={handleSubmit} className="mt-10 space-y-5">
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-ink-700">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={inputCls}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={inputCls}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-ink-700">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-ink-700">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={4}
+                  className={inputCls}
+                  required
+                />
+              </div>
+
+              {status === 'error' && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>
+              )}
+              {status === 'success' && (
+                <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  Message sent successfully! We&apos;ll get back to you soon.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="w-full rounded-xl bg-accent-deep px-6 py-3.5 text-sm font-semibold text-white shadow-glow transition-all duration-300 ease-out-expo hover:-translate-y-0.5 hover:bg-[#336E73] disabled:translate-y-0 disabled:opacity-60"
+              >
+                {status === 'loading' ? 'Sending…' : 'Send message'}
+              </button>
+            </form>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
     </div>
   );
-} 
+}

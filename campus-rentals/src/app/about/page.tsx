@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image'
 import Link from 'next/link'
 import { fetchProperties, fetchPropertyPhotos, getOptimizedImageUrl } from '@/utils/clientApi'
-import { Property } from '@/types';
+import { CheckCircleIcon, UsersIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 const isValidUrl = (url: string) => {
   try {
@@ -21,15 +21,13 @@ function getRandomItem(array: any[]) {
 
 export default function AboutPage() {
   const [randomPhotos, setRandomPhotos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadRandomPhotos = async () => {
       try {
-        setLoading(true);
         const properties = await fetchProperties();
         const randomProperties = properties.sort(() => 0.5 - Math.random()).slice(0, 3);
-        
+
         const photosPromises = randomProperties.map(async (property) => {
           const photos = await fetchPropertyPhotos(property.property_id);
           const randomPhoto = getRandomItem(photos);
@@ -40,220 +38,164 @@ export default function AboutPage() {
         setRandomPhotos(photos.filter((url): url is string => url !== null && isValidUrl(url)));
       } catch (error) {
         console.error('Error loading photos:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadRandomPhotos();
   }, []);
 
+  const values = [
+    {
+      icon: CheckCircleIcon,
+      title: 'Quality',
+      body: 'We maintain the highest standards in property maintenance and management, so our homes are always in top condition.',
+    },
+    {
+      icon: UsersIcon,
+      title: 'Community',
+      body: 'We foster a sense of community among our residents — an environment where students can thrive academically and socially.',
+    },
+    {
+      icon: LightBulbIcon,
+      title: 'Innovation',
+      body: "We continuously improve our properties and processes to meet the evolving needs of today's students.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      {/* Hero Section */}
-      <div className="relative py-24">
-        <div className="absolute inset-0">
-          <Image
-            src="/Campus-Rentals.png"
-            alt="About Campus Rentals"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/90 to-transparent" />
-        </div>
-        <div className="relative container mx-auto px-4 flex flex-col justify-center items-center">
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            About Us
+    <div className="min-h-screen bg-ink-50">
+      {/* ============ HERO ============ */}
+      <section className="relative overflow-hidden bg-ink-950 py-24 sm:py-32">
+        <div
+          className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, #54AAB1, transparent)' }}
+        />
+        <div className="section-shell relative text-center stagger">
+          <span className="eyebrow-on-dark">About us</span>
+          <h1 className="text-display-xl font-semibold text-white">
+            Your trusted partner in
+            <br />
+            off-campus student housing.
           </h1>
-          <p className="text-2xl text-gray-300 text-center max-w-3xl">
-            Your trusted partner in off-campus student housing
+          <p className="mx-auto mt-6 max-w-xl text-lg text-white/70 sm:text-xl">
+            Locally owned and operated near Tulane University and Florida Atlantic University.
           </p>
         </div>
-      </div>
-
-      {/* SEO Content Section */}
-      <section className="py-16 bg-gray-800/30 backdrop-blur-sm">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="prose prose-invert prose-lg max-w-none">
-            <h2 className="text-3xl font-bold mb-6 text-white">
-              Off-Campus Student Housing Near Tulane University & FAU
-            </h2>
-            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
-              Looking for <strong>off-campus housing near Tulane University</strong> in New Orleans or <strong>student apartments near Florida Atlantic University (FAU)</strong> in Boca Raton? Campus Rentals LLC offers premium, luxury off-campus student housing options perfect for college students seeking comfortable, convenient living spaces close to campus.
-            </p>
-            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
-              Our <strong>Tulane off-campus housing</strong> properties in New Orleans provide easy access to Tulane University, with modern amenities and prime locations in safe neighborhoods. For students attending <strong>FAU in Boca Raton</strong>, we offer <strong>off-campus apartments near FAU</strong> that combine luxury living with premium quality.
-            </p>
-            <h3 className="text-2xl font-bold mt-8 mb-4 text-white">
-              Why Choose Our Off-Campus Student Housing?
-            </h3>
-            <ul className="text-gray-300 mb-4 space-y-2 text-lg">
-              <li>• <strong>Prime Locations:</strong> Walking distance to Tulane University and FAU campuses</li>
-              <li>• <strong>Luxury Living:</strong> Premium finishes and high-end furnishings</li>
-              <li>• <strong>Modern Amenities:</strong> Fully furnished apartments with high-speed internet, utilities included</li>
-              <li>• <strong>Safe Neighborhoods:</strong> Secure buildings in student-friendly areas</li>
-              <li>• <strong>Flexible Leasing:</strong> Academic year and semester lease options available</li>
-              <li>• <strong>Easy Application:</strong> Simple online application process for students</li>
-            </ul>
-            <p className="text-gray-300 mb-4 text-lg leading-relaxed">
-              Whether you're searching for <strong>Tulane student housing</strong>, <strong>FAU off-campus apartments</strong>, or <strong>college housing near campus</strong>, we have the perfect rental property for you. Browse our listings to find your ideal off-campus living space today!
-            </p>
-          </div>
-        </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm relative overflow-hidden">
-              {randomPhotos[0] && (
-                <div className="absolute inset-0 opacity-20">
-                  <Image
-                    src={randomPhotos[0]}
-                    alt="Property Background"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="relative">
-                <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  Our Mission
-                </h2>
-                <p className="text-xl text-gray-300 leading-relaxed">
-                  At Campus Rentals, we are dedicated to providing exceptional off-campus housing solutions for students. 
-                  Our mission is to create comfortable, safe, and convenient living spaces that enhance the college experience.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Values Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Quality */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300 relative overflow-hidden">
-              {randomPhotos[1] && (
-                <div className="absolute inset-0 opacity-20">
-                  <Image
-                    src={randomPhotos[1]}
-                    alt="Property Background"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="relative">
-                <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  Quality
-                </h3>
-                <p className="text-gray-300">
-                  We maintain the highest standards in property maintenance and management, ensuring our properties are always in top condition.
-                </p>
-              </div>
-            </div>
-
-            {/* Community */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300 relative overflow-hidden">
-              {randomPhotos[2] && (
-                <div className="absolute inset-0 opacity-20">
-                  <Image
-                    src={randomPhotos[2]}
-                    alt="Property Background"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="relative">
-                <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  Community
-                </h3>
-                <p className="text-gray-300">
-                  We foster a sense of community among our tenants, creating an environment where students can thrive both academically and socially.
-                </p>
-              </div>
-            </div>
-
-            {/* Innovation */}
-            <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm group hover:bg-gray-900/70 transition-all duration-300 relative overflow-hidden">
-              {randomPhotos[0] && (
-                <div className="absolute inset-0 opacity-20">
-                  <Image
-                    src={randomPhotos[0]}
-                    alt="Property Background"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="relative">
-                <div className="w-16 h-16 bg-accent/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                  Innovation
-                </h3>
-                <p className="text-gray-300">
-                  We continuously innovate our services and properties to meet the evolving needs of today's students.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-16 bg-gray-800/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-            Get in Touch
+      {/* ============ SEO CONTENT ============ */}
+      <section className="py-20 sm:py-24">
+        <div className="section-shell max-w-4xl">
+          <span className="eyebrow">Off-campus housing near Tulane &amp; FAU</span>
+          <h2 className="text-display font-semibold text-ink-900">
+            Premium off-campus housing, built around student life.
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Have questions about our properties or services? We're here to help!
+          <p className="mt-6 text-lg leading-relaxed text-ink-600">
+            Looking for <strong className="text-ink-900">off-campus housing near Tulane University</strong>{' '}
+            in New Orleans or <strong className="text-ink-900">student apartments near Florida Atlantic
+            University (FAU)</strong> in Boca Raton? Campus Rentals LLC offers premium off-campus student
+            housing built for comfortable, convenient living close to campus.
           </p>
-          <div className="flex justify-center gap-4">
-            <a 
-              href="tel:5043834552" 
-              className="px-8 py-4 bg-accent-deep text-white rounded-xl hover:bg-[#336E73] transition-colors duration-300 text-lg font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
+          <p className="mt-4 text-lg leading-relaxed text-ink-600">
+            Our <strong className="text-ink-900">Tulane off-campus housing</strong> properties in New
+            Orleans provide easy access to Tulane University, with modern amenities and prime locations in
+            safe neighborhoods. For students attending <strong className="text-ink-900">FAU in Boca
+            Raton</strong>, we offer <strong className="text-ink-900">off-campus apartments near FAU</strong>{' '}
+            that combine convenient locations with premium quality.
+          </p>
+
+          <h3 className="mt-12 text-headline font-semibold text-ink-900">
+            Why choose our off-campus student housing?
+          </h3>
+          <ul className="mt-6 space-y-4">
+            {[
+              'Prime locations — walking distance to Tulane University and minutes from FAU',
+              'Premium finishes and high-quality furnishings',
+              'Fully furnished apartments with high-speed internet',
+              'Secure buildings in safe, student-friendly neighborhoods',
+              'Flexible academic-year and semester lease options',
+              'A simple, straightforward application process',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-lg leading-relaxed text-ink-600">
+                <CheckCircleIcon className="mt-1 h-6 w-6 shrink-0 text-accent-deep" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ============ MISSION ============ */}
+      <section className="bg-white py-20 sm:py-24">
+        <div className="section-shell">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
+            <div>
+              <span className="eyebrow">Our mission</span>
+              <h2 className="text-display font-semibold text-ink-900">
+                Housing that makes college life easier, not harder.
+              </h2>
+              <p className="mt-6 text-lg leading-relaxed text-ink-600">
+                We&apos;re dedicated to providing exceptional off-campus housing for students — comfortable,
+                safe, and convenient homes that let you focus on what actually matters: your degree, your
+                friends, and your four years.
+              </p>
+              <Link href="/contact" className="btn-quiet mt-8 inline-flex">
+                Get in touch
+              </Link>
+            </div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-ink-100 shadow-soft">
+              {randomPhotos[0] ? (
+                <Image src={randomPhotos[0]} alt="A Campus Rentals property" fill className="object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-ink-400">Campus Rentals</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ VALUES ============ */}
+      <section className="py-20 sm:py-24">
+        <div className="section-shell">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="eyebrow">What we stand for</span>
+            <h2 className="text-display font-semibold text-ink-900">The details make the difference.</h2>
+          </div>
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {values.map((v) => (
+              <div key={v.title} className="card-premium p-8">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+                  <v.icon className="h-6 w-6 text-accent-deep" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">{v.title}</h3>
+                <p className="text-[15px] leading-relaxed text-ink-500">{v.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ CTA ============ */}
+      <section className="relative overflow-hidden bg-ink-950 py-24 sm:py-32">
+        <div
+          className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, #54AAB1, transparent)' }}
+        />
+        <div className="section-shell relative text-center">
+          <h2 className="mx-auto max-w-2xl text-display font-semibold text-white">Get in touch.</h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-white/60">
+            Have questions about our properties or services? We&apos;re here to help.
+          </p>
+          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <a href="tel:5043834552" className="btn-hero">
               (504) 383-4552
             </a>
-            <a 
-              href="mailto:rovnerproperties@gmail.com" 
-              className="px-8 py-4 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition-colors duration-300 text-lg font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              rovnerproperties@gmail.com
+            <a href="mailto:rovnerproperties@gmail.com" className="btn-ghost">
+              Email us
             </a>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
     </div>
   )
-} 
+}

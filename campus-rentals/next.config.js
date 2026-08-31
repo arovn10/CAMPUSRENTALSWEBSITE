@@ -36,4 +36,18 @@ module.exports = {
   experimental: {
     optimizeCss: true,
   },
+  // `/properties` used to be a client-rendered page that immediately
+  // useEffect-redirected to `/` — a JS-only redirect that Google has to render
+  // before it discovers the real destination, and a crawl-budget dead end that
+  // was still listed in sitemap.xml. A real HTTP redirect resolves before any
+  // page renders and passes link equity properly.
+  async redirects() {
+    return [
+      {
+        source: '/properties',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
 };
