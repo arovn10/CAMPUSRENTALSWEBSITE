@@ -56,7 +56,7 @@ export default function Footer() {
               </li>
               <li><Link href="/investors/login" className="text-ink-300 transition-colors hover:text-white">Investor Portal</Link></li>
               <li><a href="tel:5043834552" className="text-ink-300 transition-colors hover:text-white">(504) 383-4552</a></li>
-              <li><a href="mailto:rovnerproperties@gmail.com" className="text-ink-300 transition-colors hover:text-white">rovnerproperties@gmail.com</a></li>
+              <li><a href="mailto:arovner@campusrentalsllc.com" className="text-ink-300 transition-colors hover:text-white">arovner@campusrentalsllc.com</a></li>
             </ul>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default function FairHousingPage() {
           services, or a reasonable modification to a unit or common area. Ask us — there is no special
           form and no fee to make a request. Call{' '}
           <a href="tel:5043834552">(504) 383-4552</a> or email{' '}
-          <a href="mailto:rovnerproperties@gmail.com">rovnerproperties@gmail.com</a> and we will respond
+          <a href="mailto:arovner@campusrentalsllc.com">arovner@campusrentalsllc.com</a> and we will respond
           promptly.
         </p>
         <p>
@@ -55,7 +55,7 @@ export default function FairHousingPage() {
         </p>
         <p>
           Report an accessibility problem:{' '}
-          <a href="mailto:rovnerproperties@gmail.com">rovnerproperties@gmail.com</a> ·{' '}
+          <a href="mailto:arovner@campusrentalsllc.com">arovner@campusrentalsllc.com</a> ·{' '}
           <a href="tel:5043834552">(504) 383-4552</a>
         </p>
       </div>

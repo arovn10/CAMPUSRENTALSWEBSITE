@@ -190,7 +190,7 @@ export default function AboutPage() {
             <a href="tel:5043834552" className="btn-hero">
               (504) 383-4552
             </a>
-            <a href="mailto:rovnerproperties@gmail.com" className="btn-ghost">
+            <a href="mailto:arovner@campusrentalsllc.com" className="btn-ghost">
               Email us
             </a>
           </div>

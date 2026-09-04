@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   try {
     const { sendEmail } = await import('@/lib/email')
     await sendEmail({
-      to: 'rovnerproperties@gmail.com',
+      to: 'arovner@campusrentalsllc.com',
       subject: `Plaza waitlist: ${name} (${interest.toLowerCase()})`,
       html: `<p><strong>${name}</strong> joined the Maple Street Plaza waitlist.</p>
              <p>Interest: <strong>${interest}</strong><br/>Email: ${email}${phone ? `<br/>Phone: ${phone}` : ''}</p>

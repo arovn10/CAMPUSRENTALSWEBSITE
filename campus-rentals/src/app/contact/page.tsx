@@ -44,7 +44,7 @@ export default function ContactPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'rovnerproperties@gmail.com',
+          to: 'arovner@campusrentalsllc.com',
           from: formData.email,
           subject: `New Contact Form Submission from ${formData.name}`,
           text: `
@@ -130,10 +130,10 @@ Message: ${formData.message}
               </div>
               <h2 className="mb-2 text-lg font-semibold tracking-tight text-ink-900">Email</h2>
               <a
-                href="mailto:rovnerproperties@gmail.com"
+                href="mailto:arovner@campusrentalsllc.com"
                 className="text-ink-600 transition-colors hover:text-accent-deep"
               >
-                rovnerproperties@gmail.com
+                arovner@campusrentalsllc.com
               </a>
             </div>
 

@@ -90,7 +90,7 @@ export default function TermsPage() {
         <h2>Contact</h2>
         <p>
           Questions about these terms:{' '}
-          <a href="mailto:rovnerproperties@gmail.com">rovnerproperties@gmail.com</a> ·{' '}
+          <a href="mailto:arovner@campusrentalsllc.com">arovner@campusrentalsllc.com</a> ·{' '}
           <a href="tel:5043834552">(504) 383-4552</a>
         </p>
       </div>
