@@ -1,0 +1,84 @@
+name: Instagram Pipeline
+
+# Drives the @campusrentalsllc content pipeline. Three independent jobs:
+#
+#   generate — refills the review queue from listings, photos and editorial
+#              topics. Publishes nothing; its output is drafts awaiting a human.
+#   publish  — sends at most ONE human-approved post, subject to the rolling
+#              24h cap and the minimum gap. A no-op unless someone approved
+#              something AND SOCIAL_PUBLISHING_ENABLED is "true" on the server.
+#   insights — snapshots per-media engagement and the follower count.
+#
+# Requires:
+#   secret  CRON_SECRET   — must match the app's CRON_SECRET env var
+#   var     APP_BASE_URL  — optional; defaults to https://campusrentalsllc.com
+#
+# Every endpoint is safe to re-run: generation dedupes on a unique sourceKey,
+# publishing claims a row conditionally, insight writes are keyed per hour.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1' # Mondays 14:00 UTC — refill the review queue
+    - cron: '0 15,19 * * *' # twice daily — publish an approved post if one is due
+    - cron: '20 */6 * * *' # every 6h — engagement + follower snapshot
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to run'
+        type: choice
+        options: [generate, publish, insights]
+        default: generate
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick the endpoint for this trigger
+        id: pick
+        env:
+          CRON: ${{ github.event.schedule }}
+          MANUAL: ${{ github.event.inputs.job }}
+        run: |
+          if [ -n "$MANUAL" ]; then
+            job="$MANUAL"
+          else
+            case "$CRON" in
+              '0 14 * * 1')     job=generate ;;
+              '0 15,19 * * *')  job=publish ;;
+              '20 */6 * * *')   job=insights ;;
+              *)                job=insights ;;
+            esac
+          fi
+          echo "job=$job" >> "$GITHUB_OUTPUT"
+          echo "Running: $job"
+
+      - name: Call the pipeline endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE_URL: ${{ vars.APP_BASE_URL || 'https://campusrentalsllc.com' }}
+          JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET secret is not set — aborting."
+            exit 1
+          fi
+          echo "POST $BASE_URL/api/cron/social-$JOB"
+          code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 280 \
+            -X POST "$BASE_URL/api/cron/social-$JOB" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{}' || echo 000)
+          echo "HTTP $code"
+          cat /tmp/out
+          echo ""
+          # 503 means the feature is intentionally not configured yet (no
+          # CRON_SECRET on the server, or credentials absent) — not a failure
+          # worth a red run while the pipeline is still being set up.
+          if [ "$code" = "503" ]; then
+            echo "::warning::Pipeline not configured yet (HTTP 503)"
+            exit 0
+          fi
+          if [ "$code" != "200" ]; then
+            echo "::error::social-$JOB returned HTTP $code"
+            exit 1
+          fi
