@@ -93,6 +93,7 @@ model User {
   documentAccessGrants       DocumentAccess[]
   signatureRequests          SignatureRequest[]
   announcements              Announcement[]
+  socialPostsReviewed        SocialPost[]                @relation("SocialPostReviewedBy")
 
   @@map("users")
 }
@@ -105,22 +106,22 @@ model Property {
   description                String?
   bedrooms                   Int
   bathrooms                  Int
-  price                      Decimal @db.Decimal(15, 2)
+  price                      Decimal       @db.Decimal(15, 2)
   squareFeet                 Int?
   propertyType               PropertyType  @default(SINGLE_FAMILY)
   acquisitionDate            DateTime?
   constructionCompletionDate DateTime?
   stabilizationDate          DateTime?
-  acquisitionPrice           Decimal? @db.Decimal(15, 2)
-  constructionCost           Decimal? @db.Decimal(15, 2)
-  totalCost                  Decimal? @db.Decimal(15, 2)
-  debtAmount                 Decimal? @db.Decimal(15, 2)
+  acquisitionPrice           Decimal?      @db.Decimal(15, 2)
+  constructionCost           Decimal?      @db.Decimal(15, 2)
+  totalCost                  Decimal?      @db.Decimal(15, 2)
+  debtAmount                 Decimal?      @db.Decimal(15, 2)
   debtDetails                String?
-  currentValue               Decimal? @db.Decimal(15, 2)
+  currentValue               Decimal?      @db.Decimal(15, 2)
   occupancyRate              Float?
-  monthlyRent                Decimal? @db.Decimal(15, 2)
-  otherIncome                Decimal? @db.Decimal(15, 2)
-  annualExpenses             Decimal? @db.Decimal(15, 2)
+  monthlyRent                Decimal?      @db.Decimal(15, 2)
+  otherIncome                Decimal?      @db.Decimal(15, 2)
+  annualExpenses             Decimal?      @db.Decimal(15, 2)
   capRate                    Float?
   dealStatus                 DealStatus    @default(STABILIZED)
   fundingStatus              FundingStatus @default(FUNDED)
@@ -169,7 +170,7 @@ model Fund {
   description String?
   fundType    FundType @default(REAL_ESTATE)
   targetSize  Decimal? @db.Decimal(15, 2)
-  currentSize Decimal @db.Decimal(15, 2)
+  currentSize Decimal  @db.Decimal(15, 2)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -186,7 +187,7 @@ model Investment {
   id                          String           @id @default(cuid())
   userId                      String
   propertyId                  String
-  investmentAmount            Decimal? @db.Decimal(15, 2)  // Optional for SPECTATOR type
+  investmentAmount            Decimal?         @db.Decimal(15, 2) // Optional for SPECTATOR type
   ownershipPercentage         Float? // Optional for SPECTATOR type
   investmentType              InvestmentType   @default(INVESTOR)
   status                      InvestmentStatus @default(ACTIVE)
@@ -216,7 +217,7 @@ model FundInvestment {
   id                  String           @id @default(cuid())
   userId              String
   fundId              String
-  investmentAmount    Decimal @db.Decimal(15, 2)
+  investmentAmount    Decimal          @db.Decimal(15, 2)
   ownershipPercentage Float?
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -236,7 +237,7 @@ model Distribution {
   id               String           @id @default(cuid())
   investmentId     String
   userId           String
-  amount           Decimal @db.Decimal(15, 2)
+  amount           Decimal          @db.Decimal(15, 2)
   distributionDate DateTime
   distributionType DistributionType @default(RENTAL_INCOME)
   description      String?
@@ -298,7 +299,7 @@ model WaterfallTierDistribution {
   waterfallTierId    String
   entityInvestmentId String?
   userId             String?
-  distributionAmount Decimal @db.Decimal(15, 2)
+  distributionAmount Decimal                   @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   WaterfallDistributionType
   description        String?
@@ -319,12 +320,12 @@ model WaterfallTierDistribution {
 model WaterfallDistribution {
   id                   String                    @id @default(cuid())
   waterfallStructureId String
-  totalAmount          Decimal @db.Decimal(15, 2)
+  totalAmount          Decimal                   @db.Decimal(15, 2)
   distributionDate     DateTime
   distributionType     WaterfallDistributionType
   description          String?
   isProcessed          Boolean                   @default(false)
-  oldDebtAmount        Decimal? @db.Decimal(15, 2)  // For refinancing distributions - stores old debt amount
+  oldDebtAmount        Decimal?                  @db.Decimal(15, 2) // For refinancing distributions - stores old debt amount
   oldDebtDetails       String? // For refinancing distributions - stores old debt details
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
@@ -447,19 +448,19 @@ model Notification {
 }
 
 model Entity {
-  id                 String     @id @default(cuid())
-  name               String
-  type               EntityType
-  address            String?
-  taxId              String?
-  stateOfFormation   String?
-  formationDate      DateTime?
-  contactPerson      String?
-  contactEmail  String?
-  contactPhone  String?
-  isActive      Boolean    @default(true)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id               String     @id @default(cuid())
+  name             String
+  type             EntityType
+  address          String?
+  taxId            String?
+  stateOfFormation String?
+  formationDate    DateTime?
+  contactPerson    String?
+  contactEmail     String?
+  contactPhone     String?
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Relations
   createdBy                      String
@@ -478,7 +479,7 @@ model EntityInvestment {
   id                  String           @id @default(cuid())
   entityId            String
   propertyId          String
-  investmentAmount    Decimal @db.Decimal(15, 2)
+  investmentAmount    Decimal          @db.Decimal(15, 2)
   ownershipPercentage Float
   status              InvestmentStatus @default(ACTIVE)
   investmentDate      DateTime         @default(now())
@@ -503,7 +504,7 @@ model EntityOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Decimal @db.Decimal(15, 2)
+  investmentAmount    Decimal  @db.Decimal(15, 2)
   breakdown           Json? // Breakdown of entity member investments for this specific deal
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
@@ -526,7 +527,7 @@ model EntityInvestmentOwner {
   userId              String?
   investorEntityId    String?
   ownershipPercentage Float
-  investmentAmount    Decimal @db.Decimal(15, 2)
+  investmentAmount    Decimal  @db.Decimal(15, 2)
   breakdown           Json?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -569,7 +570,7 @@ model EntityDistribution {
   id                 String           @id @default(cuid())
   entityInvestmentId String
   userId             String
-  amount             Decimal @db.Decimal(15, 2)
+  amount             Decimal          @db.Decimal(15, 2)
   distributionDate   DateTime
   distributionType   DistributionType @default(RENTAL_INCOME)
   description        String?
@@ -586,21 +587,21 @@ model EntityDistribution {
 }
 
 model Insurance {
-  id             String   @id @default(cuid())
-  propertyId     String
-  provider       String
-  policyNumber   String
-  annualPremium  Decimal @db.Decimal(15, 2)
-  coverageAmount Decimal @db.Decimal(15, 2)
-  renewalDate    DateTime
-  notes          String?
+  id               String   @id @default(cuid())
+  propertyId       String
+  provider         String
+  policyNumber     String
+  annualPremium    Decimal  @db.Decimal(15, 2)
+  coverageAmount   Decimal  @db.Decimal(15, 2)
+  renewalDate      DateTime
+  notes            String?
   // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
   documentUrl      String?
   documentFileName String?
   documentS3Key    String?
-  createdBy      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdBy        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -613,12 +614,12 @@ model PropertyTax {
   id                String   @id @default(cuid())
   propertyId        String
   taxYear           Int
-  annualPropertyTax Decimal @db.Decimal(15, 2)
+  annualPropertyTax Decimal  @db.Decimal(15, 2)
   notes             String?
   // Uploaded document fields (added by scripts/add-insurance-tax-documents.sql)
-  documentUrl      String?
-  documentFileName String?
-  documentS3Key    String?
+  documentUrl       String?
+  documentFileName  String?
+  documentS3Key     String?
   createdBy         String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -635,12 +636,12 @@ model PropertyLoan {
   propertyId        String
   lenderName        String // e.g., "Metairie Bank", "JD Bank", "Planters Bank"
   accountNumber     String? // Account number or loan identifier
-  originalAmount    Decimal @db.Decimal(15, 2)  // Original loan amount when first taken
-  currentBalance    Decimal @db.Decimal(15, 2)  // Current outstanding balance
+  originalAmount    Decimal     @db.Decimal(15, 2) // Original loan amount when first taken
+  currentBalance    Decimal     @db.Decimal(15, 2) // Current outstanding balance
   interestRate      Float? // Annual interest rate (e.g., 5.5 for 5.5%)
   loanDate          DateTime? // Date loan was originated
   maturityDate      DateTime? // Loan maturity date
-  monthlyPayment    Decimal? @db.Decimal(15, 2)  // Monthly payment amount
+  monthlyPayment    Decimal?    @db.Decimal(15, 2) // Monthly payment amount
   loanType          String? // e.g., "Mortgage", "Construction Loan", "Line of Credit"
   paymentType       PaymentType @default(AMORTIZING) // Interest-Only vs Amortizing
   amortizationYears Int? // Amortization term in years when amortizing
@@ -978,9 +979,9 @@ model Contact {
   updatedAt DateTime @updatedAt
 
   // Relations
-  creator           User               @relation(fields: [createdBy], references: [id])
-  dealFollowers     DealFollower[] // Deals this contact follows
-  dealRelationships DealRelationship[] // Relationships in deals
+  creator             User                 @relation(fields: [createdBy], references: [id])
+  dealFollowers       DealFollower[] // Deals this contact follows
+  dealRelationships   DealRelationship[] // Relationships in deals
   vendorRelationships VendorRelationship[]
 
   @@index([email])
@@ -1108,7 +1109,7 @@ model Deal {
   propertyId         String? // Link to existing property if applicable
   description        String?
   // location field removed - not in database
-  estimatedValue     Decimal? @db.Decimal(15, 2)
+  estimatedValue     Decimal?     @db.Decimal(15, 2)
   estimatedCloseDate DateTime?
   actualCloseDate    DateTime?
   source             String? // Where the deal came from
@@ -1119,32 +1120,32 @@ model Deal {
   section            String?      @default("ACQUISITION") // ACQUISITION, DEVELOPMENT, ASSET_MANAGEMENT
   underwritingData   Json? // Underwriting calculations and data
   dueDiligenceStatus String?      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
-  budgetedCost       Decimal? @db.Decimal(15, 2)
-  actualCost         Decimal? @db.Decimal(15, 2)
+  budgetedCost       Decimal?     @db.Decimal(15, 2)
+  actualCost         Decimal?     @db.Decimal(15, 2)
   startDate          DateTime?
   completionDate     DateTime?
   occupancyRate      Float?
-  noi                Decimal? @db.Decimal(15, 2)
+  noi                Decimal?     @db.Decimal(15, 2)
   capRate            Float?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
   // Relations
-  pipeline            DealPipeline?      @relation(fields: [pipelineId], references: [id])
-  stage               DealPipelineStage? @relation(fields: [stageId], references: [id])
-  property            Property?          @relation(fields: [propertyId], references: [id])
-  assignedTo          User?              @relation("DealAssignedTo", fields: [assignedToId], references: [id])
-  tasks               DealTask[]
-  notes               DealNote[]
-  relationships       DealRelationship[]
-  dealTags            DealTag[]
-  developmentTimelines DevelopmentTimeline[]
-  budgetLineItems     BudgetLineItem[]
+  pipeline                DealPipeline?         @relation(fields: [pipelineId], references: [id])
+  stage                   DealPipelineStage?    @relation(fields: [stageId], references: [id])
+  property                Property?             @relation(fields: [propertyId], references: [id])
+  assignedTo              User?                 @relation("DealAssignedTo", fields: [assignedToId], references: [id])
+  tasks                   DealTask[]
+  notes                   DealNote[]
+  relationships           DealRelationship[]
+  dealTags                DealTag[]
+  developmentTimelines    DevelopmentTimeline[]
+  budgetLineItems         BudgetLineItem[]
   underwritingDataRecords UnderwritingData[]
-  dueDiligenceItems   DueDiligenceItem[]
-  assetMetrics        AssetMetric[]
-  vendorRelationships VendorRelationship[]
-  pipelineDealFiles   PipelineDealFile[]
+  dueDiligenceItems       DueDiligenceItem[]
+  assetMetrics            AssetMetric[]
+  vendorRelationships     VendorRelationship[]
+  pipelineDealFiles       PipelineDealFile[]
 
   @@index([pipelineId])
   @@index([stageId])
@@ -1305,11 +1306,11 @@ model DevelopmentTimeline {
 model BudgetLineItem {
   id             String   @id @default(cuid())
   dealId         String
-  category       String   // e.g., "Construction", "Legal", "Marketing"
+  category       String // e.g., "Construction", "Legal", "Marketing"
   description    String
-  budgetedAmount Decimal @db.Decimal(15, 2)
+  budgetedAmount Decimal  @db.Decimal(15, 2)
   actualAmount   Decimal? @db.Decimal(15, 2)
-  variance       Decimal? @db.Decimal(15, 2)  // Calculated: actualAmount - budgetedAmount
+  variance       Decimal? @db.Decimal(15, 2) // Calculated: actualAmount - budgetedAmount
   status         String   @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1322,25 +1323,25 @@ model BudgetLineItem {
 }
 
 model UnderwritingData {
-  id                 String   @id @default(cuid())
-  dealId             String
-  propertyType       String?
-  purchasePrice      Decimal? @db.Decimal(15, 2)
-  loanAmount         Decimal? @db.Decimal(15, 2)
-  loanRate           Float?
-  loanTerm           Int?
-  downPayment        Decimal? @db.Decimal(15, 2)
-  grossRent          Decimal? @db.Decimal(15, 2)
-  vacancyRate        Float?
-  operatingExpenses  Decimal? @db.Decimal(15, 2)
-  noi                Decimal? @db.Decimal(15, 2)
-  capRate            Float?
-  irr                Float?
-  cashOnCash         Float?
+  id                  String   @id @default(cuid())
+  dealId              String
+  propertyType        String?
+  purchasePrice       Decimal? @db.Decimal(15, 2)
+  loanAmount          Decimal? @db.Decimal(15, 2)
+  loanRate            Float?
+  loanTerm            Int?
+  downPayment         Decimal? @db.Decimal(15, 2)
+  grossRent           Decimal? @db.Decimal(15, 2)
+  vacancyRate         Float?
+  operatingExpenses   Decimal? @db.Decimal(15, 2)
+  noi                 Decimal? @db.Decimal(15, 2)
+  capRate             Float?
+  irr                 Float?
+  cashOnCash          Float?
   debtServiceCoverage Float?
-  additionalData     Json?    // Flexible field for other metrics
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  additionalData      Json? // Flexible field for other metrics
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relations
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -1350,17 +1351,17 @@ model UnderwritingData {
 }
 
 model DueDiligenceItem {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   dealId       String
-  category     String   // e.g., "Legal", "Financial", "Physical", "Environmental"
-  item         String   // Specific checklist item
-  status       String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, BLOCKED
+  category     String // e.g., "Legal", "Financial", "Physical", "Environmental"
+  item         String // Specific checklist item
+  status       String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, BLOCKED
   assignedToId String?
   dueDate      DateTime?
   completedAt  DateTime?
   notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
   deal       Deal  @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -1372,19 +1373,19 @@ model DueDiligenceItem {
 }
 
 model AssetMetric {
-  id              String   @id @default(cuid())
-  dealId          String
-  metricDate      DateTime
-  occupancyRate   Float?
-  revenue         Decimal? @db.Decimal(15, 2)
-  expenses        Decimal? @db.Decimal(15, 2)
-  noi             Decimal? @db.Decimal(15, 2)
-  capRate         Float?
-  debtService     Decimal? @db.Decimal(15, 2)
-  cashFlow        Decimal? @db.Decimal(15, 2)
-  additionalMetrics Json?  // Flexible field for other operational metrics
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(cuid())
+  dealId            String
+  metricDate        DateTime
+  occupancyRate     Float?
+  revenue           Decimal? @db.Decimal(15, 2)
+  expenses          Decimal? @db.Decimal(15, 2)
+  noi               Decimal? @db.Decimal(15, 2)
+  capRate           Float?
+  debtService       Decimal? @db.Decimal(15, 2)
+  cashFlow          Decimal? @db.Decimal(15, 2)
+  additionalMetrics Json? // Flexible field for other operational metrics
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -1394,19 +1395,19 @@ model AssetMetric {
 }
 
 model VendorRelationship {
-  id           String   @id @default(cuid())
-  dealId       String
-  contactId    String?  // Link to Contact if exists
-  vendorName   String
-  vendorType   String   // e.g., "Property Manager", "Contractor", "Lender", "Legal"
+  id            String   @id @default(cuid())
+  dealId        String
+  contactId     String? // Link to Contact if exists
+  vendorName    String
+  vendorType    String // e.g., "Property Manager", "Contractor", "Lender", "Legal"
   contactPerson String?
-  email        String?
-  phone        String?
-  services     String[] // Array of services provided
-  rating       Int?     // 1-5 rating
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  email         String?
+  phone         String?
+  services      String[] // Array of services provided
+  rating        Int? // 1-5 rating
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
   deal    Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -1572,17 +1573,17 @@ model DocumentAccess {
 }
 
 model SignatureRequest {
-  id          String          @id @default(cuid())
-  documentId  String
-  userId      String
-  status      SignatureStatus @default(PENDING)
-  signerName  String?
+  id            String          @id @default(cuid())
+  documentId    String
+  userId        String
+  status        SignatureStatus @default(PENDING)
+  signerName    String?
   signatureText String?
-  signedAt    DateTime?
-  ipAddress   String?
-  createdBy   String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  signedAt      DateTime?
+  ipAddress     String?
+  createdBy     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
@@ -1603,13 +1604,13 @@ enum SignatureStatus {
 // Notification rows (and optionally email). Additive.
 
 model Announcement {
-  id          String    @id @default(cuid())
-  title       String
-  body        String
-  propertyId  String?   // null = broadcast to all investors; set = per-deal
-  createdBy    String
-  recipientCount Int     @default(0)
-  createdAt   DateTime  @default(now())
+  id             String   @id @default(cuid())
+  title          String
+  body           String
+  propertyId     String? // null = broadcast to all investors; set = per-deal
+  createdBy      String
+  recipientCount Int      @default(0)
+  createdAt      DateTime @default(now())
 
   author User @relation(fields: [createdBy], references: [id])
 
@@ -1622,10 +1623,137 @@ model PlazaWaitlist {
   name      String
   email     String
   phone     String?
-  interest  String   // RENT | BUY | EITHER
+  interest  String // RENT | BUY | EITHER
   message   String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@map("plaza_waitlist")
+}
+
+// ---------------------------------------------------------------------------
+// Instagram content pipeline (@campusrentalsllc)
+//
+// Campus Rentals' own social pipeline. Entirely separate from any other
+// Instagram automation: its own Meta app, its own credentials, its own tables.
+// Nothing here is shared with, or reachable from, another brand's pipeline.
+//
+// Every post is a DRAFT until a human approves it. See docs/INSTAGRAM-PIPELINE.md.
+// ---------------------------------------------------------------------------
+
+enum SocialPostKind {
+  LISTING // an available unit, sourced live from the Abodingo backend
+  PHOTO_FEATURE // a single-property showcase from the photo library
+  DEVELOPMENT // Maple Street Plaza construction / floor plans / renderings
+  NEIGHBORHOOD // evergreen area + student-life content, not tied to a unit
+}
+
+enum SocialMediaFormat {
+  IMAGE
+  CAROUSEL
+  REEL
+}
+
+enum SocialPostStatus {
+  DRAFT // generated, awaiting human review
+  APPROVED // a human approved it; the publish cron may send it
+  PUBLISHING // claimed by a publish run (guards against double-send)
+  PUBLISHED // live on Instagram
+  REJECTED // a human declined it; never publishes
+  FAILED // publishing was attempted and errored
+}
+
+/// One reviewable unit of content. The caption stored here is the body only —
+/// hashtags are held separately and appended at publish time so they can be
+/// re-tuned without rewriting approved copy.
+model SocialPost {
+  id              String            @id @default(cuid())
+  kind            SocialPostKind
+  format          SocialMediaFormat
+  status          SocialPostStatus  @default(DRAFT)
+  caption         String
+  hashtags        String[]
+  mediaUrls       String[] // CDN URLs in order: 1 for IMAGE/REEL, 2-10 for CAROUSEL
+  altText         String?
+  /// Idempotency key for the generator, e.g. "listing:4821:2026-W38". Unique so
+  /// a re-run cannot queue the same content twice.
+  sourceKey       String            @unique
+  /// Free-form traceability back to the source record (listing id, slug, topic).
+  sourceRef       String?
+  scheduledFor    DateTime?
+  publishedAt     DateTime?
+  igMediaId       String?
+  igPermalink     String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  failureReason   String?
+  attemptCount    Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  reviewer User?               @relation("SocialPostReviewedBy", fields: [reviewedBy], references: [id])
+  insights SocialPostInsight[]
+
+  @@index([status])
+  @@index([kind])
+  @@index([publishedAt])
+  @@index([reviewedBy])
+  @@map("social_posts")
+}
+
+/// A snapshot of one published media's engagement. Many rows per media — one
+/// per tracking run. NEVER sum `reach` across rows: group by igMediaId and take
+/// the max, or the number is several times the truth.
+model SocialPostInsight {
+  id                String   @id @default(cuid())
+  postId            String
+  igMediaId         String
+  reach             Int      @default(0)
+  likes             Int      @default(0)
+  comments          Int      @default(0)
+  saved             Int      @default(0)
+  shares            Int      @default(0)
+  totalInteractions Int      @default(0)
+  capturedAt        DateTime @default(now())
+
+  post SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([igMediaId, capturedAt])
+  @@index([postId])
+  @@map("social_post_insights")
+}
+
+/// The outcome metric. Reach is granted by the platform and collapses for
+/// reasons no post is responsible for; a follower only ever moves because a
+/// person chose. Recorded from the first day so changes can be judged against
+/// the thing they were made for. `capturedHour` makes the write idempotent.
+model SocialAccountSnapshot {
+  id           String   @id @default(cuid())
+  igUserId     String
+  followers    Int
+  follows      Int      @default(0)
+  mediaCount   Int
+  capturedHour String   @unique // "2026-09-21T14" — one row per clock hour
+  capturedAt   DateTime @default(now())
+
+  @@index([capturedAt])
+  @@map("social_account_snapshots")
+}
+
+/// Durable credential state. The Lightsail box runs under PM2 and the app
+/// cannot rewrite its own process env, so a rotating long-lived token has to
+/// live somewhere it survives a restart. Encrypted at rest (src/lib/encryption).
+model SocialCredential {
+  id              String    @id @default(cuid())
+  provider        String    @unique // "instagram"
+  igUserId        String?
+  accessToken     String // ciphertext — never log or return this
+  expiresAt       DateTime?
+  lastRefreshedAt DateTime?
+  refreshFailures Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("social_credentials")
 }

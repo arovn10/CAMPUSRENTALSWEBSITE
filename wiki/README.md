@@ -11,6 +11,7 @@ Continuous-context knowledge base for **every Campus Rentals repo** (currently `
 | **How agents should read this wiki (start here)** | [`agents.md`](agents.md) |
 | **Hard rules — non-negotiable, every repo, every session** | [`rules/hard-rules.md`](rules/hard-rules.md) |
 | What is Campus Rentals? Sites, users, products | [`product/overview.md`](product/overview.md) |
+| Instagram / social content pipeline | [`product/instagram-pipeline.md`](product/instagram-pipeline.md) |
 | Website architecture (Next.js app, key libs, patterns) | [`architecture/website.md`](architecture/website.md) |
 | **Where data comes from (Abodingo dependency — CRITICAL)** | [`architecture/data-sources.md`](architecture/data-sources.md) |
 | Investor portal / IMS | [`architecture/investor-portal.md`](architecture/investor-portal.md) |

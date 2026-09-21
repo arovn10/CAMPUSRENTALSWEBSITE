@@ -18,6 +18,7 @@ You are (probably) a Claude session working on a Campus Rentals repo. This page 
 | Prisma schema, migrations, money columns | [`architecture/database.md`](architecture/database.md) |
 | Deploying, PM2, nginx, Lightsail, "site is down" | [`operations/environments.md`](operations/environments.md) + [`operations/deployment-runbook.md`](operations/deployment-runbook.md) |
 | Auth, API route security, ownership checks | [`architecture/website.md`](architecture/website.md) (Patterns section) + hard rules |
+| Instagram posts, social content, the review queue, captions, fair-housing copy | [`product/instagram-pipeline.md`](product/instagram-pipeline.md) — note the pipeline in `arovn10/deal-finder` is a DIFFERENT account and must stay separate |
 | Anything touching Abodingo repos | [`architecture/data-sources.md`](architecture/data-sources.md) — know the boundary before you cross it |
 
 ## Anti-patterns
