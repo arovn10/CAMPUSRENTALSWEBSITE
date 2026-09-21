@@ -26,9 +26,14 @@ separate:
 
 | Job | Cadence | Does |
 |---|---|---|
-| `social-generate` | weekly | builds drafts from listings, the photo library and editorial topics |
-| `social-publish` | 2×/day | sends **at most one** human-approved post, inside a rolling cap |
+| `social-generate` | Mondays | builds drafts from listings, the photo library and editorial topics |
+| `social-publish` | Tuesdays | sends **at most one** human-approved post, inside a rolling cap |
 | `social-insights` | 6-hourly | per-media engagement **and the follower count** |
+
+**Target cadence is one post a week** (Alec, 2026-09-21). Enforced twice: a fixed
+Tuesday schedule for a predictable posting day, and a server-side cap of 1 per
+rolling 168h that a manual workflow run cannot bypass. To go faster, raise
+`SOCIAL_MAX_MEDIA_PER_WINDOW` or shorten `SOCIAL_WINDOW_HOURS`.
 
 **Every post is a DRAFT until a human approves it** at `/admin/social`
 (ADMIN/MANAGER). Approving is a content judgement; sending is a timing decision.

@@ -4,10 +4,16 @@ name: Instagram Pipeline
 #
 #   generate — refills the review queue from listings, photos and editorial
 #              topics. Publishes nothing; its output is drafts awaiting a human.
-#   publish  — sends at most ONE human-approved post, subject to the rolling
-#              24h cap and the minimum gap. A no-op unless someone approved
-#              something AND SOCIAL_PUBLISHING_ENABLED is "true" on the server.
+#   publish  — sends at most ONE human-approved post. A no-op unless someone
+#              approved something AND SOCIAL_PUBLISHING_ENABLED is "true".
 #   insights — snapshots per-media engagement and the follower count.
+#
+# Target cadence is ONE POST A WEEK. Two independent things enforce it:
+#   - the publish job runs on a fixed weekly schedule (Tuesdays), which gives a
+#     predictable posting day rather than one that drifts;
+#   - the server caps publishing at 1 per rolling 168h, which a manual run
+#     cannot bypass. Belt and braces: the schedule sets the rhythm, the cap
+#     makes double-posting impossible.
 #
 # Requires:
 #   secret  CRON_SECRET   — must match the app's CRON_SECRET env var
@@ -18,8 +24,8 @@ name: Instagram Pipeline
 
 on:
   schedule:
-    - cron: '0 14 * * 1' # Mondays 14:00 UTC — refill the review queue
-    - cron: '0 15,19 * * *' # twice daily — publish an approved post if one is due
+    - cron: '0 14 * * 1' # Mondays 14:00 UTC — refill the review queue for review
+    - cron: '0 15 * * 2' # Tuesdays 15:00 UTC — publish the week's approved post
     - cron: '20 */6 * * *' # every 6h — engagement + follower snapshot
   workflow_dispatch:
     inputs:
@@ -43,9 +49,9 @@ jobs:
             job="$MANUAL"
           else
             case "$CRON" in
-              '0 14 * * 1')     job=generate ;;
-              '0 15,19 * * *')  job=publish ;;
-              '20 */6 * * *')   job=insights ;;
+              '0 14 * * 1')   job=generate ;;
+              '0 15 * * 2')   job=publish ;;
+              '20 */6 * * *') job=insights ;;
               *)                job=insights ;;
             esac
           fi

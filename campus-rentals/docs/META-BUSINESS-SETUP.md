@@ -139,6 +139,10 @@ META_APP_ID=<from Step 4>
 META_APP_SECRET=<from Step 4>
 CRON_SECRET=<any long random string; must match the GitHub secret>
 SOCIAL_PUBLISHING_ENABLED=false      # leave false until you have reviewed drafts
+
+# Cadence defaults to one post a week. These only need setting to change that.
+# SOCIAL_MAX_MEDIA_PER_WINDOW=1
+# SOCIAL_WINDOW_HOURS=168
 ```
 
 None of these may ever carry the `NEXT_PUBLIC_` prefix — that would bundle them

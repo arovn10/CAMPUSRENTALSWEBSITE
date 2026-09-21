@@ -42,24 +42,48 @@ function intEnv(name: string, fallback: number, min: number, max: number): numbe
   return Math.min(max, Math.max(min, raw))
 }
 
-/** Ceiling on published media per rolling 24h. Deliberately small. */
-export function maxMediaPerDay(): number {
-  return intEnv('SOCIAL_MAX_MEDIA_PER_DAY', 2, 1, 12)
+/**
+ * Publishing cadence is a ceiling of N media per rolling window of H hours.
+ *
+ * The default is ONE post per 168 hours — one a week. The window is rolling
+ * rather than a calendar week on purpose: a calendar boundary can be crossed to
+ * reset the count, so "one a week" enforced against a calendar week permits two
+ * posts a few hours apart across a Sunday night. A rolling window cannot be
+ * gamed that way, including by a manual workflow_dispatch.
+ */
+export function maxMediaPerWindow(): number {
+  return intEnv('SOCIAL_MAX_MEDIA_PER_WINDOW', 1, 1, 12)
 }
 
-/** Minimum spacing between publishes, in minutes. */
+/** Length of that rolling window, in hours. 168 = 7 days. */
+export function windowHours(): number {
+  return intEnv('SOCIAL_WINDOW_HOURS', 168, 1, 720)
+}
+
+/**
+ * Secondary spacing guard, in minutes. Redundant while the cap is 1 — the
+ * window already enforces the gap — but it keeps spacing honest the moment
+ * anyone raises the cap above 1.
+ */
 export function minPublishGapMinutes(): number {
-  return intEnv('SOCIAL_MIN_PUBLISH_GAP_MINUTES', 240, 30, 1440)
+  return intEnv('SOCIAL_MIN_PUBLISH_GAP_MINUTES', 1440, 30, 10080)
 }
 
-/** How many drafts a generation run may leave sitting unreviewed. */
+/**
+ * How many drafts a generation run may leave sitting unreviewed. At one post a
+ * week this is roughly six weeks of choice — enough to pick from, small enough
+ * that the queue is still reviewable in one sitting.
+ */
 export function maxOpenDrafts(): number {
-  return intEnv('SOCIAL_MAX_OPEN_DRAFTS', 12, 1, 100)
+  return intEnv('SOCIAL_MAX_OPEN_DRAFTS', 6, 1, 100)
 }
 
-/** Hours of publishing silence before /api/health flags it. */
+/**
+ * Hours of publishing silence before this is worth flagging. Sized to the
+ * weekly rhythm: 240h is two missed weeks, not one late afternoon.
+ */
 export function silentHoursWarning(): number {
-  return intEnv('SOCIAL_SILENT_HOURS_WARNING', 72, 6, 720)
+  return intEnv('SOCIAL_SILENT_HOURS_WARNING', 240, 6, 2160)
 }
 
 /** True when the credentials needed to talk to Instagram are all present. */

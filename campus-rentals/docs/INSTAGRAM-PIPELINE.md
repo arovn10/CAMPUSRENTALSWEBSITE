@@ -17,7 +17,7 @@ owner-gated — the code here is inert until those values exist.
 ## The flow
 
 ```
-  generate (weekly)                review (human)              publish (2×/day)
+  generate (Mondays)               review (human)             publish (Tuesdays)
  ┌──────────────────┐            ┌──────────────┐            ┌─────────────────┐
  │ Abodingo listings│            │ /admin/social│            │ ≤1 post / cycle │
  │ S3 photo library │──drafts──▶ │ approve/edit │──APPROVED─▶│ cap + min gap   │──▶ IG
@@ -28,6 +28,9 @@ owner-gated — the code here is inert until those values exist.
                                                                       ▼
                                                    reach · saves · FOLLOWERS
 ```
+
+**Target cadence is one post a week.** Monday builds the queue, you review it
+during the week, Tuesday publishes whatever you approved.
 
 Generation and publishing are separate jobs on separate schedules on purpose.
 Approving something is a judgement about content; sending it is a decision about
@@ -85,12 +88,27 @@ Defaults, all overridable by env:
 
 | Knob | Default | Why |
 |---|---|---|
-| `SOCIAL_MAX_MEDIA_PER_DAY` | 2 | a rolling-24h ceiling, not a calendar day — midnight cannot reset it |
-| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 240 | spacing survives a cron that runs late |
-| `SOCIAL_MAX_OPEN_DRAFTS` | 12 | generation stops refilling a queue nobody is reviewing |
+| `SOCIAL_MAX_MEDIA_PER_WINDOW` | 1 | one post per window |
+| `SOCIAL_WINDOW_HOURS` | 168 | the window is 7 days — so, one post a week |
+| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 1440 | redundant at a cap of 1; matters the moment you raise it |
+| `SOCIAL_MAX_OPEN_DRAFTS` | 6 | ~six weeks of choice; generation stops refilling a queue nobody reviews |
 
-The publish job sends **at most one post per cycle** even when the cap would
-allow more. Two posts in one cycle is how spacing silently becomes zero.
+Two independent things enforce the weekly rhythm, and both are deliberate:
+
+- the **schedule** publishes on Tuesdays, which gives a predictable posting day.
+  A rolling cap alone would drift — the next slot frees exactly 168h after the
+  last post, so the posting time walks later every week.
+- the **cap** is 1 per rolling 168 hours, which a manual `workflow_dispatch`
+  cannot bypass. The window is rolling rather than a calendar week because a
+  calendar boundary can be crossed to reset the count: "one a week" enforced
+  against a calendar week permits two posts a few hours apart across a Sunday
+  night.
+
+The publish job also sends **at most one post per cycle** regardless of what the
+cap would allow. Two posts in one cycle is how spacing silently becomes zero.
+
+To go faster later, raise `SOCIAL_MAX_MEDIA_PER_WINDOW`, or shorten
+`SOCIAL_WINDOW_HOURS` and add publish days to the workflow schedule.
 
 ## Measurement
 

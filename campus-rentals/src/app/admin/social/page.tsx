@@ -55,7 +55,8 @@ interface Stats {
   meanReachMature: number | null
   publishingEnabled: boolean
   instagramConfigured: boolean
-  maxMediaPerDay: number
+  maxMediaPerWindow: number
+  windowHours: number
   cadence: { allowed: number; reason?: string }
 }
 

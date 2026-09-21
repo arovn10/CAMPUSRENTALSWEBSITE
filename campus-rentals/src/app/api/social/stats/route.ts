@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSocialReviewer, errorResponse } from '@/lib/social/guard'
 import { pipelineStats } from '@/lib/social/insights'
-import { publishingEnabled, instagramConfigured, maxMediaPerDay, minPublishGapMinutes } from '@/lib/social/config'
+import {
+  publishingEnabled,
+  instagramConfigured,
+  maxMediaPerWindow,
+  windowHours,
+  minPublishGapMinutes,
+} from '@/lib/social/config'
 import { cadenceAllowance } from '@/lib/social/publish'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +24,8 @@ export async function GET(request: NextRequest) {
       ...stats,
       publishingEnabled: publishingEnabled(),
       instagramConfigured: instagramConfigured(),
-      maxMediaPerDay: maxMediaPerDay(),
+      maxMediaPerWindow: maxMediaPerWindow(),
+      windowHours: windowHours(),
       minPublishGapMinutes: minPublishGapMinutes(),
       cadence,
     })

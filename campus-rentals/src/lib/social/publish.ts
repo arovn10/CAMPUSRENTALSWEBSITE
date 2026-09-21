@@ -26,7 +26,13 @@ import {
   publishingLimit,
   InstagramError,
 } from './instagram'
-import { maxMediaPerDay, minPublishGapMinutes, publishingEnabled, instagramConfigured } from './config'
+import {
+  maxMediaPerWindow,
+  windowHours,
+  minPublishGapMinutes,
+  publishingEnabled,
+  instagramConfigured,
+} from './config'
 
 export interface PublishOutcome {
   postId: string
@@ -48,22 +54,34 @@ function needsEqualHousingNotice(post: Pick<SocialPost, 'kind'>): boolean {
 }
 
 /**
- * Cadence: how many more media may go out right now. Enforced against a ROLLING
- * 24h window rather than a calendar day, so the cap cannot be reset by midnight.
+ * Cadence: how many more media may go out right now.
+ *
+ * Enforced against a ROLLING window (default 168h = one post a week) rather
+ * than a calendar period, so the cap cannot be reset by crossing midnight or a
+ * week boundary — including by a manual workflow run.
  */
 export async function cadenceAllowance(now = new Date()): Promise<{
   allowed: number
   reason?: string
 }> {
-  const since = new Date(now.getTime() - 24 * 3_600_000)
+  const hours = windowHours()
+  const since = new Date(now.getTime() - hours * 3_600_000)
   const recent = await prisma.socialPost.findMany({
     where: { status: 'PUBLISHED', publishedAt: { gte: since } },
     select: { publishedAt: true },
     orderBy: { publishedAt: 'desc' },
   })
 
-  if (recent.length >= maxMediaPerDay()) {
-    return { allowed: 0, reason: `daily cap reached (${recent.length}/${maxMediaPerDay()} in the last 24h)` }
+  if (recent.length >= maxMediaPerWindow()) {
+    const last = recent[0]?.publishedAt
+    const freesAt = last ? new Date(last.getTime() + hours * 3_600_000) : null
+    const hoursLeft = freesAt ? Math.ceil((freesAt.getTime() - now.getTime()) / 3_600_000) : hours
+    return {
+      allowed: 0,
+      reason:
+        `cap reached (${recent.length}/${maxMediaPerWindow()} in the last ${hours}h)` +
+        (freesAt ? `; next slot in ~${hoursLeft}h` : ''),
+    }
   }
 
   const last = recent[0]?.publishedAt
@@ -75,7 +93,7 @@ export async function cadenceAllowance(now = new Date()): Promise<{
     }
   }
 
-  return { allowed: maxMediaPerDay() - recent.length }
+  return { allowed: maxMediaPerWindow() - recent.length }
 }
 
 /** Push one already-claimed post to Instagram. */
