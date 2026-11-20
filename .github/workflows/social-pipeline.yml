@@ -64,9 +64,13 @@ jobs:
           BASE_URL: ${{ vars.APP_BASE_URL || 'https://campusrentalsllc.com' }}
           JOB: ${{ steps.pick.outputs.job }}
         run: |
+          # A missing secret means the pipeline has not been activated yet
+          # (Meta setup is owner-gated). Same treatment as a server 503: warn,
+          # don't fail. 198 red runs between 2026-09-21 and 2026-11-20 were
+          # this and nothing else, and they were drowning real failures.
           if [ -z "$CRON_SECRET" ]; then
-            echo "::error::CRON_SECRET secret is not set — aborting."
-            exit 1
+            echo "::warning::CRON_SECRET secret is not set — pipeline not activated yet, skipping."
+            exit 0
           fi
           echo "POST $BASE_URL/api/cron/social-$JOB"
           code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 280 \
