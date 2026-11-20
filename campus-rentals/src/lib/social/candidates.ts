@@ -27,7 +27,7 @@ import {
 } from './captions'
 import { DEVELOPMENT_TOPICS, NEIGHBORHOOD_TOPICS } from './editorial'
 import { maxOpenDrafts } from './config'
-import { activeCampaign, upcomingSlots, unitForSlot, SLOT_STALE_HOURS, type Campaign } from './campaign'
+import { activeCampaign, upcomingSlots, unitForSlot, rotateForLineup, SLOT_STALE_HOURS, type Campaign } from './campaign'
 
 export interface Candidate {
   kind: SocialPostKind
@@ -204,14 +204,30 @@ function editorialCandidates(): Candidate[] {
   ]
 }
 
-/** Ordered CloudFront photo URLs for a listing. */
-async function listingPhotoUrls(propertyId: number, max: number): Promise<string[]> {
+/**
+ * Ordered CloudFront photo URLs for a listing. With `curated` photo IDs, those
+ * photos in that order (cover first); otherwise the listing's own order.
+ */
+async function listingPhotoUrls(propertyId: number, max: number, curated?: number[]): Promise<string[]> {
   const photos = await fetchPropertyPhotos(propertyId).catch(() => [])
+  const toUrl = (ph: (typeof photos)[number]) => s3ToCloudFrontUrl(ph.photoLink)
+  const valid = (u: string) => u.startsWith('https://')
+
+  if (curated && curated.length > 0) {
+    const byId = new Map(photos.map((ph) => [ph.photoId, ph]))
+    const picked = curated
+      .map((id) => byId.get(id))
+      .filter((ph): ph is (typeof photos)[number] => Boolean(ph))
+      .map(toUrl)
+      .filter(valid)
+    if (picked.length >= 2) return picked.slice(0, max)
+  }
+
   return photos
     .slice()
     .sort((a, b) => (a.photoOrder ?? 999) - (b.photoOrder ?? 999))
-    .map((ph) => s3ToCloudFrontUrl(ph.photoLink))
-    .filter((u) => u.startsWith('https://'))
+    .map(toUrl)
+    .filter(valid)
     .slice(0, max)
 }
 
@@ -260,9 +276,10 @@ async function campaignCandidates(c: Campaign, now: Date): Promise<CampaignBuild
 
     if (slot.role === 'lineup') {
       if (available.length < 2) continue // a carousel needs two images; Monday covers a lone unit
+      const lineup = rotateForLineup(available, slot)
       const covers: string[] = []
-      for (const a of available) {
-        const [cover] = await listingPhotoUrls(a.p.property_id, 1)
+      for (const a of lineup) {
+        const [cover] = await listingPhotoUrls(a.p.property_id, 1, a.unit.photoIds)
         if (cover) covers.push(cover)
       }
       if (covers.length < 2) continue
@@ -270,7 +287,7 @@ async function campaignCandidates(c: Campaign, now: Date): Promise<CampaignBuild
         kind: 'LISTING',
         format: 'CAROUSEL',
         caption: campaignLineupCaption(
-          available.map((a) => ({ address: a.unit.label, bedrooms: a.p.bedrooms, bathrooms: a.p.bathrooms, price: a.p.price })),
+          lineup.map((a) => ({ address: a.unit.label, bedrooms: a.p.bedrooms, bathrooms: a.p.bathrooms, price: a.p.price })),
           c.moveInLabel,
           slot.week,
         ),
@@ -287,7 +304,7 @@ async function campaignCandidates(c: Campaign, now: Date): Promise<CampaignBuild
     const pick = unitForSlot(available, slot)
     if (!pick) continue
     const { unit, p } = pick
-    const urls = await listingPhotoUrls(p.property_id, slot.role === 'feature' ? 6 : 10)
+    const urls = await listingPhotoUrls(p.property_id, slot.role === 'feature' ? 6 : 10, unit.photoIds)
     if (urls.length === 0) continue
     const sourceKey = `${base}:${p.property_id}`
 

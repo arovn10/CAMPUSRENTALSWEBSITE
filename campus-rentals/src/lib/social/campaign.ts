@@ -29,6 +29,14 @@ export interface CampaignUnit {
    * tenant (fair housing: see compliance.ts).
    */
   highlight: string
+  /**
+   * Curated carousel, by Abodingo photoId, cover first (max 10). Chosen by
+   * looking at every listing photo, 2026-11-20: street-facing exteriors lead,
+   * then kitchen/living, bedrooms, baths; weak shots (utility hookups, empty
+   * closets, hallways) are left out. IDs no longer on the listing are skipped;
+   * if fewer than two survive, the listing's own order is used instead.
+   */
+  photoIds?: number[]
 }
 
 export interface Campaign {
@@ -52,26 +60,36 @@ export const JUNE_2027_PRELEASING: Campaign = {
       propertyId: 1,
       label: '2422 Joseph St',
       highlight: 'A 10-minute walk to campus on a quiet, well-kept block, a few streets from the Freret Street shops.',
+      // cover: full house from the street
+      photoIds: [18, 20, 2, 3, 9, 13, 5, 15, 17, 19],
     },
     {
       propertyId: 10,
       label: '7700 Burthe St',
       highlight: 'A fully furnished upstairs unit in a quiet, picturesque part of Uptown.',
+      // cover: whole building from above. NOT the front-porch shot — its door reads "7702".
+      photoIds: [43, 36, 33, 34, 32, 39, 41, 44, 40],
     },
     {
       propertyId: 6,
       label: '7315 Freret St',
       highlight: 'Fully furnished, right on the Freret corridor, with campus close by.',
+      // cover: staged front exterior
+      photoIds: [30, 24, 25, 28, 29, 26],
     },
     {
       propertyId: 2,
       label: '2424 Joseph St',
       highlight: 'A 10-minute walk to campus on a quiet, well-kept block, a few streets from the Freret Street shops.',
+      // cover: kitchen (2422 already uses the shared facade)
+      photoIds: [96, 107, 102, 100, 98, 97, 105, 103],
     },
     {
       propertyId: 11,
       label: '7702 Burthe St',
       highlight: 'New construction on the corner of Burthe and Adams — roughly 12×12 bedrooms, each with a walk-in closet.',
+      // cover: front porch — the door number reads 7702
+      photoIds: [166, 164, 169, 165, 163, 175, 171, 170, 167, 172],
     },
   ],
 }
@@ -135,6 +153,18 @@ export function unitForSlot<T>(available: T[], slot: Slot): T | null {
   if (available.length === 0) return null
   const offset = slot.role === 'feature' ? 2 : 0
   return available[(slot.week + offset) % available.length]
+}
+
+/**
+ * The Friday lineup lists every open unit; rotate which one leads (and so
+ * supplies the cover) by week, so Fridays don't all open on the same house
+ * and never repeat the cover of the posts on either side.
+ */
+export function rotateForLineup<T>(available: T[], slot: Slot): T[] {
+  if (available.length === 0) return available
+  // Mon shows unit w, Wed w+2, next Mon w+1 — so lead with w+3, which is none of them.
+  const k = (slot.week + 3) % available.length
+  return [...available.slice(k), ...available.slice(0, k)]
 }
 
 /** Grace after a slot before an unpublished post for it is considered stale. */
