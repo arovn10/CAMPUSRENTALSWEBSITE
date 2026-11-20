@@ -49,9 +49,17 @@ export interface PublishRunResult {
   outcomes: PublishOutcome[]
 }
 
-/** A listing caption advertises a dwelling, so it carries the equal-housing notice. */
+/**
+ * The equal-housing line is OFF by default (Alec, 2026-11-20): it is only
+ * mandatory in HUD-assisted / FHA-insured programs (24 CFR 200 subpart M) and
+ * Campus Rentals uses no such financing. Fair-housing compliance of the copy
+ * itself (42 U.S.C. 3604(c)) is still enforced by validateCaption. Set
+ * SOCIAL_EQUAL_HOUSING_NOTICE=true to add it back to listing captions — e.g.
+ * if a property ever takes HUD/FHA money.
+ */
 function needsEqualHousingNotice(post: Pick<SocialPost, 'kind'>): boolean {
-  return post.kind === 'LISTING' || post.kind === 'PHOTO_FEATURE'
+  const on = (process.env.SOCIAL_EQUAL_HOUSING_NOTICE ?? '').trim().toLowerCase() === 'true'
+  return on && (post.kind === 'LISTING' || post.kind === 'PHOTO_FEATURE')
 }
 
 /**

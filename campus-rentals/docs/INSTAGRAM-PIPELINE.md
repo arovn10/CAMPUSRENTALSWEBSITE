@@ -94,7 +94,10 @@ It covers the federal classes plus the ones the New Orleans ordinance adds (age,
 creed, marital status, source of income), and it screens hashtags too — a
 hashtag is part of the published advertisement.
 
-Listing and photo-feature captions carry the equal-housing notice automatically.
+The equal-housing notice is **off** by default (Alec, 2026-11-20): it is only
+mandatory for HUD-assisted / FHA-insured housing, which Campus Rentals does not
+use. `SOCIAL_EQUAL_HOUSING_NOTICE=true` adds it back to listing captions. The
+site footer and `/fair-housing` page still carry the statement — unchanged.
 
 **This is a guardrail against the obvious failures, not legal advice**, and it is
 not a substitute for the human review step. A pattern list cannot catch every
