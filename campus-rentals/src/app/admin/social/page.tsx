@@ -35,6 +35,7 @@ interface SocialPostRow {
   mediaUrls: string[]
   altText: string | null
   sourceRef: string | null
+  scheduledFor: string | null
   publishedAt: string | null
   igPermalink: string | null
   failureReason: string | null
@@ -251,6 +252,19 @@ export default function SocialReviewPage() {
                   <span className="rounded bg-gray-100 px-2 py-1 font-medium text-gray-700">{post.kind}</span>
                   <span className="rounded bg-gray-100 px-2 py-1 text-gray-600">{post.format}</span>
                   {post.sourceRef && <span className="text-gray-400">#{post.sourceRef}</span>}
+                  {post.scheduledFor && (
+                    <span className="rounded bg-blue-50 px-2 py-1 font-medium text-blue-700">
+                      Slot:{' '}
+                      {new Date(post.scheduledFor).toLocaleString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        timeZone: 'America/Chicago',
+                      })}
+                    </span>
+                  )}
                   {post.igPermalink && (
                     <a
                       href={post.igPermalink}
