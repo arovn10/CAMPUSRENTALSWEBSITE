@@ -17,6 +17,7 @@
 import { prisma } from '@/lib/prisma'
 import type { SocialPost } from '@prisma/client'
 import { validateCaption, renderCaption } from './compliance'
+import { SLOT_STALE_HOURS } from './campaign'
 import {
   createMediaContainer,
   createCarouselContainer,
@@ -153,7 +154,12 @@ async function publishOne(post: SocialPost): Promise<PublishOutcome> {
 }
 
 /**
- * Publish as many approved posts as cadence allows, oldest approval first.
+ * Publish the next due approved post, if cadence allows.
+ *
+ * Due means: no slot (legacy/undated drafts), or a campaign slot that has
+ * opened and is not more than SLOT_STALE_HOURS old. Slotted posts go first, in
+ * slot order, so Monday's unit is never sent on Wednesday ahead of its turn;
+ * undated posts follow, oldest approval first.
  * Returns a summary; never throws on a single post's failure.
  */
 export async function runPublishCycle(): Promise<PublishRunResult> {
@@ -186,9 +192,15 @@ export async function runPublishCycle(): Promise<PublishRunResult> {
     console.warn('[social] could not read publishing limit, continuing:', e)
   }
 
+  const now = new Date()
+  const staleCutoff = new Date(now.getTime() - SLOT_STALE_HOURS * 3_600_000)
   const ready = await prisma.socialPost.findMany({
-    where: { status: 'APPROVED', mediaUrls: { isEmpty: false } },
-    orderBy: { reviewedAt: 'asc' },
+    where: {
+      status: 'APPROVED',
+      mediaUrls: { isEmpty: false },
+      OR: [{ scheduledFor: null }, { scheduledFor: { lte: now, gte: staleCutoff } }],
+    },
+    orderBy: [{ scheduledFor: { sort: 'asc', nulls: 'last' } }, { reviewedAt: 'asc' }],
     take: cadence.allowed,
   })
 

@@ -17,7 +17,7 @@ owner-gated — the code here is inert until those values exist.
 ## The flow
 
 ```
-  generate (Mondays)               review (human)             publish (Tuesdays)
+  generate (Sundays)               review (human)          publish (Mon/Wed/Fri)
  ┌──────────────────┐            ┌──────────────┐            ┌─────────────────┐
  │ Abodingo listings│            │ /admin/social│            │ ≤1 post / cycle │
  │ S3 photo library │──drafts──▶ │ approve/edit │──APPROVED─▶│ cap + min gap   │──▶ IG
@@ -29,8 +29,35 @@ owner-gated — the code here is inert until those values exist.
                                                    reach · saves · FOLLOWERS
 ```
 
-**Target cadence is one post a week.** Monday builds the queue, you review it
-during the week, Tuesday publishes whatever you approved.
+**Target cadence is three posts a week, Mon/Wed/Fri** (Alec, 2026-11-20; was
+one a week). Sunday drafts a post for each of the coming week's three slots, you
+review them, and each publish run sends the approved post whose slot has opened.
+
+## Leasing campaigns (`src/lib/social/campaign.ts`)
+
+While a campaign is active it is the **only** content source — the general
+listing/editorial generators pause so they cannot crowd the queue. The current
+one is **June 1, 2027 pre-leasing**: 2422 & 2424 Joseph St, 7700 & 7702 Burthe
+St, 7315 Freret St.
+
+| Slot | Kind | Content |
+|---|---|---|
+| Mon | `LISTING` | one unit — full carousel, beds/baths/sq ft, rent, move-in date |
+| Wed | `PHOTO_FEATURE` | a different unit — its stand-out detail (from the listing copy) |
+| Fri | `LISTING` | the lineup — cover photo + one line for every unit still listed |
+
+- Units rotate by ISO week; Mon and Wed are offset so a week never repeats a unit.
+- All facts (rent, beds, photos) are read **live from the Abodingo feed** at
+  generation time. The campaign file holds only the unit list, the move-in date
+  and the Wednesday highlight lines.
+- A unit that leaves the feed (leased) drops out; its unpublished drafts are
+  set to REJECTED with the reason. Posts whose slot passed 48h ago unpublished
+  are withdrawn the same way.
+- The generate result carries `dataWarnings` when the feed disagrees with the
+  campaign (e.g. a listing's available date ≠ the campaign move-in). Fix those
+  in Abodingo — this site never writes listing data.
+- `SOCIAL_CAMPAIGN_ENABLED=false` falls back to the general sources. The
+  campaign also ends itself on its move-in date.
 
 Generation and publishing are separate jobs on separate schedules on purpose.
 Approving something is a judgement about content; sending it is a decision about
@@ -88,17 +115,19 @@ Defaults, all overridable by env:
 
 | Knob | Default | Why |
 |---|---|---|
-| `SOCIAL_MAX_MEDIA_PER_WINDOW` | 1 | one post per window |
-| `SOCIAL_WINDOW_HOURS` | 168 | the window is 7 days — so, one post a week |
-| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 1440 | redundant at a cap of 1; matters the moment you raise it |
-| `SOCIAL_MAX_OPEN_DRAFTS` | 6 | ~six weeks of choice; generation stops refilling a queue nobody reviews |
+| `SOCIAL_MAX_MEDIA_PER_WINDOW` | 3 | three posts per window |
+| `SOCIAL_WINDOW_HOURS` | 168 | the window is 7 days — so, three a week |
+| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 2160 | 36h keeps posts on separate slots (Mon→Wed, Wed→Fri are 48h) |
+| `SOCIAL_MAX_OPEN_DRAFTS` | 9 | three weeks of slots; generation stops refilling a queue nobody reviews |
+| `SOCIAL_CAMPAIGN_ENABLED` | true | `false` pauses the leasing campaign and returns to the general sources |
 
 Two independent things enforce the weekly rhythm, and both are deliberate:
 
-- the **schedule** publishes on Tuesdays, which gives a predictable posting day.
+- the **schedule** publishes Mon/Wed/Fri at 23:30 UTC, and campaign posts are
+  dated to a slot the publisher will not send early — predictable posting days.
   A rolling cap alone would drift — the next slot frees exactly 168h after the
   last post, so the posting time walks later every week.
-- the **cap** is 1 per rolling 168 hours, which a manual `workflow_dispatch`
+- the **cap** is 3 per rolling 168 hours (36h apart), which a manual `workflow_dispatch`
   cannot bypass. The window is rolling rather than a calendar week because a
   calendar boundary can be crossed to reset the count: "one a week" enforced
   against a calendar week permits two posts a few hours apart across a Sunday

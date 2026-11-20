@@ -26,14 +26,24 @@ separate:
 
 | Job | Cadence | Does |
 |---|---|---|
-| `social-generate` | Mondays | builds drafts from listings, the photo library and editorial topics |
-| `social-publish` | Tuesdays | sends **at most one** human-approved post, inside a rolling cap |
+| `social-generate` | Sundays | drafts one post per Mon/Wed/Fri slot of the coming week (campaign), or from listings/photos/editorial when no campaign is active |
+| `social-publish` | Mon/Wed/Fri 23:30 UTC | sends **at most one** due, human-approved post, inside a rolling cap |
 | `social-insights` | 6-hourly | per-media engagement **and the follower count** |
 
-**Target cadence is one post a week** (Alec, 2026-09-21). Enforced twice: a fixed
-Tuesday schedule for a predictable posting day, and a server-side cap of 1 per
-rolling 168h that a manual workflow run cannot bypass. To go faster, raise
-`SOCIAL_MAX_MEDIA_PER_WINDOW` or shorten `SOCIAL_WINDOW_HOURS`.
+**Target cadence is three posts a week, Mon/Wed/Fri** (Alec, 2026-11-20; was
+one a week from 2026-09-21). Enforced by dated slots the publisher won't send
+early, the Mon/Wed/Fri publish schedule, and a server-side cap of 3 per rolling
+168h with a 36h minimum gap that a manual run cannot bypass.
+
+**Active campaign: June 1, 2027 pre-leasing** — 2422 & 2424 Joseph, 7700 & 7702
+Burthe, 7315 Freret (`src/lib/social/campaign.ts`; Alec confirmed 7315, not
+7313). Mon = one unit, Wed = another unit's highlight, Fri = lineup of all still
+listed. Facts come live from the Abodingo feed; leased units drop out and their
+drafts are withdrawn. Full detail: `docs/INSTAGRAM-PIPELINE.md`.
+
+Known feed discrepancies at launch (2026-11-20, fix in Abodingo): 7315 Freret
+lists available 2028-06-01 and its description names 7313; 7700 Burthe's
+description says 2.5 baths, the record says 2.
 
 **Every post is a DRAFT until a human approves it** at `/admin/social`
 (ADMIN/MANAGER). Approving is a content judgement; sending is a timing decision.
