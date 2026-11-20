@@ -82,6 +82,14 @@ The long-lived token lives encrypted in `social_credentials`, not in env: PM2
 processes cannot rewrite their own environment, so an env-only token would
 revert on every restart. It auto-refreshes weekly against a 60-day window.
 
+## Activation status (checked 2026-11-20)
+
+None of the "Still owed" steps below had been done as of 2026-11-20. Every
+scheduled run since the merge failed solely because the `CRON_SECRET` Actions
+secret was unset; the workflow now treats that as a warning (like a server 503)
+so a red run means something real. Once `CRON_SECRET` is set, a 503 from the
+server still means the Lightsail env/credentials are not in place.
+
 ## Still owed
 
 1. The Meta Business setup (`docs/META-BUSINESS-SETUP.md`) — Facebook Page,
