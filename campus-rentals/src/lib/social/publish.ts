@@ -18,6 +18,9 @@ import { prisma } from '@/lib/prisma'
 import type { SocialPost } from '@prisma/client'
 import { validateCaption, renderCaption } from './compliance'
 import { SLOT_STALE_HOURS } from './campaign'
+
+/** How far ahead of its slot time a post counts as due (same-day window). */
+const DUE_EARLY_HOURS = 12
 import {
   createMediaContainer,
   createCarouselContainer,
@@ -202,11 +205,15 @@ export async function runPublishCycle(): Promise<PublishRunResult> {
 
   const now = new Date()
   const staleCutoff = new Date(now.getTime() - SLOT_STALE_HOURS * 3_600_000)
+  // A post is due on its slot's day even if its time is later that day — so
+  // posts dated under an earlier schedule (e.g. 5pm) still go out on the
+  // morning run of the same day instead of slipping to the next slot.
+  const dueBy = new Date(now.getTime() + DUE_EARLY_HOURS * 3_600_000)
   const ready = await prisma.socialPost.findMany({
     where: {
       status: 'APPROVED',
       mediaUrls: { isEmpty: false },
-      OR: [{ scheduledFor: null }, { scheduledFor: { lte: now, gte: staleCutoff } }],
+      OR: [{ scheduledFor: null }, { scheduledFor: { lte: dueBy, gte: staleCutoff } }],
     },
     orderBy: [{ scheduledFor: { sort: 'asc', nulls: 'last' } }, { reviewedAt: 'asc' }],
     take: cadence.allowed,

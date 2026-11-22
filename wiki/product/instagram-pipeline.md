@@ -1,6 +1,6 @@
 # Instagram content pipeline (@campusrentalsllc)
 
-**Status:** **LIVE since 2026-11-22.** @campusrentalsllc connected (Page token, no expiry), publishing switch ON, first automated post Mon 2026-11-23 23:30 UTC.
+**Status:** **LIVE since 2026-11-22.** @campusrentalsllc connected (Page token, no expiry), publishing switch ON, first automated post Mon 2026-11-23 14:30 UTC (8:30am CT). Publishing moved to mornings 2026-11-22.
 **Lives in:** this repo — `campus-rentals/src/lib/social/`, `/admin/social`,
 `/api/social/*`, `/api/cron/social-*`.
 **Docs:** `campus-rentals/docs/INSTAGRAM-PIPELINE.md` (how it works) ·
@@ -27,13 +27,13 @@ separate:
 | Job | Cadence | Does |
 |---|---|---|
 | `social-generate` | Sundays | drafts one post per Mon/Wed/Fri slot of the coming week (campaign), or from listings/photos/editorial when no campaign is active |
-| `social-publish` | Mon/Wed/Fri 23:30 UTC | sends **at most one** due, human-approved post, inside a rolling cap |
+| `social-publish` | Mon/Wed/Fri 14:30 UTC (8:30am CST) | sends **at most one** due, human-approved post, inside a rolling cap |
 | `social-insights` | 6-hourly | per-media engagement **and the follower count** |
 
 **Target cadence is three posts a week, Mon/Wed/Fri** (Alec, 2026-11-20; was
 one a week from 2026-09-21). Enforced by dated slots the publisher won't send
-early, the Mon/Wed/Fri publish schedule, and a server-side cap of 3 per rolling
-168h with a 36h minimum gap that a manual run cannot bypass.
+early, the Mon/Wed/Fri publish schedule, and a server-side cap of 4 per rolling
+168h (3 slots + room for one hand-made post) with a 12h minimum gap that a manual run cannot bypass.
 
 **Active campaign: June 1, 2027 pre-leasing** — 2422 & 2424 Joseph, 7700 & 7702
 Burthe, 7315 Freret (`src/lib/social/campaign.ts`; Alec confirmed 7315, not

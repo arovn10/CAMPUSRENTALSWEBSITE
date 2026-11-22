@@ -114,10 +114,11 @@ export interface Slot {
 }
 
 /**
- * Publish runs at 23:30 UTC Mon/Wed/Fri (5:30pm CST / 6:30pm CDT). A slot
- * opens at 23:00 UTC so the run that day finds it due.
+ * Publish runs at 14:30 UTC Mon/Wed/Fri — 8:30am CST / 9:30am CDT (Alec,
+ * 2026-11-22: mornings; was 5:30pm). A slot opens at 14:00 UTC so the run
+ * that day finds it due.
  */
-const SLOT_HOUR_UTC = 23
+const SLOT_HOUR_UTC = 14
 const ROLE_BY_WEEKDAY: Record<number, SlotRole> = { 1: 'unit', 3: 'feature', 5: 'lineup' }
 
 /** Drafts need time to be reviewed; a slot closer than this is not drafted for. */

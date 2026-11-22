@@ -78,15 +78,16 @@ function intEnv(name: string, fallback: number, min: number, max: number): numbe
 /**
  * Publishing cadence is a ceiling of N media per rolling window of H hours.
  *
- * The default is THREE posts per 168 hours — Mon/Wed/Fri (Alec, 2026-11-20;
- * was one a week). The window is rolling
+ * The default allows FOUR posts per 168 hours: the three Mon/Wed/Fri slots
+ * (Alec, 2026-11-20) plus room for one hand-made post a week (2026-11-22).
+ * The slots themselves still produce three. The window is rolling
  * rather than a calendar week on purpose: a calendar boundary can be crossed to
  * reset the count, so "one a week" enforced against a calendar week permits two
  * posts a few hours apart across a Sunday night. A rolling window cannot be
  * gamed that way, including by a manual workflow_dispatch.
  */
 export function maxMediaPerWindow(): number {
-  return intEnv('SOCIAL_MAX_MEDIA_PER_WINDOW', 3, 1, 12)
+  return intEnv('SOCIAL_MAX_MEDIA_PER_WINDOW', 4, 1, 12)
 }
 
 /** Length of that rolling window, in hours. 168 = 7 days. */
@@ -95,12 +96,11 @@ export function windowHours(): number {
 }
 
 /**
- * Secondary spacing guard, in minutes. With three posts a week the window
- * alone would allow all three back to back; 36h keeps them on separate slots
- * (Mon→Wed and Wed→Fri are 48h) while tolerating a late cron run.
+ * Secondary spacing guard, in minutes. 12h stops a double post from a
+ * re-run while leaving room for one hand-made post between slots (2026-11-22).
  */
 export function minPublishGapMinutes(): number {
-  return intEnv('SOCIAL_MIN_PUBLISH_GAP_MINUTES', 2160, 30, 10080)
+  return intEnv('SOCIAL_MIN_PUBLISH_GAP_MINUTES', 720, 30, 10080)
 }
 
 /**
