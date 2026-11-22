@@ -1,6 +1,6 @@
 # Instagram content pipeline (@campusrentalsllc)
 
-**Status:** built and merged, **inert until the Meta setup is done** (owner-gated).
+**Status:** **LIVE since 2026-11-22.** @campusrentalsllc connected (Page token, no expiry), publishing switch ON, first automated post Mon 2026-11-23 23:30 UTC.
 **Lives in:** this repo — `campus-rentals/src/lib/social/`, `/admin/social`,
 `/api/social/*`, `/api/cron/social-*`.
 **Docs:** `campus-rentals/docs/INSTAGRAM-PIPELINE.md` (how it works) ·
@@ -91,6 +91,13 @@ approved posts simply wait. Credentials (`IG_BUSINESS_ACCOUNT_ID`,
 The long-lived token lives encrypted in `social_credentials`, not in env: PM2
 processes cannot rewrite their own environment, so an env-only token would
 revert on every restart. It auto-refreshes weekly against a 60-day window.
+
+## Go-live log (2026-11-22)
+
+- Admin login for the owner: `arovner@campusrentalsllc.com` (ADMIN) created via SSH; existing admins `rovnerproperties@gmail.com`, `testadmin@campusrentalsllc.com`.
+- `ENCRYPTION_KEY` added to `.env.local` on Lightsail (none existed; only the social pipeline uses `lib/encryption`). **Never rotate it** without re-encrypting `social_credentials`.
+- Verified live: generate (OIDC auth) queued 3 campaign drafts; insights read 27 followers; publish dry-run 200 with nothing due.
+- Gotcha: the review page reads the login token from `sessionStorage`, which is per-tab — open `/admin/social` in the same tab you signed in with. The httpOnly-cookie fallback did not authenticate a fresh tab (cause not yet investigated).
 
 ## Activation status (checked 2026-11-20)
 
