@@ -10,8 +10,15 @@
  * servers fetch it, not the browser. Ours are CloudFront URLs, which is why the
  * pipeline only ever posts media already on the CDN.
  */
-import { GRAPH_API_BASE, igUserId } from './config'
+import { GRAPH_API_BASE, resolveIgUserId } from './config'
 import { loadCredential, scrub } from './credentials'
+
+/** The account to act on; fails loudly rather than calling /undefined/media. */
+async function igId(): Promise<string> {
+  const id = await resolveIgUserId()
+  if (!id) throw new InstagramError('No Instagram account connected', 503)
+  return id
+}
 
 export class InstagramError extends Error {
   readonly status: number
@@ -72,7 +79,7 @@ export async function createMediaContainer(params: {
   if (params.caption && !params.isCarouselItem) body.caption = params.caption
   if (params.altText) body.alt_text = params.altText
 
-  const out = await graph<{ id: string }>(`${igUserId()}/media`, body, 'POST')
+  const out = await graph<{ id: string }>(`${await igId()}/media`, body, 'POST')
   return out.id
 }
 
@@ -82,7 +89,7 @@ export async function createCarouselContainer(childIds: string[], caption: strin
     throw new InstagramError(`A carousel needs 2-10 items, got ${childIds.length}`, 400)
   }
   const out = await graph<{ id: string }>(
-    `${igUserId()}/media`,
+    `${await igId()}/media`,
     { media_type: 'CAROUSEL', children: childIds.join(','), caption },
     'POST'
   )
@@ -125,7 +132,7 @@ export async function waitForContainer(
 /** Publish a finished container. Returns the published media id. */
 export async function publishContainer(containerId: string): Promise<string> {
   const out = await graph<{ id: string }>(
-    `${igUserId()}/media_publish`,
+    `${await igId()}/media_publish`,
     { creation_id: containerId },
     'POST'
   )
@@ -188,7 +195,7 @@ export async function accountSnapshot(): Promise<{
     followers_count?: number
     follows_count?: number
     media_count?: number
-  }>(igUserId(), { fields: 'followers_count,follows_count,media_count' })
+  }>(await igId(), { fields: 'followers_count,follows_count,media_count' })
   return {
     followers: out.followers_count ?? 0,
     follows: out.follows_count ?? 0,
@@ -199,7 +206,7 @@ export async function accountSnapshot(): Promise<{
 /** Quota used in the rolling 24h publishing window (Meta's cap is 50). */
 export async function publishingLimit(): Promise<{ used: number; cap: number }> {
   const out = await graph<{ data?: Array<{ quota_usage?: number; config?: { quota_total?: number } }> }>(
-    `${igUserId()}/content_publishing_limit`,
+    `${await igId()}/content_publishing_limit`,
     { fields: 'config,quota_usage' }
   )
   const row = out.data?.[0]

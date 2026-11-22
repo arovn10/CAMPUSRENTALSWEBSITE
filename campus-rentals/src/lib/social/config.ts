@@ -10,9 +10,26 @@
 export const GRAPH_API_VERSION = 'v21.0'
 export const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
 
-/** The Instagram Business account id (numeric, from the linked Facebook Page). */
+/**
+ * The Instagram Business account id from env, if set. Normally empty: the id is
+ * discovered and stored when an admin connects the account at /admin/social.
+ * Use resolveIgUserId() — it falls back to the stored value.
+ */
 export function igUserId(): string {
   return (process.env.IG_BUSINESS_ACCOUNT_ID ?? '').trim()
+}
+
+/** The Instagram username the connect flow must find (guards against connecting the wrong account). */
+export function expectedIgUsername(): string {
+  return (process.env.SOCIAL_IG_USERNAME ?? 'campusrentalsllc').trim().replace(/^@/, '').toLowerCase()
+}
+
+/**
+ * Meta app id. Public (it appears in every OAuth URL), so a default is safe;
+ * env overrides it. Only used to ask Meta how long a token lives.
+ */
+export function metaAppIdOrDefault(): string {
+  return metaAppId() || '1827015521939730' // "Campus Rentals Social", created 2026-11-22
 }
 
 /** App id/secret — needed to exchange and refresh long-lived tokens. */
@@ -24,11 +41,27 @@ export function metaAppSecret(): string {
 }
 
 /**
- * Master switch. Publishing is OFF unless this is explicitly "true", so an
- * account misconfiguration can never result in an unintended public post.
+ * Master switch. Publishing is OFF unless something explicitly turns it on, so
+ * an account misconfiguration can never result in an unintended public post.
+ *
+ *   SOCIAL_PUBLISHING_ENABLED=false  → off, whatever the admin toggle says (hard kill)
+ *   SOCIAL_PUBLISHING_ENABLED=true   → on
+ *   unset                            → the admin toggle at /admin/social decides (default off)
  */
-export function publishingEnabled(): boolean {
-  return (process.env.SOCIAL_PUBLISHING_ENABLED ?? '').trim().toLowerCase() === 'true'
+export async function publishingEnabled(): Promise<boolean> {
+  const env = (process.env.SOCIAL_PUBLISHING_ENABLED ?? '').trim().toLowerCase()
+  if (env === 'false') return false
+  if (env === 'true') return true
+  const { getSetting } = await import('./settings')
+  return (await getSetting(PUBLISHING_SETTING)) === 'true'
+}
+
+export const PUBLISHING_SETTING = 'publishing_enabled'
+
+/** Where the switch is being decided — shown on the review screen. */
+export function publishingEnvOverride(): 'on' | 'off' | null {
+  const env = (process.env.SOCIAL_PUBLISHING_ENABLED ?? '').trim().toLowerCase()
+  return env === 'true' ? 'on' : env === 'false' ? 'off' : null
 }
 
 /** Draft generation can run (and be reviewed) with publishing still off. */
@@ -86,7 +119,17 @@ export function silentHoursWarning(): number {
   return intEnv('SOCIAL_SILENT_HOURS_WARNING', 120, 6, 2160)
 }
 
-/** True when the credentials needed to talk to Instagram are all present. */
-export function instagramConfigured(): boolean {
-  return Boolean(igUserId() && metaAppId() && metaAppSecret())
+/** The Instagram account id to publish to: env first, else the one stored at connect time. */
+export async function resolveIgUserId(): Promise<string> {
+  const fromEnv = igUserId()
+  if (fromEnv) return fromEnv
+  const { loadCredential } = await import('./credentials')
+  return (await loadCredential())?.igUserId ?? ''
+}
+
+/** True when a token and an Instagram account id are both available. */
+export async function instagramConfigured(): Promise<boolean> {
+  const { loadCredential } = await import('./credentials')
+  const cred = await loadCredential()
+  return Boolean(cred && (igUserId() || cred.igUserId))
 }

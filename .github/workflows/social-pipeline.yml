@@ -16,9 +16,12 @@ name: Instagram Pipeline
 #   - the server caps publishing at 3 per rolling 168h with a 36h minimum gap,
 #     which a manual run cannot bypass.
 #
-# Requires:
-#   secret  CRON_SECRET   — must match the app's CRON_SECRET env var
-#   var     APP_BASE_URL  — optional; defaults to https://campusrentalsllc.com
+# Auth: the job proves who it is with a GitHub OIDC token (audience
+# "campusrentalsllc-social"); the server checks it was minted for this repo's
+# main branch by this workflow. No shared secret to configure anywhere.
+# Optional:
+#   secret  CRON_SECRET   — legacy shared secret, used instead of OIDC if set
+#   var     APP_BASE_URL  — defaults to https://campusrentalsllc.com
 #
 # Every endpoint is safe to re-run: generation dedupes on a unique sourceKey,
 # publishing claims a row conditionally, insight writes are keyed per hour.
@@ -35,6 +38,10 @@ on:
         type: choice
         options: [generate, publish, insights]
         default: generate
+
+permissions:
+  contents: read
+  id-token: write # lets the job mint the OIDC token the server verifies
 
 jobs:
   run:
@@ -65,18 +72,20 @@ jobs:
           BASE_URL: ${{ vars.APP_BASE_URL || 'https://campusrentalsllc.com' }}
           JOB: ${{ steps.pick.outputs.job }}
         run: |
-          # A missing secret means the pipeline has not been activated yet
-          # (Meta setup is owner-gated). Same treatment as a server 503: warn,
-          # don't fail. 198 red runs between 2026-09-21 and 2026-11-20 were
-          # this and nothing else, and they were drowning real failures.
-          if [ -z "$CRON_SECRET" ]; then
-            echo "::warning::CRON_SECRET secret is not set — pipeline not activated yet, skipping."
-            exit 0
+          if [ -n "$CRON_SECRET" ]; then
+            TOKEN="$CRON_SECRET"
+          else
+            TOKEN=$(curl -sf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=campusrentalsllc-social" | jq -r .value)
+            if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+              echo "::error::Could not mint a GitHub OIDC token"; exit 1
+            fi
+            echo "::add-mask::$TOKEN"
           fi
           echo "POST $BASE_URL/api/cron/social-$JOB"
           code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 280 \
             -X POST "$BASE_URL/api/cron/social-$JOB" \
-            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d '{}' || echo 000)
           echo "HTTP $code"

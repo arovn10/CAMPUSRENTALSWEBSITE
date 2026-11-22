@@ -100,7 +100,32 @@ secret was unset; the workflow now treats that as a warning (like a server 503)
 so a red run means something real. Once `CRON_SECRET` is set, a 503 from the
 server still means the Lightsail env/credentials are not in place.
 
-## Still owed
+## Connect flow — no secrets to copy (2026-11-22)
+
+Meta app **"Campus Rentals Social"** (ID 1827015521939730), Instagram use case,
+"API setup with Facebook login", linked to the **Campus Rentals** business
+portfolio (597785759237786, unverified). Development mode — enough to post to
+our own account. Not the Deal Radar app.
+
+- **Connecting:** an ADMIN pastes a long-lived Facebook *user* token at
+  `/admin/social` → server finds the Page linked to `@campusrentalsllc`
+  (`SOCIAL_IG_USERNAME` overrides) and stores that Page's token + IG account id,
+  encrypted. A Page token from a long-lived user token **does not expire**, so
+  no refresh runs. Short-lived tokens are refused with instructions.
+- **Cron auth:** GitHub Actions sends an **OIDC token** (audience
+  `campusrentalsllc-social`); `guard.ts` verifies it was minted for
+  `arovn10/campusrentalswebsite`, `refs/heads/main`, `social-pipeline.yml`.
+  `CRON_SECRET` still works if set but is no longer needed.
+- **Publishing switch:** toggle on `/admin/social` (table `social_settings`).
+  `SOCIAL_PUBLISHING_ENABLED=false` in env is the hard kill; `=true` forces on.
+- **No Lightsail env vars are required any more.** `META_APP_SECRET` is only
+  used if a token with an expiry ever needs extending.
+- Not yet added in the Meta app: `instagram_manage_insights` (the dashboard's
+  Add button didn't respond from the agent's browser). Without it the insights
+  job's follower/reach reads fail; publishing is unaffected. One click in
+  App dashboard → Use cases → Customize → Permissions.
+
+## Still owed (superseded by the connect flow above)
 
 1. The Meta Business setup (`docs/META-BUSINESS-SETUP.md`) — Facebook Page,
    Business portfolio, developer app, long-lived token. Owner-gated; no agent

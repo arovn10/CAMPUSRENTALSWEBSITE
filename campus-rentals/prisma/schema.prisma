@@ -1748,6 +1748,8 @@ model SocialCredential {
   id              String    @id @default(cuid())
   provider        String    @unique // "instagram"
   igUserId        String?
+  igUsername      String? // e.g. "campusrentalsllc" — set when connected via /admin/social
+  pageName        String? // the Facebook Page the Instagram account is linked to
   accessToken     String // ciphertext — never log or return this
   expiresAt       DateTime?
   lastRefreshedAt DateTime?
@@ -1756,4 +1758,14 @@ model SocialCredential {
   updatedAt       DateTime  @updatedAt
 
   @@map("social_credentials")
+}
+
+/// Small admin-controlled switches for the social pipeline (e.g. publishing on/off).
+model SocialSetting {
+  key       String   @id
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("social_settings")
 }

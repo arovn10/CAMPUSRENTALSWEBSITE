@@ -15,7 +15,7 @@ export const maxDuration = 300
  * Auth: `Authorization: Bearer <CRON_SECRET>` (or `x-cron-secret`).
  */
 export async function POST(request: NextRequest) {
-  const unauthorized = requireCronSecret(request)
+  const unauthorized = await requireCronSecret(request)
   if (unauthorized) return unauthorized
 
   try {
