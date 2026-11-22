@@ -173,11 +173,11 @@ async function publishOne(post: SocialPost): Promise<PublishOutcome> {
 export async function runPublishCycle(): Promise<PublishRunResult> {
   const result: PublishRunResult = { attempted: 0, published: 0, outcomes: [] }
 
-  if (!publishingEnabled()) {
-    result.blocked = 'SOCIAL_PUBLISHING_ENABLED is not "true"'
+  if (!(await publishingEnabled())) {
+    result.blocked = 'Publishing is switched off (toggle at /admin/social, or SOCIAL_PUBLISHING_ENABLED)'
     return result
   }
-  if (!instagramConfigured()) {
+  if (!(await instagramConfigured())) {
     result.blocked = 'Instagram credentials are not configured'
     return result
   }

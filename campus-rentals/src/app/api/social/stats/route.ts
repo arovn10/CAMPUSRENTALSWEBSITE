@@ -3,6 +3,7 @@ import { requireSocialReviewer, errorResponse } from '@/lib/social/guard'
 import { pipelineStats } from '@/lib/social/insights'
 import {
   publishingEnabled,
+  publishingEnvOverride,
   instagramConfigured,
   maxMediaPerWindow,
   windowHours,
@@ -22,8 +23,9 @@ export async function GET(request: NextRequest) {
     const [stats, cadence] = await Promise.all([pipelineStats(), cadenceAllowance()])
     return NextResponse.json({
       ...stats,
-      publishingEnabled: publishingEnabled(),
-      instagramConfigured: instagramConfigured(),
+      publishingEnabled: await publishingEnabled(),
+      publishingEnvOverride: publishingEnvOverride(),
+      instagramConfigured: await instagramConfigured(),
       maxMediaPerWindow: maxMediaPerWindow(),
       windowHours: windowHours(),
       minPublishGapMinutes: minPublishGapMinutes(),

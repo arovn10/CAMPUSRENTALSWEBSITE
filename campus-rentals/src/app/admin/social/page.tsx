@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import InstagramConnectPanel from '@/components/social/InstagramConnectPanel'
 import Image from 'next/image'
 import {
   ArrowPathIcon,
@@ -202,17 +203,16 @@ export default function SocialReviewPage() {
           </div>
         )}
 
+        <InstagramConnectPanel headers={authHeaders} onChange={load} />
+
         {stats && !stats.publishingEnabled && (
           <Banner tone="warn">
-            Publishing is OFF (<code>SOCIAL_PUBLISHING_ENABLED</code> is not &quot;true&quot;). Drafts can be
-            reviewed and approved; nothing will reach Instagram.
+            Publishing is OFF. Drafts can be reviewed and approved; nothing will reach Instagram until an admin
+            turns publishing on.
           </Banner>
         )}
         {stats && !stats.instagramConfigured && (
-          <Banner tone="warn">
-            Instagram credentials are not configured yet. Complete the Meta setup in
-            <code> docs/META-BUSINESS-SETUP.md</code>, then store the token.
-          </Banner>
+          <Banner tone="warn">Instagram is not connected yet — an admin can connect it above.</Banner>
         )}
         {stats?.cadence.reason && stats.publishingEnabled && (
           <Banner tone="info">Publishing paused: {stats.cadence.reason}.</Banner>

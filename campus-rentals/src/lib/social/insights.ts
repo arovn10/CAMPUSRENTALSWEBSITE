@@ -12,7 +12,7 @@
  */
 import { prisma } from '@/lib/prisma'
 import { mediaInsights, accountSnapshot } from './instagram'
-import { instagramConfigured } from './config'
+import { instagramConfigured, resolveIgUserId } from './config'
 
 /** Media younger than this is still accumulating; older than this is settled. */
 const MATURE_AFTER_HOURS = 72
@@ -40,7 +40,7 @@ export function hourKey(d = new Date()): string {
 export async function runTrackingCycle(): Promise<TrackingResult> {
   const result: TrackingResult = { mediaTracked: 0, errors: 0, accountRecorded: false }
 
-  if (!instagramConfigured()) {
+  if (!(await instagramConfigured())) {
     result.skipped = 'Instagram credentials are not configured'
     return result
   }
@@ -53,7 +53,7 @@ export async function runTrackingCycle(): Promise<TrackingResult> {
       where: { capturedHour: key },
       update: { followers: snap.followers, follows: snap.follows, mediaCount: snap.mediaCount },
       create: {
-        igUserId: process.env.IG_BUSINESS_ACCOUNT_ID ?? '',
+        igUserId: await resolveIgUserId(),
         followers: snap.followers,
         follows: snap.follows,
         mediaCount: snap.mediaCount,
