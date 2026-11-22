@@ -172,8 +172,8 @@ export function validateCaption(caption: string, hashtags: string[] = []): Compl
 }
 
 /**
- * The equal-housing line that goes on any caption advertising an available
- * dwelling. Kept as a constant so the caption builder and the reviewer UI
+ * The equal-housing line, added to listing captions only when
+ * SOCIAL_EQUAL_HOUSING_NOTICE=true (off by default — see publish.ts). Kept as a constant so the caption builder and the reviewer UI
  * cannot drift apart on its wording.
  */
 export const EQUAL_HOUSING_NOTICE = 'Campus Rentals LLC is an equal housing opportunity provider.'

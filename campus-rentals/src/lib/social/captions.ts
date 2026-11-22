@@ -140,3 +140,51 @@ export interface NeighborhoodInput {
 export function neighborhoodCaption(p: NeighborhoodInput): string {
   return [p.title, p.body, 'We lease across Uptown New Orleans — current availability is on the site.'].join('\n\n')
 }
+
+// ── Leasing-campaign captions (see campaign.ts) ─────────────────────────────
+
+/** Monday: one campaign unit, with its move-in date up front. */
+export function campaignUnitCaption(p: ListingCaptionInput & { moveInLabel: string }): string {
+  const beds = p.bedrooms === 1 ? '1 bedroom' : `${p.bedrooms} bedrooms`
+  const baths = p.bathrooms === 1 ? '1 bath' : `${p.bathrooms} baths`
+  const spec = [beds, baths, p.squareFeet ? `${p.squareFeet.toLocaleString('en-US')} sq ft` : null]
+    .filter(Boolean)
+    .join(' · ')
+  return [
+    `Now pre-leasing for ${p.moveInLabel}: ${p.address}.`,
+    `${spec} — ${money(p.price)}/month.`,
+    'Photos, details and tour requests are on campusrentalsllc.com.',
+  ].join('\n\n')
+}
+
+/** Wednesday: one stand-out detail of a campaign unit. */
+export function campaignFeatureCaption(p: { address: string; highlight: string; moveInLabel: string }): string {
+  return [
+    `A closer look at ${p.address}.`,
+    p.highlight,
+    `Available ${p.moveInLabel}. See it on campusrentalsllc.com.`,
+  ].join('\n\n')
+}
+
+export interface LineupUnit {
+  address: string
+  bedrooms: number
+  bathrooms: number
+  price: number
+}
+
+/** Friday hooks, rotated by week so the lineup post does not open the same way twice running. */
+const LINEUP_HOOKS = [
+  (d: string, n: number) => `Still open for ${d} — ${n === 1 ? 'one home' : `${n} homes`} near Tulane.`,
+  (d: string, n: number) => `Planning for next year? Here is everything we have for ${d}.`,
+  (d: string, n: number) => `The ${d} lineup, as of this week: ${n === 1 ? 'one home' : `${n} homes`} left.`,
+]
+
+/** Friday: every campaign unit still listed, one line each. Counts come from the live feed. */
+export function campaignLineupCaption(units: LineupUnit[], moveInLabel: string, week: number): string {
+  const hook = LINEUP_HOOKS[week % LINEUP_HOOKS.length](moveInLabel, units.length)
+  const lines = units.map(
+    (u) => `${u.address} — ${u.bedrooms} bd / ${u.bathrooms} ba — ${money(u.price)}/month`,
+  )
+  return [hook, lines.join('\n'), 'Tours and applications through campusrentalsllc.com.'].join('\n\n')
+}
