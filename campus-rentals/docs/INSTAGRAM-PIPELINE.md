@@ -118,19 +118,19 @@ Defaults, all overridable by env:
 
 | Knob | Default | Why |
 |---|---|---|
-| `SOCIAL_MAX_MEDIA_PER_WINDOW` | 3 | three posts per window |
+| `SOCIAL_MAX_MEDIA_PER_WINDOW` | 4 | three slot posts + one hand-made post per window |
 | `SOCIAL_WINDOW_HOURS` | 168 | the window is 7 days — so, three a week |
-| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 2160 | 36h keeps posts on separate slots (Mon→Wed, Wed→Fri are 48h) |
+| `SOCIAL_MIN_PUBLISH_GAP_MINUTES` | 720 | 12h blocks a double post from a re-run, allows one hand-made post between slots |
 | `SOCIAL_MAX_OPEN_DRAFTS` | 9 | three weeks of slots; generation stops refilling a queue nobody reviews |
 | `SOCIAL_CAMPAIGN_ENABLED` | true | `false` pauses the leasing campaign and returns to the general sources |
 
 Two independent things enforce the weekly rhythm, and both are deliberate:
 
-- the **schedule** publishes Mon/Wed/Fri at 23:30 UTC, and campaign posts are
+- the **schedule** publishes Mon/Wed/Fri at 14:30 UTC (8:30am CST), and campaign posts are
   dated to a slot the publisher will not send early — predictable posting days.
   A rolling cap alone would drift — the next slot frees exactly 168h after the
   last post, so the posting time walks later every week.
-- the **cap** is 3 per rolling 168 hours (36h apart), which a manual `workflow_dispatch`
+- the **cap** is 4 per rolling 168 hours (12h apart), which a manual `workflow_dispatch`
   cannot bypass. The window is rolling rather than a calendar week because a
   calendar boundary can be crossed to reset the count: "one a week" enforced
   against a calendar week permits two posts a few hours apart across a Sunday
