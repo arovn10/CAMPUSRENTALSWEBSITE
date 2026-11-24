@@ -211,12 +211,16 @@ export default function AdminDashboard() {
                         <td className="py-2 pr-4">{u.role}</td>
                         <td className="py-2 pr-4">
                           <div className="flex flex-wrap gap-2 max-w-xl">
-                            {properties.map((p:any)=>(
-                              <label key={p.propertyId || p.property?.id || p.propertyId} className="inline-flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded border">
-                                <input type="checkbox" defaultChecked={accessSet.has(p.propertyId || p.propertyId || p.property?.id)} onChange={()=>toggle(p.propertyId || p.property?.id || p.propertyId)} />
-                                <span>{p.propertyName || p.property?.name || p.name || p.propertyAddress}</span>
+                            {properties.map((p:any)=>{
+                              const pid = p.property?.id || p.id || p.propertyId
+                              if (!pid) return null
+                              return (
+                              <label key={pid} className="inline-flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded border">
+                                <input type="checkbox" defaultChecked={accessSet.has(pid)} onChange={()=>toggle(pid)} />
+                                <span>{p.property?.name || p.propertyName || p.name || p.propertyAddress || pid}</span>
                               </label>
-                            ))}
+                              )
+                            })}
                           </div>
                         </td>
                         <td className="py-2 space-x-2">

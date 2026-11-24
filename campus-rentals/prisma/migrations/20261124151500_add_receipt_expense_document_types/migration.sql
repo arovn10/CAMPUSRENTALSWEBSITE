@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "DocumentType" ADD VALUE 'RECEIPT';
+ALTER TYPE "DocumentType" ADD VALUE 'EXPENSE';

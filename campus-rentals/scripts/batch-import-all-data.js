@@ -232,14 +232,14 @@ const entityStructure = {
     type: 'LLC',
     owners: [
       { entityName: 'Campus Rentals LLC', ownershipPercentage: 66.67, investmentAmount: 0 },
-      { email: 'sam.torres@example.com', ownershipPercentage: 33.33, investmentAmount: 0 } // Sam Torres - adjust email
+      { email: 'sam.torres@campusrentalsllc.com', ownershipPercentage: 33.33, investmentAmount: 0 } // Sidney Torres V
     ]
   },
   'Campus Rentals 3 LLC': {
     type: 'LLC',
     owners: [
       { entityName: 'Campus Rentals LLC', ownershipPercentage: 50, investmentAmount: 0 },
-      { email: 'sam.torres@example.com', ownershipPercentage: 50, investmentAmount: 0 }
+      { email: 'sam.torres@campusrentalsllc.com', ownershipPercentage: 50, investmentAmount: 0 }
     ]
   }
 }
@@ -415,13 +415,32 @@ async function importAllData() {
       })
     }
 
-    // Campus Rentals 2 LLC - CR LLC as owner (nested entity)
-    // Note: This requires entity-to-entity ownership which may need special handling
-    // For now, we'll track this separately
+    // Campus Rentals 2 LLC — CR LLC (66.67%) + Sidney Torres (33.33%)
+    const upsertEntityOwner = async ({ entityId, userId = null, investorEntityId = null, ownershipPercentage }) => {
+      const where = userId
+        ? { entityId, userId }
+        : { entityId, investorEntityId }
+      let row = await prisma.entityOwner.findFirst({ where })
+      const data = {
+        entityId,
+        userId,
+        investorEntityId,
+        ownershipPercentage,
+        investmentAmount: 0,
+        isActive: true,
+      }
+      if (!row) row = await prisma.entityOwner.create({ data })
+      else row = await prisma.entityOwner.update({ where: { id: row.id }, data })
+      return row
+    }
+    await upsertEntityOwner({ entityId: cr2LLC.id, investorEntityId: crLLC.id, ownershipPercentage: 66.67 })
+    if (sam) await upsertEntityOwner({ entityId: cr2LLC.id, userId: sam.id, ownershipPercentage: 33.33 })
+
+    // Campus Rentals 3 LLC — CR LLC (50%) + Sidney Torres (50%)
+    await upsertEntityOwner({ entityId: cr3LLC.id, investorEntityId: crLLC.id, ownershipPercentage: 50 })
+    if (sam) await upsertEntityOwner({ entityId: cr3LLC.id, userId: sam.id, ownershipPercentage: 50 })
     
-    // Campus Rentals 3 LLC - CR LLC as owner (nested entity)
-    
-    console.log('   ✅ Entity ownership configured\n')
+    console.log('   ✅ Entity ownership configured (including nested CR2/CR3)\n')
 
     // Step 4: Import Properties and Entity Investments
     console.log('🏠 Step 4: Processing properties and investments...')

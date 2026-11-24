@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -187,7 +188,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                     firstName: owner.user.firstName,
                     lastName: owner.user.lastName,
                     role: 'INVESTOR',
-                    password: 'temp-password-' + Math.random().toString(36).substring(7) // Temporary password
+                    password: await bcrypt.hash('ChangeMe-' + Math.random().toString(36).slice(2) + Date.now().toString(36), 10)
                   }
                 })
                 
