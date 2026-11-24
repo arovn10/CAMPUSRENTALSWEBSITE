@@ -25,10 +25,19 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' }
       })
     } else {
-      const [investments, grants] = await Promise.all([
+      const [investments, entityInvestments, grants] = await Promise.all([
         prisma.investment.findMany({
           where: { userId: user.id },
           select: { propertyId: true }
+        }),
+        prisma.entityInvestment.findMany({
+          where: {
+            OR: [
+              { entity: { entityOwners: { some: { userId: user.id } } } },
+              { entityInvestmentOwners: { some: { userId: user.id } } },
+            ],
+          },
+          select: { propertyId: true },
         }),
         // Documents explicitly routed to this investor (e.g. their K-1) — Phase 4 grants.
         prisma.documentAccess.findMany({
@@ -36,24 +45,34 @@ export async function GET(request: NextRequest) {
           select: { documentId: true }
         }),
       ])
-      const propertyIds = [...new Set(investments.map((i) => i.propertyId).filter(Boolean))]
+      const propertyIds = [...new Set([
+        ...investments.map((i) => i.propertyId),
+        ...entityInvestments.map((i) => i.propertyId),
+      ].filter(Boolean))]
       const grantedIds = grants.map((g) => g.documentId)
       documents = await prisma.document.findMany({
         where: {
           OR: [
-            // Broadly-visible docs the investor owns or that belong to their deals.
-            {
-              isPublic: true,
-              visibleToInvestor: true,
-              OR: [
-                { uploadedBy: user.id },
-                ...(propertyIds.length > 0
-                  ? [{ entityType: 'PROPERTY' as const, entityId: { in: propertyIds } }]
-                  : [])
-              ]
-            },
+            { uploadedBy: user.id },
             // Per-investor routed docs (grant is the routing decision).
             ...(grantedIds.length > 0 ? [{ id: { in: grantedIds } }] : []),
+            // Investor-visible docs on properties they have a stake in (isPublic not required).
+            ...(propertyIds.length > 0
+              ? [{
+                  visibleToInvestor: true,
+                  entityType: 'PROPERTY' as const,
+                  entityId: { in: propertyIds },
+                }]
+              : []),
+            // Explicitly published company-wide docs.
+            {
+              visibleToInvestor: true,
+              isPublic: true,
+              OR: [
+                { entityType: 'COMPANY' as const },
+                { entityId: 'company' },
+              ],
+            },
           ]
         },
         orderBy: { createdAt: 'desc' }
@@ -188,13 +207,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // entityId "company" = company-wide (no property); only admins/managers see in list
+    // entityId "company" / entityType COMPANY = company-wide (no property)
     const validDocumentTypes = ['RECEIPT', 'EXPENSE', 'TAX_DOCUMENT', 'PPM', 'OFFERING_MEMORANDUM', 'OPERATING_AGREEMENT', 'FINANCIAL_STATEMENT', 'CONTRACT', 'APPRAISAL', 'INSURANCE', 'TITLE_REPORT', 'ENVIRONMENTAL_REPORT', 'OTHER']
     const safeDocumentType = documentType && validDocumentTypes.includes(documentType) ? documentType : 'OTHER'
 
     // Map entityType to valid enum values
     let validEntityType = entityType
-    if (entityType === 'INVESTMENT') {
+    if (entityId === 'company' || entityType === 'COMPANY') {
+      validEntityType = 'COMPANY'
+      entityId = 'company'
+    } else if (entityType === 'INVESTMENT') {
       validEntityType = 'PROPERTY' // Investments are tied to properties
     }
     

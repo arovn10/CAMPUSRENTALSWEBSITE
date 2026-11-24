@@ -739,6 +739,7 @@ enum EntityType {
   PARTNERSHIP
   TRUST
   OPERATOR
+  COMPANY
 }
 
 enum PhotoType {
