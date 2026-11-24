@@ -5,6 +5,8 @@ import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { documentFileExists } from '@/lib/documentStorage'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/admin/documents/missing-files
  * Lists document DB rows whose filePath does not resolve on disk (loan PDFs, etc.).
