@@ -13,14 +13,20 @@ interface CacheStatus {
   amenitiesCount: number;
 }
 
-interface LoginForm {
-  username: string;
-  password: string;
+function authHeaders(): HeadersInit {
+  const token =
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token') ||
+    localStorage.getItem('token') ||
+    '';
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
 }
 
 export default function CacheAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginForm, setLoginForm] = useState<LoginForm>({ username: '', password: '' });
+  const [authChecking, setAuthChecking] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
   
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null);
@@ -29,34 +35,32 @@ export default function CacheAdminPage() {
   const [forceRefreshing, setForceRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError(null);
-    
-    if (loginForm.username === 'campusrentalsnola' && loginForm.password === '15Saratoga!') {
-      setIsAuthenticated(true);
-      localStorage.setItem('adminAuthenticated', 'true');
-    } else {
-      setLoginError('Invalid username or password');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('adminAuthenticated');
-  };
-
   useEffect(() => {
-    const authStatus = localStorage.getItem('adminAuthenticated');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
+    try {
+      const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+      const token =
+        sessionStorage.getItem('authToken') ||
+        sessionStorage.getItem('token') ||
+        localStorage.getItem('token');
+      if (token && (user.role === 'ADMIN' || user.role === 'MANAGER')) {
+        setIsAuthenticated(true);
+        setLoginError(null);
+      } else {
+        setIsAuthenticated(false);
+        setLoginError('Sign in as an admin from the main login, then open this page.');
+      }
+    } catch {
+      setIsAuthenticated(false);
+      setLoginError('Sign in as an admin from the main login, then open this page.');
+    } finally {
+      setAuthChecking(false);
     }
   }, []);
 
   const fetchCacheStatus = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/cache');
+      const response = await fetch('/api/cache', { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
         setCacheStatus(data);
@@ -78,7 +82,7 @@ export default function CacheAdminPage() {
     setRefreshing(true);
     setMessage(null);
     try {
-      const response = await fetch('/api/warmup');
+      const response = await fetch('/api/warmup', { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
         setMessage(`Cache warmed up successfully: ${data.propertiesCount} properties`);
@@ -96,7 +100,7 @@ export default function CacheAdminPage() {
     setForceRefreshing(true);
     setMessage('🔄 Starting comprehensive refresh of ALL data (bedrooms, bathrooms, descriptions, photos, etc.)...');
     try {
-      const response = await fetch('/api/force-refresh', { method: 'POST' });
+      const response = await fetch('/api/force-refresh', { method: 'POST', headers: authHeaders() });
       const data = await response.json();
       
       if (response.ok && data.success) {
@@ -122,7 +126,7 @@ export default function CacheAdminPage() {
     try {
       const response = await fetch('/api/cache', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ action: 'clear' })
       });
       
@@ -145,59 +149,28 @@ export default function CacheAdminPage() {
     }
   }, [isAuthenticated]);
 
-  // Login Form
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex items-center justify-center">
+        <p className="text-gray-300">Checking admin session…</p>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex items-center justify-center">
-        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-8 bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent text-center">
-            Admin Login
+        <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm w-full max-w-md text-center space-y-4">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+            Cache Administration
           </h1>
-          
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={loginForm.username}
-                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
-                placeholder="Enter username"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={loginForm.password}
-                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-accent"
-                placeholder="Enter password"
-                required
-              />
-            </div>
-            
-            {loginError && (
-              <div className="bg-red-500/20 border border-red-500/30 p-3 rounded-lg text-red-400 text-sm">
-                {loginError}
-              </div>
-            )}
-            
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors duration-300 font-medium"
-            >
-              Login
-            </button>
-          </form>
+          <p className="text-red-400 text-sm">{loginError}</p>
+          <a
+            href="/investors/login"
+            className="inline-block px-6 py-3 bg-accent-deep text-white rounded-lg hover:bg-[#336E73] transition-colors duration-300 font-medium"
+          >
+            Go to admin login
+          </a>
         </div>
       </div>
     );
@@ -212,12 +185,12 @@ export default function CacheAdminPage() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
             Cache Administration
           </h1>
-          <button
-            onClick={handleLogout}
+          <a
+            href="/admin"
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors duration-300"
           >
-            Logout
-          </button>
+            Back to admin
+          </a>
         </div>
 
         {/* Cache Status */}

@@ -107,7 +107,8 @@ export async function POST(request: NextRequest) {
       mimeType: string = 'application/pdf',
       visibleToAdmin: boolean = true,
       visibleToManager: boolean = true,
-      visibleToInvestor: boolean = true
+      visibleToInvestor: boolean = true,
+      isPublic: boolean = false
     let filePathForDb: string | undefined
 
     const contentType = request.headers.get('content-type') || ''
@@ -122,6 +123,7 @@ export async function POST(request: NextRequest) {
       visibleToAdmin = formData.get('visibleToAdmin') === 'true'
       visibleToManager = formData.get('visibleToManager') === 'true'
       visibleToInvestor = formData.get('visibleToInvestor') === 'true'
+      isPublic = formData.get('isPublic') === 'true'
       const file = formData.get('file') as File | null
 
       if (!file || !(file instanceof File) || file.size === 0) {
@@ -168,6 +170,7 @@ export async function POST(request: NextRequest) {
       visibleToAdmin = body.visibleToAdmin !== undefined ? body.visibleToAdmin : true
       visibleToManager = body.visibleToManager !== undefined ? body.visibleToManager : true
       visibleToInvestor = body.visibleToInvestor !== undefined ? body.visibleToInvestor : true
+      isPublic = body.isPublic === true || body.isPublic === 'true'
       fileSize = body.fileSize || 0
       fileName = body.fileName || (title ? `${title}.pdf` : 'document.pdf')
       mimeType = body.mimeType || 'application/pdf'
@@ -203,7 +206,8 @@ export async function POST(request: NextRequest) {
         documentType: safeDocumentType as any,
         entityType: validEntityType as any,
         entityId: entityId,
-        isPublic: true,
+        // Never force public — company/K-1 docs must stay private unless explicitly published.
+        isPublic,
         visibleToAdmin: visibleToAdmin !== undefined ? visibleToAdmin : true,
         visibleToManager: visibleToManager !== undefined ? visibleToManager : true,
         visibleToInvestor: visibleToInvestor !== undefined ? visibleToInvestor : true,

@@ -66,7 +66,16 @@ export async function POST(request: NextRequest) {
         role,
         password: hashed,
         emailVerified: true
-      }
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        emailVerified: true,
+      },
     })
     return NextResponse.json(created, { status: 201 })
   } catch (e: any) {
