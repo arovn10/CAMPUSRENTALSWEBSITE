@@ -76,6 +76,6 @@ WHERE e.name = 'Campus Rentals LLC'
 UPDATE documents SET "isPublic" = false, "updatedAt" = NOW()
 WHERE LOWER(title) = 'ein' AND "isPublic" = true;
 
--- 4) Clear empty debt-directory stub paths (not downloadable files)
-UPDATE documents SET "filePath" = NULL, "updatedAt" = NOW()
+-- 4) Remove empty debt-directory stub docs (filePath is NOT NULL)
+DELETE FROM documents
 WHERE "filePath" IN ('/documents/debt/', 'documents/debt/', '/documents/debt');
