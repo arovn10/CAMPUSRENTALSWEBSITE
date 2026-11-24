@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
             amount: Number(i.amount || 0),
           }))
         : []
-      const closingFees = closingFeesList.reduce((s, i) => s + (i.amount || 0), 0)
+      const closingFees = closingFeesList.reduce((s, i) => s + Number(i.amount || 0), 0)
       const cashToBorrower = parseFloat(body.cashToBorrower || body.totalAmount || '0') || 0
 
       // For refinance, the new debt amount becomes the current debt

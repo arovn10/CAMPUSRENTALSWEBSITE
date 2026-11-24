@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { assertOwnershipSum } from '@/lib/ownershipValidation'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -140,6 +141,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       // Update per-investment entity owners (does not change global entity membership)
       if (body.entityOwners) {
         console.log('Updating entity investment owners for investment:', entityInvestment.id)
+
+        const dealOwnerSum = (body.entityOwners as any[]).reduce(
+          (s, o) => s + (parseFloat(o.ownershipPercentage) || 0),
+          0
+        )
+        // Validate before mutating so we never wipe owners on a bad payload.
+        assertOwnershipSum(dealOwnerSum, 'Deal owner')
         
         // Delete existing owners for this investment only
         const deletedOwners = await tx.entityInvestmentOwner.deleteMany({
@@ -293,9 +301,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     })
   } catch (error) {
     console.error('Error updating entity investment:', error)
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    const isOwnership = /ownership/i.test(msg)
     return NextResponse.json(
-      { error: 'Failed to update entity investment', details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
-      { status: 500 }
+      { error: isOwnership ? msg : 'Failed to update entity investment', details: process.env.NODE_ENV === 'development' ? msg : undefined },
+      { status: isOwnership ? 400 : 500 }
     )
   }
 }

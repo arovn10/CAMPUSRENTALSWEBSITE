@@ -342,7 +342,7 @@ model RefinanceClosingFee {
   id                      String   @id @default(cuid())
   waterfallDistributionId String
   category                String
-  amount                  Float
+  amount                  Decimal  @db.Decimal(15, 2)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -356,7 +356,7 @@ model FundContribution {
   id               String           @id @default(cuid())
   fundId           String
   userId           String
-  amount           Float
+  amount           Decimal          @db.Decimal(15, 2)
   contributionDate DateTime
   contributionType ContributionType @default(CAPITAL_CALL)
   description      String?
@@ -374,7 +374,7 @@ model FundDistribution {
   id               String               @id @default(cuid())
   fundId           String
   userId           String
-  amount           Float
+  amount           Decimal              @db.Decimal(15, 2)
   distributionDate DateTime
   distributionType FundDistributionType @default(PROFIT_DISTRIBUTION)
   description      String?

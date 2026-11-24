@@ -24,6 +24,8 @@ const propertyData = {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 247605.26,
     ownershipPercentage: 100, // Entity owns 100% of property
+    currentValue: 826466.52,
+    aliases: ['2422-24 Joseph', '2422 Joseph'],
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -51,6 +53,7 @@ const propertyData = {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 215000, // Purchase $1,075,000 - Original loan $860,000
     ownershipPercentage: 100,
+    currentValue: 1995277.42,
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -68,6 +71,8 @@ const propertyData = {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 71673.75,
     ownershipPercentage: 100,
+    currentValue: 921181.42,
+    aliases: ['7608 Zimple'],
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -81,10 +86,12 @@ const propertyData = {
       }
     ]
   },
-  '7500 Zimple St, New Orleans, LA 70118': {
+  '7500 Zimpel St, New Orleans, LA 70118': {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 74037.57,
     ownershipPercentage: 100,
+    currentValue: 1593387.90,
+    aliases: ['7500 Zimple St', '7500 Zimpel', '1032 Cherokee'],
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -98,10 +105,13 @@ const propertyData = {
       }
     ]
   },
-  '7506 Zimpel St, New Orleans, LA 70118': {
+  // Single consolidated property (loan x0141) — matches either 7504 or 7506 spellings
+  '7504-7506 Zimpel St, New Orleans, LA 70118': {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 148862.08,
     ownershipPercentage: 100,
+    currentValue: 1658403.90,
+    aliases: ['7506 Zimpel', '7506 Zimple', '7504 Zimpel', '7504 Zimple', '7504-7506'],
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -119,6 +129,7 @@ const propertyData = {
     entityName: 'Campus Rentals LLC',
     investmentAmount: 277121.02,
     ownershipPercentage: 100,
+    currentValue: 1195867.90,
     loans: [
       {
         lenderName: 'Metairie Bank',
@@ -142,10 +153,14 @@ const propertyData = {
       }
     ]
   },
-  '460 NW 20th St, Boca Raton, FL 33496': {
-    entityName: 'Campus Rentals LLC',
+  // CR2 Boca — Unit 106 (JD x5977)
+  '460 NW 20th St Apt 106, Boca Raton, FL 33431': {
+    entityName: 'Campus Rentals 2 LLC',
     investmentAmount: 31213.94,
     ownershipPercentage: 100,
+    currentValue: 300000,
+    aliases: ['460 NW 20th', 'Apt 106', 'Unit 106'],
+    matchTokens: ['460', '106'],
     loans: [
       {
         lenderName: 'JD Bank',
@@ -159,16 +174,12 @@ const propertyData = {
       }
     ]
   },
-  '490 NW 20th St Apt 105, Boca Raton, FL': {
-    entityName: 'Campus Rentals LLC',
-    investmentAmount: 206000,
-    ownershipPercentage: 100,
-    loans: []
-  },
   '7313-15 Freret St, New Orleans, LA': {
     entityName: 'Campus Rentals 2 LLC',
     investmentAmount: 61067.11,
     ownershipPercentage: 100,
+    currentValue: 1703408.87,
+    aliases: ['7313 Freret', '7315 Freret', '7313-15'],
     loans: [
       {
         lenderName: 'Planters Bank',
@@ -182,16 +193,23 @@ const propertyData = {
       }
     ]
   },
-  '490 NW 20th St Unit 1050, Boca Raton, FL': {
+  // CR2 Boca — 490 Unit 105 (not Unit 1050 / 1110)
+  '490 NW 20th St Apt 105, Boca Raton, FL 33431': {
     entityName: 'Campus Rentals 2 LLC',
     investmentAmount: 102764.58,
     ownershipPercentage: 100,
+    aliases: ['490 NW 20th', 'Apt 105', 'Unit 105'],
+    matchTokens: ['490', '105'],
+    // Exclude fuzzy hits on 1050 / 1110
+    excludeTokens: ['1050', '1110'],
     loans: []
   },
-  '460 NW 20th St Unit 1110, Boca Raton, FL': {
+  '460 NW 20th St Unit 1110, Boca Raton, FL 33431': {
     entityName: 'Campus Rentals 2 LLC',
     investmentAmount: 5000,
     ownershipPercentage: 100,
+    aliases: ['Unit 1110', '1110'],
+    matchTokens: ['460', '1110'],
     loans: []
   },
   '1128 Lowerline St, New Orleans, LA': {
@@ -219,29 +237,73 @@ const propertyData = {
   }
 }
 
-// Entity ownership structure
+// Entity ownership structure — emails must match live portal users
 const entityStructure = {
   'Campus Rentals LLC': {
     type: 'LLC',
     owners: [
-      { email: 'rovnerproperties@gmail.com', ownershipPercentage: 51, investmentAmount: 0 }, // Steven
-      { email: 'alec.rovner@campusrentalsllc.com', ownershipPercentage: 49, investmentAmount: 0 } // Alec - UPDATE email if different
+      { email: 'srovner@dial-law.com', ownershipPercentage: 51, investmentAmount: 0 }, // Steven
+      { email: 'rovnerproperties@gmail.com', ownershipPercentage: 49, investmentAmount: 0 } // Alec
     ]
   },
   'Campus Rentals 2 LLC': {
     type: 'LLC',
     owners: [
       { entityName: 'Campus Rentals LLC', ownershipPercentage: 66.67, investmentAmount: 0 },
-      { email: 'sam.torres@campusrentalsllc.com', ownershipPercentage: 33.33, investmentAmount: 0 } // Sidney Torres V
+      { email: 'torres.samd@gmail.com', ownershipPercentage: 33.33, investmentAmount: 0 } // Sidney Torres V
     ]
   },
   'Campus Rentals 3 LLC': {
     type: 'LLC',
     owners: [
       { entityName: 'Campus Rentals LLC', ownershipPercentage: 50, investmentAmount: 0 },
-      { email: 'sam.torres@campusrentalsllc.com', ownershipPercentage: 50, investmentAmount: 0 }
+      { email: 'torres.samd@gmail.com', ownershipPercentage: 50, investmentAmount: 0 }
     ]
   }
+}
+
+/** Normalize Zimpel/Zimple + collapse whitespace for matching */
+function normalizeAddress(addr) {
+  return String(addr || '')
+    .toLowerCase()
+    .replace(/zimpel/g, 'zimple')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
+ * Match a DB property address to propertyData without confusing Boca units
+ * (105 vs 1050 vs 1110) or Zimpel spellings.
+ */
+function findPropertyData(address) {
+  const raw = String(address || '').trim()
+  if (propertyData[raw]) return propertyData[raw]
+
+  const norm = normalizeAddress(raw)
+  for (const [key, data] of Object.entries(propertyData)) {
+    if (normalizeAddress(key) === norm) return data
+    const aliases = data.aliases || []
+    if (aliases.some((a) => norm.includes(normalizeAddress(a)))) {
+      if (data.excludeTokens?.some((t) => norm.includes(String(t).toLowerCase()))) continue
+      if (data.matchTokens?.length) {
+        if (data.matchTokens.every((t) => norm.includes(String(t).toLowerCase()))) return data
+        continue
+      }
+      return data
+    }
+    if (data.matchTokens?.length) {
+      if (data.excludeTokens?.some((t) => norm.includes(String(t).toLowerCase()))) continue
+      if (data.matchTokens.every((t) => norm.includes(String(t).toLowerCase()))) return data
+    }
+  }
+
+  // Street-number + street-name fallback (first token of key before comma)
+  for (const [key, data] of Object.entries(propertyData)) {
+    if (data.matchTokens?.length) continue // already tried token-strict keys
+    const streetKey = normalizeAddress(key.split(',')[0])
+    if (streetKey && norm.includes(streetKey)) return data
+  }
+  return null
 }
 
 async function findOrCreateUser(email, firstName, lastName, role = 'INVESTOR') {
@@ -331,30 +393,40 @@ async function importAllData() {
     })
 
     if (!adminUser) {
-      adminUser = await findOrCreateUser('rovnerproperties@gmail.com', 'Steven', 'Rovner', 'ADMIN')
+      adminUser = await findOrCreateUser('arovner@campusrentalsllc.com', 'Alec', 'Rovner', 'ADMIN')
     }
 
     console.log(`📋 Using admin user: ${adminUser.email} (${adminUser.id})\n`)
 
     // Step 1: Create/Update Users
     console.log('👥 Step 1: Setting up users...')
-    const steven = await findOrCreateUser('rovnerproperties@gmail.com', 'Steven', 'Rovner', 'ADMIN')
-    // For Alec, use a unique email or create account manually first
-    // For now, using a placeholder - UPDATE THIS EMAIL
-    let alec
-    try {
-      alec = await findOrCreateUser('alec.rovner@campusrentalsllc.com', 'Alec', 'Rovner', 'ADMIN')
-    } catch (error) {
-      console.log('   ⚠️  Could not create Alec user, will use Steven for now')
-      alec = steven
-    }
-    // Sam Torres - UPDATE THIS EMAIL
-    let sam
-    try {
-      sam = await findOrCreateUser('sam.torres@campusrentalsllc.com', 'Sidney', 'Torres V', 'INVESTOR')
-    } catch (error) {
-      console.log('   ⚠️  Could not create Sam user, skipping for now')
-      sam = null
+    // Live portal emails (do not invent placeholders)
+    const steven = await findOrCreateUser('srovner@dial-law.com', 'Steven', 'Rovner', 'INVESTOR')
+    let alec =
+      (await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: 'rovnerproperties@gmail.com' },
+            { email: 'arovner@campusrentalsllc.com' },
+          ],
+        },
+      })) || (await findOrCreateUser('rovnerproperties@gmail.com', 'Alec', 'Rovner', 'ADMIN'))
+    let sam =
+      (await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: 'torres.samd@gmail.com' },
+            { email: 'sam.torres@campusrentalsllc.com' },
+          ],
+        },
+      })) || null
+    if (!sam) {
+      try {
+        sam = await findOrCreateUser('torres.samd@gmail.com', 'Sidney', 'Torres V', 'INVESTOR')
+      } catch (error) {
+        console.log('   ⚠️  Could not create Sam user, skipping for now')
+        sam = null
+      }
     }
     console.log('')
 
@@ -453,22 +525,7 @@ async function importAllData() {
     let loansImported = 0
 
     for (const property of properties) {
-      const addressToMatch = property.address.trim().toLowerCase()
-      // Try exact match first
-      let matchingData = propertyData[property.address.trim()]
-      
-      // Try fuzzy match with normalized addresses (handle Zimpel vs Zimple)
-      if (!matchingData) {
-        const normalizedAddress = addressToMatch.replace(/zimpel/g, 'zimple').replace(/zimple/g, 'zimpel')
-        matchingData = propertyData[Object.keys(propertyData).find(key => {
-          const keyLower = key.toLowerCase()
-          const normalizedKey = keyLower.replace(/zimpel/g, 'zimple').replace(/zimple/g, 'zimpel')
-          return addressToMatch === keyLower || 
-                 normalizedAddress === normalizedKey ||
-                 addressToMatch.includes(keyLower.split(',')[0]) ||
-                 keyLower.includes(addressToMatch.split(',')[0])
-        })]
-      }
+      const matchingData = findPropertyData(property.address)
 
       if (!matchingData) {
         console.log(`⏭️  Skipping ${property.name} (${property.address}) - no matching data`)
@@ -478,6 +535,13 @@ async function importAllData() {
       console.log(`\n📦 Processing: ${property.name}`)
       console.log(`   Address: ${property.address}`)
       console.log(`   Entity: ${matchingData.entityName}`)
+
+      if (matchingData.currentValue != null) {
+        await prisma.property.update({
+          where: { id: property.id },
+          data: { currentValue: matchingData.currentValue },
+        })
+      }
       console.log(`   Investment: ${matchingData.investmentAmount.toLocaleString()}`)
 
       // Find the entity

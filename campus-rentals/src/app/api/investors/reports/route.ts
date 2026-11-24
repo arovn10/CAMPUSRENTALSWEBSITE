@@ -393,9 +393,9 @@ async function generateCashFlowReport(user: any, startDate: Date, endDate: Date)
     cashFlowData,
     summary: {
       totalPropertyDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
-      totalFundDistributions: fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+      totalFundDistributions: fundDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
       totalDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0) +
-        fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+        fundDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
     },
   })
 }
@@ -443,9 +443,9 @@ async function generateTaxSummary(user: any, startDate: Date, endDate: Date) {
     refinance: propertyDistributions
       .filter(dist => dist.distributionType === 'REFINANCE')
       .reduce((sum, dist) => sum + Number(dist.amount), 0),
-    fundDistributions: fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+    fundDistributions: fundDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
     totalDistributions: propertyDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0) +
-      fundDistributions.reduce((sum, dist) => sum + dist.amount, 0),
+      fundDistributions.reduce((sum, dist) => sum + Number(dist.amount), 0),
   }
 
   return NextResponse.json({
