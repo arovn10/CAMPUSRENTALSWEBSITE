@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  assertOwnershipSum,
+  parseOwnershipPercentage,
+} from '@/lib/ownershipValidation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,14 +52,36 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
-    
-    // Create entity owner
+    if (!body.entityId) {
+      return NextResponse.json({ error: 'entityId is required' }, { status: 400 })
+    }
+
+    let ownershipPercentage: number
+    try {
+      ownershipPercentage = parseOwnershipPercentage(body.ownershipPercentage, { required: true }) as number
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : 'Invalid ownership' }, { status: 400 })
+    }
+
+    const existing = await prisma.entityOwner.findMany({
+      where: { entityId: body.entityId, isActive: true },
+      select: { ownershipPercentage: true },
+    })
+    const nextSum =
+      existing.reduce((s, o) => s + Number(o.ownershipPercentage ?? 0), 0) + ownershipPercentage
+    try {
+      assertOwnershipSum(nextSum, 'Entity owner')
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : 'Ownership sum invalid' }, { status: 400 })
+    }
+
     const entityOwner = await prisma.entityOwner.create({
       data: {
         entityId: body.entityId,
-        userId: body.userId,
-        ownershipPercentage: body.ownershipPercentage,
-        investmentAmount: body.investmentAmount
+        userId: body.userId || null,
+        investorEntityId: body.investorEntityId || null,
+        ownershipPercentage,
+        investmentAmount: body.investmentAmount != null ? Number(body.investmentAmount) : 0,
       },
       include: {
         entity: true,

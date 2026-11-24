@@ -84,27 +84,7 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
     return a
   }
 
-  // 1) Direct investments + their distributions
-  const directInvestments = await prisma.investment.findMany({
-    where: { userId },
-    include: { property: true, distributions: true },
-  })
-  for (const inv of directInvestments) {
-    if (!inv.property) continue
-    const a = ensure(inv.property)
-    a.ownershipFraction += Number(inv.ownershipPercentage ?? 0) / 100
-    if (inv.investmentAmount != null) {
-      a.contributions.push({
-        amount: Number(inv.investmentAmount),
-        date: inv.investmentDate ?? inv.createdAt,
-      })
-    }
-    for (const d of inv.distributions) {
-      a.distributions.push({ amount: Number(d.amount), date: d.distributionDate })
-    }
-  }
-
-  // 2) Entity-held positions
+  // Entity-held positions first (source of truth when an LLC owns the deal).
   // Prefer per-deal EntityInvestmentOwner rows when present; otherwise fall back to
   // global EntityOwner × each EntityInvestment (legacy path).
   const dealOwnerRows = await prisma.entityInvestmentOwner.findMany({
@@ -112,10 +92,12 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
     include: { entityInvestment: { include: { property: true } } },
   })
   const dealCoveredInvestmentIds = new Set<string>()
+  const entityCoveredPropertyIds = new Set<string>()
   for (const row of dealOwnerRows) {
     const ei = row.entityInvestment
     if (!ei?.property) continue
     dealCoveredInvestmentIds.add(ei.id)
+    entityCoveredPropertyIds.add(ei.property.id)
     const a = ensure(ei.property)
     a.ownershipFraction += Number(row.ownershipPercentage ?? 0) / 100
     const amount = Number(row.investmentAmount ?? 0)
@@ -139,6 +121,7 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
     const totalEntityInvested = entityInvs.reduce((s, ei) => s + Number(ei.investmentAmount ?? 0), 0)
     for (const ei of entityInvs) {
       if (!ei.property) continue
+      entityCoveredPropertyIds.add(ei.property.id)
       const a = ensure(ei.property)
       a.ownershipFraction += ownerPct * (Number(ei.ownershipPercentage ?? 0) / 100)
       const share =
@@ -148,6 +131,35 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
       if (share > 0) {
         a.contributions.push({ amount: share, date: ei.investmentDate ?? ei.createdAt })
       }
+    }
+  }
+
+  // Direct investments — skip properties already covered by entity ownership so
+  // legacy 100% "direct" rows don't double-count with deal/entity owners.
+  const directInvestments = await prisma.investment.findMany({
+    where: { userId },
+    include: { property: true, distributions: true },
+  })
+  for (const inv of directInvestments) {
+    if (!inv.property) continue
+    if (entityCoveredPropertyIds.has(inv.property.id)) {
+      // Still attribute personal distribution rows tied to the direct investment.
+      const a = ensure(inv.property)
+      for (const d of inv.distributions) {
+        a.distributions.push({ amount: Number(d.amount), date: d.distributionDate })
+      }
+      continue
+    }
+    const a = ensure(inv.property)
+    a.ownershipFraction += Number(inv.ownershipPercentage ?? 0) / 100
+    if (inv.investmentAmount != null) {
+      a.contributions.push({
+        amount: Number(inv.investmentAmount),
+        date: inv.investmentDate ?? inv.createdAt,
+      })
+    }
+    for (const d of inv.distributions) {
+      a.distributions.push({ amount: Number(d.amount), date: d.distributionDate })
     }
   }
 

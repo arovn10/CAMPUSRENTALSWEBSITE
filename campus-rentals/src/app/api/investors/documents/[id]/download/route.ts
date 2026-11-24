@@ -51,8 +51,10 @@ export async function GET(
     }
 
     const filePath = doc.filePath
-    if (!filePath) {
-      return NextResponse.json({ error: 'File not available' }, { status: 404 })
+    if (!filePath || filePath.endsWith('/') || filePath === 'documents/debt') {
+      return NextResponse.json({
+        error: 'File not available — re-upload this document from the Documents page.',
+      }, { status: 404 })
     }
 
     const mimeType = doc.mimeType || 'application/octet-stream'
@@ -66,12 +68,19 @@ export async function GET(
     if (existsInUploads) {
       stream = createDocumentReadStream(relativePath)
     } else {
-      // Legacy: file in public/documents
-      const publicPath = join(process.cwd(), 'public', filePath)
-      if (!existsSync(publicPath)) {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 })
+      // Legacy: file in public/ (paths often stored as /documents/xxx.pdf)
+      const publicPath = join(process.cwd(), 'public', relativePath)
+      const publicPathAlt = join(process.cwd(), 'public', filePath)
+      if (existsSync(publicPath)) {
+        stream = createReadStream(publicPath)
+      } else if (existsSync(publicPathAlt)) {
+        stream = createReadStream(publicPathAlt)
+      } else {
+        return NextResponse.json({
+          error: 'File missing on server — loan/doc PDF needs to be re-uploaded.',
+          filePath,
+        }, { status: 404 })
       }
-      stream = createReadStream(publicPath)
     }
 
     const headers = new Headers()
