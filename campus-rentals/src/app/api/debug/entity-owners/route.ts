@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request)
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     
     // Get all entity owners with their details
     const entityOwners = await prisma.entityOwner.findMany({

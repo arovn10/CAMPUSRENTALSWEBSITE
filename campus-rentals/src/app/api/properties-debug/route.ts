@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
 import { 
   isCacheValid, 
   loadDataFromCache 
@@ -7,8 +8,12 @@ import {
   fetchProperties as originalFetchProperties
 } from '@/utils/api';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const user = await requireAuth(request);
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.log('=== PROPERTIES DEBUG ===');
     
     // Get cached data

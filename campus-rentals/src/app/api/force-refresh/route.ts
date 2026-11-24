@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
 import {
   saveDataToCache,
   loadDataFromCache,
@@ -83,7 +84,12 @@ function addCoordinatesToProperties(properties: any[]): any[] {
   });
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const user = await requireAuth(request);
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     console.log('=== COMPREHENSIVE FORCE REFRESH STARTED ===');
     console.log('🔄 This will refresh ALL data points: properties, photos, amenities, coordinates, and cache images');

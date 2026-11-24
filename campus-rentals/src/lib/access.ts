@@ -82,10 +82,13 @@ export async function canAccessDocument(user: AccessUser, doc: AccessDoc): Promi
   })
   if (grant) return true
 
-  // Otherwise must be investor-visible AND attached to a property they can access.
-  if (!doc.isPublic || !doc.visibleToInvestor) return false
-  if (doc.entityType === 'PROPERTY') {
+  // Investor-visible docs on a property they can access (ownership / grant / follow).
+  // isPublic is NOT required here — that flag means "visible without a property stake".
+  if (!doc.visibleToInvestor) return false
+  if (doc.entityType === 'PROPERTY' && doc.entityId && doc.entityId !== 'company') {
     return canAccessProperty(user, doc.entityId)
   }
-  return false
+  // Company-wide (or non-property) docs: only when explicitly marked public,
+  // otherwise require an explicit DocumentAccess grant (already checked above).
+  return !!doc.isPublic
 }

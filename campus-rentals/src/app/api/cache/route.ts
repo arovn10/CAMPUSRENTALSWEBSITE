@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
 import { 
   isCacheValid, 
   loadDataFromCache,
@@ -7,8 +8,19 @@ import {
 import fs from 'fs';
 import path from 'path';
 
-export async function GET() {
+async function requireStaff(request: NextRequest) {
+  const user = await requireAuth(request);
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER')) {
+    return null;
+  }
+  return user;
+}
+
+export async function GET(request: NextRequest) {
   try {
+    if (!(await requireStaff(request))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const isValid = isCacheValid();
     const cachedData = loadDataFromCache();
     const geocodingCache = loadGeocodingCache();
@@ -51,6 +63,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await requireStaff(request))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const { action } = await request.json();
     
     if (action === 'refresh') {
