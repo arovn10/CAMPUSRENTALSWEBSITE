@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
             ? [{ entityType: 'FUND' as const, entityId: { in: fundIds } }]
             : []),
           // Truly public company docs only when explicitly marked public
+          { isPublic: true, entityType: 'COMPANY' as const },
           { isPublic: true, entityId: 'company' },
         ],
       },

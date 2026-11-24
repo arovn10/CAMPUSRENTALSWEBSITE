@@ -189,7 +189,10 @@ export default function InvestorDocumentsPage() {
       const formData = new FormData()
       formData.set('title', uploadForm.title.trim())
       formData.set('documentType', uploadForm.documentType)
-      formData.set('entityType', 'PROPERTY')
+      formData.set(
+        'entityType',
+        uploadForm.entityId === 'company' ? 'COMPANY' : 'PROPERTY'
+      )
       formData.set('entityId', uploadForm.entityId)
       if (uploadForm.description) formData.set('description', uploadForm.description)
       formData.set('file', uploadForm.file)
