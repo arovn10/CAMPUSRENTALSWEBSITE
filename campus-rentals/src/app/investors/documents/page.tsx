@@ -248,7 +248,11 @@ export default function InvestorDocumentsPage() {
       const res = await fetch(downloadUrl(doc), {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err?.error || `Download failed (${res.status})`)
+        return
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -256,7 +260,9 @@ export default function InvestorDocumentsPage() {
       a.download = doc.fileName || doc.title || 'document'
       a.click()
       URL.revokeObjectURL(url)
-    } catch (_) {}
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Download failed')
+    }
   }
 
   const onDrag = (e: React.DragEvent) => {
