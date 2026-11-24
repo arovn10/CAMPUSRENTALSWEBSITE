@@ -58,8 +58,9 @@ export async function GET(request: NextRequest) {
     // Calculate total return
     totalReturn = currentValue + totalDistributions - totalInvested
 
-    // Calculate IRR (simplified calculation)
-    const totalIrr = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0
+    // Simple total-return %, not XIRR — capital-account / metrics.ts is the real IRR path.
+    const totalReturnPct = totalInvested > 0 ? ((totalReturn / totalInvested) * 100) : 0
+    const totalIrr = totalReturnPct
 
     // Get pending distributions (distributions from last 30 days)
     const thirtyDaysAgo = new Date()
@@ -78,23 +79,21 @@ export async function GET(request: NextRequest) {
     })
 
     // Get documents count
+    const propertyIds = investments.map((inv: any) => inv.propertyId).filter(Boolean)
+    const fundIds = fundInvestments.map((inv: any) => inv.fundId).filter(Boolean)
     const documentsCount = await prisma.document.count({
       where: {
+        visibleToInvestor: true,
         OR: [
-          { isPublic: true },
           { uploadedBy: user.id },
-          {
-            entityType: 'PROPERTY',
-            entityId: {
-              in: investments.map((inv: any) => inv.propertyId),
-            },
-          },
-          {
-            entityType: 'FUND',
-            entityId: {
-              in: fundInvestments.map((inv: any) => inv.fundId),
-            },
-          },
+          ...(propertyIds.length
+            ? [{ entityType: 'PROPERTY' as const, entityId: { in: propertyIds } }]
+            : []),
+          ...(fundIds.length
+            ? [{ entityType: 'FUND' as const, entityId: { in: fundIds } }]
+            : []),
+          // Truly public company docs only when explicitly marked public
+          { isPublic: true, entityId: 'company' },
         ],
       },
     })

@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
         currentValue: currentValue,
         totalReturn: totalReturn,
         irr: Math.round(irr * 100) / 100,
-        ownershipPercentage: investment.ownershipPercentage || 100,
+        ownershipPercentage: investment.ownershipPercentage ?? null,
         status: investment.status,
         investmentDate: investment.investmentDate.toISOString(),
         // Expose deal/funding status at top-level for UI badges
@@ -511,7 +511,7 @@ export async function GET(request: NextRequest) {
         currentValue: currentValue,
         totalReturn: totalReturn,
         irr: Math.round(irr * 100) / 100,
-        ownershipPercentage: entityInvestment.ownershipPercentage || 100,
+        ownershipPercentage: entityInvestment.ownershipPercentage ?? null,
         status: entityInvestment.status,
         investmentDate: entityInvestment.investmentDate.toISOString(),
         // Expose deal/funding status at top-level for UI badges
@@ -932,7 +932,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         propertyId: body.propertyId || 'temp-property-id',
         investmentAmount: body.investmentAmount || 0,
-        ownershipPercentage: body.ownershipPercentage || 100,
+        ownershipPercentage: body.ownershipPercentage != null ? Number(body.ownershipPercentage) : 0,
         status: 'ACTIVE'
       }
     })

@@ -104,7 +104,26 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
     }
   }
 
-  // 2) Entity-held positions — the investor's share of each entity investment
+  // 2) Entity-held positions
+  // Prefer per-deal EntityInvestmentOwner rows when present; otherwise fall back to
+  // global EntityOwner × each EntityInvestment (legacy path).
+  const dealOwnerRows = await prisma.entityInvestmentOwner.findMany({
+    where: { userId },
+    include: { entityInvestment: { include: { property: true } } },
+  })
+  const dealCoveredInvestmentIds = new Set<string>()
+  for (const row of dealOwnerRows) {
+    const ei = row.entityInvestment
+    if (!ei?.property) continue
+    dealCoveredInvestmentIds.add(ei.id)
+    const a = ensure(ei.property)
+    a.ownershipFraction += Number(row.ownershipPercentage ?? 0) / 100
+    const amount = Number(row.investmentAmount ?? 0)
+    if (amount > 0) {
+      a.contributions.push({ amount, date: ei.investmentDate ?? ei.createdAt })
+    }
+  }
+
   const ownerStakes = await prisma.entityOwner.findMany({
     where: { userId },
     include: {
@@ -114,7 +133,9 @@ export async function buildCapitalAccount(userId: string): Promise<CapitalAccoun
   for (const stake of ownerStakes) {
     const ownerPct = Number(stake.ownershipPercentage ?? 0) / 100
     const ownerContribution = Number(stake.investmentAmount ?? 0)
-    const entityInvs = stake.entity?.entityInvestments ?? []
+    const entityInvs = (stake.entity?.entityInvestments ?? []).filter(
+      (ei) => !dealCoveredInvestmentIds.has(ei.id)
+    )
     const totalEntityInvested = entityInvs.reduce((s, ei) => s + Number(ei.investmentAmount ?? 0), 0)
     for (const ei of entityInvs) {
       if (!ei.property) continue

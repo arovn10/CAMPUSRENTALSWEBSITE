@@ -128,7 +128,7 @@ async function generatePortfolioSummary(user: any, startDate: Date, endDate: Dat
     investmentAmount: inv.investmentAmount,
     currentValue: inv.property.currentValue || inv.property.price,
     totalDistributions: inv.distributions.reduce((sum: number, dist: any) => sum + dist.amount, 0),
-    ownershipPercentage: inv.ownershipPercentage || 100,
+    ownershipPercentage: inv.ownershipPercentage ?? null,
   }))
 
   // Fund breakdown
@@ -136,7 +136,7 @@ async function generatePortfolioSummary(user: any, startDate: Date, endDate: Dat
     id: inv.fund.id,
     name: inv.fund.name,
     investmentAmount: inv.investmentAmount,
-    ownershipPercentage: inv.ownershipPercentage || 100,
+    ownershipPercentage: inv.ownershipPercentage ?? null,
   }))
 
   return NextResponse.json({
@@ -207,7 +207,7 @@ async function generatePropertyPerformance(user: any, startDate: Date, endDate: 
       totalDistributions,
       totalReturn,
       irr,
-      ownershipPercentage: inv.ownershipPercentage || 100,
+      ownershipPercentage: inv.ownershipPercentage ?? null,
       investmentDate: inv.investmentDate,
       distributions: inv.distributions,
     }
@@ -288,7 +288,7 @@ async function generateFundPerformance(user: any, startDate: Date, endDate: Date
         currentValue,
         totalReturn,
         irr,
-        ownershipPercentage: inv.ownershipPercentage || 100,
+        ownershipPercentage: inv.ownershipPercentage ?? null,
         investmentDate: inv.investmentDate,
         contributions,
         distributions,

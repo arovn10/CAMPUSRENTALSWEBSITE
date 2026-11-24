@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'File could not be saved. Try a different file or name.' }, { status: 500 })
       }
     } else {
-      // Handle JSON data
+      // JSON metadata-only create — require a real existing filePath (no invented paths).
       const body = await request.json()
       title = body.title
       description = body.description || body.entityName
@@ -174,7 +174,12 @@ export async function POST(request: NextRequest) {
       fileSize = body.fileSize || 0
       fileName = body.fileName || (title ? `${title}.pdf` : 'document.pdf')
       mimeType = body.mimeType || 'application/pdf'
-      filePathForDb = body.filePath || (fileName ? `documents/${fileName}` : undefined)
+      if (!body.filePath || typeof body.filePath !== 'string') {
+        return NextResponse.json({
+          error: 'Upload the file as multipart/form-data, or provide an existing filePath.',
+        }, { status: 400 })
+      }
+      filePathForDb = body.filePath
     }
 
     if (!title || !entityType || !entityId) {

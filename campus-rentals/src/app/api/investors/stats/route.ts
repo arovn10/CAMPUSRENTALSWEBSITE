@@ -39,11 +39,14 @@ export async function GET(request: NextRequest) {
     const totalIrr = positionIrrPercent({ contributions, distributions, currentValue: totalCurrentValue, asOf })
     const activeInvestments = investments.filter(inv => inv.status === 'ACTIVE').length
 
-    // Pending distributions (estimated from monthly rent)
-    const pendingDistributions = investments.reduce((sum, inv) => {
-      const monthlyRent = Number(inv.property?.monthlyRent ?? 0)
-      return sum + (monthlyRent * 0.8) // 80% of monthly rent as distribution
-    }, 0)
+    // Pending = booked distributions in the last 30 days (not a rent guess).
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const pendingAgg = await prisma.distribution.aggregate({
+      where: { userId: user.id, distributionDate: { gte: thirtyDaysAgo } },
+      _sum: { amount: true },
+    })
+    const pendingDistributions = Number(pendingAgg._sum.amount ?? 0)
 
     const propertyIds = [...new Set(investments.map((i) => i.propertyId).filter(Boolean))]
     const [documentsCount, unreadResult] = await Promise.all([
